@@ -1,0 +1,8 @@
+Model Information:
+* title:	Knight | PS1 PSX
+* source:	https://sketchfab.com/3d-models/knight-ps1-psx-66c3a171c44c403684fbc6ae2c7b94c1
+* author:	crimsongcat (https://sketchfab.com/crimsongcat)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works

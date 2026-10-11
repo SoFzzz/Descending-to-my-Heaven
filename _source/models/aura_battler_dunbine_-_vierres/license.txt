@@ -1,0 +1,11 @@
+Model Information:
+* title:	Aura Battler Dunbine - Vierres
+* source:	https://sketchfab.com/3d-models/aura-battler-dunbine-vierres-ffb38691f9dc4c7ea4f0cc3b0c871e73
+* author:	Galax27 (https://sketchfab.com/Galax27)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Aura Battler Dunbine - Vierres" (https://sketchfab.com/3d-models/aura-battler-dunbine-vierres-ffb38691f9dc4c7ea4f0cc3b0c871e73) by Galax27 (https://sketchfab.com/Galax27) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

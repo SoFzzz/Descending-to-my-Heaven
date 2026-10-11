@@ -1,0 +1,5 @@
+.godot/
+/android/
+export/
+.DS_Store
+__MACOSX/
