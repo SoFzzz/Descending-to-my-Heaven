@@ -42,17 +42,19 @@ Estética: fantasía oscura PSX (baja resolución interna, texturas con filtro *
 
 | Rol | Modelo (D:\ASSETS-PRUEBA) | Rig / animación |
 |---|---|---|
-| Kaelen | `low-poly-woman-knight` (ajustado en Blender) | Rig + animaciones Mixamo |
-| Elysia | `modelo-base-elisya/female_lowp.blend` (túnica/velo en Blender) | Rig Mixamo; idle, levantarse, abrazo |
+| Kaelen | Malla generada a partir del concept art (capucha, capa, armadura borgoña) reducida a ~5k triángulos; referencia de armadura: `low-poly-woman-knight` | Rig + animaciones Mixamo; capa separada (rígida al pecho o con huesos de resorte) |
+| Elysia | `elisya.fbx` (vestido, 497k triángulos) reducida a ~5k triángulos | Rig Mixamo; idle, levantarse, abrazo |
 | Arma de Kaelen | `demonic weapons pack/greatsword` (ya tiene .glb) | Adjunta al hueso de la mano (`BoneAttachment3D`) |
-| Jefe 1 | `bonedragon` | Rig propio; animaciones faltantes por código/tweens |
+| Jefe 1 | `bonedragon` | Rig propio de dragón (cola, cuello, mandíbula, alas, patas con IK); animaciones creadas en Blender + movimiento procedural |
 | Esbirros 1 | `Skeleton` | Sin rig → Mixamo |
-| Jefe 2 | `MaleniaPsx` | Rig propio + ~3 animaciones; resto Mixamo si es compatible |
-| Esbirros 2 | `Plague Arcanist` | Rig propio + ~11 animaciones |
-| Jefe 3 | `mecha-king-ghidorah` (reducir polígonos) | Rig propio; animaciones por código/tweens |
-| Esbirros 3 | `knight__ps1_psx` | Rig propio (solo Idle) → Mixamo |
+| Élite 1 | `knight__ps1_psx` | Rig → Mixamo |
+| Jefe 2 | `MaleniaPsx` | Rig propio + idle; ataques Mixamo reasignados (retarget en Godot) |
+| Esbirros 2 | `Plague Arcanist` | Rig Mixamo + 10 animaciones |
+| Jefe 3 | `mecha-king-ghidorah` (reducir de 26k a ~8k triángulos) | Rig propio (3 cuellos, 2 colas, alas); animaciones creadas en Blender + movimiento procedural |
+| Esbirros 3 | `TheWrapper V2` | Rig propio + 6 animaciones (embestida, idle, correr, grito, caminar, golpe) |
+| Élite 3 (opcional) | `aura_battler_dunbine` | Sin rig: mecha flotante animado por piezas rígidas (flotar, embestida, giro) |
 | Escenarios | `float-islands`, `PSX_Dungeon`, `Modular Dungeon Free Edition`, `modulardungeontextures` | Estáticos |
-| Reserva | `TheWrapper V2` (7 animaciones), `psx_insectoid_demon`, `aura_battler` | Sustitutos si algo falla al importar |
+| Reserva | `psx_insectoid_demon` (jefe 3 si Ghidorah falla), `DoriOri` | Sustitutos si algo falla al importar |
 
 **Regla de sustitución:** si el día 1 un modelo no importa bien o no se puede animar, se reemplaza por uno de reserva ese mismo día. No se gastan más de 2 horas peleando con un asset.
 
@@ -60,8 +62,8 @@ Estética: fantasía oscura PSX (baja resolución interna, texturas con filtro *
 - Kaelen: idle, caminar, correr, rodar, ataque 1-2-3, recibir golpe, morir.
 - Esbirro: idle, caminar, atacar, recibir golpe, morir.
 - Jefe: idle, moverse, 3 ataques, morir. Lo que falte se simula con tweens (inclinar, embestir, sacudir).
+- Dragones (jefes 1 y 3): las animaciones base (idle, rugido, mordida, barrido de cola, pisotón, muerte) se crean con keyframes en Blender sobre su rig; en Godot se suma movimiento procedural (ondulación de cuellos y colas, respiración) para que no se vean rígidos.
 
-**Nota de licencias:** Malenia (Elden Ring) y Mecha King Ghidorah (Toho) son fan-art de propiedades con copyright. Válido para entrega académica; si se publica en itch.io, dejarlo explícito o publicarlo como no listado.
 
 ## 4. Combate (valores iniciales, se ajustan en el día 6)
 
