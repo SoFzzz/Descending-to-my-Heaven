@@ -226,14 +226,46 @@ Complejidad baja (≈ medio día). Se abre con `Esc` / `Start`:
 | UI | mover selección, confirmar, volver, abrir/cerrar pausa |
 | Ambiente | viento en la isla, eco/goteo en el templo, cadenas o fuego por arena |
 
-### 10.3 Música
-- Menú principal, ambiente del templo (bajo, tenso), tema de jefe (uno compartido o uno por jefe), final (tranquilo).
-- Transición: fundido de la música de ambiente a la de jefe al iniciar el enfrentamiento.
+### 10.3 Música (BGM) — asignación propuesta
 
-### 10.4 Fuentes de audio gratuitas
-Freesound (filtrar por CC0 / CC-BY), Kenney (CC0), OpenGameArt, Sonniss GDC Game Audio Bundle. Registrar autor y licencia de cada archivo para los créditos.
+Pistas reunidas en `_source/bgm/` (original: `D:\BGM`):
 
-### 10.5 Implementación
+| Momento | Pista |
+|---|---|
+| Menú principal | `celtic melancholy.mp3` |
+| Isla / entrada al templo | `LVS04_10_Battlefield_bpm180_loop.ogg` (o silencio + ambiente) |
+| Jefe 1 — Bone Dragon | `skull dragon battle.mp3` |
+| Jefe 2 — Malenia | `Blazing Honor.mp3` |
+| Jefe 3 — Mecha King Ghidorah | `black dragon battle.mp3` |
+| Fase 2 de jefe / alternativas | `ancient creature battle.mp3`, `hellhound battle.mp3`, `wyvern battle.mp3` |
+| Encuentro con Elysia y créditos | `sadness piano4.mp3` |
+
+- Transición: fundido de la música de ambiente a la de jefe al iniciar el enfrentamiento; bajar volumen de la música en pausa.
+- Si una pista no hace bucle limpio, marcar el punto de loop en el import de Godot.
+
+### 10.4 Efectos de sonido (SFX) — packs disponibles
+
+Packs reunidos en `_source/sfx/` (original: `D:\SFX`):
+
+| Pack | Contenido | Uso en el juego |
+|---|---|---|
+| `40 Free PSX Footsteps` | Pasos en piedra, concreto, metal, escaleras, tierra, grava, pasto, madera | Pasos de Kaelen (piedra/metal) y esbirros |
+| `Free Fantasy SFX Pack By TomMusic` | Ataques, hechizos, puertas/rejas/cofres, antorchas, agua; loops de ambiente (cueva, interior, bosque, mar) | Swings e impactos, puertas entre arenas, ambiente de templo (`Cave`, `Interior Night`) |
+| `Monsters SFX Vol.1` | Rugidos, gruñidos, chillidos, aliento de fuego | Rugidos de dragones, sonidos de esbirros y jefes |
+| `Be Not Afraid UI` | Sonidos de interfaz de estilo oscuro | Menús: mover, confirmar, volver, pausa |
+
+Faltantes a conseguir si no están en los packs: golpe recibido/grito de Kaelen, sonido de rodar, crujido de huesos para el esqueleto, golpe metálico para el knight.
+
+### 10.5 Licencias de audio
+| Origen | Licencia | Crédito |
+|---|---|---|
+| EpicOrderSounds (`Blazing Honor`) | Uso libre, crédito opcional | "Music by EpicOrderSounds" |
+| TomMusic | Ver `ReadMe.txt` del pack | TomMusic |
+| Ririsaurus (`Monsters SFX Vol.1`) | Uso libre, **no redistribuir** | Riria / Ririsaurus |
+| Atelier Magicae (`Be Not Afraid UI`) | Uso libre, **no redistribuir**, crédito obligatorio | "Atelier Magicae" |
+| Resto de pistas BGM y pasos PSX | Registrar autor y licencia antes del día 7 | — |
+
+### 10.6 Implementación
 - `AudioStreamPlayer3D` en personajes para sonidos espaciales; `AudioStreamPlayer` para música y UI.
 - Variación de tono aleatoria (±10%) en sonidos repetidos (pasos, swings) para que no suenen iguales.
 - Sonidos de impacto disparados desde el sistema de hitbox, no desde cada script.
@@ -262,10 +294,27 @@ res://
 Principios: componentes pequeños (`Health`, `Hitbox`, `Hurtbox`, `Stamina`) que se reutilizan en Kaelen, esbirros y jefes. Los jefes comparten `boss_base` y solo cambian modelo y recursos `BossAttack`. Las arenas son escenas independientes cargadas por `game_state`.
 
 ## 12. Repositorio y assets
-- **No** se copia la carpeta completa de assets: solo lo listado en la sección 3, ordenado en `assets/<categoría>/<nombre>/` con su `license.txt`.
-- **Git LFS** para modelos, texturas y audio.
-- Fuentes pesadas (`.rar`, `floating_island` de 61 MB, Ghidorah sin reducir) quedan fuera del repo.
+### 12.1 Estructura
+
+```
+Descending-to-my-Heaven/          (raíz del repo = raíz del proyecto Godot)
+  docs/                           documentación
+  _source/                        material original, NO lo importa Godot (contiene .gdignore)
+    models/                       copia de D:\ASSETS-PRUEBA
+    bgm/                          copia de D:\BGM
+    sfx/                          copia de D:\SFX
+  assets/                         solo lo que el juego usa, ya procesado (GLB reducidos, OGG)
+  scenes/ scripts/ shaders/ ...
+```
+
+- `_source/` es el respaldo compartido del equipo: todos tienen los mismos archivos originales. El archivo vacío `_source/.gdignore` hace que Godot lo ignore (si no, importaría cientos de archivos y el editor se volvería lento).
+- `assets/` contiene solo lo que realmente usa el juego, ya procesado; cada carpeta lleva su `license.txt`.
+- **Git LFS** para modelos, texturas, audio y `.blend`.
+- Al copiar a `_source/` se omite lo duplicado o basura: carpetas `WAV Files` de TomMusic (mismos sonidos que `OGG Files`), versiones `.wav`/`.m4a` duplicadas de pistas que ya tienen `.ogg`/`.mp3`, `__MACOSX/` y `.DS_Store`.
 - Conversión FBX → GLB en Blender cuando el import directo de Godot falle.
+
+### 12.2 Visibilidad del repositorio
+El repositorio debe ser **privado**. Varios packs prohíben redistribuir los archivos originales (Ririsaurus, Atelier Magicae, licencia estándar de Sketchfab) y Malenia/Ghidorah son fan-art de propiedades con copyright. Lo que se publica es el juego exportado, no los archivos originales.
 - **Regla de trabajo:** una sola persona edita cada escena `.tscn` a la vez (dueño por escena) para evitar conflictos de merge.
 
 ## 13. Roles
