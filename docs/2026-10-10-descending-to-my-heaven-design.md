@@ -42,19 +42,21 @@ Estética: fantasía oscura PSX (baja resolución interna, texturas con filtro *
 
 | Rol | Modelo (D:\ASSETS-PRUEBA) | Rig / animación |
 |---|---|---|
-| Kaelen | Malla generada a partir del concept art (capucha, capa, armadura borgoña) reducida a ~5k triángulos; referencia de armadura: `low-poly-woman-knight` | Rig + animaciones Mixamo; capa separada (rígida al pecho o con huesos de resorte) |
-| Elysia | `elisya.fbx` (vestido, 497k triángulos) reducida a ~5k triángulos | Rig Mixamo; idle, levantarse, abrazo |
+| Kaelen | `low-poly-woman-knight` (modelo final, sin modelado propio por tiempo) | Sin rig → Mixamo (auto-rig + animaciones) |
+| Elysia | `ancient-elf-lady-psx` (744 triángulos, modelo final) | Sin rig → Mixamo; idle, levantarse, abrazo |
 | Arma de Kaelen | `demonic weapons pack/greatsword` (ya tiene .glb) | Adjunta al hueso de la mano (`BoneAttachment3D`) |
-| Jefe 1 | `bonedragon` | Rig propio de dragón (cola, cuello, mandíbula, alas, patas con IK); animaciones creadas en Blender + movimiento procedural |
+| Jefe 1 | `bonedragon` | Ya trae rig con skin (~70 huesos), sin animaciones; animaciones creadas en Blender + movimiento procedural |
 | Esbirros 1 | `Skeleton` | Sin rig → Mixamo |
-| Élite 1 | `knight__ps1_psx` | Rig → Mixamo |
-| Jefe 2 | `MaleniaPsx` | Rig propio + idle; ataques Mixamo reasignados (retarget en Godot) |
-| Esbirros 2 | `Plague Arcanist` | Rig Mixamo + 10 animaciones |
-| Jefe 3 | `mecha-king-ghidorah` (reducir de 26k a ~8k triángulos) | Rig propio (3 cuellos, 2 colas, alas); animaciones creadas en Blender + movimiento procedural |
+| Élite 1 | `knight__ps1_psx` | Trae rig propio (26 huesos) solo con `Idle` → re-rig en Mixamo |
+| Jefe 2 | `MaleniaPsx` | Rig propio (metarig Rigify) + `Idle`/`IdleMalenia`; ataques Mixamo reasignados (retarget en Godot con `BoneMap`) |
+| Esbirros 2 | `Plague Arcanist` | Rig Mixamo + 10 animaciones (nombres genéricos, hay que identificarlas y renombrarlas) |
+| Jefe 3 | `mecha-king-ghidorah` (reducir de 26k a ~8k triángulos) | Ya trae rig con skin (3 cuellos, 2 colas, alas), sin animaciones; decimar conservando pesos; animaciones creadas en Blender + movimiento procedural |
 | Esbirros 3 | `TheWrapper V2` | Rig propio + 6 animaciones (embestida, idle, correr, grito, caminar, golpe) |
 | Élite 3 (opcional) | `aura_battler_dunbine` | Sin rig: mecha flotante animado por piezas rígidas (flotar, embestida, giro) |
 | Escenarios | `floating_island`, `float-islands`, `PSX_Dungeon`, `Modular Dungeon Free Edition`, `modulardungeontextures` (detalle en sección 6) | Estáticos |
 | Reserva | `psx_insectoid_demon` (jefe 3 si Ghidorah falla), `DoriOri` | Sustitutos si algo falla al importar |
+
+Estado real de cada modelo (rig y animaciones verificados): ver [`asset-status.md`](asset-status.md).
 
 **Regla de sustitución:** si el día 1 un modelo no importa bien o no se puede animar, se reemplaza por uno de reserva ese mismo día. No se gastan más de 2 horas peleando con un asset.
 

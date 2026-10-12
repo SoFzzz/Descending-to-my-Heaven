@@ -325,7 +325,7 @@ Meta: se puede matar a un esbirro y morir ante él.
 ### Tarea 8 (C): Kaelen y Elysia procesadas + animaciones del Bone Dragon + bloqueo de la arena 1
 
 **Archivos:**
-- Crear: `assets/characters/kaelen/kaelen.glb` (rig Mixamo, ~5k triángulos, capa separada), `assets/characters/kaelen/anims/*.glb` (Mixamo, *without skin*), `assets/characters/elysia/elysia.glb`
+- Crear: `assets/characters/kaelen/kaelen.glb` (`low-poly-woman-knight`, rig Mixamo), `assets/characters/kaelen/anims/*.glb` (Mixamo, *without skin*), `assets/characters/elysia/elysia.glb` (`ancient-elf-lady-psx`, rig Mixamo)
 - Crear: `assets/bosses/bonedragon/bonedragon.glb` con animaciones `idle`, `roar`, `bite`, `tail_sweep`, `stomp`, `death`
 - Crear: `assets/minions/skeleton/skeleton.glb`, `assets/minions/knight/knight.glb` (rig Mixamo)
 - Crear: `scenes/levels/arena_1.tscn` (bloqueo CSG según §6.3: 32 × 32 m, techo 8 m, 4 pilares, rejas, margen de cámara 3 m)
@@ -334,7 +334,7 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Produce: nombres de animación exactos para Kaelen: `idle`, `walk`, `run`, `roll`, `attack_1`, `attack_2`, `attack_3`, `hurt`, `death`; para esbirros humanoides: `idle`, `walk`, `attack`, `hurt`, `death`. Lista real registrada en `docs/asset-status.md`.
 - Produce: `arena_1.tscn` con un nodo vacío `Gameplay` donde se instancia `arena_1_gameplay.tscn` (de B).
 
-- [ ] **Paso 1:** Kaelen y Elysia: reducir (Blender *Decimate* hasta ~5k triángulos), pintar por zonas con la paleta de los concept art, separar la capa de Kaelen, exportar FBX para Mixamo.
+- [ ] **Paso 1:** Kaelen (`low-poly-woman-knight`) y Elysia (`ancient-elf-lady-psx`): ya son low poly, no se modelan ni reducen. Solo aplicar escala en Blender y exportar FBX para Mixamo.
 - [ ] **Paso 2:** Mixamo (manual, cuenta del equipo): auto-rig de Kaelen, Elysia, Skeleton y Knight; descargar las animaciones de la lista *in place*.
 - [ ] **Paso 3:** Bone Dragon: crear las 6 animaciones con keyframes sobre su rig (vía MCP de Blender); verificar que se reproducen en Godot.
 - [ ] **Paso 4:** Bloqueo de `arena_1.tscn` + capturas.
