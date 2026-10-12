@@ -48,7 +48,7 @@ Estética: fantasía oscura PSX (baja resolución interna, texturas con filtro *
 | Jefe 1 | `bonedragon` | Ya trae rig con skin (~70 huesos), sin animaciones; animaciones creadas en Blender + movimiento procedural |
 | Esbirros 1 | `Skeleton` | Sin rig → Mixamo |
 | Élite 1 | `knight__ps1_psx` | Trae rig propio (26 huesos) solo con `Idle` → re-rig en Mixamo |
-| Jefe 2 | `MaleniaPsx` | Rig propio (metarig Rigify) + `Idle`/`IdleMalenia`; ataques Mixamo reasignados (retarget en Godot con `BoneMap`) |
+| Jefe 2 | `MaleniaPsx` | Se descarta su metarig (Rigify) y se re-riggea en Mixamo como los demás humanoides; todas las animaciones de Mixamo (ver `guia-mixamo.md`) |
 | Esbirros 2 | `Plague Arcanist` | Rig Mixamo + 10 animaciones (nombres genéricos, hay que identificarlas y renombrarlas) |
 | Jefe 3 | `mecha-king-ghidorah` (reducir de 26k a ~8k triángulos) | Ya trae rig con skin (3 cuellos, 2 colas, alas), sin animaciones; decimar conservando pesos; animaciones creadas en Blender + movimiento procedural |
 | Esbirros 3 | `TheWrapper V2` | Rig propio + 6 animaciones (embestida, idle, correr, grito, caminar, golpe) |

@@ -17,10 +17,12 @@ Estados: `listo` / `falta rig` / `falta animación` / `reemplazado`.
 | Esbirros 1 | `Skeleton/Skeleton/skeleton.fbx` | **No** | — | falta rig | Auto-rig en Mixamo + `idle`, `walk`, `attack`, `hurt`, `death` (*in place*). |
 | Élite 1 | `knight__ps1_psx/scene.gltf` (544 tris) | Propio, 26 huesos | Solo `Idle` | falta rig | Recomendado: subir la malla sin rig a Mixamo y descargar las 5 animaciones de esbirro. |
 | Jefe 1 | `bonedragon/bone dragon.fbx` | **Sí**, ~70 huesos con skin (no hace falta crear rig) | Ninguna | falta animación | Keyframes en Blender: `idle`, `roar`, `bite`, `tail_sweep`, `stomp`, `death`. |
-| Jefe 2 | `MaleniaPsx/Malenia/malenia.fbx` | Sí, metarig (Rigify) | `Idle`, `IdleMalenia` | falta animación | `walk`, `slash`, `thrust`, `spin`, `hurt`, `death` desde Mixamo con retarget en Godot. El metarig no usa nombres Mixamo → configurar `BoneMap` en el import. |
+| Jefe 2 | `MaleniaPsx/Malenia/malenia.fbx` | Sí, metarig (Rigify) | `Idle`, `IdleMalenia` | falta animación | Quitar el metarig y re-riggear en Mixamo (más simple que el retarget): `idle`, `walk`, `slash`, `thrust`, `spin`, `hurt`, `death`. Ver `guia-mixamo.md`. |
 | Jefe 3 | `mecha-king-ghidorah/source/Mecha King Ghidorah.fbx` (~26k tris) | **Sí**, con skin (3 cuellos, colas, alas) | Ninguna | falta animación | 1) Reducir a ~8k tris conservando pesos. 2) Keyframes: `idle`, `roar`, `bite`, `tail_sweep`, `beam`, `death`. |
 | Reserva (jefe 3) | `psx_insectoid_demon/scene.gltf` (622 tris) | No | — | falta rig | Solo si Ghidorah falla. No humanoide: rig manual en Blender. |
 | Reserva | `DoriOri.fbx` | Sí (`root`) | Solo `Pose` | falta animación | Sin uso previsto. |
+
+Procedimiento Mixamo paso a paso: [`guia-mixamo.md`](guia-mixamo.md).
 
 ## Prioridad de trabajo
 

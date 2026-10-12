@@ -395,11 +395,11 @@ Meta: se puede matar a un esbirro y morir ante él.
 **Archivos:**
 - Crear: `assets/environment/kit/*.tscn` (piezas de `PSX_Dungeon` a 4 m con colisión), `assets/environment/kit/dungeon_kit.meshlib`
 - Modificar: `scenes/levels/arena_1.tscn` (reemplazar CSG por `GridMap` + piezas; decoración mínima)
-- Crear: `assets/bosses/malenia/malenia.glb` (+ animaciones Mixamo reasignadas: `idle`, `walk`, `slash`, `thrust`, `spin`, `hurt`, `death`), `assets/bosses/ghidorah/ghidorah.glb` (~8k triángulos; `idle`, `roar`, `bite`, `tail_sweep`, `beam`, `death`)
+- Crear: `assets/bosses/malenia/malenia.glb` (rig y animaciones Mixamo: `idle`, `walk`, `slash`, `thrust`, `spin`, `hurt`, `death`), `assets/bosses/ghidorah/ghidorah.glb` (~8k triángulos; `idle`, `roar`, `bite`, `tail_sweep`, `beam`, `death`)
 
 - [ ] **Paso 1:** importar piezas del kit con escala de 4 m y colisión (caja para muros/pilares, trimesh para pisos/escaleras); exportar `MeshLibrary` (puede usarse `export_mesh_library` del MCP de Godot).
 - [ ] **Paso 2:** reconstruir `arena_1` con `GridMap` sin mover la posición de pilares, rejas ni límites (B ya horneó la navegación sobre ellos; si cambian, avisar a B para rehornear).
-- [ ] **Paso 3:** Malenia (retarget de Mixamo en Godot con `BoneMap`) y Ghidorah (reducir + keyframes vía MCP de Blender).
+- [ ] **Paso 3:** Malenia (quitar metarig, auto-rig y animaciones en Mixamo según `docs/guia-mixamo.md`) y Ghidorah (reducir + keyframes vía MCP de Blender).
 - [ ] **Paso 4: Verificación** — `arena_1` con arte se juega igual que el bloqueo; Malenia y Ghidorah reproducen todas sus animaciones en `scale_reference`.
 - [ ] **Paso 5: Commit** — `feat: arena 1 art pass, malenia and ghidorah animations`
 
