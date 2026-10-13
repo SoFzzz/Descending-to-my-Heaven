@@ -9,7 +9,7 @@ Estados: `listo` / `falta rig` / `falta animación` / `reemplazado`.
 
 | Rol | Fuente | Esqueleto | Animaciones incluidas | Estado | Trabajo pendiente |
 |---|---|---|---|---|---|
-| Kaelen | `low-poly-woman-knight/source/women knight final.fbx` | **No** | — | falta rig | Auto-rig Mixamo + `idle`, `walk`, `run`, `roll`, `attack_1..3`, `hurt`, `death` (*in place*). Falta `license.txt`. |
+| Kaelen | `low-poly-woman-knight/source/women knight final.fbx` | Sí, Mixamo (base pendiente de subir) | 17 clips Mixamo en `_source/mixamo/kaelen/anims/` (ver sección abajo) | falta animación | Subir `base.fbx` a `_source/mixamo/kaelen/` (el de Mixamo con skin; está en `D:\ASSETS-PRUEBA\low-poly-woman-knight\Kaden-R.fbx`). Falta el clip `idle` y renombrar los clips a los nombres de la guía. Falta `license.txt`. |
 | Elysia | `ancient-elf-lady-psx/source/ancient lady elf psx.glb` (744 tris) | **No** | — | falta rig | Auto-rig Mixamo + idle, levantarse, abrazo. Falta `license.txt`. |
 | Esbirros 3 | `TheWrapper V2/MonsterPSX.fbx` | Sí, propio (`MonsterPSX_Rig`) | `Attack_Lunge`, `Idle_Watchful`, `Run_Frantic`, `Scream.lol`, `Walk_Nervous`, `WallSlam_Recover` | listo | Exportar a `assets/minions/thewrapper/thewrapper.glb`; renombrar a `attack`, `idle`, `run`, `scream`, `walk`, `hurt` (WallSlam_Recover). Falta `death` → tween/caída. |
 | Esbirros 2 | `Plague Arcanist/Plague Arcanist/Plague Arcanist.fbx` | Sí, Mixamo | 10 clips con nombres genéricos (`Armature.00X\|mixamo.com\|Layer0`) | listo | Identificar cada clip y renombrar a `idle`, `walk`, `attack`, `hurt`, `death`. Exportar a `assets/minions/plague_arcanist/`. |
@@ -23,6 +23,28 @@ Estados: `listo` / `falta rig` / `falta animación` / `reemplazado`.
 | Reserva | `DoriOri.fbx` | Sí (`root`) | Solo `Pose` | falta animación | Sin uso previsto. |
 
 Procedimiento Mixamo paso a paso: [`guia-mixamo.md`](guia-mixamo.md).
+
+## Animaciones de Kaelen (Mixamo)
+
+Carpeta: `_source/mixamo/kaelen/anims/`. Los archivos conservan el nombre original de Mixamo; aún no están renombrados, así que `combine_mixamo.py` todavía no los puede usar tal cual.
+
+| Archivo | Uso probable (nombre en la guía) | Notas |
+|---|---|---|
+| `Great Sword Walk-ahead.fbx` | `walk` | |
+| `Great Sword Run.fbx` | `run` | |
+| `Quick Roll To Run.fbx` | `roll` | Alternativa: `Stand To Roll.fbx`. Revisar que dure ~0.6 s. |
+| `Great Sword Slash.fbx` | `attack_1` | |
+| `Two Hand Sword Combo.fbx` | `attack_2` | Revisar que encadene con `attack_1`. |
+| `Great Sword High Spin Attack.fbx` | `attack_3` | Alternativa: `Great Sword Jump Attack.fbx`. |
+| `Great Sword Impact.fbx` | `hurt` | |
+| `Sword And Shield Death.fbx` | `death` | No hay muerte a dos manos; es de espada y escudo. |
+| `Great Sword Blocking.fbx` | — (extra) | Posible clip de bloqueo. |
+| `Great Sword Strafe.fbx`, `Great Sword Strafe-left.fbx` | — (extra) | Movimiento lateral. |
+| `Great Sword 180 Turn-right.fbx` | — (extra) | Giro. |
+| `Draw A Great Sword 2.fbx` | — (extra) | Desenvainar. |
+| `Sword And Shield Jump.fbx` | — (extra) | Salto con espada y escudo. |
+
+Falta: `idle` (no hay ningún clip de reposo en la carpeta).
 
 ## Prioridad de trabajo
 
