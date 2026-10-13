@@ -4,3 +4,5 @@ export/
 .DS_Store
 __MACOSX/
 .mcp.json
+*.blend1
+__pycache__/

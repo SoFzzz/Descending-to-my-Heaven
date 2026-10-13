@@ -48,7 +48,8 @@ Estética: fantasía oscura PSX (baja resolución interna, texturas con filtro *
 | Jefe 1 | `bonedragon` | Ya trae rig con skin (~70 huesos), sin animaciones; animaciones creadas en Blender + movimiento procedural |
 | Esbirros 1 | `Skeleton` | Sin rig → Mixamo |
 | Élite 1 | `knight__ps1_psx` | Trae rig propio (26 huesos) solo con `Idle` → re-rig en Mixamo |
-| Jefe 2 | `MaleniaPsx` | Se descarta su metarig (Rigify) y se re-riggea en Mixamo como los demás humanoides; todas las animaciones de Mixamo (ver `guia-mixamo.md`) |
+| Jefe 2 | `dead_oath_hunter` (Dead Oath Hunter, imaginais — reemplaza a Malenia desde 2026-10-13) | Rig Mixamo con 18 animaciones propias (idle, caminar, 7 ataques, esquivas, golpe, muerte); exportado con `_source/tools/export_dead_oath_hunter.py` |
+| Reserva (esbirro) | `straw_reaper` (The Straw Reaper, imaginais) | Rig Mixamo con 9 animaciones; sustituto de cualquier esbirro que falle o se vea peor |
 | Esbirros 2 | `Plague Arcanist` | Rig Mixamo + 10 animaciones (nombres genéricos, hay que identificarlas y renombrarlas) |
 | Jefe 3 | `mecha-king-ghidorah` (reducir de 26k a ~8k triángulos) | Ya trae rig con skin (3 cuellos, 2 colas, alas), sin animaciones; decimar conservando pesos; animaciones creadas en Blender + movimiento procedural |
 | Esbirros 3 | `TheWrapper V2` | Rig propio + 6 animaciones (embestida, idle, correr, grito, caminar, golpe) |
@@ -64,7 +65,7 @@ Estado real de cada modelo (rig y animaciones verificados): ver [`asset-status.m
 - Kaelen: idle, caminar, correr, rodar, ataque 1-2-3, recibir golpe, morir.
 - Esbirro: idle, caminar, atacar, recibir golpe, morir.
 - Jefe: idle, moverse, 3 ataques, morir. Lo que falte se simula con tweens (inclinar, embestir, sacudir).
-- Dragones (jefes 1 y 3): las animaciones base (idle, rugido, mordida, barrido de cola, pisotón, muerte) se crean con keyframes en Blender sobre su rig; en Godot se suma movimiento procedural (ondulación de cuellos y colas, respiración) para que no se vean rígidos.
+- Dragones (jefes 1 y 3): las animaciones base se crean por script con poses clave sobre su propio rig (`_source/tools/animate_bonedragon.py`, `animate_ghidorah.py`, utilidades en `dragon_anim.py`); en Godot se puede sumar movimiento procedural (ondulación de cuellos y colas) para que no se vean rígidos.
 
 
 ## 4. Combate (valores iniciales, se ajustan en el día 6)
@@ -88,7 +89,7 @@ Impactos: hitbox `Area3D` activada en ventanas de la animación; hurtbox en cada
 ```
 Menú principal → Llegada a la isla / entrada al templo
   → Jefe 1 (Bone Dragon)
-  → Jefe 2 (Malenia)
+  → Jefe 2 (Dead Oath Hunter)
   → Jefe 3 (Mecha King Ghidorah)
   → Encuentro con Elysia (cámara fija + texto) → Créditos → Menú principal
 ```
@@ -123,7 +124,7 @@ El juego ocurre en un solo lugar: **un templo vertical construido sobre la isla 
 |---|---|---|
 | `island_intro` | Kaelen aparece en el borde de la isla, camina por un sendero corto hasta la puerta del templo. Texto narrativo breve. | 1-2 min |
 | `arena_1` | Catacumba — Bone Dragon + esqueletos (+ knight élite) | 3-6 min |
-| `arena_2` | Claustro — Malenia + Plague Arcanists | 3-6 min |
+| `arena_2` | Claustro — Dead Oath Hunter + Plague Arcanists | 3-6 min |
 | `arena_3` | Cúspide abierta — Mecha King Ghidorah + TheWrapper (+ Aura Battler élite) | 4-8 min |
 | `ending` | Altar en la cima — encuentro con Elysia, cámara fija | 1-2 min |
 
@@ -163,7 +164,7 @@ El juego ocurre en un solo lugar: **un templo vertical construido sobre la isla 
 
 | | Arena 1 — Catacumba | Arena 2 — Claustro | Arena 3 — Cúspide abierta |
 |---|---|---|---|
-| Jefe | Bone Dragon | Malenia | Mecha King Ghidorah |
+| Jefe | Bone Dragon | Dead Oath Hunter | Mecha King Ghidorah |
 | Forma | Rectangular | Octogonal | Circular / irregular |
 | Área de combate | 32 × 32 m | 24 m de diámetro | 40 × 40 m |
 | Altura | Techo a 8 m | Techo a 8 m (bóveda) | Sin techo (cielo abierto) |
@@ -288,7 +289,7 @@ Cada personaje tiene cinco "tamaños" distintos que **no** deben confundirse:
 | Jefe | a) Visual | b) Collider físico | c) Hurtboxes | c) Hitboxes por ataque | e) Navegación |
 |---|---|---|---|---|---|
 | **Bone Dragon** | 8 m de largo · 3.5 m de alto · 10 m de envergadura | Cápsula horizontal r 1.2 × 4 m en el torso; la cola **sin** collider físico | Torso (caja), cabeza (esfera r 0.8, daño ×1.25), 4 patas (cápsulas) | Mordida: esfera r 1.2 en la cabeza · Barrido de cola: caja curva 5 m · Pisotón: esfera r 2.5 bajo la pata | Capa grande |
-| **Malenia** | 2.60 m (escalado ×1.5 de humano) | r 0.50 · alto 2.60 | Cápsula r 0.55 · alto 2.50 | Caja de espada 0.2 × 0.2 × 1.6 m · Estocada: caja 1 × 1 × 4 m | Capa chica |
+| **Dead Oath Hunter** | 2.60 m (escalado ×1.75; el modelo mide ~1.5 m) | r 0.50 · alto 2.60 | Cápsula r 0.55 · alto 2.50 | Caja de espada 0.2 × 0.2 × 1.6 m · Estocada: caja 1 × 1 × 4 m | Capa chica |
 | **Mecha King Ghidorah** | 10 m de alto · 14 m de largo · 14 m de envergadura | Cápsula r 2.5 · alto 6 en el torso + cápsulas en patas; cuellos y cabezas **sin** collider físico | Torso y patas (siempre alcanzables); 3 cabezas (esferas r 1.0) solo alcanzables cuando bajan para morder | Mordida: esfera r 1.5 · Barrido de cola: caja 6 m · Rayo: caja larga 1.5 × 1.5 × 20 m con aviso de línea en el piso | Capa grande |
 
 **Por qué los cuellos, cabezas y colas no tienen collider físico:** se mueven mucho y empujarían a Kaelen o a la cámara de forma errática. Solo tienen hurtbox/hitbox (`Area3D`), que detectan sin empujar.
@@ -317,7 +318,7 @@ Dos capas de navegación por arena, horneadas con parámetros distintos (`Naviga
 
 | Capa | Quién la usa | Radio del agente | Alto del agente | Escalón máx. | Pendiente máx. |
 |---|---|---|---|---|---|
-| **Chica** (capa 1) | Esqueletos, Knight, Plague Arcanist, TheWrapper, Malenia | 0.5 m | 2.0 m | 0.3 m | 35° |
+| **Chica** (capa 1) | Esqueletos, Knight, Plague Arcanist, TheWrapper, Dead Oath Hunter | 0.5 m | 2.0 m | 0.3 m | 35° |
 | **Grande** (capa 2) | Bone Dragon, Ghidorah, Aura Battler | 2.5 m | 4.0 m | 0.5 m | 25° |
 
 Parámetros comunes del horneado: celda 0.25 m, alto de celda 0.25 m.
@@ -461,7 +462,7 @@ Pistas reunidas en `_source/bgm/` (original: `D:\BGM`):
 | Menú principal | `celtic melancholy.mp3` |
 | Isla / entrada al templo | `LVS04_10_Battlefield_bpm180_loop.ogg` (o silencio + ambiente) |
 | Jefe 1 — Bone Dragon | `skull dragon battle.mp3` |
-| Jefe 2 — Malenia | `Blazing Honor.mp3` |
+| Jefe 2 — Dead Oath Hunter | `Blazing Honor.mp3` |
 | Jefe 3 — Mecha King Ghidorah | `black dragon battle.mp3` |
 | Fase 2 de jefe / alternativas | `ancient creature battle.mp3`, `hellhound battle.mp3`, `wyvern battle.mp3` |
 | Encuentro con Elysia y créditos | `sadness piano4.mp3` |
@@ -505,7 +506,7 @@ res://
   scenes/
     player/      kaelen.tscn
     enemies/     minion_base.tscn + variantes por nivel
-    bosses/      boss_base.tscn + boss_dragon / boss_malenia / boss_ghidorah
+    bosses/      boss_base.tscn + boss_dragon / boss_hunter / boss_ghidorah
     levels/      island_intro, arena_1, arena_2, arena_3, ending, scale_reference
     ui/          main_menu, pause_menu, options_menu, hud, credits, debug_overlay
   scripts/
@@ -540,7 +541,7 @@ Descending-to-my-Heaven/          (raíz del repo = raíz del proyecto Godot)
 - Conversión FBX → GLB en Blender cuando el import directo de Godot falle.
 
 ### 13.2 Visibilidad del repositorio
-El repositorio debe ser **privado**. Varios packs prohíben redistribuir los archivos originales (Ririsaurus, Atelier Magicae, licencia estándar de Sketchfab) y Malenia/Ghidorah son fan-art de propiedades con copyright. Lo que se publica es el juego exportado, no los archivos originales.
+El repositorio debe ser **privado**. Varios packs prohíben redistribuir los archivos originales (Ririsaurus, Atelier Magicae, licencia estándar de Sketchfab) y Ghidorah es fan-art de una propiedad con copyright. Dead Oath Hunter es de uso **no comercial** (crédito a imaginais en los créditos). Lo que se publica es el juego exportado, no los archivos originales.
 - **Regla de trabajo:** una sola persona edita cada escena `.tscn` a la vez (dueño por escena) para evitar conflictos de merge.
 
 ## 14. Roles

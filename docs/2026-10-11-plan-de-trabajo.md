@@ -37,7 +37,7 @@
 
 | Dueño | Archivos |
 |---|---|
-| **A — Jugador e interfaz** | `scripts/player/*`, `scenes/player/*`, `scenes/ui/{main_menu,pause_menu,hud,credits,death_screen,options_menu,transition}.tscn` + sus scripts en `scripts/ui/`, `scenes/levels/test_arena.tscn`, `scenes/bosses/boss_malenia.tscn`, `scenes/bosses/boss_ghidorah.tscn`, `resources/attacks/malenia_*.tres`, `resources/attacks/ghidorah_*.tres`, `scripts/game/game_state.gd` (desde el día 3), `scripts/game/ending_director.gd` |
+| **A — Jugador e interfaz** | `scripts/player/*`, `scenes/player/*`, `scenes/ui/{main_menu,pause_menu,hud,credits,death_screen,options_menu,transition}.tscn` + sus scripts en `scripts/ui/`, `scenes/levels/test_arena.tscn`, `scenes/bosses/boss_hunter.tscn`, `scenes/bosses/boss_ghidorah.tscn`, `resources/attacks/hunter_*.tres`, `resources/attacks/ghidorah_*.tres`, `scripts/game/game_state.gd` (desde el día 3), `scripts/game/ending_director.gd` |
 | **B — IA y enemigos** | `project.godot`, `scripts/game/events.gd`, `scripts/combat/*`, `scripts/ai/*`, `scenes/enemies/*`, `scenes/bosses/boss_base.tscn`, `scenes/bosses/boss_bonedragon.tscn`, `resources/attacks/bonedragon_*.tres`, `scenes/levels/arena_*_gameplay.tscn`, `scenes/ui/debug_overlay.tscn`, `tests/*`, `docs/playtest.md` |
 | **C — Arte, escenarios y sonido** | `assets/**`, `shaders/*`, `scenes/levels/{scale_reference,island_intro,arena_1,arena_2,arena_3,ending}.tscn`, `assets/environment/base_env.tres`, `scripts/audio/*`, `docs/asset-status.md`, sección §7.8 del documento de diseño |
 
@@ -250,8 +250,8 @@ En las pruebas de `AttackTokens` instanciar el script directamente (`load("res:/
 **Interfaces:**
 - Produce: `docs/asset-status.md` con una fila por modelo: ruta en `assets/`, factor de escala, altura medida, lista exacta de animaciones, estado (`listo` / `falta rig` / `falta animación` / `reemplazado`).
 
-- [ ] **Paso 1: Importar** los 11 modelos del reparto (§3 de la spec) a `assets/`. Los FBX con escalas internas raras (knight, Malenia, skeleton, bonedragon, TheWrapper, woman knight) se abren en Blender vía MCP, se aplica escala y se exportan a GLB.
-- [ ] **Paso 2: Armar `scale_reference.tscn`** — grilla de 1 m, cápsula de 1.70 m, cada modelo a su altura de la tabla §7.4 (Kaelen 1.70, Elysia 1.60, Skeleton 1.75, Knight 2.10, Plague Arcanist 1.80, TheWrapper 2.00, Aura Battler 3.00, Malenia 2.60, Bone Dragon 8 m de largo, Ghidorah 10 m de alto), módulo de muro de `PSX_Dungeon` a 4 × 4 m.
+- [ ] **Paso 1: Importar** los 11 modelos del reparto (§3 de la spec) a `assets/`. Los FBX con escalas internas raras (knight, skeleton, bonedragon, TheWrapper, woman knight) se abren en Blender vía MCP, se aplica escala y se exportan a GLB.
+- [ ] **Paso 2: Armar `scale_reference.tscn`** — grilla de 1 m, cápsula de 1.70 m, cada modelo a su altura de la tabla §7.4 (Kaelen 1.70, Elysia 1.60, Skeleton 1.75, Knight 2.10, Plague Arcanist 1.80, TheWrapper 2.00, Aura Battler 3.00, Dead Oath Hunter 2.60, Bone Dragon 8 m de largo, Ghidorah 10 m de alto), módulo de muro de `PSX_Dungeon` a 4 × 4 m.
 - [ ] **Paso 3: Verificar** con un script de herramienta (o el MCP de Godot) que imprima la `AABB` de cada modelo instanciado; cada altura dentro de ±5 % de la tabla.
 - [ ] **Paso 4: Completar `docs/asset-status.md`** y la tabla de §7.8.
 - [ ] **Paso 5: Decidir reservas** — todo modelo que no importe en 2 h se marca `reemplazado` con su sustituto (§3).
@@ -335,8 +335,8 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Produce: `arena_1.tscn` con un nodo vacío `Gameplay` donde se instancia `arena_1_gameplay.tscn` (de B).
 
 - [ ] **Paso 1:** Kaelen (`low-poly-woman-knight`): ya es low poly; solo aplicar escala y exportar FBX para Mixamo. Elysia (`ancient-elf-lady-psx`): **sin rig**; solo escalar a 1.60 m y exportar `elysia.glb` estático.
-- [ ] **Paso 2:** Mixamo (manual, cuenta del equipo): auto-rig de Kaelen, Skeleton y Knight (Elysia no lleva rig); descargar las animaciones de la lista *in place*.
-- [ ] **Paso 3:** Bone Dragon: crear las 6 animaciones con keyframes sobre su rig (vía MCP de Blender); verificar que se reproducen en Godot.
+- [x] **Paso 2:** Mixamo: Kaelen, Skeleton y Knight riggeados y combinados (`_source/tools/build_characters.py`); Plague Arcanist y TheWrapper exportados (`export_multi_action.py`). Ver `docs/asset-status.md`.
+- [x] **Paso 3:** Bone Dragon: 6 animaciones hechas por script (`_source/tools/animate_bonedragon.py`). Falta verificar que se reproducen en Godot.
 - [ ] **Paso 4:** Bloqueo de `arena_1.tscn` + capturas.
 - [ ] **Paso 5: Verificación** — cada GLB abre en Godot con las animaciones de la lista; Kaelen mide 1.70 m en `scale_reference`.
 - [ ] **Paso 6: Commit** — `feat: add processed Kaelen, Elysia, skeleton, knight and bone dragon animations`
@@ -390,18 +390,19 @@ Meta: se puede matar a un esbirro y morir ante él.
 - [ ] **Paso 5: Verificación manual** — desde el menú se entra a `arena_1`, se pausa y continúa, se muere y reaparece con el jefe a vida completa y sin esbirros sobrantes; "Volver al menú" desde la pausa no deja el juego pausado.
 - [ ] **Paso 6: Commit** — `feat: add main menu, pause, death and game flow`
 
-### Tarea 11 (C): Arte de la arena 1 + animaciones de Malenia y Ghidorah
+### Tarea 11 (C): Arte de la arena 1 + animaciones de Ghidorah
 
 **Archivos:**
 - Crear: `assets/environment/kit/*.tscn` (piezas de `PSX_Dungeon` a 4 m con colisión), `assets/environment/kit/dungeon_kit.meshlib`
 - Modificar: `scenes/levels/arena_1.tscn` (reemplazar CSG por `GridMap` + piezas; decoración mínima)
-- Crear: `assets/bosses/malenia/malenia.glb` (rig y animaciones Mixamo: `idle`, `walk`, `slash`, `thrust`, `spin`, `hurt`, `death`), `assets/bosses/ghidorah/ghidorah.glb` (~8k triángulos; `idle`, `roar`, `bite`, `tail_sweep`, `beam`, `death`)
+- Ya existe: `assets/bosses/dead_oath_hunter/dead_oath_hunter.glb` (jefe 2, 18 animaciones; ver `docs/asset-status.md`)
+- Ya existe: `assets/bosses/ghidorah/ghidorah.glb` (9.1k triángulos; `idle`, `roar`, `bite`, `tail_sweep`, `beam`, `death`)
 
 - [ ] **Paso 1:** importar piezas del kit con escala de 4 m y colisión (caja para muros/pilares, trimesh para pisos/escaleras); exportar `MeshLibrary` (puede usarse `export_mesh_library` del MCP de Godot).
 - [ ] **Paso 2:** reconstruir `arena_1` con `GridMap` sin mover la posición de pilares, rejas ni límites (B ya horneó la navegación sobre ellos; si cambian, avisar a B para rehornear).
-- [ ] **Paso 3:** Malenia (quitar metarig, auto-rig y animaciones en Mixamo según `docs/guia-mixamo.md`) y Ghidorah (reducir + keyframes vía MCP de Blender).
-- [ ] **Paso 4: Verificación** — `arena_1` con arte se juega igual que el bloqueo; Malenia y Ghidorah reproducen todas sus animaciones en `scale_reference`.
-- [ ] **Paso 5: Commit** — `feat: arena 1 art pass, malenia and ghidorah animations`
+- [x] **Paso 3:** Ghidorah: reducido a 9.1k triángulos y 6 animaciones por script (`_source/tools/animate_ghidorah.py`).
+- [ ] **Paso 4: Verificación** — `arena_1` con arte se juega igual que el bloqueo; Dead Oath Hunter y Ghidorah reproducen todas sus animaciones en `scale_reference`.
+- [ ] **Paso 5: Commit** — `feat: arena 1 art pass and ghidorah animations`
 
 **Fin del día 3 — HITO:** menú → arena 1 → ganar y perder contra el Bone Dragon. **Si no se cumple**, aplicar los recortes de la spec §15 antes de seguir.
 
@@ -429,18 +430,18 @@ Meta: se puede matar a un esbirro y morir ante él.
 - [ ] **Paso 6: Verificación manual** — en `arena_1` la intensidad oscila (no se queda en 0 ni en 100), aparecen oleadas fuera de cámara, y al bajar de 25 % de vida dejan de aparecer.
 - [ ] **Paso 7: Commit** — `feat: add orchestrator and debug overlay`
 
-### Tarea 13 (A): Jefes 2 (Malenia) y 3 (Ghidorah)
+### Tarea 13 (A): Jefes 2 (Dead Oath Hunter) y 3 (Ghidorah)
 
 **Archivos:**
-- Crear: `scenes/bosses/boss_malenia.tscn`, `scenes/bosses/boss_ghidorah.tscn` (heredan de `boss_base.tscn`), `resources/attacks/malenia_{slash,thrust,spin}.tres`, `resources/attacks/ghidorah_{bite,tail_sweep,beam}.tres`
+- Crear: `scenes/bosses/boss_hunter.tscn`, `scenes/bosses/boss_ghidorah.tscn` (heredan de `boss_base.tscn`), `resources/attacks/hunter_{slash,thrust,overhead,leap}.tres`, `resources/attacks/ghidorah_{bite,tail_sweep,beam}.tres`
 
 **Interfaces:**
 - Consume: `Boss`, `BossAttack` (Tarea 9) — **sin modificar sus scripts**; si falta algo, pedirlo a B.
-- Medidas (§7.4): Malenia cápsula r 0.50 · alto 2.60, hurtbox r 0.55 · alto 2.50, espada 0.2 × 0.2 × 1.6 m, estocada 1 × 1 × 4 m, navegación capa 1, vida 500. Ghidorah cápsula torso r 2.5 · alto 6 + patas, cabezas solo con hurtbox (esferas r 1.0) y bajan al suelo durante `bite`, mordida esfera r 1.5, cola caja 6 m, rayo 1.5 × 1.5 × 20 m con aviso en línea, navegación capa 2, vida 600, `LockOnPoint` en el torso a media altura.
+- Medidas (§7.4): Dead Oath Hunter cápsula r 0.50 · alto 2.60, hurtbox r 0.55 · alto 2.50, espada 0.2 × 0.2 × 1.6 m, estocada 1 × 1 × 4 m, navegación capa 1, vida 500. Ghidorah cápsula torso r 2.5 · alto 6 + patas, cabezas solo con hurtbox (esferas r 1.0) y bajan al suelo durante `bite`, mordida esfera r 1.5, cola caja 6 m, rayo 1.5 × 1.5 × 20 m con aviso en línea, navegación capa 2, vida 600, `LockOnPoint` en el torso a media altura.
 
-- [ ] **Paso 1:** crear las escenas y los 6 recursos de ataque con rangos coherentes (Malenia: `slash` 0–3 m, `thrust` 2–6 m, `spin` 0–3.5 m solo fase 2; Ghidorah: `bite` 0–6 m, `tail_sweep` 0–8 m, `beam` 8–20 m).
+- [ ] **Paso 1:** crear las escenas y los 7 recursos de ataque con rangos coherentes (Dead Oath Hunter: `attack_slash` 0–3 m, `attack_thrust` 2–6 m, `attack_overhead` 0–3.5 m, `attack_leap` 5–10 m solo fase 2; Ghidorah: `bite` 0–6 m, `tail_sweep` 0–8 m, `beam` 8–20 m).
 - [ ] **Paso 2: Verificación manual** en `test_arena` (cambiando el jefe instanciado): ambos jefes se pueden matar y matan a Kaelen; las cabezas de Ghidorah solo reciben golpes al bajar en `bite`; la cámara con lock-on encuadra a Ghidorah sin meterse en su cuerpo.
-- [ ] **Paso 3: Commit** — `feat: add malenia and ghidorah bosses`
+- [ ] **Paso 3: Commit** — `feat: add dead oath hunter and ghidorah bosses`
 
 ### Tarea 14 (C): Bloqueo y arte de arenas 2 y 3 + isla
 
@@ -528,8 +529,8 @@ Meta: se puede matar a un esbirro y morir ante él.
 |---|---|---|---|
 | 1 | T3 Kaelen-cápsula, cámara, rodada, `test_arena` | T1 Contrato (primera hora) · T2 Componentes + fichas | T4 Escalas e importación · T5 Shader PSX |
 | 2 | T6 Combo, lock-on, muerte, HUD | T7 Esbirro FSM + navegación | T8 Kaelen/Elysia/esbirros Mixamo, animaciones Bone Dragon, bloqueo arena 1 |
-| 3 | T10 Menús, pausa, muerte, `GameState` | T9 Sistema de jefes + Bone Dragon + gameplay arena 1 | T11 Arte arena 1, animaciones Malenia y Ghidorah |
-| 4 | T13 Jefes Malenia y Ghidorah | T12 Orquestador + overlay · gameplay arenas 2 y 3 | T14 Arenas 2 y 3, isla |
+| 3 | T10 Menús, pausa, muerte, `GameState` | T9 Sistema de jefes + Bone Dragon + gameplay arena 1 | T11 Arte arena 1, animaciones Ghidorah |
+| 4 | T13 Jefes Dead Oath Hunter y Ghidorah | T12 Orquestador + overlay · gameplay arenas 2 y 3 | T14 Arenas 2 y 3, isla |
 | 5 | T15 Flujo completo, final, créditos | T16 Esbirros por nivel y élites | T17 Audio completo |
 | 6 | Pulido combate y opciones | Balance y prueba externa | Decoración e iluminación |
 | 7 | Exportar | Arreglos priorizados | Créditos y licencias |
