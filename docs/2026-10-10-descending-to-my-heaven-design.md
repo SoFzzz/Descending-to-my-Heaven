@@ -43,7 +43,7 @@ Estética: fantasía oscura PSX (baja resolución interna, texturas con filtro *
 | Rol | Modelo (D:\ASSETS-PRUEBA) | Rig / animación |
 |---|---|---|
 | Kaelen | `low-poly-woman-knight` (modelo final, sin modelado propio por tiempo) | Sin rig → Mixamo (auto-rig + animaciones) |
-| Elysia | `ancient-elf-lady-psx` (744 triángulos, modelo final) | Sin rig → Mixamo; idle, levantarse, abrazo |
+| Elysia | `ancient-elf-lady-psx` (744 triángulos, modelo final) | Sin rig ni animaciones (decisión 2026-10-12): Mixamo deforma su vestido de una pieza y el pelo largo. Modelo estático en pose de reposo; en Godot un `Tween` de respiración (sube/baja ~2 cm en bucle) y giro hacia Kaelen; el abrazo se resuelve con fundido de cámara |
 | Arma de Kaelen | `demonic weapons pack/greatsword` (ya tiene .glb) | Adjunta al hueso de la mano (`BoneAttachment3D`) |
 | Jefe 1 | `bonedragon` | Ya trae rig con skin (~70 huesos), sin animaciones; animaciones creadas en Blender + movimiento procedural |
 | Esbirros 1 | `Skeleton` | Sin rig → Mixamo |

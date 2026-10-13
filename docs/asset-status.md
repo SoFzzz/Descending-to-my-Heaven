@@ -10,7 +10,7 @@ Estados: `listo` / `falta rig` / `falta animación` / `reemplazado`.
 | Rol | Fuente | Esqueleto | Animaciones incluidas | Estado | Trabajo pendiente |
 |---|---|---|---|---|---|
 | Kaelen | `low-poly-woman-knight/source/women knight final.fbx` | Sí, Mixamo (`_source/mixamo/kaelen/base.fbx`) | 18 clips Mixamo en `_source/mixamo/kaelen/anims/` (ver sección abajo) | listo | Renombrar los clips a los nombres de la guía y ejecutar `combine_mixamo.py`. Falta `license.txt`. |
-| Elysia | `ancient-elf-lady-psx/source/ancient lady elf psx.glb` (744 tris) | **No** | — | falta rig | Auto-rig Mixamo + idle, levantarse, abrazo. Falta `license.txt`. |
+| Elysia | `ancient-elf-lady-psx/source/ancient lady elf psx.glb` (744 tris) | No (no lo necesita) | — | listo | Sin rig ni animaciones (decisión 2026-10-12): Mixamo deforma su vestido de una pieza y el pelo largo. Modelo estático en pose de reposo; en Godot un `Tween` de respiración (sube/baja ~2 cm en bucle) y giro hacia Kaelen; el abrazo se resuelve con fundido de cámara. Exportar a `assets/characters/elysia/elysia.glb` a 1.60 m. Falta `license.txt`. |
 | Esbirros 3 | `TheWrapper V2/MonsterPSX.fbx` | Sí, propio (`MonsterPSX_Rig`) | `Attack_Lunge`, `Idle_Watchful`, `Run_Frantic`, `Scream.lol`, `Walk_Nervous`, `WallSlam_Recover` | listo | Exportar a `assets/minions/thewrapper/thewrapper.glb`; renombrar a `attack`, `idle`, `run`, `scream`, `walk`, `hurt` (WallSlam_Recover). Falta `death` → tween/caída. |
 | Esbirros 2 | `Plague Arcanist/Plague Arcanist/Plague Arcanist.fbx` | Sí, Mixamo | 10 clips con nombres genéricos (`Armature.00X\|mixamo.com\|Layer0`) | listo | Identificar cada clip y renombrar a `idle`, `walk`, `attack`, `hurt`, `death`. Exportar a `assets/minions/plague_arcanist/`. |
 | Élite 3 (opcional) | `aura_battler_dunbine_-_vierres/scene.gltf` (1148 tris) | No (no lo necesita) | — | listo | Mecha rígido: flotar, embestida y giro con tweens en Godot. |
@@ -52,7 +52,7 @@ Base: `_source/mixamo/kaelen/base.fbx` (T-pose, con skin; antes `Kaden-R.fbx`).
 1. Animaciones de Bone Dragon y Ghidorah (12 clips a mano) — cuello de botella.
 2. Decimar Ghidorah antes de animar.
 3. Retarget de Malenia (BoneMap metarig → Mixamo).
-4. Mixamo para Kaelen, Elysia, Skeleton y Knight.
+4. Mixamo para Kaelen, Skeleton y Knight.
 5. Renombrar clips de Plague Arcanist y TheWrapper.
 
 ## Pendiente de medir al importar
