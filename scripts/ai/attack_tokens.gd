@@ -1,20 +1,34 @@
 extends Node
-## Autoload "AttackTokens": fichas de ataque de los esbirros (spec §8.1). Stub de la Tarea 1.
+## Autoload "AttackTokens": fichas de ataque de los esbirros (spec §8.1). Máximo 2 atacando a la vez.
 
 const MAX_TOKENS := 2
 
-
-func request(_enemy: Node) -> bool:
-	return false
+var _holders: Array = []
 
 
-func release(_enemy: Node) -> void:
-	pass
+func request(enemy: Node) -> bool:
+	_prune()
+	if _holders.has(enemy):
+		return true
+	if _holders.size() >= MAX_TOKENS:
+		return false
+	_holders.append(enemy)
+	return true
+
+
+func release(enemy: Node) -> void:
+	_holders.erase(enemy)
 
 
 func reset() -> void:
-	pass
+	_holders.clear()
 
 
 func holders_count() -> int:
-	return 0
+	_prune()
+	return _holders.size()
+
+
+# Un esbirro liberado devuelve su ficha solo.
+func _prune() -> void:
+	_holders = _holders.filter(func(h) -> bool: return is_instance_valid(h))
