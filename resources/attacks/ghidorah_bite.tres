@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BossAttack" format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/boss_attack.gd" id="1_attack"]
+
+[resource]
+script = ExtResource("1_attack")
+id = &"bite"
+min_range = 0.0
+max_range = 6.0
+telegraph_time = 1.1
+active_time = 0.6
+recovery_time = 1.0
+base_weight = 1.0
+damage = 12
+animation = &"bite"
+hitbox_path = NodePath("BiteHitbox")
+phase_min = 1
+lateral = false
+spin_degrees = 0.0
