@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="BossAttack" format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/boss_attack.gd" id="1_attack"]
+
+[resource]
+script = ExtResource("1_attack")
+id = &"stomp"
+min_range = 0.0
+max_range = 3.4
+telegraph_time = 1.45
+active_time = 0.35
+recovery_time = 1.2
+base_weight = 0.8
+damage = 30
+animation = &"stomp"
+hitbox_path = NodePath("StompHitbox")
+lateral = false
+spin_degrees = 0.0
