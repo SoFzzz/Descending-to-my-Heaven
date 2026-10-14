@@ -749,6 +749,8 @@ func _mat(tex_name: String, tint: Color) -> Material:
 
 
 func _save(root: Node, path: String) -> void:
+	# Las escenas *_gameplay.tscn son de A y B: el generador nunca las toca.
+	assert(not path.ends_with("_gameplay.tscn"), "level_builder no debe escribir " + path)
 	_set_owner(root, root)
 	var ps := PackedScene.new()
 	var err := ps.pack(root)
