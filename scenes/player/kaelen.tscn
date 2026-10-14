@@ -1,0 +1,44 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1_ctrl"]
+[ext_resource type="PackedScene" path="res://assets/characters/kaelen/kaelen.glb" id="2_model"]
+[ext_resource type="PackedScene" path="res://assets/weapons/greatsword/greatsword.glb" id="3_sword"]
+[ext_resource type="Script" path="res://scripts/player/camera_rig.gd" id="4_cam"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.35
+height = 1.7
+
+[node name="Kaelen" type="CharacterBody3D" groups=["player"]]
+collision_layer = 2
+collision_mask = 13
+floor_max_angle = 0.785398
+floor_snap_length = 0.4
+script = ExtResource("1_ctrl")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="RightHand" type="BoneAttachment3D" parent="Model/Armature/Skeleton3D"]
+bone_name = "mixamorig_RightHand"
+
+[node name="SwordGrip" type="Node3D" parent="Model/Armature/Skeleton3D/RightHand"]
+transform = Transform3D(577.03, 0, 0, 0, 577.03, 0, 0, 0, 577.03, 0, 0, 0)
+
+[node name="Greatsword" parent="Model/Armature/Skeleton3D/RightHand/SwordGrip" instance=ExtResource("3_sword")]
+transform = Transform3D(1.45, 0, 0, 0, 0, 1.45, 0, -1.45, 0, 0, 0.08, -0.6)
+
+[node name="CameraRig" type="Node3D" parent="."]
+script = ExtResource("4_cam")
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraRig"]
+collision_mask = 1
+spring_length = 4.0
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D"]
+fov = 70.0
+far = 300.0
