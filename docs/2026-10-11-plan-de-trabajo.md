@@ -267,8 +267,8 @@ En las pruebas de `AttackTokens` instanciar el script directamente (`load("res:/
 - Produce: `psx_base.tres` = `ShaderMaterial` con `psx_lit.gdshader` (uniformes `albedoTex` con filtro nearest, `modulate_color` = tinte, `uv_scale`, `precision_multiplier` = cuánto tiemblan los vértices). `base_env.tres`: niebla de distancia gris-azulada, cielo con gradiente, luz ambiental tenue. Postproceso: `SubViewport` a baja resolución (p. ej. 320 × 240) mostrado en un `TextureRect` con `pp_band_dither.gdshader` (`dither_tex` = `psxdither.png`, `col_depth` 15).
 
 - [x] **Paso 1: Shader**: portado del kit (no hace falta escribirlo).
-- [ ] **Paso 2: Aplicarlo** a todos los modelos de `scale_reference` con `base_env.tres`.
-- [ ] **Paso 3: Verificar** — captura de `scale_reference` donde todos los modelos se ven con la misma paleta y textura pixelada; compartirla con el equipo.
+- [x] **Paso 2: Aplicarlo** a todos los modelos de `scale_reference` con `base_env.tres`. *(Hecho en `scenes/levels/psx_test.tscn` con Kaelen y el esqueleto; `scale_reference` no se tocó. Para el resto basta `PsxTest.apply_psx(nodo)`.)*
+- [x] **Paso 3: Verificar** *(captura de `psx_test` en ejecución: pixelado 320×240, bandas/dither y texturas correctas; falta compartirla)* — captura de `scale_reference` donde todos los modelos se ven con la misma paleta y textura pixelada; compartirla con el equipo.
 - [ ] **Paso 4: Commit** — `feat: add PSX shader and base environment`
 
 **Fin del día 1 (integración):** pull de todos; B corre pruebas (todas pasan); A muestra la cápsula en `test_arena`; C muestra `scale_reference`.

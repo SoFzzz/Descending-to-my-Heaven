@@ -1,0 +1,103 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://scenes/levels/scale_reference.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/characters/kaelen/kaelen.glb" id="2_kaelen"]
+[ext_resource type="PackedScene" path="res://assets/minions/skeleton/skeleton.glb" id="3_skeleton"]
+[ext_resource type="PackedScene" path="res://assets/minions/knight/knight.glb" id="4_knight"]
+[ext_resource type="PackedScene" path="res://assets/minions/plague_arcanist/plague_arcanist.glb" id="5_plague"]
+[ext_resource type="PackedScene" path="res://assets/minions/thewrapper/thewrapper.glb" id="6_wrapper"]
+[ext_resource type="PackedScene" path="res://assets/bosses/blackhorn/blackhorn.glb" id="7_blackhorn"]
+[ext_resource type="PackedScene" path="res://assets/bosses/bonedragon/bonedragon.glb" id="8_dragon"]
+[ext_resource type="PackedScene" path="res://assets/bosses/ghidorah/ghidorah.glb" id="9_ghidorah"]
+
+[sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+sky = SubResource("sky")
+ambient_light_source = 3
+
+[sub_resource type="StandardMaterial3D" id="floor_mat"]
+albedo_color = Color(0.35, 0.35, 0.38, 1)
+uv1_scale = Vector3(80, 80, 1)
+
+[sub_resource type="PlaneMesh" id="floor_mesh"]
+material = SubResource("floor_mat")
+size = Vector2(80, 80)
+
+[sub_resource type="StandardMaterial3D" id="ref_mat"]
+albedo_color = Color(0.9, 0.25, 0.2, 1)
+
+[node name="ScaleReference" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866, 0, -0.866, 0.5, 0, 20, 0)
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+mesh = SubResource("floor_mesh")
+
+[node name="Reference" type="Node3D" parent="."]
+
+[node name="Capsule170" type="CSGBox3D" parent="Reference"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.85, 0)
+size = Vector3(0.3, 1.7, 0.3)
+material = SubResource("ref_mat")
+
+[node name="Label170" type="Label3D" parent="Reference"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 2, 0)
+text = "1.70 m"
+font_size = 48
+
+[node name="WallModule4m" type="CSGBox3D" parent="Reference"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2, -2)
+size = Vector3(4, 4, 0.5)
+
+[node name="Label4m" type="Label3D" parent="Reference"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 4.5, -2)
+text = "muro 4 × 4 m"
+font_size = 48
+
+[node name="Ceiling8m" type="CSGBox3D" parent="Reference"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 8, -4)
+size = Vector3(6, 0.1, 6)
+
+[node name="LabelCeiling" type="Label3D" parent="Reference"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 8.4, -4)
+text = "techo 8 m (arenas 1 y 2)"
+font_size = 48
+
+[node name="Models" type="Node3D" parent="."]
+
+[node name="Kaelen" parent="Models" instance=ExtResource("2_kaelen")]
+
+[node name="Skeleton" parent="Models" instance=ExtResource("3_skeleton")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="Knight" parent="Models" instance=ExtResource("4_knight")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 0)
+
+[node name="PlagueArcanist" parent="Models" instance=ExtResource("5_plague")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 0)
+
+[node name="TheWrapper" parent="Models" instance=ExtResource("6_wrapper")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 0)
+
+[node name="Blackhorn" parent="Models" instance=ExtResource("7_blackhorn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -4)
+
+[node name="BoneDragon" parent="Models" instance=ExtResource("8_dragon")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -4)
+
+[node name="Ghidorah" parent="Models" instance=ExtResource("9_ghidorah")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 38, 0, -6)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.966, 0.259, 0, -0.259, 0.966, 18, 7, 30)
+fov = 60.0
