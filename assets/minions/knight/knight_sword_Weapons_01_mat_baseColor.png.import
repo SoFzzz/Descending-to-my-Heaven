@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cdjmirqfbnspp"
-path="res://.godot/imported/knight_sword_Weapons_01_mat_baseColor.png-11becdfc4415f8464988c34541938ae9.ctex"
+path.s3tc="res://.godot/imported/knight_sword_Weapons_01_mat_baseColor.png-11becdfc4415f8464988c34541938ae9.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "aa6d34a7c76d95d12c3444f611596803"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/minions/knight/knight_sword_Weapons_01_mat_baseColor.png"
-dest_files=["res://.godot/imported/knight_sword_Weapons_01_mat_baseColor.png-11becdfc4415f8464988c34541938ae9.ctex"]
+dest_files=["res://.godot/imported/knight_sword_Weapons_01_mat_baseColor.png-11becdfc4415f8464988c34541938ae9.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
