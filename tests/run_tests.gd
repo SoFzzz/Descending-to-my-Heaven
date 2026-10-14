@@ -7,6 +7,12 @@ func _init() -> void:
 		if not (file.begins_with("test_") and file.ends_with(".gd")) or file == "test_case.gd":
 			continue
 		var script: GDScript = load("res://tests/" + file)
+		# Un archivo que no compila no tiene métodos: sin esto se saltaría en silencio.
+		if script == null or not script.can_instantiate():
+			total += 1
+			failures += 1
+			print("FAIL %s — no se pudo cargar (error de parseo)" % file)
+			continue
 		for method in script.get_script_method_list():
 			if not String(method.name).begins_with("test_"):
 				continue
