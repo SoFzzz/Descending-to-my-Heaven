@@ -27,7 +27,8 @@
 
 1. **Cada archivo tiene un solo dueño** (tabla abajo). Si necesitas un cambio en un archivo ajeno, se lo pides al dueño.
 2. **`project.godot` solo lo edita B.** Autoloads, mapa de entradas y ajustes nuevos se piden a B.
-3. **Arena = dos escenas:** `scenes/levels/arena_N.tscn` (arte, dueño C) instancia a `scenes/levels/arena_N_gameplay.tscn` (gameplay, dueño B). C nunca coloca enemigos; B nunca mueve muros.
+3. **Nivel = dos escenas:** `scenes/levels/<nivel>.tscn` (arte, dueño C) y `scenes/levels/<nivel>_gameplay.tscn` (gameplay, dueño B; `exterior_gameplay` de A), que **instancia** al nivel como hijo `Level` y agrega a Kaelen, enemigos y lógica. C nunca coloca enemigos; B nunca mueve muros.
+   - **Las escenas generadas (`exterior.tscn`, `arena_N.tscn`) se SOBRESCRIBEN cada vez que se ejecuta `scripts/tools/level_builder.gd`: nunca se editan a mano ni se les agregan nodos.** Los puntos del mapa (`PlayerStart`, `BossStart`, `spawn_point`, `GateEntry`, `GateExit`, `ExitTrigger`, `EndingTrigger`…) se buscan por nombre o grupo desde la escena de gameplay. Los cambios del mapa se piden a C, que los hace en las tablas del generador (problemas conocidos en [`problemas-mapa.md`](problemas-mapa.md)). El generador nunca escribe `*_gameplay.tscn` (tiene un `assert`).
 4. **Entrega de modelos:** C exporta a `assets/<categoría>/<nombre>/<nombre>.glb` y avisa en el chat del equipo con la lista de animaciones. Quien usa el modelo lo instancia; **no** lo edita.
 5. **Git:** trabajar en `main` con commits pequeños; antes de cada `push` ejecutar `git pull --rebase`. Correr las pruebas antes de hacer push.
 6. **Sincronización:** 10 min al inicio del día (qué hace cada uno) y 20 min al final (integración y prueba juntos).
