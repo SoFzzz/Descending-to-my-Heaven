@@ -7,7 +7,7 @@ extends Node
 ##   exterior y arena 1 → 0 (100), arena 2 → 1 (70), arena 3 → 2 (40). Ver level_for_scene().
 ##
 ## Al iniciar (fuera de las pruebas) crea como hijos propios la transición (fundido), el menú de
-## pausa y la pantalla de muerte: al ser hijos de un autoload sobreviven a los cambios de escena y
+## pausa, la pantalla de muerte y el overlay de depuración (F3/F5; solo actúa con Kaelen en escena): al ser hijos de un autoload sobreviven a los cambios de escena y
 ## existen en toda escena jugable sin editar las escenas de nivel.
 
 const MAX_HP_BY_LEVEL: Array[int] = [100, 70, 40]
@@ -23,6 +23,7 @@ const CREDITS_SCENE := "res://scenes/ui/credits.tscn"
 const TRANSITION_SCENE := "res://scenes/ui/transition.tscn"
 const PAUSE_MENU_SCENE := "res://scenes/ui/pause_menu.tscn"
 const DEATH_SCREEN_SCENE := "res://scenes/ui/death_screen.tscn"
+const DEBUG_OVERLAY_SCENE := "res://scenes/ui/debug_overlay.tscn"
 
 var current_level: int = 0   # 0, 1, 2
 var scene_index: int = 0     # 0 = exterior, 1..3 = arenas
@@ -32,12 +33,14 @@ var last_requested_scene: String = ""
 var transition: Node = null
 var pause_menu: Node = null
 var death_screen: Node = null
+var debug_overlay: Node = null
 
 
 func _ready() -> void:
 	transition = _add_ui(TRANSITION_SCENE)
 	pause_menu = _add_ui(PAUSE_MENU_SCENE)
 	death_screen = _add_ui(DEATH_SCREEN_SCENE)
+	debug_overlay = _add_ui(DEBUG_OVERLAY_SCENE)
 
 
 func _add_ui(path: String) -> Node:
