@@ -39,7 +39,7 @@
 |---|---|
 | **A — Jugador e interfaz** | `scripts/player/*`, `scenes/player/*`, `scenes/ui/{main_menu,pause_menu,hud,credits,death_screen,options_menu,transition}.tscn` + sus scripts en `scripts/ui/`, `scenes/levels/test_arena.tscn`, `scenes/bosses/boss_blackhorn.tscn`, `scenes/bosses/boss_ghidorah.tscn`, `resources/attacks/blackhorn_*.tres`, `resources/attacks/ghidorah_*.tres`, `scripts/game/game_state.gd` (desde el día 3), `scripts/game/ending_director.gd` |
 | **B — IA y enemigos** | `project.godot`, `scripts/game/events.gd`, `scripts/combat/*`, `scripts/ai/*`, `scenes/enemies/*`, `scenes/bosses/boss_base.tscn`, `scenes/bosses/boss_bonedragon.tscn`, `resources/attacks/bonedragon_*.tres`, `scenes/levels/arena_*_gameplay.tscn`, `scenes/ui/debug_overlay.tscn`, `tests/*`, `docs/playtest.md` |
-| **C — Arte, escenarios y sonido** | `assets/**`, `shaders/*`, `scenes/levels/{scale_reference,island_intro,arena_1,arena_2,arena_3,ending}.tscn`, `assets/environment/base_env.tres`, `scripts/audio/*`, `docs/asset-status.md`, sección §7.8 del documento de diseño |
+| **C — Arte, escenarios y sonido** | `assets/**`, `shaders/*`, `scenes/levels/{scale_reference,exterior,arena_1,arena_2,arena_3}.tscn`, `scripts/tools/level_builder.gd`, `assets/environment/base_env.tres`, `scripts/audio/*`, `docs/asset-status.md`, sección §7.8 del documento de diseño |
 
 ## Contrato (lo que todos usan)
 
@@ -60,7 +60,7 @@ signal hit_landed(position: Vector3, surface: StringName)   # &"flesh", &"bone",
 const MAX_HP_BY_LEVEL: Array[int] = [100, 70, 40]
 var current_level: int                    # 0, 1, 2
 func get_player_max_hp() -> int
-func start_new_game() -> void             # level 0 → island_intro
+func start_new_game() -> void             # level 0 → exterior
 func advance_level() -> void              # tras boss_defeated: siguiente arena o ending
 func reload_current_arena() -> void       # reaparición tras muerte
 func go_to_main_menu() -> void
@@ -329,7 +329,7 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Crear: `assets/characters/kaelen/kaelen.glb` (`low-poly-woman-knight`, rig Mixamo), `assets/characters/kaelen/anims/*.glb` (Mixamo, *without skin*), `assets/characters/elysia/elysia.glb` (`ancient-elf-lady-psx`, estático sin rig)
 - Crear: `assets/bosses/bonedragon/bonedragon.glb` con animaciones `idle`, `roar`, `bite`, `tail_sweep`, `stomp`, `death`
 - Crear: `assets/minions/skeleton/skeleton.glb`, `assets/minions/knight/knight.glb` (rig Mixamo)
-- Crear: `scenes/levels/arena_1.tscn` (bloqueo CSG según §6.3: 32 × 32 m, techo 8 m, 4 pilares, rejas, margen de cámara 3 m)
+- Crear: `scenes/levels/arena_1.tscn` (bloqueo CSG según §6.3: 32 × 32 m, techo 8 m, 4 pilares, rejas, margen de cámara 3 m), **generado** por `scripts/tools/level_builder.gd`
 
 **Interfaces:**
 - Produce: nombres de animación exactos para Kaelen: `idle`, `walk`, `run`, `roll`, `attack_1`, `attack_2`, `attack_3`, `hurt`, `death`; para esbirros humanoides: `idle`, `walk`, `attack`, `hurt`, `death`. Lista real registrada en `docs/asset-status.md`.
@@ -338,7 +338,7 @@ Meta: se puede matar a un esbirro y morir ante él.
 - [ ] **Paso 1:** Kaelen (`low-poly-woman-knight`): ya es low poly; solo aplicar escala y exportar FBX para Mixamo. Elysia (`ancient-elf-lady-psx`): **sin rig**; solo escalar a 1.60 m y exportar `elysia.glb` estático.
 - [x] **Paso 2:** Mixamo: Kaelen, Skeleton y Knight riggeados y combinados (`_source/tools/build_characters.py`); Plague Arcanist y TheWrapper exportados (`export_multi_action.py`). Ver `docs/asset-status.md`.
 - [x] **Paso 3:** Bone Dragon: 6 animaciones hechas por script (`_source/tools/animate_bonedragon.py`). Falta verificar que se reproducen en Godot.
-- [ ] **Paso 4:** Bloqueo de `arena_1.tscn` + capturas.
+- [ ] **Paso 4:** Bloqueo de `arena_1.tscn` + capturas. Se genera con `level_builder.gd` junto con `exterior`, `arena_2` y `arena_3` (ver Tarea 14).
 - [ ] **Paso 5: Verificación** — cada GLB abre en Godot con las animaciones de la lista; Kaelen mide 1.70 m en `scale_reference`.
 - [ ] **Paso 6: Commit** — `feat: add processed Kaelen, Elysia, skeleton, knight and bone dragon animations`
 
@@ -382,7 +382,7 @@ Meta: se puede matar a un esbirro y morir ante él.
 
 **Interfaces:**
 - Consume: `Events.player_died`, `Events.boss_defeated`.
-- Produce: `GameState.LEVEL_SCENES: Array[String] = ["res://scenes/levels/island_intro.tscn", "res://scenes/levels/arena_1.tscn", "res://scenes/levels/arena_2.tscn", "res://scenes/levels/arena_3.tscn", "res://scenes/levels/ending.tscn"]`; `func scene_for_level(level: int) -> String`; `transition.tscn` con `func fade_to(path: String) -> void` (fundido a negro 0.5 s). Kaelen se vuelve invulnerable al recibir `Events.boss_defeated`.
+- Produce: `GameState.LEVEL_SCENES: Array[String] = ["res://scenes/levels/exterior.tscn", "res://scenes/levels/arena_1.tscn", "res://scenes/levels/arena_2.tscn", "res://scenes/levels/arena_3.tscn"]` (el final ocurre dentro de `arena_3`)`; `func scene_for_level(level: int) -> String`; `transition.tscn` con `func fade_to(path: String) -> void` (fundido a negro 0.5 s). Kaelen se vuelve invulnerable al recibir `Events.boss_defeated`.
 
 - [ ] **Paso 1: Pruebas que fallan** — `test_max_hp_by_level` (0 → 100, 1 → 70, 2 → 40); `test_level_clamped` (`current_level` no pasa de 2 al calcular vida); `test_new_game_resets_level` (`start_new_game()` con nivel 2 → nivel 0).
 - [ ] **Paso 2: Ejecutar** — FAIL.
@@ -400,7 +400,7 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Ya existe: `assets/bosses/ghidorah/ghidorah.glb` (9.1k triángulos; `idle`, `roar`, `bite`, `tail_sweep`, `beam`, `death`)
 
 - [ ] **Paso 1:** importar piezas del kit con escala de 4 m y colisión (caja para muros/pilares, trimesh para pisos/escaleras); exportar `MeshLibrary` (puede usarse `export_mesh_library` del MCP de Godot).
-- [ ] **Paso 2:** reconstruir `arena_1` con `GridMap` sin mover la posición de pilares, rejas ni límites (B ya horneó la navegación sobre ellos; si cambian, avisar a B para rehornear).
+- [ ] **Paso 2:** el mismo `level_builder.gd` pinta un `GridMap` en lugar de las cajas (mismo plano, otra salida), sin mover la posición de pilares, rejas ni límites (B ya horneó la navegación sobre ellos; si cambian, avisar a B para rehornear).
 - [x] **Paso 3:** Ghidorah: reducido a 9.1k triángulos y 6 animaciones por script (`_source/tools/animate_ghidorah.py`).
 - [ ] **Paso 4: Verificación** — `arena_1` con arte se juega igual que el bloqueo; Blackhorn y Ghidorah reproducen todas sus animaciones en `scale_reference`.
 - [ ] **Paso 5: Commit** — `feat: arena 1 art pass and ghidorah animations`
@@ -444,16 +444,17 @@ Meta: se puede matar a un esbirro y morir ante él.
 - [ ] **Paso 2: Verificación manual** en `test_arena` (cambiando el jefe instanciado): ambos jefes se pueden matar y matan a Kaelen; las cabezas de Ghidorah solo reciben golpes al bajar en `bite`; la cámara con lock-on encuadra a Ghidorah sin meterse en su cuerpo.
 - [ ] **Paso 3: Commit** — `feat: add blackhorn and ghidorah bosses`
 
-### Tarea 14 (C): Bloqueo y arte de arenas 2 y 3 + isla
+### Tarea 14 (C): Bloqueo y arte de arenas 2 y 3 + exterior
 
 **Archivos:**
-- Crear: `scenes/levels/arena_2.tscn` (octogonal, 24 m, techo 8 m, 6 columnas), `scenes/levels/arena_3.tscn` (40 × 40 m, sin techo, pilares rotos, altar al fondo tras reja), `scenes/levels/island_intro.tscn`
-- Crear: `assets/environment/island/floating_island.tscn` (escena heredada, limpia)
+- Crear: `scripts/tools/level_builder.gd` (generador paramétrico; se ejecuta con `godot --headless --path . -s res://scripts/tools/level_builder.gd`)
+- Genera: `scenes/levels/exterior.tscn`, `arena_1.tscn`, `arena_2.tscn` (octogonal, 24 m, techo 8 m, 6 columnas), `arena_3.tscn` (40 × 40 m, sin techo, pilares rotos, puerta bloqueada `GateExit` → pasillo ~20 m → sala de Elysia con altar, Elysia y `EndingTrigger`)
+- ~~`island_intro.tscn` y `floating_island`~~: reemplazados por `exterior.tscn` con `float-islands` (§6.2).
 
-- [ ] **Paso 1:** bloqueo CSG de arenas 2 y 3 con nodo `Gameplay` vacío; entregar a B para que cree `arena_2_gameplay.tscn` y `arena_3_gameplay.tscn` y hornee la navegación.
-- [ ] **Paso 2:** `floating_island` según §6.2: escalar a ≈ 150 m, ocultar dirigible/animales/torii/banderas, texturas a 256 px, tinte desaturado, sin colisión salvo suelo invisible del sendero; fachada del templo con `PSX_Dungeon`; islotes de `float-islands`; cielo y niebla.
-- [ ] **Paso 3: Verificación** — `island_intro` se recorre de inicio a puerta en 1–2 min sin caer al vacío; corre a ≥ 60 FPS en la PC más lenta del equipo.
-- [ ] **Paso 4: Commit** — `feat: add arenas 2-3 blockout and island intro`
+- [ ] **Paso 1:** generar el bloqueo CSG de las 4 escenas con nodo `Gameplay` vacío; entregar a B para que cree `arena_N_gameplay.tscn` y revise la navegación.
+- [ ] **Paso 2:** exterior según §6.2: `float-islands`, sendero con colisión invisible, fachada del templo con `PSX_Dungeon`, cielo y niebla.
+- [ ] **Paso 3: Verificación** — `exterior` se recorre de inicio a puerta en 1–2 min sin caer al vacío; el pasillo y la sala de Elysia de `arena_3` son transitables; ≥ 60 FPS en la PC más lenta.
+- [ ] **Paso 4: Commit** — `feat: add level builder, arenas blockout and exterior`
 
 **(B, final del día 4):** `arena_2_gameplay.tscn` y `arena_3_gameplay.tscn` con navegación, spawns y `ArenaConfig` (arena 2: Plague Arcanist; arena 3: TheWrapper + élite Aura Battler si existe).
 
@@ -466,14 +467,14 @@ Meta: se puede matar a un esbirro y morir ante él.
 **Archivos:**
 - Modificar: `scripts/game/game_state.gd`
 - Crear: `scenes/ui/credits.tscn`, `scripts/ui/credits.gd`, `scripts/game/ending_director.gd`
-- Pedido a C: `scenes/levels/ending.tscn` con cámaras fijas `Cam1`..`Cam3` y Elysia (estática; A le agrega el `Tween` de respiración y el fundido del abrazo)
+- Ya en `arena_3.tscn` (de C): nodo `Ending` con `EndingTrigger` (`Area3D`), cámaras fijas `EndingCam1`/`EndingCam2` y Elysia estática (A le agrega el `Tween` de respiración y el fundido del abrazo). **No hay escena `ending` aparte.**
 
 **Interfaces:**
-- Produce: `ending_director.gd` (adjunto a un nodo de `ending.tscn` por C) con `func play() -> void`: corta entre `Cam1`–`Cam3` con texto en pantalla y termina en `credits.tscn`. `credits.tscn` muestra el texto de `res://assets/credits.txt` (C lo escribe con autores y licencias).
+- Produce: `ending_director.gd` (A lo adjunta al nodo `Ending` de `arena_3.tscn`; se dispara con `EndingTrigger.body_entered`) con `func play() -> void`: corta entre `EndingCam1`–`EndingCam2` con texto en pantalla y termina en `credits.tscn`. `credits.tscn` muestra el texto de `res://assets/credits.txt` (C lo escribe con autores y licencias).
 
-- [ ] **Paso 1:** puerta del templo en `island_intro` → `advance_level()`; `boss_defeated` → espera 3 s → reja abierta → al cruzarla `advance_level()`; vida máxima de Kaelen = `GameState.get_player_max_hp()` al entrar a cada arena.
+- [ ] **Paso 1:** `ExitTrigger` de `exterior` → `advance_level()`; `boss_defeated` → espera 3 s → `GateExit` abierta → `ExitTrigger` → `advance_level()` (en la arena 3 Kaelen recorre el pasillo hasta `EndingTrigger`); vida máxima de Kaelen = `GameState.get_player_max_hp()` al entrar a cada arena.
 - [ ] **Paso 2:** final y créditos (botón "Volver al menú").
-- [ ] **Paso 3: Verificación manual** — partida completa menú → isla → 3 jefes → final → créditos → menú usando F6 (invulnerable) y F5; luego otra muriendo una vez por jefe: la vida máxima es 100, 70 y 40.
+- [ ] **Paso 3: Verificación manual** — partida completa menú → exterior → 3 jefes → pasillo → Elysia → créditos → menú usando F6 (invulnerable) y F5; luego otra muriendo una vez por jefe: la vida máxima es 100, 70 y 40.
 - [ ] **Paso 4: Commit** — `feat: complete game flow, ending and credits`
 
 ### Tarea 16 (B): Esbirros por nivel, élites y ajuste de jefes
@@ -518,7 +519,7 @@ Meta: se puede matar a un esbirro y morir ante él.
 ### Tarea 19 (los 3): Cierre
 - [ ] **Congelación:** no se agregan funciones; solo arreglos de la lista de `docs/playtest.md`, priorizados por B.
 - [ ] **Exportar** Windows (A) y Web (opcional, A); probar el ejecutable en una PC que no sea de desarrollo.
-- [ ] **Checklist final** (spec §16): menú → isla → 3 jefes → final → créditos → menú, muriendo al menos una vez por jefe y usando la pausa; todas las pruebas pasan.
+- [ ] **Checklist final** (spec §16): menú → exterior → 3 jefes → pasillo → Elysia → créditos → menú, muriendo al menos una vez por jefe y usando la pausa; todas las pruebas pasan.
 - [ ] **Créditos** revisados contra las licencias (C).
 - [ ] **Commit y tag** `v1.0`.
 
