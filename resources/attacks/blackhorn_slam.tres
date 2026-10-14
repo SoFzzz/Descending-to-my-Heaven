@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BossAttack" format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/boss_attack.gd" id="1_attack"]
+
+[resource]
+script = ExtResource("1_attack")
+id = &"slam"
+min_range = 0.0
+max_range = 4.0
+telegraph_time = 1.35
+active_time = 0.45
+recovery_time = 0.9
+base_weight = 1.0
+damage = 20
+animation = &"attack_slam"
+hitbox_path = NodePath("SlamHitbox")
+phase_min = 1
+lateral = false
+spin_degrees = 0.0
