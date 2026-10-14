@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1_ctrl"]
 [ext_resource type="PackedScene" path="res://assets/characters/kaelen/kaelen.glb" id="2_model"]
@@ -7,6 +7,9 @@
 [ext_resource type="Script" path="res://scripts/combat/health.gd" id="5_health"]
 [ext_resource type="Script" path="res://scripts/combat/stamina.gd" id="6_stamina"]
 [ext_resource type="Script" path="res://scripts/combat/hurtbox.gd" id="7_hurtbox"]
+[ext_resource type="Script" path="res://scripts/combat/hitbox.gd" id="8_hitbox"]
+[ext_resource type="Script" path="res://scripts/player/lock_on.gd" id="9_lockon"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="10_hud"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -15,6 +18,9 @@ height = 1.7
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hurt"]
 radius = 0.3
 height = 1.5
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sword"]
+size = Vector3(0.2, 0.2, 1.4)
 
 [node name="Kaelen" type="CharacterBody3D" groups=["player"]]
 collision_layer = 2
@@ -37,6 +43,9 @@ transform = Transform3D(577.03, 0, 0, 0, 577.03, 0, 0, 0, 577.03, 0, 0, 0)
 
 [node name="Greatsword" parent="Model/Armature/Skeleton3D/RightHand/SwordGrip" instance=ExtResource("3_sword")]
 transform = Transform3D(1.45, 0, 0, 0, 0, 1.45, 0, -1.45, 0, 0, 0.08, -0.6)
+
+[node name="SwordHitboxMarker" type="Marker3D" parent="Model/Armature/Skeleton3D/RightHand/SwordGrip"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, -0.6)
 
 [node name="CameraRig" type="Node3D" parent="."]
 script = ExtResource("4_cam")
@@ -69,3 +78,18 @@ surface = &"flesh"
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Hurtbox"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
 shape = SubResource("CapsuleShape3D_hurt")
+
+[node name="SwordHitbox" type="Area3D" parent="."]
+top_level = true
+collision_layer = 16
+collision_mask = 128
+monitorable = false
+script = ExtResource("8_hitbox")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SwordHitbox"]
+shape = SubResource("BoxShape3D_sword")
+
+[node name="LockOn" type="Node" parent="."]
+script = ExtResource("9_lockon")
+
+[node name="HUD" parent="." instance=ExtResource("10_hud")]
