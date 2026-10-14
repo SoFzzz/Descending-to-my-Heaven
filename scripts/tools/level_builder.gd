@@ -645,18 +645,24 @@ func _kit_library() -> void:
 	print("MeshLibrary → %s (%s)" % [KIT_LIB, error_string(ResourceSaver.save(lib, KIT_LIB))])
 
 
-var _kit_mat: ShaderMaterial
+var _kit_mat: Material
 
-# Instancia una pieza del kit con el material PSX (atlas Dungeon_Map).
+# Instancia una pieza del kit con el atlas Dungeon_Map. Material estándar (nearest, luz por vértice,
+# sin culling) como el del resto del nivel, NO el shader psx_lit: su ajuste de vértices a rejilla
+# hacía desaparecer las baldosas de 4 m con algún vértice detrás de la cámara (un hueco en el suelo
+# junto a Kaelen). El aspecto PSX lo da el postproceso de baja resolución.
 func _kit_instance(name: String) -> Node3D:
 	var node := (load(KIT + name + ".glb") as PackedScene).instantiate() as Node3D
 	var mi := _first_mesh(node)
 	if _kit_mat == null:
-		_kit_mat = (load(PSX_BASE) as ShaderMaterial).duplicate()
 		var src := mi.mesh.surface_get_material(0) as BaseMaterial3D
-		_kit_mat.set_shader_parameter("albedoTex", src.albedo_texture)
-		ResourceSaver.save(_kit_mat, KIT + "kit_psx.tres")
-		_kit_mat = load(KIT + "kit_psx.tres")
+		var m := StandardMaterial3D.new()
+		m.albedo_texture = src.albedo_texture
+		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+		m.cull_mode = BaseMaterial3D.CULL_DISABLED
+		ResourceSaver.save(m, KIT + "kit_std.tres")
+		_kit_mat = load(KIT + "kit_std.tres")
 	var mesh := mi.mesh.duplicate() as Mesh
 	for s in mesh.get_surface_count():
 		mesh.surface_set_material(s, _kit_mat)
