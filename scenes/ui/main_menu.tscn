@@ -1,0 +1,104 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_mm"]
+[ext_resource type="PackedScene" path="res://scenes/levels/exterior.tscn" id="2_ext"]
+[ext_resource type="Theme" path="res://scenes/ui/menu_theme.tres" id="3_th"]
+
+[sub_resource type="LabelSettings" id="title"]
+font_size = 40
+font_color = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_color = Color(0.08, 0.02, 0.02, 1)
+shadow_size = 4
+shadow_color = Color(0, 0, 0, 0.7)
+shadow_offset = Vector2(2, 2)
+
+[sub_resource type="LabelSettings" id="hint"]
+font_size = 12
+font_color = Color(0.75, 0.7, 0.62, 1)
+outline_size = 4
+outline_color = Color(0, 0, 0, 1)
+
+[node name="MainMenu" type="Node3D"]
+script = ExtResource("1_mm")
+
+[node name="Background" parent="." instance=ExtResource("2_ext")]
+
+[node name="CameraPivot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 32, 92)
+current = true
+fov = 60.0
+far = 1000.0
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Root" type="Control" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("3_th")
+
+[node name="Vignette" type="ColorRect" parent="UI/Root"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.3)
+
+[node name="Title" type="Label" parent="UI/Root"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 44.0
+offset_bottom = 100.0
+grow_horizontal = 2
+text = "Descending to my Heaven"
+label_settings = SubResource("title")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Buttons" type="VBoxContainer" parent="UI/Root"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -90.0
+offset_top = -170.0
+offset_right = 90.0
+offset_bottom = -50.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Start" type="Button" parent="UI/Root/Buttons"]
+unique_name_in_owner = true
+text = "Iniciar"
+
+[node name="Credits" type="Button" parent="UI/Root/Buttons"]
+unique_name_in_owner = true
+text = "Créditos"
+
+[node name="Quit" type="Button" parent="UI/Root/Buttons"]
+unique_name_in_owner = true
+text = "Salir"
+
+[node name="Hint" type="Label" parent="UI/Root"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -26.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Flechas + Enter o ratón"
+label_settings = SubResource("hint")
+horizontal_alignment = 1
