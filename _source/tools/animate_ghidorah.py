@@ -5,9 +5,9 @@ Uso (desde la raíz del repo):
 
 Esqueleto estilo MMD (nombres en japonés): 首 = cuello, 頭 = cabeza, 顎 = mandíbula,
 尾 = cola, 翼 = ala, 足/ひざ/足首 = muslo/rodilla/tobillo, 上半身/下半身 = torso/cadera,
-左 = izquierda (+X), 右 = derecha (-X). Mira hacia -Y, Z arriba, mide ~3.5 m (escalar ×3 en Godot).
+左 = izquierda (+X), 右 = derecha (-X). Mira hacia -Y, Z arriba, mide 4.15 m de alto y 5.8 m de largo (escalar ×2.4 en Godot: 10 × 14 m, §7.4).
 Signos (ejes del armature): cuello pitch < 0 levanta la cabeza, > 0 la baja; mandíbula
-pitch > 0 abre; pierna pitch < 0 adelanta; alas roll > 0 abre la izquierda.
+pitch > 0 abre; pierna pitch < 0 adelanta; alas: wings(angle>0) las abre hacia arriba.
 """
 import math
 import sys
@@ -31,6 +31,15 @@ HEADS = {"c": (NECK_C, "頭", "jaw"), "l": (NECK_L, "左頭", "左顎"), "r": (N
 TAIL_L = ["左尾"] + [f"左尾{i}" for i in range(2, 11)]
 TAIL_R = ["右尾"] + [f"右尾{i}" for i in range(2, 11)]
 TAIL_W = [1 + i * 0.2 for i in range(10)]
+# Ajustes de las correcciones de Tarea 13 (medidos con la malla en Godot, ver docs/asset-status.md)
+TAIL_LIFT = 40.0     # grados que se sube la base de cada cola (si no, cuelgan ~2.5 m bajo los pies)
+BITE_LEAN = 45.0     # inclinación del torso en bite: la cabeza central baja a ~0.6 m (hueso) sin escalar
+SIDE_DIP = 60.0      # inclinación de los cuellos laterales en bite (bajan a ~2.2 m, alcanzables)
+DEATH_ROLL = 80.0    # cae de costado (de espaldas las colas se clavaban 4.8 m bajo el suelo)
+DEATH_LIFT = 0.6     # m que sube ROOT para que el costado apoye en y = 0 (cuerpo a ~0.02 m)
+DEATH_SHIFT = 0.5    # m que se desplaza ROOT en X
+DEATH_WING_L = 110.0  # el ala del lado que cae se pliega hacia arriba (colgaba 2.4 m bajo el cuerpo)
+DEATH_WING_R = 30.0
 ROOT, CENTER, UPPER, LOWER = "全ての親", "センター", "上半身", "下半身"
 
 
@@ -60,7 +69,8 @@ def tails(yaw=0.0, pitch=0.0):
 
 
 def wings(angle):
-    return {"左翼": (0, 0, angle), "右翼": (0, 0, -angle)}
+    """angle > 0 abre las alas hacia ARRIBA (en V); el roll positivo las hundía bajo el suelo."""
+    return {"左翼": (0, 0, -angle), "右翼": (0, 0, angle)}
 
 
 def window(fn, start, end):
@@ -106,12 +116,12 @@ def build(arm):
     c.pose(1, {}, {CENTER: (0, 0, 0)})
     c.pose(16, {**head("c", -30, 0, -10, 25), **head("l", 0, 20), **head("r", 0, -20), UPPER: (-8, 0, 0)},
            {CENTER: (0, 0.08, 0)})
-    c.pose(24, {**head("c", 80, 0, -25, 40, base=True), **head("l", 10, 25), **head("r", 10, -25), UPPER: (25, 0, 0)},
-           {CENTER: (0, -0.15, -0.08)})
-    c.pose(28, {**head("c", 80, 0, -25, 0, base=True), **head("l", 10, 25), **head("r", 10, -25), UPPER: (25, 0, 0)},
-           {CENTER: (0, -0.15, -0.08)})
-    c.pose(44, {**head("c", 78, 0, -25, 5, base=True), **head("l", 8, 20), **head("r", 8, -20), UPPER: (24, 0, 0)},
-           {CENTER: (0, -0.15, -0.08)})
+    c.pose(24, {**head("c", 80, 0, -25, 40, base=True), **head("l", SIDE_DIP, 25), **head("r", SIDE_DIP, -25), UPPER: (BITE_LEAN, 0, 0)},
+           {CENTER: (0, -0.15, 0)})
+    c.pose(28, {**head("c", 80, 0, -25, 0, base=True), **head("l", SIDE_DIP, 25), **head("r", SIDE_DIP, -25), UPPER: (BITE_LEAN, 0, 0)},
+           {CENTER: (0, -0.15, 0)})
+    c.pose(44, {**head("c", 78, 0, -25, 5, base=True), **head("l", SIDE_DIP - 2, 20), **head("r", SIDE_DIP - 2, -20), UPPER: (BITE_LEAN - 1, 0, 0)},
+           {CENTER: (0, -0.15, 0)})
     c.pose(64, {}, {CENTER: (0, 0, 0)})
     clips.append(c)
 
@@ -129,11 +139,11 @@ def build(arm):
     c.pose(1, {}, {CENTER: (0, 0, 0)})
     c.pose(9, {LOWER: (0, -8, 0), UPPER: (0, -10, 0), **legs(-8, lift_r=1), **tails(-20, 5)}, {CENTER: (0, 0, 0.05)})
     c.pose(16, {LOWER: (0, -8, 0), UPPER: (0, -18, 0), **legs(-8), **tails(-45, 10), **heads(0, side_yaw=8)},
-           {CENTER: (0, 0, -0.04)})
+           {CENTER: (0, 0, 0)})
     c.pose(24, {LOWER: (0, 12, 0), UPPER: (0, 10, 0), **legs(12, lift_l=1), **tails(30, 12)}, {CENTER: (0, 0, 0.05)})
     c.pose(31, {LOWER: (0, 12, 0), UPPER: (0, 28, 0), **legs(12), **tails(110, 15), **heads(5, side_yaw=-10)},
-           {CENTER: (0, 0, -0.06)})
-    c.pose(40, {LOWER: (0, 12, 0), UPPER: (0, 22, 0), **legs(12), **tails(80, 10)}, {CENTER: (0, 0, -0.03)})
+           {CENTER: (0, 0, 0)})
+    c.pose(40, {LOWER: (0, 12, 0), UPPER: (0, 22, 0), **legs(12), **tails(80, 10)}, {CENTER: (0, 0, 0)})
     c.pose(50, {LOWER: (0, 0, 0), UPPER: (0, 8, 0), **legs(0, lift_r=0.8), **tails(35, 5)}, {CENTER: (0, 0, 0.04)})
     c.pose(57, {LOWER: (0, 0, 0), UPPER: (0, 2, 0), **legs(0, lift_l=0.5), **tails(10, 2)}, {CENTER: (0, 0, 0.02)})
     c.pose(64, {}, {CENTER: (0, 0, 0)})
@@ -151,18 +161,24 @@ def build(arm):
                             "右頭": (0.8 * math.sin(f * 1.8), 0, 0)}, 27, 65))
     clips.append(c)
 
-    # death: grito, retrocede y cae de espaldas con los cuellos sin fuerza
+    # death: grito, retrocede y cae de costado con los cuellos sin fuerza
     c = Clip(arm, "death", 100)
-    limp = {**heads(25, 10, 25, side_yaw=25), **tails(10, 0), **wings(-10)}
+    limp = {**heads(25, 10, 25, side_yaw=25), **tails(10, 0), **{"左翼": (0, 0, -DEATH_WING_L), "右翼": (0, 0, DEATH_WING_R)}}
     c.pose(1, {}, {CENTER: (0, 0, 0)})
     c.pose(20, {**heads(-35, -15, 40, side_yaw=15), UPPER: (-10, 0, 0), **wings(35)}, {CENTER: (0, 0, 0)})
     c.pose(50, {**heads(10, 0, 30, side_yaw=20), UPPER: (-15, 0, 0), "左ひざ+": (15, 0, 0),
-                "右ひざ+": (15, 0, 0), **wings(15)}, {CENTER: (0, 0.3, -0.25)})
-    c.pose(80, {**limp, ROOT: (-80, 0, 0), UPPER: (5, 0, 0)}, {CENTER: (0, 0.3, -0.25)})
-    c.pose(100, {**limp, ROOT: (-80, 0, 0), UPPER: (5, 0, 0)}, {CENTER: (0, 0.3, -0.25)})
+                "右ひざ+": (15, 0, 0), **wings(15)}, {CENTER: (0, 0.3, 0)})
+    # cae de COSTADO (roll alrededor del eje largo) y no de espaldas: de espaldas las colas se
+    # clavaban 4.8 m bajo el suelo. ROOT sube y se desplaza para que el costado apoye en y = 0.
+    side = {ROOT: (0, 0, DEATH_ROLL)}
+    c.pose(80, {**limp, **side, UPPER: (5, 0, 0)}, {CENTER: (0, 0.3, 0), ROOT: (DEATH_SHIFT, 0, DEATH_LIFT)})
+    c.pose(100, {**limp, **side, UPPER: (5, 0, 0)}, {CENTER: (0, 0.3, 0), ROOT: (DEATH_SHIFT, 0, DEATH_LIFT)})
     clips.append(c)
 
+    # Las colas colgaban ~2.5 m bajo los pies en todos los clips: subir la base de cada una 40°
+    # las deja a la altura de los pies (y >= -0.07 m en idle, roar, bite, tail_sweep y beam).
     for c in clips:
+        c.add(lambda f: {TAIL_L[0]: (TAIL_LIFT, 0, 0), TAIL_R[0]: (TAIL_LIFT, 0, 0)})
         c.bake()
 
 
