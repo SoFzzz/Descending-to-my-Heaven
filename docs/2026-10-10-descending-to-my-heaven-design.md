@@ -87,69 +87,55 @@ Impactos: hitbox `Area3D` activada en ventanas de la animación; hurtbox en cada
 ## 5. Flujo del juego
 
 ```
-Menú principal → Llegada a la isla / entrada al templo
-  → Jefe 1 (Bone Dragon)
-  → Jefe 2 (Blackhorn)
-  → Jefe 3 (Mecha King Ghidorah)
-  → Encuentro con Elysia (cámara fija + texto) → Créditos → Menú principal
+Menú principal → Exterior (isla, sendero, fachada del templo) → entra al templo
+  → Piso 1: arena del Bone Dragon → reja de salida + escalera (fundido)
+  → Piso 2: arena de Blackhorn → reja de salida + escalera (fundido)
+  → Piso 3: arena de Mecha King Ghidorah → la puerta bloqueada se abre al morir Ghidorah
+      → pasillo (~20 m) → sala de Elysia (altar) → zona de activación → texto → Créditos → Menú principal
 ```
 
-Al ser un *boss rush*, no hay exploración entre jefes: cada transición es corta (escalera, puerta o fundido a negro) y sirve para ocultar la carga de escena.
+Al ser un *boss rush*, no hay exploración ni salas de relleno entre jefes: los esbirros aparecen dentro de cada arena. Cada transición entre pisos es una escalera + fundido a negro, que oculta la carga de escena. Al morir se reinicia solo el piso actual.
 
 ## 6. Escenarios y diseño de niveles
 
 ### 6.1 Estructura del mundo
 
-El juego ocurre en un solo lugar: **un templo vertical construido sobre la isla flotante**. Kaelen llega a la isla, entra al templo y sube piso por piso. Cada piso es una arena cerrada e independiente (una escena de Godot); entre arenas hay una transición corta (escalera + fundido a negro).
+El juego ocurre en un solo lugar: **un templo de 3 pisos construido sobre una isla flotante**. Kaelen empieza fuera, entra al templo y sube piso por piso. **Cada piso es una escena de Godot**; entre pisos hay escalera + fundido a negro. El pasillo final y la sala de Elysia están **dentro de la escena del piso 3** (no hay escena `ending` aparte ni cúspide abierta).
 
 ```
-                    ┌──────────────────────────┐
-   Piso 3 (cima)    │ Arena 3 — Cúspide abierta │──► Altar de Elysia (final)
-                    └────────────▲─────────────┘
+                    ┌────────────────────────────┐  puerta     ┌─────────┐   ┌─────────────┐
+   Piso 3           │ Arena 3 — Ruinas (Ghidorah) │─bloqueada─►│ Pasillo │──►│ Sala Elysia │ → créditos
+                    └────────────▲───────────────┘             └─────────┘   └─────────────┘
                                  │ escalera / fundido
-                    ┌────────────┴─────────────┐
-   Piso 2           │ Arena 2 — Claustro        │
-                    └────────────▲─────────────┘
+                    ┌────────────┴───────────────┐
+   Piso 2           │ Arena 2 — Claustro          │
+                    └────────────▲───────────────┘
                                  │ escalera / fundido
-                    ┌────────────┴─────────────┐
-   Piso 1           │ Arena 1 — Catacumba       │
-                    └────────────▲─────────────┘
+                    ┌────────────┴───────────────┐
+   Piso 1           │ Arena 1 — Catacumba         │
+                    └────────────▲───────────────┘
                                  │ puerta del templo
-                    ┌────────────┴─────────────┐
-   Exterior         │ Isla flotante (intro)     │
-                    └──────────────────────────┘
+                    ┌────────────┴───────────────┐
+   Exterior         │ Isla flotante (sendero)     │
+                    └────────────────────────────┘
 ```
 
 | Escena | Contenido | Duración aproximada |
 |---|---|---|
-| `island_intro` | Kaelen aparece en el borde de la isla, camina por un sendero corto hasta la puerta del templo. Texto narrativo breve. | 1-2 min |
+| `exterior` | Kaelen aparece en la isla y camina por un sendero corto hasta la puerta del templo. | 1-2 min |
 | `arena_1` | Catacumba — Bone Dragon + esqueletos (+ knight élite) | 3-6 min |
 | `arena_2` | Claustro — Blackhorn + Plague Arcanists | 3-6 min |
-| `arena_3` | Cúspide abierta — Mecha King Ghidorah + TheWrapper (+ Aura Battler élite) | 4-8 min |
-| `ending` | Altar en la cima — encuentro con Elysia, cámara fija | 1-2 min |
+| `arena_3` | Ruinas — Mecha King Ghidorah + TheWrapper; al morir el jefe se abre la puerta norte → pasillo → sala de Elysia (`EndingTrigger`) | 5-10 min |
 
-### 6.2 Uso de la isla flotante (`floating_island`)
+**Generación:** las 4 escenas se generan con un script paramétrico y determinista (`scripts/tools/level_builder.gd`, ver 6.4). No hay generación procedural ni addons: el plano está en una tabla y para cambiarlo se edita un número y se vuelve a ejecutar.
 
-`floating_island` (Sketchfab, 153 mallas, 61 MB de texturas) es una isla completa con aldea: casas, árboles, cascada, dirigible, torii, animales. Sus texturas son fotográficas y de estilos mezclados, y su escala original es enorme (≈ 61 000 unidades de ancho). Se usa así:
+### 6.2 Exterior (`float-islands`)
 
-**Rol: base del exterior y panorama del reino.**
-1. **Intro (`island_intro`):** el templo se coloca sobre la meseta de la isla. Kaelen solo recorre un sendero corto hasta la puerta; la isla es escenografía alrededor del sendero.
-2. **Fondo del menú principal:** cámara orbitando lentamente la isla con el templo.
-3. **Panorama desde la arena 3:** la isla se ve abajo, lejana y con niebla, desde la cúspide abierta.
-
-**Preparación (persona C, día 1-2):**
-| Paso | Dónde | Detalle |
-|---|---|---|
-| Escalar | Godot (import) o Blender | Llevarla a ≈ 150 m de ancho (ver 7.3). |
-| Limpiar | Godot (escena heredada) | Ocultar o borrar mallas que no encajan con la fantasía oscura: dirigible, gallinas, caballo, torii, banderas pirata, carteles. Son mallas separadas, se eliminan por nombre. |
-| Texturas | Import de Godot | `Size Limit` 256 px, filtro *nearest*, sin mipmaps. Reduce los 61 MB a pocos MB. |
-| Unificar | Material | Shader PSX de todo el juego + tinte desaturado (gris-azulado) para que las texturas fotográficas pierdan saturación y se integren. |
-| Colisión | Escena | **No** se genera colisión para las 153 mallas. Solo un suelo invisible simple (`StaticBody3D` con caja/plano) bajo el sendero, y paredes invisibles a los lados. |
-| Templo | Escena | Fachada del templo armada con piezas de `PSX_Dungeon` (arcos, pilares, puerta) sobre la meseta. |
-| Islotes | Escena | Instancias de `float-islands/FloatingIsland.fbx` (estilizada, con puentes y enredaderas) flotando alrededor como decoración, a distintas alturas y escalas. |
-| Vacío | `WorldEnvironment` | Cielo con gradiente + niebla de distancia para ocultar el borde inferior y el vacío. |
-
-**Alternativa si `floating_island` no rinde o no encaja:** usar `float-islands/FloatingIsland.fbx` como isla principal (más liviana, ya estilizada) y dejar `floating_island` solo como silueta lejana.
+Se descartó `floating_island` (61 MB, texturas fotográficas). El exterior usa:
+- `float-islands/FloatingIsland.fbx` como isla principal (escalada para que el sendero quepa holgado) y copias pequeñas como islotes decorativos.
+- Un sendero con **colisión invisible** (caja) y paredes invisibles a los lados.
+- La fachada del templo armada con piezas de `PSX_Dungeon` (muros, arco, puerta) y la `ExitTrigger` en la puerta.
+- `base_env.tres` (cielo + niebla de distancia) para ocultar el vacío.
 
 ### 6.3 Diseño de las arenas
 
@@ -162,20 +148,22 @@ El juego ocurre en un solo lugar: **un templo vertical construido sobre la isla 
 - **Iluminación:** 1 luz direccional tenue + 4 a 6 antorchas (`OmniLight3D`) como máximo, para mantener rendimiento y el look PSX.
 - **Límites:** paredes invisibles que encierran el área jugable, aunque la decoración siga más allá.
 
-| | Arena 1 — Catacumba | Arena 2 — Claustro | Arena 3 — Cúspide abierta |
+| | Arena 1 — Catacumba | Arena 2 — Claustro | Arena 3 — Ruinas |
 |---|---|---|---|
 | Jefe | Bone Dragon | Blackhorn | Mecha King Ghidorah |
 | Forma | Rectangular | Octogonal | Circular / irregular |
 | Área de combate | 32 × 32 m | 24 m de diámetro | 40 × 40 m |
-| Altura | Techo a 8 m | Techo a 8 m (bóveda) | Sin techo (cielo abierto) |
+| Altura | Techo a 8 m | Techo a 8 m (bóveda) | Sin techo (muros de 12 m, cielo con niebla) |
 | Por qué ese tamaño | Dragón largo (≈ 8 m) que necesita espacio para barrer con la cola | Jefe humanoide rápido; arena chica = más presión | Jefe enorme (≈ 10 m); proyectiles de largo alcance |
 | Pilares | 4 pilares gruesos + cadenas colgando | 6 columnas finas en anillo | Pilares rotos (`Pillar_Collapsed`) y escombros |
 | Identidad visual | Oscura, cálida (antorchas), calaveras en muros, piso de piedra sucia | Fría y blanca, velas, candelabro central, telas | Abierta, viento, luz de cielo gris, metal y oro oxidado |
-| Piezas clave | `Skull_Wall`, `Chain`, `Candle_*`, `Debris` | `Hexagon`, `Chandelier`, `Arch`, `Candle_*` | `Pillar_Collapsed_*`, `Wall_Ruin`, `Altar` |
+| Piezas clave | `Skull_Wall`, `Chain`, `Candle_*`, `Debris` | `Hexagon`, `Chandelier`, `Arch`, `Candle_*` | `Pillar_Collapsed_*`, `Wall_Ruin`; `Altar` en la sala de Elysia |
 | Texturas | `concrete_512_indexed_dark`, `Floor512_indexed` | `concrete_512_indexed`, `512_fabric`, `gold512` | `metal_512`, `gold512`, `TerraCotta_512` |
 | Ambiente sonoro | `Cave` | `Interior Night` | Viento |
 
-**Escena final (`ending`):** plataforma con el `Altar` de `Modular Dungeon` al borde de la cúspide, Elysia junto al altar, la isla visible abajo entre la niebla. Cámara fija con 2-3 planos; sin combate.
+**Rejas y triggers (nombres fijos en todas las arenas):** `GateEntry` (sur, se cierra al entrar), `GateExit` (norte, se abre con `Events.boss_defeated`), `ExitTrigger` (`Area3D` tras `GateExit`, lleva al piso siguiente), `PlayerStart`, `BossStart`, 6 `Marker3D` en el grupo `spawn_point`.
+
+**Final dentro de `arena_3`:** detrás de `GateExit` (la "puerta bloqueada") sale un pasillo de 6 m de ancho (el de la reja) y ~20 m de largo hacia la **sala de Elysia** (12 × 12 m, techo 6 m) con el altar, Elysia estática mirando hacia el pasillo y un `EndingTrigger` (`Area3D`) delante de ella. La lógica (texto, cámara, créditos) la conecta A con `ending_director.gd`; las cámaras fijas son `EndingCam1` y `EndingCam2` dentro de la sala.
 
 ### 6.4 Uso de los kits de dungeon y texturas en Godot
 
@@ -190,14 +178,14 @@ El juego ocurre en un solo lugar: **un templo vertical construido sobre la isla 
 | `demonic weapons pack` | Arma de Kaelen | Mandoble. |
 
 **Flujo de trabajo (en este orden):**
-1. **Bloqueo (día 2):** cada arena se arma primero con `CSGBox3D`/`CSGCylinder3D` y un material liso. Se hornea la navegación y se prueba el combate. Nadie decora antes de que la arena se juegue bien.
+1. **Bloqueo (día 2):** cada arena se genera primero con `scripts/tools/level_builder.gd` (`CSGBox3D`/`CSGCylinder3D` y un material liso, a partir de una tabla con el plano). Se hornea la navegación y se prueba el combate. Nadie decora antes de que la arena se juegue bien.
 2. **Importación del kit (día 2-3):**
    - Importar cada pieza FBX con la escala corregida para que un módulo de muro mida exactamente 4 m (ver 7.3).
    - Colisión automática en el import: `Static Body` con forma simple (caja/convexa) para muros y pilares; *trimesh* solo para pisos y escaleras.
    - Guardar cada pieza como escena (`assets/environment/kit/<pieza>.tscn`).
 3. **Construcción con `GridMap` (día 3-4):**
    - Crear una `MeshLibrary` con las piezas de muro, piso y esquina del kit.
-   - Construir pisos y muros con `GridMap` (celda de 4 × 4 × 4 m). Es mucho más rápido y alineado que colocar piezas a mano.
+   - Construir pisos y muros con `GridMap` (celda de 4 × 4 × 4 m), pintado por el mismo `level_builder.gd` a partir del plano (otra salida, mismas medidas).
    - Pilares, escombros, velas, cadenas y decoración se colocan a mano encima.
 4. **Texturas:**
    - Ajuste global del proyecto: `rendering/textures/canvas_textures/default_texture_filter = Nearest`.
@@ -206,6 +194,13 @@ El juego ocurre en un solo lugar: **un templo vertical construido sobre la isla 
    - Las piezas bloqueadas con CSG pueden usar *triplanar* temporalmente.
 5. **Material único PSX:** se usan los shaders de **Godot-PSX-Starter-kit** (MIT, portados a Godot 4 en `shaders/psx/`): `psx_lit.gdshader` para casi todo (vértices que tiemblan, iluminación por vértice, textura *nearest*), con variantes `alpha_scissor` (rejas, cadenas, follaje), `transparent` y `metal`; parámetros `albedoTex`, `modulate_color` (tinte), `uv_scale` y `precision_multiplier`. Cambiar `modulate_color` en la plantilla ajusta la paleta. Postproceso en `shaders/psx/postprocess/`: `pp_band_dither` (reducción de color con *dithering*, lo más importante para el look PS1) y opcionales (`vhs`, `ntsc`, `grain`, `lcd`…). Original sin portar en `_source/godot-psx-starter-kit/`.
 6. **Decoración (día 6):** solo después de que el flujo completo funcione.
+
+**Generador de niveles (`scripts/tools/level_builder.gd`):**
+- Ejecutar: `godot --headless --path . -s res://scripts/tools/level_builder.gd` (todas) o `... -- arena_2` (una). Sobrescribe `scenes/levels/{exterior,arena_1,arena_2,arena_3}.tscn`, así que **no se editan a mano**: los cambios van en las tablas `LEVELS` y `EXTERIOR` del script. Lo que A y B agreguen va en escenas aparte (`arena_N_gameplay.tscn` instanciada bajo `Gameplay`).
+- Arenas 1 y 3: muros, suelo y techo en `GridMap` con `assets/environment/kit/dungeon_kit.meshlib` (piezas de `PSX_Dungeon` normalizadas por `_source/tools/export_dungeon_kit.py`). Arena 2 (octogonal) sigue en CSG con textura triplanar, porque no encaja en la grilla. Pasillos, escaleras, jambas y dintel de las rejas son CSG.
+- Navegación: se hornea al generar (`NavigationSmall` capa 1, r 0.5; `NavigationLarge` capa 2, r 2.5).
+- Rejas: `GateEntry` y `GateExit` son `AnimatableBody3D` de 6 × 6 m, ambas cerradas; la meta `open_offset` (0, −6.1, 0) indica cuánto bajarlas para abrirlas.
+- Exterior: `island_main` (pieza `IslandSkull` de `float-islands`, ≈ 104 m, exportada por `_source/tools/export_float_island.py`) con colisión trimesh, sendero de 67 m con paredes invisibles, templo escalonado con arco y pilares del kit, islotes y `ExitTrigger` en la puerta.
 
 ### 6.5 Reglas para que todo se vea como un conjunto
 1. **Un solo shader PSX** para todos los modelos (vértices "temblorosos", filtro *nearest*, iluminación por vértice).
@@ -219,9 +214,9 @@ El juego ocurre en un solo lugar: **un templo vertical construido sobre la isla 
 | Escena | Contenido mínimo |
 |---|---|
 | `scale_reference` | Kaelen, Elysia, un esbirro de cada tipo, los 3 jefes, módulo de muro, puerta y pilar, alineados sobre una grilla de 1 m |
-| `island_intro` | Isla preparada, sendero con colisión, fachada del templo, islotes, cielo y niebla |
+| `exterior` | Isla `float-islands`, sendero con colisión, fachada del templo, islotes, cielo y niebla |
 | `arena_1`, `arena_2`, `arena_3` | Arena cerrada, navegación horneada (2 capas, ver 7.6), 6 spawns, rejas, inicio de jugador y jefe, iluminación |
-| `ending` | Altar, Elysia, cámaras fijas |
+| `arena_3` (además) | Puerta bloqueada `GateExit`, pasillo ~20 m, sala de Elysia con altar, Elysia, `EndingTrigger` y cámaras fijas |
 
 ## 7. Escala y dimensiones
 
@@ -417,7 +412,7 @@ Esbirro normal cuesta 1, esbirro élite (más vida/daño, mismo modelo con otro 
 ## 10. Menús
 
 ### 10.1 Menú principal (obligatorio)
-- Fondo: la isla flotante con cámara girando lentamente (reutiliza `island_intro`).
+- Fondo: la isla flotante con cámara girando lentamente (reutiliza `exterior`).
 - Título del juego.
 - Botones: **Iniciar**, **Opciones** (oculto si no se implementa), **Créditos**, **Salir**.
 - Navegable con ratón y teclado/mando (foco inicial en "Iniciar").
@@ -507,7 +502,7 @@ res://
     player/      kaelen.tscn
     enemies/     minion_base.tscn + variantes por nivel
     bosses/      boss_base.tscn + boss_dragon / boss_blackhorn / boss_ghidorah
-    levels/      island_intro, arena_1, arena_2, arena_3, ending, scale_reference
+    levels/      exterior, arena_1, arena_2, arena_3 (incluye pasillo y sala de Elysia), scale_reference
     ui/          main_menu, pause_menu, options_menu, hud, credits, debug_overlay
   scripts/
     player/      player_controller.gd, player_combat.gd, lock_on.gd, camera_rig.gd
