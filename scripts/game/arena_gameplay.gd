@@ -1,10 +1,10 @@
 extends "res://scripts/game/level_gameplay.gd"
 ## Raíz de `arena_N_gameplay.tscn` (Tarea 9). Además de lo de level_gameplay.gd (Kaelen en
 ## PlayerStart + material PSX): coloca al jefe (hijo `Boss`) en BossStart mirando a Kaelen,
-## pone `initial_minions` esbirros en puntos `spawn_point`, cierra las rejas y emite
-## Events.arena_entered; muestra la barra del jefe en el HUD de Kaelen. Con Events.boss_defeated
-## oculta la barra y, GATE_OPEN_DELAY s después, baja GateExit (meta `open_offset`) y emite
-## Events.arena_cleared. Cuando Kaelen cruza ExitTrigger con la reja abierta emite `exit_reached`
+## cierra las rejas, emite Events.arena_entered y arranca al Orquestador
+## (Orchestrator.begin_arena), que genera los esbirros en los `spawn_point`; muestra la barra
+## del jefe en el HUD de Kaelen. Con Events.boss_defeated oculta la barra y, GATE_OPEN_DELAY s
+## después, baja GateExit (meta `open_offset`) y emite Events.arena_cleared. Cuando Kaelen cruza ExitTrigger con la reja abierta emite `exit_reached`
 ## y llama a GameState.advance_level() (el paso de nivel es de las Tareas 10/15).
 
 signal exit_reached
@@ -14,10 +14,6 @@ const GATE_OPEN_TIME := 2.0
 const GATE_CLOSE_TIME := 1.0
 
 @export var config: ArenaConfig
-@export var initial_minions := 4
-## Índices (orden por nombre) de los spawn_point donde van los esbirros iniciales; si sobran
-## esbirros se usan los demás puntos.
-@export var minion_spawn_indices: Array[int] = [0, 1, 4, 5]
 
 var arena_cleared := false
 
@@ -39,7 +35,6 @@ func _ready() -> void:
 		else:
 			push_warning("%s no tiene BossStart" % level.name)
 		boss.health.died.connect(_on_boss_died)
-	_spawn_minions()
 	_gate_entry = level.get_node_or_null("GateEntry") as Node3D
 	_gate_exit = level.get_node_or_null("GateExit") as Node3D
 	_close_entry_gate()
@@ -53,32 +48,9 @@ func _ready() -> void:
 	if events:
 		events.boss_defeated.connect(_on_boss_defeated)
 		events.arena_entered.emit(arena_id)
-
-
-func _spawn_minions() -> void:
-	var scene: PackedScene = config.minion_scene if config else null
-	if scene == null or initial_minions <= 0:
-		return
-	var points: Array[Node3D] = []
-	for node in get_tree().get_nodes_in_group(&"spawn_point"):
-		if node is Node3D and level.is_ancestor_of(node):
-			points.append(node)
-	points.sort_custom(func(a: Node3D, b: Node3D) -> bool: return String(a.name).naturalnocasecmp_to(String(b.name)) < 0)
-	var order: Array[int] = []
-	for i in minion_spawn_indices:
-		if i >= 0 and i < points.size() and not order.has(i):
-			order.append(i)
-	for i in points.size():
-		if not order.has(i):
-			order.append(i)
-	for k in mini(initial_minions, order.size()):
-		var point := points[order[k]]
-		var minion := scene.instantiate() as Node3D
-		minion.name = "Minion%d" % (k + 1)
-		add_child(minion)
-		minion.global_position = point.global_position
-		var to_player := player.global_position - point.global_position
-		minion.rotation.y = atan2(-to_player.x, -to_player.z)
+	var orchestrator := get_node_or_null(^"/root/Orchestrator")
+	if orchestrator and config:
+		orchestrator.begin_arena(config, self, boss)
 
 
 # --- Rejas ------------------------------------------------------------------------------------
