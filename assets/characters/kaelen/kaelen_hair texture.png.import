@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://7bn72dp23bws"
-path.s3tc="res://.godot/imported/kaelen_hair texture.png-c97fb36c31df30deb9d2d3dd506d9b97.s3tc.ctex"
+path="res://.godot/imported/kaelen_hair texture.png-c97fb36c31df30deb9d2d3dd506d9b97.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "fd15f92670005531f7e46a1c9cb08e64"
@@ -15,11 +14,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/characters/kaelen/kaelen_hair texture.png"
-dest_files=["res://.godot/imported/kaelen_hair texture.png-c97fb36c31df30deb9d2d3dd506d9b97.s3tc.ctex"]
+dest_files=["res://.godot/imported/kaelen_hair texture.png-c97fb36c31df30deb9d2d3dd506d9b97.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

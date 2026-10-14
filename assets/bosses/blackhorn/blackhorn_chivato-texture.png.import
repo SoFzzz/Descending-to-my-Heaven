@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ctq06jnxk7bwk"
-path.s3tc="res://.godot/imported/blackhorn_chivato-texture.png-47bd7e817a5da8ffb2e6cd426205dded.s3tc.ctex"
+path="res://.godot/imported/blackhorn_chivato-texture.png-47bd7e817a5da8ffb2e6cd426205dded.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "46483cb4d2deeee74a43be6de3d75b45"
@@ -15,11 +14,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/bosses/blackhorn/blackhorn_chivato-texture.png"
-dest_files=["res://.godot/imported/blackhorn_chivato-texture.png-47bd7e817a5da8ffb2e6cd426205dded.s3tc.ctex"]
+dest_files=["res://.godot/imported/blackhorn_chivato-texture.png-47bd7e817a5da8ffb2e6cd426205dded.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

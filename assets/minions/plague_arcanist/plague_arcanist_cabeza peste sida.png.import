@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bna2iqut6hxsq"
-path.s3tc="res://.godot/imported/plague_arcanist_cabeza peste sida.png-03472cb6b82094397b3b1e78ad96a692.s3tc.ctex"
+path="res://.godot/imported/plague_arcanist_cabeza peste sida.png-03472cb6b82094397b3b1e78ad96a692.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "ea7af6597160a38a65179032b81ebe5d"
@@ -15,11 +14,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/minions/plague_arcanist/plague_arcanist_cabeza peste sida.png"
-dest_files=["res://.godot/imported/plague_arcanist_cabeza peste sida.png-03472cb6b82094397b3b1e78ad96a692.s3tc.ctex"]
+dest_files=["res://.godot/imported/plague_arcanist_cabeza peste sida.png-03472cb6b82094397b3b1e78ad96a692.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

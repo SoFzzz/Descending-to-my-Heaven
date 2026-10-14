@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://pt0ku8d8jfje"
-path.s3tc="res://.godot/imported/ghidorah_Image.png-7e2c053d21efb420aa7d2f0d3aad0971.s3tc.ctex"
+path="res://.godot/imported/ghidorah_Image.png-7e2c053d21efb420aa7d2f0d3aad0971.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "42b3cbe5e011f3cecfb338936139b0f8"
@@ -15,11 +14,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/bosses/ghidorah/ghidorah_Image.png"
-dest_files=["res://.godot/imported/ghidorah_Image.png-7e2c053d21efb420aa7d2f0d3aad0971.s3tc.ctex"]
+dest_files=["res://.godot/imported/ghidorah_Image.png-7e2c053d21efb420aa7d2f0d3aad0971.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

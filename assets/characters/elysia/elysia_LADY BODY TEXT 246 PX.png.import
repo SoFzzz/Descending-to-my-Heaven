@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://i5j1cho61408"
-path.s3tc="res://.godot/imported/elysia_LADY BODY TEXT 246 PX.png-3a87564ed875c40842eed0abdb740b10.s3tc.ctex"
+path="res://.godot/imported/elysia_LADY BODY TEXT 246 PX.png-3a87564ed875c40842eed0abdb740b10.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "ddfc351c0f1d2d3c050a56b59aaa3c0f"
@@ -15,11 +14,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/characters/elysia/elysia_LADY BODY TEXT 246 PX.png"
-dest_files=["res://.godot/imported/elysia_LADY BODY TEXT 246 PX.png-3a87564ed875c40842eed0abdb740b10.s3tc.ctex"]
+dest_files=["res://.godot/imported/elysia_LADY BODY TEXT 246 PX.png-3a87564ed875c40842eed0abdb740b10.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

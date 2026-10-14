@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b5ri7o0iy8pnf"
-path.s3tc="res://.godot/imported/kaelen_blenderpaintedit.png-0e4297ed57c8d95de91d1c590f3c1edd.s3tc.ctex"
+path="res://.godot/imported/kaelen_blenderpaintedit.png-0e4297ed57c8d95de91d1c590f3c1edd.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "319c7789fc02978a224d32e2d48d991b"
@@ -15,11 +14,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/characters/kaelen/kaelen_blenderpaintedit.png"
-dest_files=["res://.godot/imported/kaelen_blenderpaintedit.png-0e4297ed57c8d95de91d1c590f3c1edd.s3tc.ctex"]
+dest_files=["res://.godot/imported/kaelen_blenderpaintedit.png-0e4297ed57c8d95de91d1c590f3c1edd.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

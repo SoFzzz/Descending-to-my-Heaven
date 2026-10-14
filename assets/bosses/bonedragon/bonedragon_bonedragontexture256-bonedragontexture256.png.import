@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dnpneqvjfh6rg"
-path.s3tc="res://.godot/imported/bonedragon_bonedragontexture256-bonedragontexture256.png-34516b6bf65cd2aa17680abeb61582ac.s3tc.ctex"
+path="res://.godot/imported/bonedragon_bonedragontexture256-bonedragontexture256.png-34516b6bf65cd2aa17680abeb61582ac.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "4febd0a06cf81afbaa254c32ec757ace"
@@ -15,11 +14,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/bosses/bonedragon/bonedragon_bonedragontexture256-bonedragontexture256.png"
-dest_files=["res://.godot/imported/bonedragon_bonedragontexture256-bonedragontexture256.png-34516b6bf65cd2aa17680abeb61582ac.s3tc.ctex"]
+dest_files=["res://.godot/imported/bonedragon_bonedragontexture256-bonedragontexture256.png-34516b6bf65cd2aa17680abeb61582ac.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

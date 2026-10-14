@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dmylti5v0062b"
-path.s3tc="res://.godot/imported/thewrapper_MonsterPSX_Diffuse.png-856f22357309c14219bbb991def0ae9f.s3tc.ctex"
+path="res://.godot/imported/thewrapper_MonsterPSX_Diffuse.png-856f22357309c14219bbb991def0ae9f.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "9ab1c3fccdce24545c0b2492ec564256"
@@ -15,11 +14,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/minions/thewrapper/thewrapper_MonsterPSX_Diffuse.png"
-dest_files=["res://.godot/imported/thewrapper_MonsterPSX_Diffuse.png-856f22357309c14219bbb991def0ae9f.s3tc.ctex"]
+dest_files=["res://.godot/imported/thewrapper_MonsterPSX_Diffuse.png-856f22357309c14219bbb991def0ae9f.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b25ib374lc0p3"
-path.s3tc="res://.godot/imported/plague_arcanist_imanos pesrte sida.png-55b9214969b2e5f1bedef0c096df6457.s3tc.ctex"
+path="res://.godot/imported/plague_arcanist_imanos pesrte sida.png-55b9214969b2e5f1bedef0c096df6457.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "d4e298a3acce62d7454184e2aaf36a34"
@@ -15,11 +14,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/minions/plague_arcanist/plague_arcanist_imanos pesrte sida.png"
-dest_files=["res://.godot/imported/plague_arcanist_imanos pesrte sida.png-55b9214969b2e5f1bedef0c096df6457.s3tc.ctex"]
+dest_files=["res://.godot/imported/plague_arcanist_imanos pesrte sida.png-55b9214969b2e5f1bedef0c096df6457.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
