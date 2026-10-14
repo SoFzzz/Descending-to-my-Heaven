@@ -1,0 +1,26 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/debug_overlay.gd" id="1_dbg"]
+
+[sub_resource type="LabelSettings" id="dbg_label"]
+font_size = 12
+font_color = Color(0.85, 1, 0.85, 1)
+outline_size = 3
+outline_color = Color(0, 0, 0, 1)
+
+[node name="DebugOverlay" type="CanvasLayer"]
+process_mode = 3
+layer = 90
+script = ExtResource("1_dbg")
+
+[node name="Panel" type="PanelContainer" parent="."]
+offset_left = 8.0
+offset_top = 60.0
+offset_right = 168.0
+offset_bottom = 140.0
+mouse_filter = 2
+
+[node name="Label" type="Label" parent="Panel"]
+layout_mode = 2
+text = "Orquestador"
+label_settings = SubResource("dbg_label")
