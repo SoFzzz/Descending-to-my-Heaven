@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="BossAttack" format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/boss_attack.gd" id="1_attack"]
+
+[resource]
+script = ExtResource("1_attack")
+id = &"tail_sweep"
+min_range = 0.0
+max_range = 5.5
+telegraph_time = 1.2
+active_time = 0.8
+recovery_time = 1.0
+base_weight = 0.7
+damage = 20
+animation = &"tail_sweep"
+hitbox_path = NodePath("TailSweepHitbox")
+lateral = true
+spin_degrees = 360.0
