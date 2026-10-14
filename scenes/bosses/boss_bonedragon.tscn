@@ -1,0 +1,223 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/bosses/boss_base.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://assets/bosses/bonedragon/bonedragon.glb" id="2_model"]
+[ext_resource type="Script" path="res://scripts/combat/hurtbox.gd" id="3_hurtbox"]
+[ext_resource type="Script" path="res://scripts/combat/hitbox.gd" id="4_hitbox"]
+[ext_resource type="Script" path="res://scripts/ai/boss_attack.gd" id="5_attack"]
+[ext_resource type="Resource" path="res://resources/attacks/bonedragon_bite.tres" id="6_bite"]
+[ext_resource type="Resource" path="res://resources/attacks/bonedragon_tail_sweep.tres" id="7_tail"]
+[ext_resource type="Resource" path="res://resources/attacks/bonedragon_stomp.tres" id="8_stomp"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_torso"]
+size = Vector3(1.6, 3.2, 1.4)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_head"]
+radius = 0.8
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_foreleg"]
+radius = 0.35
+height = 1.4
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hindleg"]
+radius = 0.35
+height = 1.2
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_bite"]
+radius = 1.2
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tail"]
+size = Vector3(1.6, 2, 4.5)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_stomp"]
+radius = 2.5
+
+[sub_resource type="StandardMaterial3D" id="Mat_telegraph"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.08, 0.04, 0.4)
+cull_mode = 2
+no_depth_test = false
+
+[sub_resource type="CylinderMesh" id="Cyl_bite"]
+material = SubResource("Mat_telegraph")
+top_radius = 1.2
+bottom_radius = 1.2
+height = 0.02
+radial_segments = 24
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Cyl_stomp"]
+material = SubResource("Mat_telegraph")
+top_radius = 2.5
+bottom_radius = 2.5
+height = 0.02
+radial_segments = 32
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Cyl_tail"]
+material = SubResource("Mat_telegraph")
+top_radius = 5.31
+bottom_radius = 5.31
+height = 0.02
+radial_segments = 48
+rings = 1
+
+[node name="BossBonedragon" instance=ExtResource("1_base")]
+display_name = "Bone Dragon"
+attacks = Array[ExtResource("5_attack")]([ExtResource("6_bite"), ExtResource("7_tail"), ExtResource("8_stomp")])
+max_health = 400
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+
+[node name="SpineAttach" type="BoneAttachment3D" parent="Model/metarig/Skeleton3D"]
+bone_name = "spine.003"
+bone_idx = 11
+
+[node name="TorsoHurtbox" type="Area3D" parent="Model/metarig/Skeleton3D/SpineAttach"]
+collision_layer = 128
+collision_mask = 0
+monitoring = false
+monitorable = true
+script = ExtResource("3_hurtbox")
+surface = &"bone"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Model/metarig/Skeleton3D/SpineAttach/TorsoHurtbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0.15)
+shape = SubResource("BoxShape3D_torso")
+
+[node name="SkullAttach" type="BoneAttachment3D" parent="Model/metarig/Skeleton3D"]
+bone_name = "skull"
+bone_idx = 15
+
+[node name="HeadHurtbox" type="Area3D" parent="Model/metarig/Skeleton3D/SkullAttach"]
+collision_layer = 128
+collision_mask = 0
+monitoring = false
+monitorable = true
+script = ExtResource("3_hurtbox")
+damage_multiplier = 1.25
+surface = &"bone"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Model/metarig/Skeleton3D/SkullAttach/HeadHurtbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("SphereShape3D_head")
+
+[node name="BiteHitbox" type="Area3D" parent="Model/metarig/Skeleton3D/SkullAttach"]
+collision_layer = 32
+collision_mask = 64
+monitoring = false
+monitorable = false
+script = ExtResource("4_hitbox")
+damage = 25
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Model/metarig/Skeleton3D/SkullAttach/BiteHitbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("SphereShape3D_bite")
+
+[node name="ForelegLAttach" type="BoneAttachment3D" parent="Model/metarig/Skeleton3D"]
+bone_name = "forearm.L"
+bone_idx = 18
+
+[node name="ForelegLHurtbox" type="Area3D" parent="Model/metarig/Skeleton3D/ForelegLAttach"]
+collision_layer = 128
+collision_mask = 0
+monitoring = false
+monitorable = true
+script = ExtResource("3_hurtbox")
+surface = &"bone"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Model/metarig/Skeleton3D/ForelegLAttach/ForelegLHurtbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("CapsuleShape3D_foreleg")
+
+[node name="ForelegRAttach" type="BoneAttachment3D" parent="Model/metarig/Skeleton3D"]
+bone_name = "forearm.R"
+bone_idx = 23
+
+[node name="ForelegRHurtbox" type="Area3D" parent="Model/metarig/Skeleton3D/ForelegRAttach"]
+collision_layer = 128
+collision_mask = 0
+monitoring = false
+monitorable = true
+script = ExtResource("3_hurtbox")
+surface = &"bone"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Model/metarig/Skeleton3D/ForelegRAttach/ForelegRHurtbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("CapsuleShape3D_foreleg")
+
+[node name="HindlegLAttach" type="BoneAttachment3D" parent="Model/metarig/Skeleton3D"]
+bone_name = "lower_leg.L"
+bone_idx = 52
+
+[node name="HindlegLHurtbox" type="Area3D" parent="Model/metarig/Skeleton3D/HindlegLAttach"]
+collision_layer = 128
+collision_mask = 0
+monitoring = false
+monitorable = true
+script = ExtResource("3_hurtbox")
+surface = &"bone"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Model/metarig/Skeleton3D/HindlegLAttach/HindlegLHurtbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+shape = SubResource("CapsuleShape3D_hindleg")
+
+[node name="HindlegRAttach" type="BoneAttachment3D" parent="Model/metarig/Skeleton3D"]
+bone_name = "lower_leg.R"
+bone_idx = 58
+
+[node name="HindlegRHurtbox" type="Area3D" parent="Model/metarig/Skeleton3D/HindlegRAttach"]
+collision_layer = 128
+collision_mask = 0
+monitoring = false
+monitorable = true
+script = ExtResource("3_hurtbox")
+surface = &"bone"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Model/metarig/Skeleton3D/HindlegRAttach/HindlegRHurtbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+shape = SubResource("CapsuleShape3D_hindleg")
+
+[node name="TailSweepHitbox" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 3)
+collision_layer = 32
+collision_mask = 64
+monitoring = false
+monitorable = false
+script = ExtResource("4_hitbox")
+damage = 20
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TailSweepHitbox"]
+shape = SubResource("BoxShape3D_tail")
+
+[node name="StompHitbox" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -1)
+collision_layer = 32
+collision_mask = 64
+monitoring = false
+monitorable = false
+script = ExtResource("4_hitbox")
+damage = 30
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StompHitbox"]
+shape = SubResource("SphereShape3D_stomp")
+
+[node name="bite" type="MeshInstance3D" parent="Telegraphs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -2.95)
+visible = false
+cast_shadow = 0
+mesh = SubResource("Cyl_bite")
+
+[node name="stomp" type="MeshInstance3D" parent="Telegraphs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -1)
+visible = false
+cast_shadow = 0
+mesh = SubResource("Cyl_stomp")
+
+[node name="tail_sweep" type="MeshInstance3D" parent="Telegraphs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
+cast_shadow = 0
+mesh = SubResource("Cyl_tail")
