@@ -62,3 +62,24 @@ func test_reset_clears_all() -> void:
 	assert_eq(t.holders_count(), 0)
 	for n in [t, a, b]:
 		n.free()
+
+
+func test_is_holder_false_after_reset() -> void:
+	var t: Node = TokensScript.new()
+	var a := Node.new()
+	t.request(a)
+	assert_true(t.is_holder(a))
+	t.reset()
+	assert_true(not t.is_holder(a), "tras reset() el esbirro ya no es titular")
+	for n in [t, a]:
+		n.free()
+
+
+func test_is_holder_false_after_release() -> void:
+	var t: Node = TokensScript.new()
+	var a := Node.new()
+	t.request(a)
+	t.release(a)
+	assert_true(not t.is_holder(a))
+	for n in [t, a]:
+		n.free()
