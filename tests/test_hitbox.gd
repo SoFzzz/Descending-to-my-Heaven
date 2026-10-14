@@ -33,3 +33,22 @@ func test_inactive_hitbox_does_not_register() -> void:
 	assert_true(not hb.register_hit(hurt))
 	hb.free()
 	hurt.free()
+
+
+func test_invulnerable_hurtbox_cannot_be_hit() -> void:
+	var health := Health.new()
+	health.max_value = 100
+	health.reset()
+	var hurt := Hurtbox.new()
+	hurt.health = health
+	health.invulnerable = true
+	assert_true(not hurt.can_be_hit())
+	health.invulnerable = false
+	assert_true(hurt.can_be_hit())
+	health.take_damage(100)  # muerto
+	assert_true(not hurt.can_be_hit())
+	var sin_health := Hurtbox.new()  # sin Health: el golpe siempre cuenta
+	assert_true(sin_health.can_be_hit())
+	sin_health.free()
+	hurt.free()
+	health.free()

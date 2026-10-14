@@ -9,6 +9,11 @@ signal hurt(amount: int, source: Node)
 @export var surface: StringName = &"flesh"
 
 
+## Falso si su Health está invulnerable o muerta: el golpe no cuenta (ni sonido, ni reacción).
+func can_be_hit() -> bool:
+	return health == null or not (health.invulnerable or health.is_dead())
+
+
 func receive_hit(amount: int, source: Node) -> void:
 	var final := roundi(amount * damage_multiplier)
 	if health:
