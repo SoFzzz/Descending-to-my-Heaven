@@ -1,0 +1,9 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/environment/kit/floor_Dungeon_Map.png" id="1_u1upd"]
+
+[resource]
+cull_mode = 2
+shading_mode = 2
+albedo_texture = ExtResource("1_u1upd")
+texture_filter = 0
