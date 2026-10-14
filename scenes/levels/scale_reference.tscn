@@ -22,11 +22,11 @@ ambient_light_source = 3
 
 [sub_resource type="StandardMaterial3D" id="floor_mat"]
 albedo_color = Color(0.35, 0.35, 0.38, 1)
-uv1_scale = Vector3(80, 80, 1)
+uv1_scale = Vector3(140, 140, 1)
 
 [sub_resource type="PlaneMesh" id="floor_mesh"]
 material = SubResource("floor_mat")
-size = Vector2(80, 80)
+size = Vector2(140, 140)
 
 [sub_resource type="StandardMaterial3D" id="ref_mat"]
 albedo_color = Color(0.9, 0.25, 0.2, 1)
@@ -41,6 +41,7 @@ environment = SubResource("env")
 transform = Transform3D(1, 0, 0, 0, 0.5, 0.866, 0, -0.866, 0.5, 0, 20, 0)
 
 [node name="Floor" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 0)
 mesh = SubResource("floor_mesh")
 
 [node name="Reference" type="Node3D" parent="."]
@@ -96,7 +97,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -4)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -4)
 
 [node name="Ghidorah" parent="Models" instance=ExtResource("9_ghidorah")]
-transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 38, 0, -6)
+transform = Transform3D(2.4, 0, 0, 0, 2.4, 0, 0, 0, 2.4, 38, 0, -6)
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.966, 0.259, 0, -0.259, 0.966, 18, 7, 30)
