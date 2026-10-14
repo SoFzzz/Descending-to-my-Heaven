@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/game/arena_gameplay.gd" id="1_gp"]
+[ext_resource type="PackedScene" path="res://scenes/levels/arena_3.tscn" id="2_level"]
+[ext_resource type="PackedScene" path="res://scenes/player/kaelen.tscn" id="3_kaelen"]
+[ext_resource type="PackedScene" path="res://scenes/bosses/boss_ghidorah.tscn" id="4_boss"]
+[ext_resource type="Resource" path="res://resources/arenas/arena_3_config.tres" id="5_config"]
+
+[node name="Arena3Gameplay" type="Node3D"]
+script = ExtResource("1_gp")
+config = ExtResource("5_config")
+
+[node name="Level" parent="." instance=ExtResource("2_level")]
+
+[node name="Kaelen" parent="." instance=ExtResource("3_kaelen")]
+
+[node name="Boss" parent="." instance=ExtResource("4_boss")]
+
+; arena_3.tscn trae EndingCam1/EndingCam2 (Tarea 15) y, al entrar primero en el árbol, la EndingCam1 se
+; quedaba como cámara activa. La cámara de Kaelen debe ser la actual durante el combate.
+[node name="Camera3D" parent="Kaelen/CameraRig/SpringArm3D" index="0"]
+current = true
