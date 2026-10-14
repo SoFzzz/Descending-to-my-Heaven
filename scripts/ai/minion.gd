@@ -92,6 +92,16 @@ func _physics_process(delta: float) -> void:
 	_run_state(delta)
 
 
+## Lo pone en persecución y sin radio de pérdida: lo usa el Orquestador con las oleadas, que nacen
+## a > 8 m (normalmente fuera del radio de detección) y, sin esto, se quedarían en IDLE.
+func alert() -> void:
+	if state == MinionState.DEAD:
+		return
+	brain.lose_radius = INF
+	state = MinionState.CHASE
+	_state_time = 0.0
+
+
 func _run_state(delta: float) -> void:
 	match state:
 		MinionState.CHASE:
@@ -174,8 +184,18 @@ func _update_token(distance: float) -> void:
 			_release_token()
 
 
+## Consulta a AttackTokens (la fuente de verdad): si lo reiniciaron (reset) con este esbirro vivo,
+## deja de creer que tiene ficha. Sin autoload (pruebas con -s) usa su copia local.
 func _has_token() -> bool:
+	var tokens := _tokens()
+	if tokens and _holding_token:
+		_holding_token = tokens.is_holder(self)
 	return _holding_token
+
+
+## Devuelve la ficha (lo usa el Orquestador al terminar la arena).
+func release_token() -> void:
+	_release_token()
 
 
 func _release_token(cooldown := false) -> void:
