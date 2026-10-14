@@ -27,6 +27,19 @@ func _ready() -> void:
 		var expected: float = EXPECTED.get(model.name, 0.0)
 		print("%-15s alto %5.2f m (esperado %5.2f)  largo %5.2f  suelo %+.2f" % [
 			model.name, box.size.y, expected, max(box.size.x, box.size.z), box.position.y])
+	for boss in ["Blackhorn", "Ghidorah"]:
+		_report_animations($Models.get_node(boss))
+
+
+## Lista las animaciones de un modelo con su duración y si hacen bucle (comprobación de la Tarea 11).
+func _report_animations(model: Node) -> void:
+	var player := model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if player == null:
+		print("%s: SIN AnimationPlayer" % model.name)
+		return
+	for anim in player.get_animation_list():
+		var a := player.get_animation(anim)
+		print("  %-10s %-14s %5.2f s  %s" % [model.name, anim, a.length, "bucle" if a.loop_mode != Animation.LOOP_NONE else "una vez"])
 
 
 func _world_aabb(node: Node) -> AABB:
