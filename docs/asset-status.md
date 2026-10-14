@@ -19,7 +19,7 @@ Estados: `listo` / `falta rig` / `falta animación` / `reemplazado`.
 | Jefe 1 | `bonedragon/bone dragon.fbx` | Sí, ~70 huesos (los pesos de los huesos de control IK se pasaron al hueso FK más cercano) | `idle` (bucle), `roar`, `bite`, `tail_sweep`, `stomp`, `death` | listo | `assets/bosses/bonedragon/bonedragon.glb`, generado con `_source/tools/animate_bonedragon.py` (poses clave por script; editable en `_source/models/bonedragon/bonedragon_animated.blend`). Mide ~7.7 m de largo: escala 1. `bite` y `stomp` mueven el hueso `root`; `death` termina tumbado de costado. |
 | Jefe 2 | `blackhorn/Blackhorn of the Shattered Peaks.fbx` (reemplaza a Dead Oath Hunter, 2026-10-14) | Sí, Mixamo | 8 propios: `idle`, `taunt`, `roar`, `walk`, `run`, `charge`, `attack_pounce`, `attack_slam`; + `hurt` y `death` de Mixamo | listo | `assets/bosses/blackhorn/blackhorn.glb` a **3.20 m** con los pies en el suelo (`export_multi_action.py -- blackhorn`). `hurt`/`death` descargados de Mixamo en `_source/mixamo/blackhorn/anims/`. |
 | Reserva (esbirro) | `straw_reaper/THE STRAW REAPER new.fbx` | Sí, Mixamo | 9 clips Mixamo sin nombre (17–366 frames) + `Scarecrow anim` (701 frames, todas pegadas) | falta animación | Solo si un esbirro falla o se ve peor. Identificar y nombrar clips como se hizo con el Hunter. Hoz incluida. Uso comercial permitido (crédito opcional a imaginais). |
-| Jefe 3 | `mecha-king-ghidorah/source/Mecha King Ghidorah.fbx` (26k → 9.1k tris) | Sí, estilo MMD (nombres en japonés; 3 cuellos, 2 colas, alas) | `idle` (bucle), `roar`, `bite`, `tail_sweep`, `beam`, `death` | listo | `assets/bosses/ghidorah/ghidorah.glb`, generado con `_source/tools/animate_ghidorah.py` (reduce la malla y crea las poses; editable en `_source/models/mecha-king-ghidorah/ghidorah_animated.blend`). Mide ~3.5 m: **escalar ×3** en Godot. `tail_sweep` gira cadera y torso dando pasos (pies apoyados). En `bite` la cabeza central baja casi al suelo entre los frames 24 y 44 (ventana para golpearla); el rayo de `beam` es un efecto en Godot (frames 27–65). |
+| Jefe 3 | `mecha-king-ghidorah/source/Mecha King Ghidorah.fbx` (26k → 9.1k tris) | Sí, estilo MMD (nombres en japonés; 3 cuellos, 2 colas, alas) | `idle` (bucle), `roar`, `bite`, `tail_sweep`, `beam`, `death` | listo (corregido en la Tarea 13) | `assets/bosses/ghidorah/ghidorah.glb`, generado con `_source/tools/animate_ghidorah.py` (reduce la malla y crea las poses; editable en `_source/models/mecha-king-ghidorah/ghidorah_animated.blend`). Mide 4.15 m de alto y 7.1 m de largo con las colas: **escalar ×2.4 en Godot** (10.2 m de alto, 17 m de largo con las colas extendidas, §7.4 pide ~10 × 14 × 14). Colas subidas 40° en todos los clips (colgaban 2.5 m bajo el suelo). `death` cae de costado. En `bite` la cabeza central baja a 1.47 m (hueso, ya con ×2.4; la mandíbula a 1.1 m y el punto más bajo de la malla a 0.4 m) y las laterales a 2.2 m; el rayo de `beam` es un efecto en Godot (frames 27–65). |
 | Reserva (jefe 3) | `psx_insectoid_demon/scene.gltf` (622 tris) | No | — | falta rig | Solo si Ghidorah falla. No humanoide: rig manual en Blender. |
 | Reserva | `DoriOri.fbx` | Sí (`root`) | Solo `Pose` | falta animación | Sin uso previsto. |
 
@@ -82,6 +82,77 @@ Licencias y créditos: [`creditos.md`](creditos.md).
 
 Al importar un `.glb`, Blender dibuja cada hueso con una esfera (objeto `Icosphere`). En modelos con muchos huesos (Ghidorah tiene 118) las esferas se amontonan y tapan la malla: parece una "papa" con contorno naranja (es el *Armature* seleccionado). No es un error del modelo y Godot no dibuja los huesos. Para verlo: seleccionar el *Armature* → *Object Data* → *Viewport Display* → desmarcar **Shapes** (o ocultarlo con `H`), y `Home` para encuadrar. Alternativa: abrir los `.blend` de trabajo (`bonedragon_animated.blend`, `ghidorah_animated.blend`), que no tienen ese problema.
 
+## Verificación en Godot (Tarea 11, 2026-10-14)
+
+Medido con el esqueleto y la malla en `scenes/levels/scale_reference.tscn` (skinning calculado en CPU; el suelo de la escena se amplió a 140 m para que quepa Ghidorah). `scale_reference.gd` ahora lista también las animaciones de los jefes.
+
+**Blackhorn** (escala 1): 3.20 m exactos con los pies en y = 0.000 en `idle`. 10 clips reproducen sin errores; picos de altura 3.81 m (`run`/`walk`, brazos arriba). Pies entre −0.06 y +0.15 m en todos los clips. Diferencias con lo documentado:
+- `idle` y `charge` duran lo mismo (0.90 s, bucle) y `walk` y `run` también (1.47 s, bucle): parecen el mismo clip duplicado. Comprobar si hay que usar velocidades distintas desde Godot.
+- `death` termina con el cuerpo tumbado **0.83 m por encima del suelo** (el hueso de la cadera no baja en el clip de Mixamo): hay que bajar el modelo ~0.8 m al terminar la muerte (tween en `Boss`) o recortar el clip.
+- `hurt` levanta los pies ~0.12 m.
+
+**Ghidorah**: lo documentado ("~3.5 m, escalar ×3") no es cierto. El `.glb` mide **4.15 m** de los pies a la punta del ala/cabeza más alta y 5.8 m de largo (cuerpo + colas), 3.8 m de envergadura. Los huesos llegan a 3.3 m (cuernos), por eso salía 3.5. Con ×3: 12.5 m de alto, 17.4 m de largo, 11.3 m de envergadura (§7.4: 10 × 14 × 14). Con **×2.4** sale 10.0 m de alto y 13.9 m de largo (envergadura 9.1 m): es el factor que mejor cuadra con §7.4. Los pies sí quedan en y = 0.01.
+- **Defecto: las dos colas cuelgan bajo el suelo.** En reposo la punta de cada cola está 2.0 m (hueso) / 2.5 m (malla) por debajo de los pies; con ×3 son 7.4 m bajo el suelo (6 m con ×2.4). Atraviesan el piso en todos los clips.
+- **Arreglado en la Tarea 13** (ver *Corrección de Ghidorah* más abajo).
+- Sin deformaciones evidentes de la malla en ningún clip (capturas de 3 fotogramas por clip revisadas).
+
+Tabla de animaciones (`AnimationPlayer.get_animation_list()`, duraciones reales):
+
+| Jefe | Clip | Duración | Bucle |
+|---|---|---|---|
+| Blackhorn | `idle` | 0.90 s | sí |
+| Blackhorn | `taunt` | 5.43 s | no |
+| Blackhorn | `roar` | 2.87 s | no |
+| Blackhorn | `walk` | 1.47 s | sí |
+| Blackhorn | `run` | 1.47 s | sí |
+| Blackhorn | `charge` | 0.90 s | sí |
+| Blackhorn | `attack_pounce` | 3.53 s | no |
+| Blackhorn | `attack_slam` | 2.70 s | no |
+| Blackhorn | `hurt` | 1.07 s | no |
+| Blackhorn | `death` | 3.67 s | no |
+| Ghidorah | `idle` | 2.54 s | sí |
+| Ghidorah | `roar` | 2.92 s | no |
+| Ghidorah | `bite` | 2.67 s | no |
+| Ghidorah | `tail_sweep` | 2.67 s | no |
+| Ghidorah | `beam` | 3.33 s | no |
+| Ghidorah | `death` | 4.17 s | no |
+
+Otros modelos en `scale_reference` (esqueleto): Bone Dragon sale 4.92 m de alto y 8.6 m de largo con el suelo en −1.08 m (huesos de las colas/alas bajo el suelo); PlagueArcanist 1.89 m (doc. 1.80).
+
 ## Pendiente de medir al importar
 
 Factor de escala y altura en `scale_reference` para cada modelo (se completa al exportar el `.glb`).
+
+## Corrección de Ghidorah y jefes 2 y 3 (Tarea 13, 2026-10-14)
+
+Medido en Godot con el esqueleto y la malla (skinning en CPU, 25 muestras por clip), escala ×2.4, antes y después de regenerar `ghidorah.glb`:
+
+| Clip | Hueso más bajo (antes → después) | Malla más baja (antes → después) | Cambio |
+|---|---|---|---|
+| `idle` | −4.89 → 0.00 m | −5.95 → −0.01 m | colas a la altura de los pies |
+| `roar` | −4.89 → 0.00 | −5.95 → −0.01 | alas abiertas hacia arriba |
+| `bite` | −5.08 → 0.00 | −6.14 → −0.01 | torso inclinado 45° y cuellos laterales 60° |
+| `tail_sweep` | −4.89 → 0.00 | −5.95 → −0.01 | |
+| `beam` | −4.88 → 0.00 | −5.95 → −0.01 | |
+| `death` | −10.66 → 0.00 | −12.27 → −0.17 (durante la caída; al final 0.02) | cae de costado: `ROOT` con roll 80° (+0.6 m de altura y 0.5 m en X), ala del lado que cae plegada hacia arriba |
+
+- Cambios en `_source/tools/animate_ghidorah.py`: base de cada cola +40° (antes de `bake()`), `wings(angle)` ahora abre las alas hacia arriba (con el signo anterior colgaban hasta 0.6 m bajo el suelo al abrirlas), `bite` con `UPPER` 45° y cuellos laterales 60°, `CENTER` sin bajar en `bite`/`tail_sweep` (los pies se hundían), `death` de costado. Constantes al inicio del script. Nombres de clip y marcas de bucle sin cambios (`idle-loop` → `idle` con bucle).
+- Altura de la cabeza en `bite` (escala ×2.4): hueso de la cabeza central 1.47 m, mandíbula 1.12 m, vértice más bajo de esa cabeza 0.37 m; cabezas laterales 2.2 m (hueso) / 1.2 m (malla). Las tres caen delante del cuerpo (z = 4.3 a 5.3 m). Con la espada (alcance ~1.5 m) se golpean sin saltar.
+- Longitud: con las colas horizontales mide 17.2 m (z de −12.8 a +4.4), no 14: las colas miden ~7 m a escala 1. Pegado a la pared norte de `arena_3` (BossStart z = −12, arena de ±20) la cola atraviesa el muro (solo visual).
+- Escalas en Godot: Blackhorn 1.0 (3.20 m), Ghidorah 2.4 (en `boss_ghidorah.tscn` y `scale_reference.tscn`).
+- `BoneAttachment3D` sobre estos esqueletos (escala 0.01 del armature) deforma las `Area3D` hijas, por eso las zonas que siguen huesos (garras de Blackhorn, cabezas, torso y mordida de Ghidorah) son `Area3D` sueltas movidas por un `RemoteTransform3D` (solo posición) colgado del `BoneAttachment3D`.
+
+### Jefes 2 y 3 en Godot (`boss_blackhorn.tscn`, `boss_ghidorah.tscn`)
+
+| Jefe | Ataque (id, clip) | Rango | Daño | Aviso | Activo | Recuperación | Fase | Zona |
+|---|---|---|---|---|---|---|---|---|
+| Blackhorn (500 PV) | `slam`, `attack_slam` | 0–4 m | 20 | 1.35 s | 0.45 s | 0.9 s | 1 | esfera r 3 alrededor |
+| | `pounce`, `attack_pounce` | 2–7 m | 18 | 1.9 s | 0.5 s | 1.1 s | 1 | caja 2×2×4 al frente + garras (esferas r 0.6 en las manos); avanza 3 m |
+| | `charge`, `charge` | 8–16 m | 25 | 1.0 s | 0.9 s | 1.4 s | solo 2 | caja 1.5×2.5×3 al frente; avanza 12 m (aviso: carril 1.5 × 15 m) |
+| Ghidorah (600 PV) | `bite`, `bite` | 0–6 m | 12 | 1.1 s | 0.6 s | 1.0 s | 1 | esfera r 1.5 en la mandíbula central |
+| | `tail_sweep`, `tail_sweep` | 0–8 m | 10 | 1.2 s | 0.8 s | 1.2 s | 1 | caja 2.5×3×6 detrás (a 3.5–9.5 m) y el cuerpo gira 360° (aviso: disco r 9.6) |
+| | `beam`, `beam` | 8–20 m | 14 | 1.1 s | 1.5 s | 1.3 s | 1 | caja 1.5×1.5×20 al frente (aviso: línea; efecto visual amarillo mientras está activo) |
+
+Daño pensado para la vida máxima de Kaelen en cada arena (100/70/40 PV): ~25–30 % por golpe. Los clips `idle`/`charge` de Blackhorn duran lo mismo (0.90 s) y `walk`/`run` también (1.47 s): parecen duplicados; el clip `charge` se usa también como aviso de la embestida (corre en el sitio durante 1 s).
+
+`scripts/ai/attack_driver.gd` (nodo `AttackDriver`, hijo del jefe) cubre lo que `Boss` aún no hace, sin tocar `boss.gd`: avance durante `ACTIVE` (embestida, salto), aproximación para ataques de largo alcance (`Boss` solo ataca a menos de `engage_range`), `walk`/`run` al avanzar (`Boss.walk_animation` no se usa), garras con el zarpazo, cabezas de Ghidorah golpeables solo mientras dura `bite` (+0.25 s), efecto del rayo y apoyo del cuerpo en el suelo al morir (la `death` de Blackhorn terminaba 0.83 m en el aire: el modelo baja ~1 m en la animación).
