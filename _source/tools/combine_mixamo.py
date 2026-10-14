@@ -62,11 +62,13 @@ def strip_root_motion(action):
 
 
 def normalize_height(arm, height):
-    """Escala el objeto raíz para que el personaje mida `height` m en el frame 1 de su idle."""
+    """Escala el objeto raíz para que el personaje mida `height` m en el frame 1 de su idle
+    y lo sube o baja para que los pies queden en z = 0."""
     tracks = list(arm.animation_data.nla_tracks)
     for t in tracks:
         t.mute = True
-    idle = next((t.strips[0].action for t in tracks if t.name.startswith("idle")), tracks[0].strips[0].action)
+    by_name = {t.name: t.strips[0].action for t in tracks}
+    idle = by_name.get("idle-loop") or by_name.get("idle") or tracks[0].strips[0].action
     arm.animation_data.action = idle
     bpy.context.scene.frame_set(1)
 
@@ -79,13 +81,16 @@ def normalize_height(arm, height):
                 me = e.to_mesh()
                 zs += [(o.matrix_world @ v.co).z for v in me.vertices]
                 e.to_mesh_clear()
-        return max(zs) - min(zs)
+        return min(zs), max(zs)
 
     root = arm
     while root.parent:
         root = root.parent
-    before = measure()
+    lo, hi = measure()
+    before = hi - lo
     root.scale *= height / before
+    bpy.context.view_layer.update()
+    root.location.z -= measure()[0]  # pies en z = 0
     bpy.context.view_layer.update()
     arm.animation_data.action = None
     for t in tracks:

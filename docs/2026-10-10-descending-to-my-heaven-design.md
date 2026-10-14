@@ -48,7 +48,7 @@ Estética: fantasía oscura PSX (baja resolución interna, texturas con filtro *
 | Jefe 1 | `bonedragon` | Ya trae rig con skin (~70 huesos), sin animaciones; animaciones creadas en Blender + movimiento procedural |
 | Esbirros 1 | `Skeleton` | Sin rig → Mixamo |
 | Élite 1 | `knight__ps1_psx` | Trae rig propio (26 huesos) solo con `Idle` → re-rig en Mixamo |
-| Jefe 2 | `dead_oath_hunter` (Dead Oath Hunter, imaginais — reemplaza a Malenia desde 2026-10-13) | Rig Mixamo con 18 animaciones propias (idle, caminar, 7 ataques, esquivas, golpe, muerte); exportado con `_source/tools/export_dead_oath_hunter.py` |
+| Jefe 2 | `blackhorn` (Blackhorn of the Shattered Peaks; reemplaza a Dead Oath Hunter desde 2026-10-14) | Rig Mixamo con 8 animaciones propias (idle, burla, rugido, caminar, correr, embestida, zarpazo con salto, golpe al suelo) + `hurt`/`death` tomadas de otro personaje Mixamo; exportado a 3.20 m con `_source/tools/export_multi_action.py -- blackhorn` |
 | Reserva (esbirro) | `straw_reaper` (The Straw Reaper, imaginais) | Rig Mixamo con 9 animaciones; sustituto de cualquier esbirro que falle o se vea peor |
 | Esbirros 2 | `Plague Arcanist` | Rig Mixamo + 10 animaciones (nombres genéricos, hay que identificarlas y renombrarlas) |
 | Jefe 3 | `mecha-king-ghidorah` (reducir de 26k a ~8k triángulos) | Ya trae rig con skin (3 cuellos, 2 colas, alas), sin animaciones; decimar conservando pesos; animaciones creadas en Blender + movimiento procedural |
@@ -89,7 +89,7 @@ Impactos: hitbox `Area3D` activada en ventanas de la animación; hurtbox en cada
 ```
 Menú principal → Llegada a la isla / entrada al templo
   → Jefe 1 (Bone Dragon)
-  → Jefe 2 (Dead Oath Hunter)
+  → Jefe 2 (Blackhorn)
   → Jefe 3 (Mecha King Ghidorah)
   → Encuentro con Elysia (cámara fija + texto) → Créditos → Menú principal
 ```
@@ -124,7 +124,7 @@ El juego ocurre en un solo lugar: **un templo vertical construido sobre la isla 
 |---|---|---|
 | `island_intro` | Kaelen aparece en el borde de la isla, camina por un sendero corto hasta la puerta del templo. Texto narrativo breve. | 1-2 min |
 | `arena_1` | Catacumba — Bone Dragon + esqueletos (+ knight élite) | 3-6 min |
-| `arena_2` | Claustro — Dead Oath Hunter + Plague Arcanists | 3-6 min |
+| `arena_2` | Claustro — Blackhorn + Plague Arcanists | 3-6 min |
 | `arena_3` | Cúspide abierta — Mecha King Ghidorah + TheWrapper (+ Aura Battler élite) | 4-8 min |
 | `ending` | Altar en la cima — encuentro con Elysia, cámara fija | 1-2 min |
 
@@ -164,7 +164,7 @@ El juego ocurre en un solo lugar: **un templo vertical construido sobre la isla 
 
 | | Arena 1 — Catacumba | Arena 2 — Claustro | Arena 3 — Cúspide abierta |
 |---|---|---|---|
-| Jefe | Bone Dragon | Dead Oath Hunter | Mecha King Ghidorah |
+| Jefe | Bone Dragon | Blackhorn | Mecha King Ghidorah |
 | Forma | Rectangular | Octogonal | Circular / irregular |
 | Área de combate | 32 × 32 m | 24 m de diámetro | 40 × 40 m |
 | Altura | Techo a 8 m | Techo a 8 m (bóveda) | Sin techo (cielo abierto) |
@@ -204,7 +204,7 @@ El juego ocurre en un solo lugar: **un templo vertical construido sobre la isla 
    - Import de cada textura: sin mipmaps, `Size Limit` 256, compresión *Lossless*.
    - Pisos y muros reutilizan `modulardungeontextures` con repetición (`uv1_scale`).
    - Las piezas bloqueadas con CSG pueden usar *triplanar* temporalmente.
-5. **Material único PSX:** un `ShaderMaterial` plantilla (`psx.gdshader`) con parámetros `albedo_texture`, `tint` y `uv_scale`. Todas las piezas del kit, la isla y los personajes lo usan; cambiar el tinte global ajusta la paleta de todo el juego.
+5. **Material único PSX:** se usan los shaders de **Godot-PSX-Starter-kit** (MIT, portados a Godot 4 en `shaders/psx/`): `psx_lit.gdshader` para casi todo (vértices que tiemblan, iluminación por vértice, textura *nearest*), con variantes `alpha_scissor` (rejas, cadenas, follaje), `transparent` y `metal`; parámetros `albedoTex`, `modulate_color` (tinte), `uv_scale` y `precision_multiplier`. Cambiar `modulate_color` en la plantilla ajusta la paleta. Postproceso en `shaders/psx/postprocess/`: `pp_band_dither` (reducción de color con *dithering*, lo más importante para el look PS1) y opcionales (`vhs`, `ntsc`, `grain`, `lcd`…). Original sin portar en `_source/godot-psx-starter-kit/`.
 6. **Decoración (día 6):** solo después de que el flujo completo funcione.
 
 ### 6.5 Reglas para que todo se vea como un conjunto
@@ -289,7 +289,7 @@ Cada personaje tiene cinco "tamaños" distintos que **no** deben confundirse:
 | Jefe | a) Visual | b) Collider físico | c) Hurtboxes | c) Hitboxes por ataque | e) Navegación |
 |---|---|---|---|---|---|
 | **Bone Dragon** | 8 m de largo · 3.5 m de alto · 10 m de envergadura | Cápsula horizontal r 1.2 × 4 m en el torso; la cola **sin** collider físico | Torso (caja), cabeza (esfera r 0.8, daño ×1.25), 4 patas (cápsulas) | Mordida: esfera r 1.2 en la cabeza · Barrido de cola: caja curva 5 m · Pisotón: esfera r 2.5 bajo la pata | Capa grande |
-| **Dead Oath Hunter** | 2.60 m (escalado ×1.75; el modelo mide ~1.5 m) | r 0.50 · alto 2.60 | Cápsula r 0.55 · alto 2.50 | Caja de espada 0.2 × 0.2 × 1.6 m · Estocada: caja 1 × 1 × 4 m | Capa chica |
+| **Blackhorn** | 3.20 m (ya exportado a esa altura; casi el doble que Kaelen) | r 0.70 · alto 3.20 | Cápsula r 0.80 · alto 3.0 | Garras: esferas r 0.6 en ambas manos · Zarpazo con salto: caja 2 × 2 × 4 m al frente · Golpe al suelo: esfera r 3 alrededor · Embestida: caja 1.5 × 2.5 × 3 m al frente | Capa grande |
 | **Mecha King Ghidorah** | 10 m de alto · 14 m de largo · 14 m de envergadura | Cápsula r 2.5 · alto 6 en el torso + cápsulas en patas; cuellos y cabezas **sin** collider físico | Torso y patas (siempre alcanzables); 3 cabezas (esferas r 1.0) solo alcanzables cuando bajan para morder | Mordida: esfera r 1.5 · Barrido de cola: caja 6 m · Rayo: caja larga 1.5 × 1.5 × 20 m con aviso de línea en el piso | Capa grande |
 
 **Por qué los cuellos, cabezas y colas no tienen collider físico:** se mueven mucho y empujarían a Kaelen o a la cámara de forma errática. Solo tienen hurtbox/hitbox (`Area3D`), que detectan sin empujar.
@@ -318,8 +318,8 @@ Dos capas de navegación por arena, horneadas con parámetros distintos (`Naviga
 
 | Capa | Quién la usa | Radio del agente | Alto del agente | Escalón máx. | Pendiente máx. |
 |---|---|---|---|---|---|
-| **Chica** (capa 1) | Esqueletos, Knight, Plague Arcanist, TheWrapper, Dead Oath Hunter | 0.5 m | 2.0 m | 0.3 m | 35° |
-| **Grande** (capa 2) | Bone Dragon, Ghidorah, Aura Battler | 2.5 m | 4.0 m | 0.5 m | 25° |
+| **Chica** (capa 1) | Esqueletos, Knight, Plague Arcanist, TheWrapper | 0.5 m | 2.0 m | 0.3 m | 35° |
+| **Grande** (capa 2) | Bone Dragon, Blackhorn, Ghidorah, Aura Battler | 2.5 m | 4.0 m | 0.5 m | 25° |
 
 Parámetros comunes del horneado: celda 0.25 m, alto de celda 0.25 m.
 
@@ -462,7 +462,7 @@ Pistas reunidas en `_source/bgm/` (original: `D:\BGM`):
 | Menú principal | `celtic melancholy.mp3` |
 | Isla / entrada al templo | `LVS04_10_Battlefield_bpm180_loop.ogg` (o silencio + ambiente) |
 | Jefe 1 — Bone Dragon | `skull dragon battle.mp3` |
-| Jefe 2 — Dead Oath Hunter | `Blazing Honor.mp3` |
+| Jefe 2 — Blackhorn | `Blazing Honor.mp3` |
 | Jefe 3 — Mecha King Ghidorah | `black dragon battle.mp3` |
 | Fase 2 de jefe / alternativas | `ancient creature battle.mp3`, `hellhound battle.mp3`, `wyvern battle.mp3` |
 | Encuentro con Elysia y créditos | `sadness piano4.mp3` |
@@ -506,7 +506,7 @@ res://
   scenes/
     player/      kaelen.tscn
     enemies/     minion_base.tscn + variantes por nivel
-    bosses/      boss_base.tscn + boss_dragon / boss_hunter / boss_ghidorah
+    bosses/      boss_base.tscn + boss_dragon / boss_blackhorn / boss_ghidorah
     levels/      island_intro, arena_1, arena_2, arena_3, ending, scale_reference
     ui/          main_menu, pause_menu, options_menu, hud, credits, debug_overlay
   scripts/
@@ -515,7 +515,7 @@ res://
     ai/          minion_fsm.gd, attack_token_manager.gd, boss_brain.gd, boss_attack.gd (Resource), orchestrator.gd
     game/        game_state.gd (autoload: nivel actual, vida máxima), events.gd (autoload: señales)
     audio/       audio_manager.gd (autoload: música y sonidos globales)
-  shaders/       psx.gdshader, post_effect.gdshader
+  shaders/       psx/ (psx_lit*.gdshader, psx_unlit*.gdshader) + psx/postprocess/ (pp_band_dither y efectos de pantalla)
 ```
 
 Principios: componentes pequeños (`Health`, `Hitbox`, `Hurtbox`, `Stamina`) que se reutilizan en Kaelen, esbirros y jefes. Los jefes comparten `boss_base` y solo cambian modelo y recursos `BossAttack`. Las arenas son escenas independientes cargadas por `game_state`.
@@ -541,7 +541,7 @@ Descending-to-my-Heaven/          (raíz del repo = raíz del proyecto Godot)
 - Conversión FBX → GLB en Blender cuando el import directo de Godot falle.
 
 ### 13.2 Visibilidad del repositorio
-El repositorio debe ser **privado**. Varios packs prohíben redistribuir los archivos originales (Ririsaurus, Atelier Magicae, licencia estándar de Sketchfab) y Ghidorah es fan-art de una propiedad con copyright. Dead Oath Hunter es de uso **no comercial** (crédito a imaginais en los créditos). Lo que se publica es el juego exportado, no los archivos originales.
+El repositorio debe ser **privado**. Varios packs prohíben redistribuir los archivos originales (Ririsaurus, Atelier Magicae, licencia estándar de Sketchfab) y Ghidorah es fan-art de una propiedad con copyright. Lo que se publica es el juego exportado, no los archivos originales.
 - **Regla de trabajo:** una sola persona edita cada escena `.tscn` a la vez (dueño por escena) para evitar conflictos de merge.
 
 ## 14. Roles

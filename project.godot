@@ -13,10 +13,6 @@ config_version=5
 config/name="Descending to my Heaven"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
-[audio]
-
-buses/default_bus_layout="res://default_bus_layout.tres"
-
 [display]
 
 window/size/viewport_width=640
@@ -28,19 +24,19 @@ window/stretch/mode="viewport"
 [layer_names]
 
 3d_physics/layer_1="world"
+3d_navigation/layer_1="small"
 3d_physics/layer_2="player"
+3d_navigation/layer_2="large"
 3d_physics/layer_3="enemy"
 3d_physics/layer_4="boss"
 3d_physics/layer_5="player_hitbox"
 3d_physics/layer_6="enemy_hitbox"
 3d_physics/layer_7="player_hurtbox"
 3d_physics/layer_8="enemy_hurtbox"
-3d_navigation/layer_1="small"
-3d_navigation/layer_2="large"
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-textures/canvas_textures/default_texture_filter=0
 shading/overrides/force_vertex_shading=true

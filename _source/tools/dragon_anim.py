@@ -1,7 +1,8 @@
 """Utilidades para animar por script esqueletos de criaturas en Blender.
 
-Las rotaciones se escriben en ejes del armature, no del hueso, así una misma
-"inclinación" significa lo mismo en cualquier hueso:
+Las rotaciones y desplazamientos se escriben en ejes del MUNDO (Z arriba), no del hueso ni
+del objeto armature (que puede venir girado o escalado desde el FBX, como Ghidorah: 90° en X
+y escala 0.01). Así una misma "inclinación" significa lo mismo en cualquier hueso:
     pitch: alrededor del eje lateral (X)
     yaw:   alrededor del eje vertical (Z)
     roll:  alrededor del eje largo del cuerpo (Y)
@@ -22,15 +23,22 @@ def arm_quat(pitch=0.0, yaw=0.0, roll=0.0):
             @ Quaternion(AXIS["roll"], math.radians(roll)))
 
 
-def to_local(arm, bone_name, q_arm):
-    """Convierte una rotación en ejes del armature a la rotación de pose del hueso."""
-    rest = arm.data.bones[bone_name].matrix_local.to_3x3()
-    return (rest.inverted() @ q_arm.to_matrix() @ rest).to_quaternion()
+def _rest_world(arm, bone_name):
+    """Orientación de reposo del hueso en el mundo (sin escala)."""
+    obj = arm.matrix_world.to_3x3().normalized()
+    return obj @ arm.data.bones[bone_name].matrix_local.to_3x3().normalized()
 
 
-def loc_local(arm, bone_name, v_arm):
-    rest = arm.data.bones[bone_name].matrix_local.to_3x3()
-    return rest.inverted() @ Vector(v_arm)
+def to_local(arm, bone_name, q_world):
+    """Convierte una rotación en ejes del mundo a la rotación de pose del hueso."""
+    rest = _rest_world(arm, bone_name)
+    return (rest.inverted() @ q_world.to_matrix() @ rest).to_quaternion()
+
+
+def loc_local(arm, bone_name, v_world):
+    """Convierte un desplazamiento en metros del mundo al espacio local del hueso."""
+    full = arm.matrix_world.to_3x3() @ arm.data.bones[bone_name].matrix_local.to_3x3()
+    return full.inverted() @ Vector(v_world)
 
 
 def spread(bones, total, weights=None):

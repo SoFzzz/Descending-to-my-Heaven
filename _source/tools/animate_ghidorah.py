@@ -105,23 +105,38 @@ def build(arm):
     c = Clip(arm, "bite", 64)
     c.pose(1, {}, {CENTER: (0, 0, 0)})
     c.pose(16, {**head("c", -30, 0, -10, 25), **head("l", 0, 20), **head("r", 0, -20), UPPER: (-8, 0, 0)},
-           {CENTER: (0, 0.2, 0)})
-    c.pose(24, {**head("c", 62, 0, -20, 40, base=True), **head("l", 10, 25), **head("r", 10, -25), UPPER: (42, 0, 0)},
-           {CENTER: (0, -0.5, -0.35)})
-    c.pose(28, {**head("c", 62, 0, -20, 0, base=True), **head("l", 10, 25), **head("r", 10, -25), UPPER: (42, 0, 0)},
-           {CENTER: (0, -0.5, -0.35)})
-    c.pose(44, {**head("c", 60, 0, -20, 5, base=True), **head("l", 8, 20), **head("r", 8, -20), UPPER: (40, 0, 0)},
-           {CENTER: (0, -0.5, -0.35)})
+           {CENTER: (0, 0.08, 0)})
+    c.pose(24, {**head("c", 80, 0, -25, 40, base=True), **head("l", 10, 25), **head("r", 10, -25), UPPER: (25, 0, 0)},
+           {CENTER: (0, -0.15, -0.08)})
+    c.pose(28, {**head("c", 80, 0, -25, 0, base=True), **head("l", 10, 25), **head("r", 10, -25), UPPER: (25, 0, 0)},
+           {CENTER: (0, -0.15, -0.08)})
+    c.pose(44, {**head("c", 78, 0, -25, 5, base=True), **head("l", 8, 20), **head("r", 8, -20), UPPER: (24, 0, 0)},
+           {CENTER: (0, -0.15, -0.08)})
     c.pose(64, {}, {CENTER: (0, 0, 0)})
     clips.append(c)
 
-    # tail_sweep: gira el cuerpo y barre con las dos colas
-    c = Clip(arm, "tail_sweep", 60)
-    c.pose(1, {})
-    c.pose(16, {UPPER: (0, -12, 0), LOWER: (0, -15, 0), **tails(-40, 10), **heads(0, side_yaw=8)})
-    c.pose(30, {UPPER: (0, 20, 0), LOWER: (0, 30, 0), **tails(100, 15), **heads(5, side_yaw=-8)})
-    c.pose(42, {UPPER: (0, 10, 0), LOWER: (0, 15, 0), **tails(55, 8)})
-    c.pose(60, {})
+    # tail_sweep: gira la cadera dando pasos (una pierna y luego la otra) y barre con las colas.
+    # Los muslos contrarrestan el giro de la cadera para que los pies no patinen.
+    def legs(hip_yaw, lift_l=0.0, lift_r=0.0):
+        out = {}
+        for side, lift in (("左", lift_l), ("右", lift_r)):
+            out[f"{side}足+"] = (-25 * lift, -hip_yaw, 0)
+            out[f"{side}ひざ+"] = (45 * lift, 0, 0)
+            out[f"{side}足首+"] = (-20 * lift, 0, 0)
+        return out
+
+    c = Clip(arm, "tail_sweep", 64)
+    c.pose(1, {}, {CENTER: (0, 0, 0)})
+    c.pose(9, {LOWER: (0, -8, 0), UPPER: (0, -10, 0), **legs(-8, lift_r=1), **tails(-20, 5)}, {CENTER: (0, 0, 0.05)})
+    c.pose(16, {LOWER: (0, -8, 0), UPPER: (0, -18, 0), **legs(-8), **tails(-45, 10), **heads(0, side_yaw=8)},
+           {CENTER: (0, 0, -0.04)})
+    c.pose(24, {LOWER: (0, 12, 0), UPPER: (0, 10, 0), **legs(12, lift_l=1), **tails(30, 12)}, {CENTER: (0, 0, 0.05)})
+    c.pose(31, {LOWER: (0, 12, 0), UPPER: (0, 28, 0), **legs(12), **tails(110, 15), **heads(5, side_yaw=-10)},
+           {CENTER: (0, 0, -0.06)})
+    c.pose(40, {LOWER: (0, 12, 0), UPPER: (0, 22, 0), **legs(12), **tails(80, 10)}, {CENTER: (0, 0, -0.03)})
+    c.pose(50, {LOWER: (0, 0, 0), UPPER: (0, 8, 0), **legs(0, lift_r=0.8), **tails(35, 5)}, {CENTER: (0, 0, 0.04)})
+    c.pose(57, {LOWER: (0, 0, 0), UPPER: (0, 2, 0), **legs(0, lift_l=0.5), **tails(10, 2)}, {CENTER: (0, 0, 0.02)})
+    c.pose(64, {}, {CENTER: (0, 0, 0)})
     clips.append(c)
 
     # beam: carga con las bocas abiertas y dispara al frente (el rayo es un efecto en Godot)

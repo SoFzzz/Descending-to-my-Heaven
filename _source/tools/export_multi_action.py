@@ -2,7 +2,7 @@
 
 Uso (desde la raíz del repo), uno por ejecución:
     blender -b --factory-startup -P _source/tools/export_multi_action.py -- plague_arcanist
-    (plague_arcanist | thewrapper)
+    (plague_arcanist | thewrapper | blackhorn)
 
 Cada tabla dice: clip final -> (acción del FBX, frame final o None). Con un frame final se
 recorta la acción (sirve para sacar "hurt" y "death" de una animación más larga). Los nombres
@@ -21,6 +21,7 @@ REPO = Path(__file__).resolve().parents[2]
 ROOT_MOTION = {"death"}
 
 PA = "Armature|Armature|Armature{}|mixamo.com|Layer0"
+BH = "Armature.003|Armature.003|{}"
 CHARACTERS = {
     "plague_arcanist": {
         "fbx": "_source/models/Plague Arcanist/Plague Arcanist/Plague Arcanist.fbx",
@@ -53,6 +54,29 @@ CHARACTERS = {
             "attack": ("MonsterPSX_Rig|MonsterPSX_Rig|Attack_Lunge", None),
             "hurt": ("MonsterPSX_Rig|MonsterPSX_Rig|WallSlam_Recover", None),
             "scream": ("MonsterPSX_Rig|MonsterPSX_Rig|Scream.lol", None),
+        },
+    },
+    # Jefe 2 (reemplaza a Dead Oath Hunter, 2026-10-14). Bestia con cuernos, rig Mixamo.
+    "blackhorn": {
+        "fbx": "_source/models/blackhorn/Blackhorn of the Shattered Peaks.fbx",
+        "textures": "_source/models/blackhorn/Textures",
+        "out": "assets/bosses/blackhorn/blackhorn.glb",
+        "height": 3.20,  # casi el doble que Kaelen (1.70): intimidante sin salirse de la arena 2
+        "clips": {
+            "idle-loop": (BH.format("Armature.007|mixamo.com|Layer0"), None),
+            "taunt": (BH.format("Armature.005|mixamo.com|Layer0"), None),
+            "roar": (BH.format("Armature.001|mixamo.com|Layer0"), None),
+            "walk-loop": (BH.format("Armature.004|mixamo.com|Layer0.001"), None),
+            "run-loop": (BH.format("Armature.003|mixamo.com|Layer0"), None),
+            "charge-loop": (BH.format("Armature.004|mixamo.com|Layer0"), None),
+            "attack_pounce": (BH.format("Armature.002|mixamo.com|Layer0"), None),
+            "attack_slam": (BH.format("Armature.006|mixamo.com|Layer0"), None),
+        },
+        # el pack no trae golpe recibido ni muerte: se toman de otros personajes Mixamo
+        # (mismos nombres de hueso). Reemplazar por "Mutant Hit Reaction"/"Mutant Dying".
+        "extra_clips": {
+            "hurt": "_source/mixamo/knight/anims/Sword And Shield Impact.fbx",
+            "death": "_source/mixamo/knight/anims/Falling Back Death.fbx",
         },
     },
 }
@@ -94,6 +118,41 @@ def main():
         track.name = clip
         track.strips.new(clip, 1, action)
         print(f"  + {clip} ({int(action.frame_range[1])} frames) <- {src}")
+
+    for clip, path in cfg.get("extra_clips", {}).items():
+        before = set(bpy.data.objects)
+        bpy.ops.import_scene.fbx(filepath=str(REPO / path), automatic_bone_orientation=False)
+        new_objs = [o for o in bpy.data.objects if o not in before]
+        src = next(o for o in new_objs if o.type == "ARMATURE")
+        action = src.animation_data.action
+        for fc in action_fcurves(action):
+            if fc.data_path in ("location", "rotation_euler", "rotation_quaternion", "scale"):
+                fc.keyframe_points.clear()
+        # la cadera de otro esqueleto guarda posiciones de SU reposo y en SUS unidades: se pasan
+        # a desplazamientos relativos al primer frame, escalados por la altura de cadera
+        hips = "mixamorig:Hips"
+        ratio = arm.data.bones[hips].head_local.length / src.data.bones[hips].head_local.length
+        # punto de partida: la cadera del idle de este personaje en su frame 1
+        idle = bpy.data.actions[cfg["clips"]["idle-loop"][0]]
+        ref = {fc.array_index: fc.evaluate(1) for fc in action_fcurves(idle)
+               if fc.data_path.endswith(':Hips"].location')}
+        for fc in action_fcurves(action):
+            if fc.data_path.endswith(':Hips"].location') and fc.keyframe_points:
+                v0 = fc.keyframe_points[0].co[1]
+                base = ref.get(fc.array_index, 0.0)
+                for kp in fc.keyframe_points:
+                    for attr in ("co", "handle_left", "handle_right"):
+                        pt = getattr(kp, attr)
+                        pt[1] = base + (pt[1] - v0) * ratio
+        if clip not in ROOT_MOTION:
+            strip_root_motion(action)
+        action.name = clip
+        action.use_fake_user = True
+        track = arm.animation_data.nla_tracks.new()
+        track.name = clip
+        track.strips.new(clip, 1, action)
+        bpy.data.batch_remove(new_objs)
+        print(f"  + {clip} ({int(action.frame_range[1])} frames) <- {Path(path).name}")
 
     normalize_height(arm, cfg["height"])
     out = REPO / cfg["out"]

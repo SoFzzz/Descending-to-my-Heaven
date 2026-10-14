@@ -17,9 +17,9 @@ Estados: `listo` / `falta rig` / `falta animación` / `reemplazado`.
 | Esbirros 1 | `Skeleton` → Mixamo (`_source/mixamo/skeleton/`) | Sí, Mixamo | `idle`, `walk`, `attack`, `hurt`, `death` | listo | `assets/minions/skeleton/skeleton.glb` (1.75 m). |
 | Élite 1 | `knight__ps1_psx` → Mixamo (`_source/mixamo/knight/`) | Sí, Mixamo | `idle`, `walk`, `attack`, `attack_2`, `combo`, `hurt`, `death` | listo | `assets/minions/knight/knight.glb` (2.10 m). `walk` es `Sword And Shield Run` (no hay caminar): reproducirlo más lento. Espada aparte en `_source/mixamo/knight/sword.fbx` → engancharla en Godot a `mixamorig:RightHand`. Falta `license.txt`. |
 | Jefe 1 | `bonedragon/bone dragon.fbx` | Sí, ~70 huesos (los pesos de los huesos de control IK se pasaron al hueso FK más cercano) | `idle` (bucle), `roar`, `bite`, `tail_sweep`, `stomp`, `death` | listo | `assets/bosses/bonedragon/bonedragon.glb`, generado con `_source/tools/animate_bonedragon.py` (poses clave por script; editable en `_source/models/bonedragon/bonedragon_animated.blend`). Mide ~7.7 m de largo: escala 1. `bite` y `stomp` mueven el hueso `root`; `death` termina tumbado de costado. |
-| Jefe 2 | `dead_oath_hunter/DEAD OATH HUNTER.blend` (reemplaza a Malenia, 2026-10-13) | Sí, Mixamo (65 huesos) | 18 clips (ver sección abajo) | listo | `assets/bosses/dead_oath_hunter/dead_oath_hunter.glb` (generado con `_source/tools/export_dead_oath_hunter.py`; espada pesada a la mano derecha). Mide ~1.5 m → escalar a 2.60 m en Godot. Licencia **no comercial**: acreditar a imaginais. |
+| Jefe 2 | `blackhorn/Blackhorn of the Shattered Peaks.fbx` (reemplaza a Dead Oath Hunter, 2026-10-14) | Sí, Mixamo | 8 propios: `idle`, `taunt`, `roar`, `walk`, `run`, `charge`, `attack_pounce`, `attack_slam`; + `hurt` y `death` tomados del Knight | listo | `assets/bosses/blackhorn/blackhorn.glb` a **3.20 m** con los pies en el suelo (`export_multi_action.py -- blackhorn`). `hurt`/`death` son provisionales: mejor bajar de Mixamo *Mutant Hit Reaction* y *Mutant Dying* (cualquier personaje, *without skin*) y cambiar `extra_clips` en el script. Falta `license.txt`. |
 | Reserva (esbirro) | `straw_reaper/THE STRAW REAPER new.fbx` | Sí, Mixamo | 9 clips Mixamo sin nombre (17–366 frames) + `Scarecrow anim` (701 frames, todas pegadas) | falta animación | Solo si un esbirro falla o se ve peor. Identificar y nombrar clips como se hizo con el Hunter. Hoz incluida. Uso comercial permitido (crédito opcional a imaginais). |
-| Jefe 3 | `mecha-king-ghidorah/source/Mecha King Ghidorah.fbx` (26k → 9.1k tris) | Sí, estilo MMD (nombres en japonés; 3 cuellos, 2 colas, alas) | `idle` (bucle), `roar`, `bite`, `tail_sweep`, `beam`, `death` | listo | `assets/bosses/ghidorah/ghidorah.glb`, generado con `_source/tools/animate_ghidorah.py` (reduce la malla y crea las poses; editable en `_source/models/mecha-king-ghidorah/ghidorah_animated.blend`). Mide ~3.5 m: **escalar ×3** en Godot. En `bite` la cabeza central baja casi al suelo entre los frames 24 y 44 (ventana para golpearla); el rayo de `beam` es un efecto en Godot (frames 27–65). |
+| Jefe 3 | `mecha-king-ghidorah/source/Mecha King Ghidorah.fbx` (26k → 9.1k tris) | Sí, estilo MMD (nombres en japonés; 3 cuellos, 2 colas, alas) | `idle` (bucle), `roar`, `bite`, `tail_sweep`, `beam`, `death` | listo | `assets/bosses/ghidorah/ghidorah.glb`, generado con `_source/tools/animate_ghidorah.py` (reduce la malla y crea las poses; editable en `_source/models/mecha-king-ghidorah/ghidorah_animated.blend`). Mide ~3.5 m: **escalar ×3** en Godot. `tail_sweep` gira cadera y torso dando pasos (pies apoyados). En `bite` la cabeza central baja casi al suelo entre los frames 24 y 44 (ventana para golpearla); el rayo de `beam` es un efecto en Godot (frames 27–65). |
 | Reserva (jefe 3) | `psx_insectoid_demon/scene.gltf` (622 tris) | No | — | falta rig | Solo si Ghidorah falla. No humanoide: rig manual en Blender. |
 | Reserva | `DoriOri.fbx` | Sí (`root`) | Solo `Pose` | falta animación | Sin uso previsto. |
 
@@ -30,30 +30,35 @@ Procedimiento Mixamo paso a paso: [`guia-mixamo.md`](guia-mixamo.md).
 | Personajes | Script | Comando |
 |---|---|---|
 | Kaelen, Skeleton, Knight | `_source/tools/build_characters.py` (tabla clip ← animación de Mixamo) | `blender -b --factory-startup -P _source/tools/build_characters.py -- kaelen` |
-| Plague Arcanist, TheWrapper | `_source/tools/export_multi_action.py` (varias acciones en un FBX) | `blender -b --factory-startup -P _source/tools/export_multi_action.py -- plague_arcanist` |
-| Dead Oath Hunter | `_source/tools/export_dead_oath_hunter.py` | ver el script |
+| Plague Arcanist, TheWrapper, Blackhorn | `_source/tools/export_multi_action.py` (varias acciones en un FBX; admite clips de otros FBX en `extra_clips`) | `blender -b --factory-startup -P _source/tools/export_multi_action.py -- plague_arcanist` |
 | Bone Dragon, Ghidorah | `_source/tools/animate_bonedragon.py`, `animate_ghidorah.py` | ver el script |
 
-Todos dejan las animaciones *in place* (salvo `death`), marcan `idle`/`walk`/`run` como bucle (`-loop`) y escalan el personaje a su altura de §7.4 midiendo el frame 1 de su `idle`.
+Todos dejan las animaciones *in place* (salvo `death`), marcan `idle`/`walk`/`run` como bucle (`-loop`), escalan el personaje a su altura de §7.4 midiendo el frame 1 de su `idle` y apoyan los pies en z = 0 (`normalize_height` en `combine_mixamo.py`).
 
-## Animaciones de Dead Oath Hunter (jefe 2)
+`dragon_anim.py` escribe rotaciones y desplazamientos en ejes del **mundo**: el armature de Ghidorah viene del FBX girado 90° y escalado ×0.01, y antes eso convertía los giros horizontales en balanceos laterales.
 
-Identificadas a partir de capturas de cada acción del `.blend` (la acción larga "Todo", con todas pegadas, se descarta). Todas quedan *in place* salvo `death`.
+## Animaciones de Blackhorn (jefe 2)
+
+Identificadas con capturas de cada acción del FBX (la acción de 860 frames, con todas pegadas, se descarta). Todas *in place* salvo `death`.
 
 | Clip | Frames | Qué hace | Uso sugerido |
 |---|---|---|---|
-| `idle` / `idle_guard` | 41 / 56 | Guardia con espada baja / en alto | Reposo (fase 1 / fase 2) |
-| `walk`, `walk_forward`, `strafe`, `step` | ~40 | Pasos y desplazamiento lateral | Acercarse / rodear al jugador |
-| `attack_slash` | 57 | Tajo corto | Ataque cercano rápido |
-| `attack_thrust` | 69 | Estocada horizontal | Ataque a media distancia |
-| `attack_overhead` | 90 | Tajo descendente amplio | Ataque pesado con aviso largo |
-| `attack_combo` / `attack_combo_thrust` | 96 / 83 | Combos de varios golpes | Fase 2 |
-| `attack_charge` | 96 | Ataque en carrera | Cerrar distancia |
-| `attack_leap` | 107 | Salto grande con golpe | Fase 2, a distancia (el código mueve al jefe) |
-| `dodge`, `dash` | 111 / 23 | Esquiva / impulso agachado | Opcional |
-| `hurt` | 49 | Se dobla al recibir golpe | Reacción |
-| `taunt` | 86 | Se inclina y se recupera | Transición a fase 2 |
-| `death` | 118 | Cae al suelo | Muerte |
+| `idle` | 27 | Agazapado, respirando | Reposo (bucle) |
+| `taunt` | 163 | Se yergue y flexiona los brazos | Entrada / pausa entre ataques |
+| `roar` | 86 | Abre los brazos y echa la cabeza atrás | Transición a fase 2 |
+| `walk` / `run` | 44 / 44 | Caminar / correr | Acercarse |
+| `charge` | 27 | Carrera rápida en cuatro patas | Embestida (fase 2; el código lo mueve) |
+| `attack_pounce` | 106 | Se lanza y da un zarpazo hacia abajo | Ataque a media distancia |
+| `attack_slam` | 81 | Salta y golpea el suelo | Ataque de área cercano |
+| `hurt` | 22 | (del Knight) retrocede | Reacción, provisional |
+| `death` | 79 | (del Knight) cae de espaldas | Muerte, provisional |
+
+## Estética PSX (Godot-PSX-Starter-kit)
+
+- Original (Godot 3.3, MIT): `_source/godot-psx-starter-kit/` (sin `project.godot`; solo referencia).
+- Portado a Godot 4: `shaders/psx/` con `psx_lit`, `psx_unlit` y variantes `_alpha_scissor`, `_transparent`, `_metal`; `shaders/psx/postprocess/` con `pp_band_dither` (+ `psxdither.png`), `vhs`, `vhspause`, `ntsc`, `ntscbasic`, `tv`, `grain`, `simplegrain`, `glitch`, `simpleglitch`, `lcd_post_process`, `post_process_blur`, `lensdistortion`, `jpegcompression`, `bandw`.
+- Cambios del port: `hint_albedo`/`hint_color` → `source_color` (texturas con `filter_nearest`), `SCREEN_TEXTURE` → `hint_screen_texture`, `ALPHA_SCISSOR` → `ALPHA_SCISSOR_THRESHOLD`, sin `const PI` (ya existe en Godot 4), y se quitó `POSITION /= abs(POSITION.w)` (en Godot 4 rompe la profundidad: se pierde la deformación afín de texturas y se mantiene el temblor de vértices). Los 23 compilan en Godot 4.7.
+- Licencia MIT (`shaders/psx/LICENSE-psx-starter-kit.txt`): va en los créditos.
 
 ## Prioridad de trabajo
 
