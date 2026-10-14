@@ -86,11 +86,12 @@ func test_buffered_roll_expires() -> void:
 	_free_all(n)
 
 
-func test_damage_interrupts_attack_with_hurt() -> void:
+# Fuera del ataque el daño la aturde (HURT); durante el ataque ya no lo interrumpe (armadura, ver
+# test_player_defense.gd).
+func test_damage_in_move_enters_hurt() -> void:
 	var n := _make_player()
 	var p: Player = n[0]
 	var h: Health = n[2]
-	assert_true(p.try_attack())
 	h.take_damage(20)
 	assert_eq(p.state, Player.State.HURT)
 	p._advance_hurt(Player.HURT_DURATION + 0.01)
@@ -104,6 +105,7 @@ func test_death_is_terminal() -> void:
 	var h: Health = n[2]
 	for i in 5:
 		h.take_damage(20)
+		p._tick_hurt_iframes(Player.HURT_IFRAMES)   # cada golpe da i-frames: se dejan pasar
 	assert_eq(p.state, Player.State.DEAD)
 	assert_eq(p.death_count, 1, "muere una sola vez")
 	assert_true(not p.try_attack(), "sin control al morir")
