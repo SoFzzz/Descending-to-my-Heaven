@@ -196,6 +196,7 @@ Se descartó `floating_island` (61 MB, texturas fotográficas). El exterior usa:
 6. **Decoración (día 6):** solo después de que el flujo completo funcione.
 
 **Generador de niveles (`scripts/tools/level_builder.gd`):**
+- **Regla:** las escenas generadas se sobrescriben al ejecutar el generador; **nunca se editan a mano ni se les agregan nodos**. Todo el gameplay va en `scenes/levels/<nivel>_gameplay.tscn`, que instancia el nivel (hijo `Level`) + Kaelen + enemigos, y busca los puntos del mapa por nombre (`scripts/game/level_gameplay.gd` coloca a Kaelen en `PlayerStart`).
 - Ejecutar: `godot --headless --path . -s res://scripts/tools/level_builder.gd` (todas) o `... -- arena_2` (una). Sobrescribe `scenes/levels/{exterior,arena_1,arena_2,arena_3}.tscn`, así que **no se editan a mano**: los cambios van en las tablas `LEVELS` y `EXTERIOR` del script. Lo que A y B agreguen va en escenas aparte (`arena_N_gameplay.tscn` instanciada bajo `Gameplay`).
 - Arenas 1 y 3: muros, suelo y techo en `GridMap` con `assets/environment/kit/dungeon_kit.meshlib` (piezas de `PSX_Dungeon` normalizadas por `_source/tools/export_dungeon_kit.py`). Arena 2 (octogonal) sigue en CSG con textura triplanar, porque no encaja en la grilla. Pasillos, escaleras, jambas y dintel de las rejas son CSG.
 - Navegación: se hornea al generar (`NavigationSmall` capa 1, r 0.5; `NavigationLarge` capa 2, r 2.5).
