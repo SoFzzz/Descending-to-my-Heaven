@@ -24,6 +24,12 @@ func reset() -> void:
 	_holders.clear()
 
 
+## true si `enemy` tiene ficha ahora (tras reset() o liberar al esbirro, ya no).
+func is_holder(enemy: Node) -> bool:
+	_prune()
+	return _holders.has(enemy)
+
+
 func holders_count() -> int:
 	_prune()
 	return _holders.size()
