@@ -1,8 +1,9 @@
 class_name Player
 extends CharacterBody3D
 ## Kaelen. States: MOVE (walk relative to the camera, gravity, smooth turning), ROLL (roll with
-## i-frames and stamina cost), ATTACK (3-hit combo with the greatsword), HURT (stunned when taking
-## damage) and DEAD (no control; respawn is handled by GameState, Task 10).
+## i-frames and stamina cost), ATTACK (3-hit combo with the greatsword; hyper armor: a hit does not
+## interrupt it and does less damage), HURT (stunned when taking damage) and DEAD (no control;
+## respawn is handled by GameState, Task 10). Every hit taken grants HURT_IFRAMES of invulnerability.
 
 enum State { MOVE, ROLL, ATTACK, HURT, DEAD }
 
@@ -24,26 +25,50 @@ const ATTACK_COST := 20.0
 ## When each hit's damage window closes, there are COMBO_WINDOW s to chain the next one;
 ## after that window the hit ends and it returns to MOVE (the tail of the clip is cut).
 const COMBO_WINDOW := 0.4
-## Clip and playback speed of each hit. attack_2 is a long Mixamo combo (3.3 s,
-## three slashes): only its first upward slash is used and the hit is cut when the combo
-## window closes (≈ 1.36 s of the clip), before the second slash begins.
+## Clip of each hit. attack_2 is a long Mixamo combo (3.3 s, three slashes): only its first
+## upward slash is used and the hit is cut when the combo window closes (≈ 1.32 s of the clip),
+## before the second slash begins (≈ 1.38 s).
 const ATTACK_ANIMS: Array[StringName] = [&"attack_1", &"attack_2", &"attack_3"]
-const ATTACK_ANIM_SPEED: Array[float] = [1.3, 1.2, 1.2]
-## Damage windows in game seconds from the start of each hit (by time, not by animation
-## markers). Measured by following the greatsword tip in each clip; the clip time
-## (= game time × speed) is in parentheses:
-## - attack_1: horizontal slash from right to left (clip 0.75–1.00 s).
-## - attack_2: first upward slash in front of Kaelen (clip 0.60–0.88 s).
-## - attack_3: final downward strike (clip 1.00–1.25 s).
-const HIT_START: Array[float] = [0.58, 0.50, 0.83]
-const HIT_END: Array[float] = [0.77, 0.73, 1.04]
-## Mixamo's slashes do not pass exactly through the front: within its window attack_1 sweeps from −20° to
-## +60°, attack_2 from −60° to 0° and attack_3 from −60° to −5° (angle in the model's space, + = +X,
-## measured with a target 1.5 m away). When turning toward the target this offset is added so the
-## target ends up in the center of the sweep.
-const ATTACK_AIM_OFFSET: Array[float] = [deg_to_rad(-15.0), deg_to_rad(25.0), deg_to_rad(25.0)]
+## Each hit starts its clip at ATTACK_CLIP_START (clip seconds, start_offset of the AnimationTree
+## node) and plays it at ATTACK_ANIM_SPEED, so game time = (clip time − start) / speed. The slow
+## anticipation of attack_1 (guard pose, clip 0–0.35 s) and the loop of attack_3 around Kaelen's
+## back (clip 0–0.70 s) are skipped instead of speeding the clips up a lot: hitting that early
+## without skipping would need ×2.3 and ×2.75, and the slashes would look absurd.
+const ATTACK_CLIP_START: Array[float] = [0.35, 0.0, 0.70]
+const ATTACK_ANIM_SPEED: Array[float] = [1.4, 1.45, 1.2]
+## Damage windows in CLIP seconds, measured by sweeping the sword hitbox against a dummy 1.5 m away
+## (Hurtbox capsule r 0.4) at every angle around Kaelen (model space, + = +X):
+## - attack_1: horizontal slash, +120° → −25° (clip 0.80–1.03 s).
+## - attack_2: first upward slash in front of Kaelen, −120° → +25° (clip 0.53–0.74 s).
+## - attack_3: final downward strike, −35° → +65° (clip 1.10–1.27 s).
+const CLIP_HIT_START: Array[float] = [0.80, 0.53, 1.10]
+const CLIP_HIT_END: Array[float] = [1.03, 0.74, 1.27]
+## The same windows in game seconds from the start of each hit (by time, not by animation markers):
+## ≈ 0.32–0.49, 0.37–0.51 and 0.33–0.48 s.
+const HIT_START: Array[float] = [
+	(CLIP_HIT_START[0] - ATTACK_CLIP_START[0]) / ATTACK_ANIM_SPEED[0],
+	(CLIP_HIT_START[1] - ATTACK_CLIP_START[1]) / ATTACK_ANIM_SPEED[1],
+	(CLIP_HIT_START[2] - ATTACK_CLIP_START[2]) / ATTACK_ANIM_SPEED[2],
+]
+const HIT_END: Array[float] = [
+	(CLIP_HIT_END[0] - ATTACK_CLIP_START[0]) / ATTACK_ANIM_SPEED[0],
+	(CLIP_HIT_END[1] - ATTACK_CLIP_START[1]) / ATTACK_ANIM_SPEED[1],
+	(CLIP_HIT_END[2] - ATTACK_CLIP_START[2]) / ATTACK_ANIM_SPEED[2],
+]
+## The slashes do not pass exactly through the front (see the sweeps above). When turning toward the
+## target this offset is added so the target is hit in the middle of the sweep (the target ends up
+## at +30°, −35° and +5° of the model).
+const ATTACK_AIM_OFFSET: Array[float] = [deg_to_rad(-30.0), deg_to_rad(35.0), deg_to_rad(-5.0)]
 
 const HURT_DURATION := 0.4
+## After any hit that does not kill her (also in ATTACK) she is invulnerable for this long, counted
+## from the hit; HURT ends earlier (HURT_DURATION) and she can act while still invulnerable.
+const HURT_IFRAMES := 1.0
+## Meanwhile the model blinks: it toggles its visibility every HURT_BLINK_INTERVAL s.
+const HURT_BLINK_INTERVAL := 0.08
+## Hyper armor: in ATTACK a hit does not interrupt the slash (no HURT) and only this fraction of its
+## damage is taken (multiplier of Kaelen's Hurtbox while attacking).
+const ATTACK_DAMAGE_TAKEN_MULT := 0.5
 ## Orders (roll, attack) pressed while they cannot be executed are kept for this long.
 const BUFFER_TIME := 0.2
 
@@ -58,10 +83,11 @@ const ACTION_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"a
 const SCALED_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"attack_3", &"hurt"]
 
 var state: State = State.MOVE
-## If nobody assigned them before, they are looked up in _ready (children "Health" and "Stamina"). Tests
+## If nobody assigned them before, they are looked up in _ready (children "Health", "Stamina" and "Hurtbox"). Tests
 ## assign them by hand without putting Kaelen in the tree and call _connect_components().
 var health: Health
 var stamina: Stamina
+var hurtbox: Hurtbox
 ## Current combo hit (0, 1, 2, 3…; damage and clip use index % 3).
 var combo_index := 0
 ## How many times she died (Events.player_died is emitted only the first time).
@@ -79,8 +105,12 @@ var _roll_time := 0.0
 var _roll_dir := Vector3.ZERO
 # Sources of invulnerability: they combine and none of them turns off the others (Review focus 4).
 var _iframes := false   # roll window
+var _hurt_iframes_left := 0.0   # after taking a hit (HURT_IFRAMES)
 var _victory := false   # after Events.boss_defeated
 var _god := false       # debug (action "debug_god", F6)
+# Hyper armor: the Hurtbox's multiplier is scaled while attacking and restored afterwards.
+var _armor_on := false
+var _base_damage_multiplier := 1.0
 
 var _attack_time := 0.0
 var _hitbox_on := false
@@ -97,6 +127,8 @@ func _ready() -> void:
 		health = get_node_or_null(^"Health") as Health
 	if stamina == null:
 		stamina = get_node_or_null(^"Stamina") as Stamina
+	if hurtbox == null:
+		hurtbox = get_node_or_null(^"Hurtbox") as Hurtbox
 	# Maximum health according to the level (GameState may not exist in tests run with -s).
 	var game_state := get_node_or_null(^"/root/GameState")
 	if game_state and health:
@@ -176,6 +208,7 @@ func _physics_process(delta: float) -> void:
 			_advance_hurt(delta)
 		State.DEAD:
 			_stand_still()
+	_tick_hurt_iframes(delta)
 	_update_invulnerability()
 	_follow_sword()
 	_update_animation(Vector3(velocity.x, 0.0, velocity.z).length())
@@ -327,6 +360,7 @@ func try_attack() -> bool:
 	_set_hitbox_active(false)
 	_attack_time = 0.0
 	state = State.ATTACK
+	_set_armor(true)
 	_face_attack_direction()
 	var hit := combo_index % 3
 	if _anim_tree:
@@ -369,10 +403,26 @@ func _advance_attack(delta: float) -> void:
 
 func _end_attack() -> void:
 	_set_hitbox_active(false)
+	_set_armor(false)
 	_attack_time = 0.0
 	combo_index = 0
 	if state == State.ATTACK:
 		state = State.MOVE
+
+
+## Hyper armor: scales the damage that reaches Health through the Hurtbox while attacking
+## (scripts/combat is not touched: only its damage_multiplier is changed at runtime).
+func _set_armor(on: bool) -> void:
+	if on == _armor_on:
+		return
+	_armor_on = on
+	if hurtbox == null:
+		return
+	if on:
+		_base_damage_multiplier = hurtbox.damage_multiplier
+		hurtbox.damage_multiplier = _base_damage_multiplier * ATTACK_DAMAGE_TAKEN_MULT
+	else:
+		hurtbox.damage_multiplier = _base_damage_multiplier
 
 
 func _set_hitbox_active(on: bool) -> void:
@@ -432,11 +482,14 @@ func _on_health_changed(current: int, max_value: int) -> void:
 	var events := _events()
 	if events:
 		events.player_damaged.emit(previous - current, current, max_value)
-	if current > 0 and state != State.DEAD:
+	if current <= 0 or state == State.DEAD:
+		return
+	_start_hurt_iframes()
+	if state != State.ATTACK:   # hyper armor: the slash goes on, without the hurt animation
 		_enter_hurt()
 
 
-## HURT interrupts the attack (and turns off the hitbox) or the roll.
+## HURT interrupts the roll (an attack is not interrupted by damage: hyper armor).
 func _enter_hurt() -> void:
 	_end_attack()
 	_roll_time = 0.0
@@ -455,12 +508,40 @@ func _advance_hurt(delta: float) -> void:
 		_consume_buffer()
 
 
+func _start_hurt_iframes() -> void:
+	_hurt_iframes_left = HURT_IFRAMES
+	_update_invulnerability()
+	_update_blink()
+
+
+## Counts down the post-hit invulnerability (every frame, in any state) and makes the model blink.
+func _tick_hurt_iframes(delta: float) -> void:
+	if _hurt_iframes_left <= 0.0:
+		return
+	_hurt_iframes_left = maxf(0.0, _hurt_iframes_left - delta)
+	_update_invulnerability()
+	_update_blink()
+
+
+## Hidden during the odd HURT_BLINK_INTERVAL slices of the i-frames; visible otherwise.
+func _update_blink() -> void:
+	if _model == null:
+		return
+	if _hurt_iframes_left <= 0.0:
+		_model.visible = true
+		return
+	var elapsed := HURT_IFRAMES - _hurt_iframes_left
+	_model.visible = int(elapsed / HURT_BLINK_INTERVAL) % 2 == 1
+
+
 func _on_died() -> void:
 	if state == State.DEAD:
 		return
 	_end_attack()
 	_clear_buffer()
 	_iframes = false
+	_hurt_iframes_left = 0.0
+	_update_blink()
 	state = State.DEAD
 	_update_invulnerability()
 	death_count += 1
@@ -479,7 +560,7 @@ func _on_boss_defeated(_boss: Node3D) -> void:
 
 
 func is_invulnerable() -> bool:
-	return _iframes or _victory or _god
+	return _iframes or _hurt_iframes_left > 0.0 or _victory or _god
 
 
 func _update_invulnerability() -> void:
@@ -516,7 +597,8 @@ func spawn_at(marker: Node3D) -> void:
 # - "locomotion": BlendTree with a BlendSpace1D idle/walk/run based on speed and a TimeScale
 #   that speeds up the clip when moving faster than it shows (prevents the feet from sliding).
 # - roll, attack_1..3, hurt: BlendTree with the clip and a TimeScale ("speed"). roll and hurt are fitted
-#   to ROLL_DURATION / HURT_DURATION; each hit uses ATTACK_ANIM_SPEED.
+#   to ROLL_DURATION / HURT_DURATION; each hit uses ATTACK_ANIM_SPEED and starts its clip at
+#   ATTACK_CLIP_START.
 # - death: the clip only, no return.
 # Transitions: locomotion → action and action → action are immediate (travel is used so there is a crossfade);
 # roll and hurt return on their own when finished; hits return when the code asks for it,
@@ -529,7 +611,10 @@ func _build_animation_tree() -> void:
 	for i in ACTION_STATES.size():
 		var state_name := ACTION_STATES[i]
 		var node: AnimationRootNode
-		if state_name in SCALED_STATES:
+		if state_name in ATTACK_ANIMS:
+			var hit := ATTACK_ANIMS.find(state_name)
+			node = _build_time_scaled_clip(state_name, ATTACK_CLIP_START[hit], _clip_length(player, state_name, 2.0))
+		elif state_name in SCALED_STATES:
 			node = _build_time_scaled_clip(state_name)
 		else:
 			var clip := AnimationNodeAnimation.new()
@@ -611,9 +696,16 @@ func _build_locomotion() -> AnimationNodeBlendTree:
 
 
 ## BlendTree clip → TimeScale ("speed") → output; the factor is set in parameters/<state>/speed/scale.
-func _build_time_scaled_clip(clip_name: StringName) -> AnimationNodeBlendTree:
+## With start_offset > 0 the clip starts at that clip second (custom timeline of the node, up to
+## the end of the clip without stretching it).
+func _build_time_scaled_clip(clip_name: StringName, start_offset := 0.0, clip_length := 0.0) -> AnimationNodeBlendTree:
 	var clip := AnimationNodeAnimation.new()
 	clip.animation = clip_name
+	if start_offset > 0.0:
+		clip.use_custom_timeline = true
+		clip.stretch_time_scale = false
+		clip.start_offset = start_offset
+		clip.timeline_length = clip_length - start_offset
 	var tree := AnimationNodeBlendTree.new()
 	tree.add_node(&"clip", clip)
 	tree.add_node(&"speed", AnimationNodeTimeScale.new())
