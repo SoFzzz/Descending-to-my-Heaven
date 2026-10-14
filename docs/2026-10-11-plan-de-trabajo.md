@@ -116,7 +116,7 @@ Meta del día: el contrato existe, Kaelen-cápsula se mueve en `test_arena`, los
 - Produce: todo el bloque "Contrato"; acciones de entrada `move_forward`, `move_back`, `move_left`, `move_right` (WASD + stick izq.), `attack` (clic izq. / X), `roll` (Espacio / B), `lock_on` (clic central o Q / R3), `pause` (Esc / Start), `debug_overlay` (F3), `debug_skip` (F5), `debug_god` (F6); cámara con ratón y stick der. (A lee el ratón en `_unhandled_input`).
 - Produce: `class_name TestCase extends RefCounted` con `assert_eq(actual, expected, msg := "")`, `assert_true(cond, msg := "")`, `assert_almost(actual: float, expected: float, eps := 0.001, msg := "")`, propiedades `failed: bool`, `message: String`.
 
-- [ ] **Paso 1: Escribir el corredor `tests/run_tests.gd`**
+- [x] **Paso 1: Escribir el corredor `tests/run_tests.gd`**
 
 ```gdscript
 extends SceneTree
@@ -141,15 +141,15 @@ func _init() -> void:
 	quit(1 if failures > 0 else 0)
 ```
 
-- [ ] **Paso 2: Escribir `tests/test_case.gd` y una prueba de humo** `test_smoke.gd::test_runner_works` con `assert_eq(1 + 1, 2)`. Todo archivo de prueba empieza con `extends TestCase`; las pruebas que crean nodos los liberan con `free()` al final.
+- [x] **Paso 2: Escribir `tests/test_case.gd` y una prueba de humo** `test_smoke.gd::test_runner_works` con `assert_eq(1 + 1, 2)`. Todo archivo de prueba empieza con `extends TestCase`; las pruebas que crean nodos los liberan con `free()` al final.
 
-- [ ] **Paso 3: Ejecutar el comando de pruebas** — Esperado: `1/1 passed`, código 0. Cambiar temporalmente a `assert_eq(1 + 1, 3)` y confirmar `FAIL` y código 1; revertir.
+- [x] **Paso 3: Ejecutar el comando de pruebas** — Esperado: `1/1 passed`, código 0. Cambiar temporalmente a `assert_eq(1 + 1, 3)` y confirmar `FAIL` y código 1; revertir.
 
-- [ ] **Paso 4: Crear los stubs del Contrato y registrarlos como autoloads** en `project.godot` (`Events`, `GameState`, `AttackTokens`, `Orchestrator`, `AudioManager`), más el mapa de entradas.
+- [x] **Paso 4: Crear los stubs del Contrato y registrarlos como autoloads** en `project.godot` (`Events`, `GameState`, `AttackTokens`, `Orchestrator`, `AudioManager`), más el mapa de entradas.
 
-- [ ] **Paso 5: Verificar** — abrir el proyecto en Godot sin errores en el panel *Output*; el comando de pruebas sigue en `1/1 passed`.
+- [x] **Paso 5: Verificar** — abrir el proyecto en Godot sin errores en el panel *Output*; el comando de pruebas sigue en `1/1 passed`.
 
-- [ ] **Paso 6: Commit y push inmediato** (los otros dos esperan esto)
+- [x] **Paso 6: Commit y push inmediato** (los otros dos esperan esto)
 
 ```bash
 git add project.godot scripts tests
@@ -172,7 +172,7 @@ git push
   - `class_name Hurtbox extends Area3D` — `@export var health: Health`; `@export var damage_multiplier := 1.0`; `@export var surface: StringName = &"flesh"`; `signal hurt(amount: int, source: Node)`; `func receive_hit(amount: int, source: Node) -> void`.
   - `class_name Hitbox extends Area3D` — `@export var damage: int`; `func activate() -> void`; `func deactivate() -> void`; `func register_hit(hurtbox: Hurtbox) -> bool` (true solo la primera vez por activación); al detectar un `Hurtbox` llama `receive_hit` y emite `Events.hit_landed`.
 
-- [ ] **Paso 1: Escribir las pruebas que fallan**
+- [x] **Paso 1: Escribir las pruebas que fallan**
 
 ```gdscript
 # tests/test_health.gd
@@ -215,10 +215,10 @@ func test_reset_clears_all():
 
 En las pruebas de `AttackTokens` instanciar el script directamente (`load("res://scripts/ai/attack_tokens.gd").new()`), no el autoload.
 
-- [ ] **Paso 2: Ejecutar pruebas** — Esperado: FAIL (clases no definidas).
-- [ ] **Paso 3: Implementar los cuatro componentes y `AttackTokens`.** `AttackTokens` guarda los dueños en un `Array` y descarta los `!is_instance_valid` antes de contar. `Hurtbox.receive_hit` usa `roundi(amount * damage_multiplier)`.
-- [ ] **Paso 4: Ejecutar pruebas** — Esperado: todas pasan.
-- [ ] **Paso 5: Commit** — `feat: add combat components and attack tokens`
+- [x] **Paso 2: Ejecutar pruebas** — Esperado: FAIL (clases no definidas).
+- [x] **Paso 3: Implementar los cuatro componentes y `AttackTokens`.** `AttackTokens` guarda los dueños en un `Array` y descarta los `!is_instance_valid` antes de contar. `Hurtbox.receive_hit` usa `roundi(amount * damage_multiplier)`.
+- [x] **Paso 4: Ejecutar pruebas** — Esperado: todas pasan.
+- [x] **Paso 5: Commit** — `feat: add combat components and attack tokens`
 
 ### Tarea 3 (A): Kaelen-cápsula, cámara y rodada en `test_arena`
 
@@ -232,14 +232,14 @@ En las pruebas de `AttackTokens` instanciar el script directamente (`load("res:/
 - Produce: `class_name Player extends CharacterBody3D` en grupo `"player"`, con hijos `Health`, `Stamina`, `Hurtbox` (capa 7), `CameraRig`; `enum State { MOVE, ROLL, ATTACK, HURT, DEAD }`; `var state: State`; `func is_invulnerable() -> bool`; constantes `ROLL_DURATION := 0.6`, `ROLL_IFRAME_START := 0.05`, `ROLL_IFRAME_END := 0.40`, `ROLL_COST := 25.0`.
 - Medidas: collider cápsula r 0.35 · alto 1.70 (capa 2, máscara 1|3|4); hurtbox r 0.30 · alto 1.50; cámara pivote 1.5 m, `spring_length` 4 m, FOV 70°, margen 0.2, máscara del `SpringArm3D` solo capa 1.
 
-- [ ] **Paso 1: Prueba que falla** — `test_player_roll.gd`:
+- [x] **Paso 1: Prueba que falla** — `test_player_roll.gd`:
   - `test_iframes_window`: `Player.iframes_active_at(t)` es falso en 0.0, verdadero en 0.05 y 0.30, falso en 0.45 (ventana de 0.35 s).
   - `test_roll_needs_stamina`: con `stamina.current = 0`, `try_roll()` devuelve false y `state` sigue `MOVE`.
-- [ ] **Paso 2: Ejecutar** — Esperado: FAIL.
-- [ ] **Paso 3: Implementar** `static func iframes_active_at(t: float) -> bool`, `func try_roll() -> bool`, movimiento relativo a la cámara (velocidad 5 m/s caminar, 7 m/s rodada), gravedad, giro suave hacia la dirección de movimiento, y `camera_rig.gd` (órbita con ratón, captura del cursor).
-- [ ] **Paso 4: Ejecutar pruebas** — Esperado: pasan.
-- [ ] **Paso 5: Verificación manual** — F6 sobre `test_arena.tscn`: la cápsula camina, rueda, no atraviesa pilares; la cámara se acerca al chocar con un pilar y no atraviesa paredes.
-- [ ] **Paso 6: Commit** — `feat: add player capsule with camera and roll`
+- [x] **Paso 2: Ejecutar** — Esperado: FAIL.
+- [x] **Paso 3: Implementar** `static func iframes_active_at(t: float) -> bool`, `func try_roll() -> bool`, movimiento relativo a la cámara (velocidad 5 m/s caminar, 7 m/s rodada), gravedad, giro suave hacia la dirección de movimiento, y `camera_rig.gd` (órbita con ratón, captura del cursor).
+- [x] **Paso 4: Ejecutar pruebas** — Esperado: pasan.
+- [x] **Paso 5: Verificación manual** — F6 sobre `test_arena.tscn`: la cápsula camina, rueda, no atraviesa pilares; la cámara se acerca al chocar con un pilar y no atraviesa paredes.
+- [x] **Paso 6: Commit** — `feat: add player capsule with camera and roll`
 
 ### Tarea 4 (C): Escalas, importación y estado de assets
 
@@ -251,12 +251,12 @@ En las pruebas de `AttackTokens` instanciar el script directamente (`load("res:/
 **Interfaces:**
 - Produce: `docs/asset-status.md` con una fila por modelo: ruta en `assets/`, factor de escala, altura medida, lista exacta de animaciones, estado (`listo` / `falta rig` / `falta animación` / `reemplazado`).
 
-- [ ] **Paso 1: Importar** los 11 modelos del reparto (§3 de la spec) a `assets/`. Los FBX con escalas internas raras (knight, skeleton, bonedragon, TheWrapper, woman knight) se abren en Blender vía MCP, se aplica escala y se exportan a GLB.
-- [ ] **Paso 2: Armar `scale_reference.tscn`** — grilla de 1 m, cápsula de 1.70 m, cada modelo a su altura de la tabla §7.4 (Kaelen 1.70, Elysia 1.60, Skeleton 1.75, Knight 2.10, Plague Arcanist 1.80, TheWrapper 2.00, Aura Battler 3.00, Blackhorn 3.20, Bone Dragon 8 m de largo, Ghidorah 10 m de alto), módulo de muro de `PSX_Dungeon` a 4 × 4 m.
-- [ ] **Paso 3: Verificar** con un script de herramienta (o el MCP de Godot) que imprima la `AABB` de cada modelo instanciado; cada altura dentro de ±5 % de la tabla.
-- [ ] **Paso 4: Completar `docs/asset-status.md`** y la tabla de §7.8.
-- [ ] **Paso 5: Decidir reservas** — todo modelo que no importe en 2 h se marca `reemplazado` con su sustituto (§3).
-- [ ] **Paso 6: Commit** — `feat: import and normalize character and boss assets`
+- [x] **Paso 1: Importar** los 11 modelos del reparto (§3 de la spec) a `assets/`. Los FBX con escalas internas raras (knight, skeleton, bonedragon, TheWrapper, woman knight) se abren en Blender vía MCP, se aplica escala y se exportan a GLB.
+- [x] **Paso 2: Armar `scale_reference.tscn`** — grilla de 1 m, cápsula de 1.70 m, cada modelo a su altura de la tabla §7.4 (Kaelen 1.70, Elysia 1.60, Skeleton 1.75, Knight 2.10, Plague Arcanist 1.80, TheWrapper 2.00, Aura Battler 3.00, Blackhorn 3.20, Bone Dragon 8 m de largo, Ghidorah 10 m de alto), módulo de muro de `PSX_Dungeon` a 4 × 4 m.
+- [x] **Paso 3: Verificar** con un script de herramienta (o el MCP de Godot) que imprima la `AABB` de cada modelo instanciado; cada altura dentro de ±5 % de la tabla.
+- [x] **Paso 4: Completar `docs/asset-status.md`** y la tabla de §7.8.
+- [x] **Paso 5: Decidir reservas** — todo modelo que no importe en 2 h se marca `reemplazado` con su sustituto (§3).
+- [x] **Paso 6: Commit** — `feat: import and normalize character and boss assets`
 
 ### Tarea 5 (C, tarde): Shader PSX y entorno base
 
@@ -270,7 +270,7 @@ En las pruebas de `AttackTokens` instanciar el script directamente (`load("res:/
 - [x] **Paso 1: Shader**: portado del kit (no hace falta escribirlo).
 - [x] **Paso 2: Aplicarlo** a todos los modelos de `scale_reference` con `base_env.tres`. *(Hecho en `scenes/levels/psx_test.tscn` con Kaelen y el esqueleto; `scale_reference` no se tocó. Para el resto basta `PsxTest.apply_psx(nodo)`.)*
 - [x] **Paso 3: Verificar** *(captura de `psx_test` en ejecución: pixelado 320×240, bandas/dither y texturas correctas; falta compartirla)* — captura de `scale_reference` donde todos los modelos se ven con la misma paleta y textura pixelada; compartirla con el equipo.
-- [ ] **Paso 4: Commit** — `feat: add PSX shader and base environment`
+- [x] **Paso 4: Commit** — `feat: add PSX shader and base environment`
 
 **Fin del día 1 (integración):** pull de todos; B corre pruebas (todas pasan); A muestra la cápsula en `test_arena`; C muestra `scale_reference`.
 
@@ -291,15 +291,15 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Consume: `Hitbox`, `Hurtbox`, `Health`, `Stamina`, grupo `"lockable"` + `LockOnPoint`, `Events.player_damaged`, `Events.player_died`.
 - Produce: `const COMBO_DAMAGE: Array[int] = [10, 10, 18]`, `const ATTACK_COST := 20.0`; `class_name LockOn extends Node` con `var target: Node3D`, `func toggle() -> void`, `func validate() -> void` (suelta objetivos liberados o a más de 15 m; 25 m si el objetivo está en grupo `"boss"`); el `CameraRig` usa pivote 2.5 m y distancia 6.5 m cuando `target` está en grupo `"boss"`. HUD: barras de vida y estamina arriba a la izquierda; nodo `BossBar` oculto con `func show_boss(name: String, health: Health) -> void`.
 
-- [ ] **Paso 1: Pruebas que fallan**
+- [x] **Paso 1: Pruebas que fallan**
   - `test_combo_damage_sequence`: `Player.combo_damage(i)` devuelve 10, 10, 18 para i = 0, 1, 2 y 10 para i = 3 (vuelve a empezar).
   - `test_lock_on_drops_invalid_target`: con un `Node3D` asignado como `target` y luego liberado, `validate()` deja `target == null` sin error.
   - `test_lock_on_range`: objetivo a 16 m sin grupo `"boss"` → se suelta; en grupo `"boss"` a 16 m → se mantiene.
-- [ ] **Paso 2: Ejecutar** — FAIL.
-- [ ] **Paso 3: Implementar** combo (ventana para encadenar 0.4 s tras cada golpe), hitbox del mandoble (caja 0.2 × 0.2 × 1.4 m, capa 5, máscara 8) activada solo en la ventana de daño, estado `HURT` (0.4 s, interrumpe ataque), `DEAD` (emite `Events.player_died`), y el HUD conectado a `Health.changed` y `Stamina.changed`.
-- [ ] **Paso 4: Ejecutar pruebas** — pasan.
-- [ ] **Paso 5: Verificación manual** en `test_arena` con un muñeco (`StaticBody3D` + `Hurtbox` + `Health` 30): 3 golpes de combo lo matan (10 + 10 + 18 ≥ 30); la estamina baja 20 por golpe; el lock-on gira la cámara hacia el muñeco.
-- [ ] **Paso 6: Commit** — `feat: add player combo, lock-on, death and HUD`
+- [x] **Paso 2: Ejecutar** — FAIL.
+- [x] **Paso 3: Implementar** combo (ventana para encadenar 0.4 s tras cada golpe), hitbox del mandoble (caja 0.2 × 0.2 × 1.4 m, capa 5, máscara 8) activada solo en la ventana de daño, estado `HURT` (0.4 s, interrumpe ataque), `DEAD` (emite `Events.player_died`), y el HUD conectado a `Health.changed` y `Stamina.changed`.
+- [x] **Paso 4: Ejecutar pruebas** — pasan.
+- [x] **Paso 5: Verificación manual** en `test_arena` con un muñeco (`StaticBody3D` + `Hurtbox` + `Health` 30): 3 golpes de combo lo matan (10 + 10 + 18 ≥ 30); la estamina baja 20 por golpe; el lock-on gira la cámara hacia el muñeco.
+- [x] **Paso 6: Commit** — `feat: add player combo, lock-on, death and HUD`
 
 ### Tarea 7 (B): Esbirro con máquina de estados y navegación
 
@@ -315,14 +315,14 @@ Meta: se puede matar a un esbirro y morir ante él.
   - `class_name Minion extends CharacterBody3D` en grupos `"enemy"` y `"lockable"`; `@export var cost := 1`; `@export var attack_range := 1.5`; `@export var move_speed := 3.5`; `@export var damage := 20`; al morir emite `Events.enemy_died(self, cost)` y libera su ficha.
   - `minion_base.tscn`: cápsula r 0.35 · alto 1.75 (capa 3), hurtbox r 0.40 · alto 1.80 (capa 8), hitbox esfera r 0.5 a 1.2 m al frente (capa 6, máscara 7), `NavigationAgent3D` capa 1 con evitación r 0.35, `LockOnPoint` a 1.3 m. Malla placeholder: cápsula roja.
 
-- [ ] **Paso 1: Pruebas que fallan**
+- [x] **Paso 1: Pruebas que fallan**
   - `test_idle_to_chase_when_seen`; `test_chase_to_circle_without_token` (distancia ≤ 4 m y `has_token = false` → `CIRCLE`); `test_chase_to_attack_with_token` (distancia ≤ 1.5 y token → `ATTACK`); `test_attack_to_recover`; `test_hit_interrupts_to_stunned`; `test_dead_is_terminal` (desde cualquier estado con `is_dead` → `DEAD`, y de `DEAD` no sale).
   - `test_can_see_cone`: objetivo a 5 m al frente → true; a 5 m detrás → false; a 13 m al frente → false.
-- [ ] **Paso 2: Ejecutar** — FAIL.
-- [ ] **Paso 3: Implementar** `MinionBrain` y `minion.gd` (pide ficha al entrar en rango de 4 m; en `CIRCLE` orbita a 3.5 m; en `ATTACK` activa la hitbox 0.3 s tras 0.5 s de aviso; `RECOVER` 0.8 s; `STUNNED` 0.4 s; libera la ficha al salir de `ATTACK` y al morir).
-- [ ] **Paso 4: Ejecutar pruebas** — pasan.
-- [ ] **Paso 5: Verificación manual** — 4 esbirros en `test_arena`: solo 2 atacan a la vez, los demás rodean; se mueren con los combos de Kaelen; Kaelen muere tras 5 golpes de 20.
-- [ ] **Paso 6: Commit** — `feat: add minion FSM with navigation and attack tokens`
+- [x] **Paso 2: Ejecutar** — FAIL.
+- [x] **Paso 3: Implementar** `MinionBrain` y `minion.gd` (pide ficha al entrar en rango de 4 m; en `CIRCLE` orbita a 3.5 m; en `ATTACK` activa la hitbox 0.3 s tras 0.5 s de aviso; `RECOVER` 0.8 s; `STUNNED` 0.4 s; libera la ficha al salir de `ATTACK` y al morir).
+- [x] **Paso 4: Ejecutar pruebas** — pasan.
+- [x] **Paso 5: Verificación manual** — 4 esbirros en `test_arena`: solo 2 atacan a la vez, los demás rodean; se mueren con los combos de Kaelen; Kaelen muere tras 5 golpes de 20.
+- [x] **Paso 6: Commit** — `feat: add minion FSM with navigation and attack tokens`
 
 ### Tarea 8 (C): Kaelen y Elysia procesadas + animaciones del Bone Dragon + bloqueo de la arena 1
 
@@ -336,12 +336,12 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Produce: nombres de animación exactos para Kaelen: `idle`, `walk`, `run`, `roll`, `attack_1`, `attack_2`, `attack_3`, `hurt`, `death`; para esbirros humanoides: `idle`, `walk`, `attack`, `hurt`, `death`. Lista real registrada en `docs/asset-status.md`.
 - Produce: `arena_1.tscn` con un nodo vacío `Gameplay` donde se instancia `arena_1_gameplay.tscn` (de B).
 
-- [ ] **Paso 1:** Kaelen (`low-poly-woman-knight`): ya es low poly; solo aplicar escala y exportar FBX para Mixamo. Elysia (`ancient-elf-lady-psx`): **sin rig**; solo escalar a 1.60 m y exportar `elysia.glb` estático.
+- [x] **Paso 1:** Kaelen (`low-poly-woman-knight`): ya es low poly; solo aplicar escala y exportar FBX para Mixamo. Elysia (`ancient-elf-lady-psx`): **sin rig**; solo escalar a 1.60 m y exportar `elysia.glb` estático.
 - [x] **Paso 2:** Mixamo: Kaelen, Skeleton y Knight riggeados y combinados (`_source/tools/build_characters.py`); Plague Arcanist y TheWrapper exportados (`export_multi_action.py`). Ver `docs/asset-status.md`.
 - [x] **Paso 3:** Bone Dragon: 6 animaciones hechas por script (`_source/tools/animate_bonedragon.py`). Falta verificar que se reproducen en Godot.
-- [ ] **Paso 4:** Bloqueo de `arena_1.tscn` + capturas. Se genera con `level_builder.gd` junto con `exterior`, `arena_2` y `arena_3` (ver Tarea 14).
-- [ ] **Paso 5: Verificación** — cada GLB abre en Godot con las animaciones de la lista; Kaelen mide 1.70 m en `scale_reference`.
-- [ ] **Paso 6: Commit** — `feat: add processed Kaelen, Elysia, skeleton, knight and bone dragon animations`
+- [x] **Paso 4:** Bloqueo de `arena_1.tscn` + capturas. Se genera con `level_builder.gd` junto con `exterior`, `arena_2` y `arena_3` (ver Tarea 14).
+- [x] **Paso 5: Verificación** — cada GLB abre en Godot con las animaciones de la lista; Kaelen mide 1.70 m en `scale_reference`.
+- [x] **Paso 6: Commit** — `feat: add processed Kaelen, Elysia, skeleton, knight and bone dragon animations`
 
 **Fin del día 2:** se combate contra esbirros en `test_arena`. A cambia la cápsula por `kaelen.glb` si ya está.
 
@@ -364,14 +364,14 @@ Meta: se puede matar a un esbirro y morir ante él.
   - `class_name ArenaConfig extends Resource` — `arena_id: int`, `base_budget: float`, `minion_scene: PackedScene`, `elite_scene: PackedScene`, `max_alive := 6`.
 - Fórmula (spec §8.2): `score = base_weight × ajuste_distancia × (0.3 si id == last_attack_id, si no 1) × (1 + 0.5 × |dodge_bias| si el ataque es lateral) × (1.25 si phase == 2)`; `ajuste_distancia` = 1 dentro de `[min_range, max_range]`, 0 fuera. `choose` sortea ponderado entre los 2 de mayor puntaje; ataques con `phase_min > phase` quedan fuera.
 
-- [ ] **Paso 1: Pruebas que fallan**
+- [x] **Paso 1: Pruebas que fallan**
   - `test_out_of_range_scores_zero`; `test_repeat_penalty` (mismo ataque como último → puntaje × 0.3); `test_phase2_multiplier` (× 1.25); `test_choose_never_returns_out_of_range`; `test_choose_only_from_top_two` (con 3 ataques válidos y semilla fija, en 200 sorteos el de menor puntaje nunca sale); `test_phase_min_filter`; `test_dodge_bias_average` (registrar +1, +1, −1 → 0.333).
-- [ ] **Paso 2: Ejecutar** — FAIL.
-- [ ] **Paso 3: Implementar** `BossBrain`, `Boss` (ciclo: elegir → aviso con decal en el piso del tamaño de la hitbox → activa → recuperación; fase 2 = +25 % velocidad de animación y de ataque), `boss_base.tscn` y `boss_bonedragon.tscn` con medidas de §7.4 (collider cápsula horizontal r 1.2 × 4 m; hurtboxes en torso, cabeza ×1.25 y 4 patas con `BoneAttachment3D`; navegación capa 2).
-- [ ] **Paso 4: Ejecutar pruebas** — pasan.
-- [ ] **Paso 5: `arena_1_gameplay.tscn`**: `PlayerStart`, `BossStart`, 6 `Marker3D` en grupo `"spawn_point"` sobre la capa 1, `NavigationRegion3D` capa 1 y 2 horneadas sobre la geometría de `arena_1`, rejas que se cierran al entrar (`Events.arena_entered`) y se abren con `Events.boss_defeated`; 4 esqueletos colocados a mano (el Orquestador llega el día 4).
-- [ ] **Paso 6: Verificación manual (hito)** — se puede matar al Bone Dragon (400 de vida) y morir ante él; a 200 cambia a fase 2; si Kaelen y el dragón mueren casi a la vez gana quien llegó primero a 0, y tras `boss_defeated` Kaelen no recibe daño.
-- [ ] **Paso 7: Commit** — `feat: add boss system and bone dragon fight`
+- [x] **Paso 2: Ejecutar** — FAIL.
+- [x] **Paso 3: Implementar** `BossBrain`, `Boss` (ciclo: elegir → aviso con decal en el piso del tamaño de la hitbox → activa → recuperación; fase 2 = +25 % velocidad de animación y de ataque), `boss_base.tscn` y `boss_bonedragon.tscn` con medidas de §7.4 (collider cápsula horizontal r 1.2 × 4 m; hurtboxes en torso, cabeza ×1.25 y 4 patas con `BoneAttachment3D`; navegación capa 2).
+- [x] **Paso 4: Ejecutar pruebas** — pasan.
+- [x] **Paso 5: `arena_1_gameplay.tscn`**: `PlayerStart`, `BossStart`, 6 `Marker3D` en grupo `"spawn_point"` sobre la capa 1, `NavigationRegion3D` capa 1 y 2 horneadas sobre la geometría de `arena_1`, rejas que se cierran al entrar (`Events.arena_entered`) y se abren con `Events.boss_defeated`; 4 esqueletos colocados a mano (el Orquestador llega el día 4).
+- [x] **Paso 6: Verificación manual (hito)** — se puede matar al Bone Dragon (400 de vida) y morir ante él; a 200 cambia a fase 2; si Kaelen y el dragón mueren casi a la vez gana quien llegó primero a 0, y tras `boss_defeated` Kaelen no recibe daño.
+- [x] **Paso 7: Commit** — `feat: add boss system and bone dragon fight`
 
 ### Tarea 10 (A): Menú principal, pausa, muerte/reaparición y flujo de `GameState`
 
@@ -385,12 +385,12 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Consume: `Events.player_died`, `Events.boss_defeated`.
 - Produce: `GameState.LEVEL_SCENES: Array[String] = ["res://scenes/levels/exterior.tscn", "res://scenes/levels/arena_1.tscn", "res://scenes/levels/arena_2.tscn", "res://scenes/levels/arena_3.tscn"]` (el final ocurre dentro de `arena_3`)`; `func scene_for_level(level: int) -> String`; `transition.tscn` con `func fade_to(path: String) -> void` (fundido a negro 0.5 s). Kaelen se vuelve invulnerable al recibir `Events.boss_defeated`.
 
-- [ ] **Paso 1: Pruebas que fallan** — `test_max_hp_by_level` (0 → 100, 1 → 70, 2 → 40); `test_level_clamped` (`current_level` no pasa de 2 al calcular vida); `test_new_game_resets_level` (`start_new_game()` con nivel 2 → nivel 0).
-- [ ] **Paso 2: Ejecutar** — FAIL.
-- [ ] **Paso 3: Implementar** `GameState` (sin cargar escenas en las pruebas: separar `_change_scene(path)` para que las pruebas no lo llamen), menú principal (Iniciar, Créditos, Salir; foco inicial en Iniciar; navegable con teclado y mando), pausa (`get_tree().paused`, `process_mode = ALWAYS`, Continuar / Volver al menú / Salir; libera y recaptura el ratón), pantalla "HAS MUERTO" + fundido + `reload_current_arena()`.
-- [ ] **Paso 4: Ejecutar pruebas** — pasan.
-- [ ] **Paso 5: Verificación manual** — desde el menú se entra a `arena_1`, se pausa y continúa, se muere y reaparece con el jefe a vida completa y sin esbirros sobrantes; "Volver al menú" desde la pausa no deja el juego pausado.
-- [ ] **Paso 6: Commit** — `feat: add main menu, pause, death and game flow`
+- [x] **Paso 1: Pruebas que fallan** — `test_max_hp_by_level` (0 → 100, 1 → 70, 2 → 40); `test_level_clamped` (`current_level` no pasa de 2 al calcular vida); `test_new_game_resets_level` (`start_new_game()` con nivel 2 → nivel 0).
+- [x] **Paso 2: Ejecutar** — FAIL.
+- [x] **Paso 3: Implementar** `GameState` (sin cargar escenas en las pruebas: separar `_change_scene(path)` para que las pruebas no lo llamen), menú principal (Iniciar, Créditos, Salir; foco inicial en Iniciar; navegable con teclado y mando), pausa (`get_tree().paused`, `process_mode = ALWAYS`, Continuar / Volver al menú / Salir; libera y recaptura el ratón), pantalla "HAS MUERTO" + fundido + `reload_current_arena()`.
+- [x] **Paso 4: Ejecutar pruebas** — pasan.
+- [x] **Paso 5: Verificación manual** — desde el menú se entra a `arena_1`, se pausa y continúa, se muere y reaparece con el jefe a vida completa y sin esbirros sobrantes; "Volver al menú" desde la pausa no deja el juego pausado.
+- [x] **Paso 6: Commit** — `feat: add main menu, pause, death and game flow`
 
 ### Tarea 11 (C): Arte de la arena 1 + animaciones de Ghidorah
 
