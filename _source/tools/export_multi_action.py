@@ -72,11 +72,11 @@ CHARACTERS = {
             "attack_pounce": (BH.format("Armature.002|mixamo.com|Layer0"), None),
             "attack_slam": (BH.format("Armature.006|mixamo.com|Layer0"), None),
         },
-        # el pack no trae golpe recibido ni muerte: se toman de otros personajes Mixamo
-        # (mismos nombres de hueso). Reemplazar por "Mutant Hit Reaction"/"Mutant Dying".
+        # el pack no trae golpe recibido ni muerte: descargadas de Mixamo sin skin
+        # (mismos nombres de hueso que el rig de Blackhorn)
         "extra_clips": {
-            "hurt": "_source/mixamo/knight/anims/Sword And Shield Impact.fbx",
-            "death": "_source/mixamo/knight/anims/Falling Back Death.fbx",
+            "hurt": "_source/mixamo/blackhorn/anims/hurt.fbx",
+            "death": "_source/mixamo/blackhorn/anims/death.fbx",
         },
     },
 }

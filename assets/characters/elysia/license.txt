@@ -1,0 +1,10 @@
+Model Information:
+* title:	Ancient Elf Lady PSX
+* source:	https://sketchfab.com/3d-models/ancient-elf-lady-psx-ff06ac3ff7474fe3b9f51bf8e68d96bb
+* author:	Seifert / Peter_Seifert (https://sketchfab.com/Peter_Seifert)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	credit the author
+
+Changes: rescaled to 1.60 m, materials made opaque.

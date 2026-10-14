@@ -1,0 +1,11 @@
+Model Information:
+* title:	Blackhorn of the Shattered Peaks - Retro PS1 Low-Poly Horror Enemy
+* source:	https://imaginais.itch.io/blackhorn-of-the-shattered-peaks
+* author:	imaginais (https://imaginais.itch.io)
+
+Terms:
+* No formal license on the page. The author confirmed use in games in the page comments.
+  Credit is not required but is given.
+* Animations: included clips and the added hurt/death clips come from Mixamo (Adobe).
+
+Changes: clips renamed and made in-place, rescaled to 3.20 m.

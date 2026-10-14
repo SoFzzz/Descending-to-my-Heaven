@@ -1,0 +1,6 @@
+Model Information:
+* title:	Low poly woman knight
+* source:	unknown (original source not found)
+* author:	unknown - credit to the original author ("a quien corresponda")
+
+Changes: rigged and animated with Mixamo (Adobe), rescaled to 1.70 m.
