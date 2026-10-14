@@ -1,0 +1,137 @@
+extends "res://scripts/game/level_gameplay.gd"
+## Raíz de `arena_N_gameplay.tscn` (Tarea 9). Además de lo de level_gameplay.gd (Kaelen en
+## PlayerStart + material PSX): coloca al jefe (hijo `Boss`) en BossStart mirando a Kaelen,
+## pone `initial_minions` esbirros en puntos `spawn_point`, cierra las rejas y emite
+## Events.arena_entered; muestra la barra del jefe en el HUD de Kaelen. Con Events.boss_defeated
+## oculta la barra y, GATE_OPEN_DELAY s después, baja GateExit (meta `open_offset`) y emite
+## Events.arena_cleared. Cuando Kaelen cruza ExitTrigger con la reja abierta emite `exit_reached`
+## y llama a GameState.advance_level() (el paso de nivel es de las Tareas 10/15).
+
+signal exit_reached
+
+const GATE_OPEN_DELAY := 3.0
+const GATE_OPEN_TIME := 2.0
+const GATE_CLOSE_TIME := 1.0
+
+@export var config: ArenaConfig
+@export var initial_minions := 4
+## Índices (orden por nombre) de los spawn_point donde van los esbirros iniciales; si sobran
+## esbirros se usan los demás puntos.
+@export var minion_spawn_indices: Array[int] = [0, 1, 4, 5]
+
+var arena_cleared := false
+
+@onready var boss: Boss = get_node_or_null(^"Boss") as Boss
+
+var _gate_entry: Node3D
+var _gate_exit: Node3D
+var _exit_used := false
+
+
+func _ready() -> void:
+	super._ready()
+	var arena_id := config.arena_id if config else 1
+	if boss:
+		PSX.apply_psx(boss.get_node("Model"))
+		var boss_start := level.get_node_or_null("BossStart") as Node3D
+		if boss_start:
+			boss.spawn_at(boss_start, player.global_position)
+		else:
+			push_warning("%s no tiene BossStart" % level.name)
+		boss.health.died.connect(_on_boss_died)
+	_spawn_minions()
+	_gate_entry = level.get_node_or_null("GateEntry") as Node3D
+	_gate_exit = level.get_node_or_null("GateExit") as Node3D
+	_close_entry_gate()
+	var exit_trigger := level.get_node_or_null("ExitTrigger") as Area3D
+	if exit_trigger:
+		exit_trigger.body_entered.connect(_on_exit_trigger_body_entered)
+	var hud := player.get_node_or_null(^"HUD") as Hud
+	if hud and boss:
+		hud.show_boss(boss.display_name, boss.health)
+	var events := get_node_or_null(^"/root/Events")
+	if events:
+		events.boss_defeated.connect(_on_boss_defeated)
+		events.arena_entered.emit(arena_id)
+
+
+func _spawn_minions() -> void:
+	var scene: PackedScene = config.minion_scene if config else null
+	if scene == null or initial_minions <= 0:
+		return
+	var points: Array[Node3D] = []
+	for node in get_tree().get_nodes_in_group(&"spawn_point"):
+		if node is Node3D and level.is_ancestor_of(node):
+			points.append(node)
+	points.sort_custom(func(a: Node3D, b: Node3D) -> bool: return String(a.name).naturalnocasecmp_to(String(b.name)) < 0)
+	var order: Array[int] = []
+	for i in minion_spawn_indices:
+		if i >= 0 and i < points.size() and not order.has(i):
+			order.append(i)
+	for i in points.size():
+		if not order.has(i):
+			order.append(i)
+	for k in mini(initial_minions, order.size()):
+		var point := points[order[k]]
+		var minion := scene.instantiate() as Node3D
+		minion.name = "Minion%d" % (k + 1)
+		add_child(minion)
+		minion.global_position = point.global_position
+		var to_player := player.global_position - point.global_position
+		minion.rotation.y = atan2(-to_player.x, -to_player.z)
+
+
+# --- Rejas ------------------------------------------------------------------------------------
+
+## La reja de entrada arranca abierta (bajada) y sube detrás de Kaelen.
+func _close_entry_gate() -> void:
+	if _gate_entry == null:
+		return
+	var closed := _gate_entry.position
+	# from(): the open position is applied on the tween's first step (an AnimatableBody3D moved in
+	# _ready, before it is in the physics space, gets its old transform back).
+	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	tween.tween_property(_gate_entry, "position", closed, GATE_CLOSE_TIME).from(closed + _open_offset(_gate_entry))
+
+
+func _open_exit_gate() -> void:
+	if _gate_exit == null:
+		return
+	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	tween.tween_property(_gate_exit, "position", _gate_exit.position + _open_offset(_gate_exit), GATE_OPEN_TIME)
+
+
+static func _open_offset(gate: Node3D) -> Vector3:
+	return gate.get_meta(&"open_offset", Vector3(0, -6.1, 0))
+
+
+# --- Jefe -------------------------------------------------------------------------------------
+
+func _on_boss_died() -> void:
+	var hud := player.get_node_or_null(^"HUD") as Hud
+	if hud:
+		hud.hide_boss()
+
+
+func _on_boss_defeated(defeated: Node3D) -> void:
+	if defeated != boss or arena_cleared:
+		return
+	arena_cleared = true
+	get_tree().create_timer(GATE_OPEN_DELAY, false, true).timeout.connect(_on_gate_delay_finished)
+
+
+func _on_gate_delay_finished() -> void:
+	_open_exit_gate()
+	var events := get_node_or_null(^"/root/Events")
+	if events:
+		events.arena_cleared.emit(config.arena_id if config else 1)
+
+
+func _on_exit_trigger_body_entered(body: Node3D) -> void:
+	if _exit_used or not arena_cleared or body != player:
+		return
+	_exit_used = true
+	exit_reached.emit()
+	var game_state := get_node_or_null(^"/root/GameState")
+	if game_state and game_state.has_method(&"advance_level"):
+		game_state.call_deferred(&"advance_level")   # deferred: we are inside a physics signal
