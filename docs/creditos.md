@@ -38,6 +38,7 @@ Animaciones: Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist, Stra
 
 | Asset | Autor | Licencia |
 |---|---|---|
+| Beam VFX - Godot 3D (rayo de Ghidorah, `assets/vfx/beam/`) | Binbun (https://binbun3d.itch.io/beam-vfx) | CC0 1.0 (crédito no obligatorio) |
 | Godot-PSX-Starter-kit (portado a Godot 4) | DruidCZ; shaders de MenacingMecha y Ahopness | MIT (`shaders/psx/LICENSE-psx-starter-kit.txt`) |
 
 ## Audio
