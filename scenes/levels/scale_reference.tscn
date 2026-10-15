@@ -97,7 +97,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -4)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -4)
 
 [node name="Ghidorah" parent="Models" instance=ExtResource("9_ghidorah")]
-transform = Transform3D(2.4, 0, 0, 0, 2.4, 0, 0, 0, 2.4, 38, 0, -6)
+transform = Transform3D(1.95, 0, 0, 0, 1.95, 0, 0, 0, 1.95, 38, 0, -6)
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.966, 0.259, 0, -0.259, 0.966, 18, 7, 30)
