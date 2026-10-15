@@ -1,0 +1,4 @@
+Pulsing Heart (barra de vida con corazon latiendo)
+Autor: por confirmar (el readme no lo indica)
+Licencia: por confirmar (el pack no incluye licencia)
+Las imagenes son copias sin modificar; ver readme.txt para el orden de capas.
