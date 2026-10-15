@@ -105,7 +105,7 @@ Autor y licencia por confirmar.
 Pulsing Heart (barra de vida y estamina de Kaelen)
 Autor y licencia por confirmar.
 
-Pixel UI pack 3 (barra de Blackhorn y marcador de fijado)
+Pixel UI pack 3 (barra de Blackhorn y marcador de fijado; el marcador es una copia reducida a la mitad, 03_reticle_thin.png)
 Autor y licencia por confirmar.
 
 
