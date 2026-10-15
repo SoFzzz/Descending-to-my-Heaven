@@ -9,6 +9,7 @@
 [ext_resource type="Resource" path="res://resources/attacks/ghidorah_tail_sweep.tres" id="8_tail"]
 [ext_resource type="Resource" path="res://resources/attacks/ghidorah_beam.tres" id="9_beam"]
 [ext_resource type="PackedScene" path="res://assets/vfx/beam/beam_vfx.tscn" id="10_beamvfx"]
+[ext_resource type="Script" path="res://scripts/vfx/ghidorah_beam_aim.gd" id="11_beamaim"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 1.4
@@ -60,6 +61,10 @@ rings = 1
 [sub_resource type="BoxMesh" id="Box_beam"]
 material = SubResource("Mat_telegraph")
 size = Vector3(1.5, 0.02, 20)
+
+[sub_resource type="BoxMesh" id="Box_beam_zone"]
+material = SubResource("Mat_telegraph")
+size = Vector3(1.5, 0.02, 1)
 
 [node name="BossGhidorah" instance=ExtResource("1_base")]
 display_name = "Mecha King Ghidorah"
@@ -257,3 +262,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -12)
 visible = false
 cast_shadow = 0
 mesh = SubResource("Box_beam")
+
+[node name="HitZone" type="MeshInstance3D" parent="Telegraphs/beam"]
+cast_shadow = 0
+mesh = SubResource("Box_beam_zone")
+
+[node name="BeamAim" type="Node" parent="."]
+script = ExtResource("11_beamaim")
