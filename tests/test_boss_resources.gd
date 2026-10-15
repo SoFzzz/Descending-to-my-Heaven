@@ -1,5 +1,6 @@
 extends TestCase
-# Tarea 13: ataques y escenas de Blackhorn y Ghidorah (§7.4, §8.2) y el complemento AttackDriver.
+# Tarea 13: ataques y escenas de Blackhorn y Ghidorah (§7.4, §8.2). El avance, las aperturas y las hurtboxes
+# expuestas viven en Boss / BossAttack (ver test_boss_attack.gd).
 # Solo estructura y datos: el comportamiento en ejecución se comprueba con el arnés de verificación.
 
 const ATTACK_DIR := "res://resources/attacks/"
@@ -134,7 +135,10 @@ func test_blackhorn_scene() -> void:
 		if s:
 			assert_almost(s.radius, 0.6, 0.001, "garras r 0.6")
 	assert_true(boss.get_node_or_null(^"LockOnPoint") is Marker3D)
-	assert_true(boss.get_node_or_null(^"AttackDriver") is AttackDriver, "complemento de embestida/aproximación")
+	assert_eq(boss.walk_animation, &"run", "Blackhorn solo corre (nunca walk)")
+	assert_true(boss.settle_on_death, "apoya el cuerpo en el suelo al morir")
+	assert_eq(boss.collision_mask & 2, 2, "no atraviesa a Kaelen (capa player en la máscara)")
+	assert_true(boss.get_node_or_null(^"AttackDriver") == null, "el AttackDriver ya no existe")
 	boss.free()
 
 
@@ -148,10 +152,10 @@ func test_ghidorah_scene() -> void:
 	assert_eq((boss.get_node(^"NavigationAgent3D") as NavigationAgent3D).navigation_layers, 2)
 	_check_attack_wiring(boss, "ghidorah")
 	var cap := (boss.get_node(^"CollisionShape3D") as CollisionShape3D).shape as CapsuleShape3D
-	assert_almost(cap.radius, 2.5)
-	assert_almost(cap.height, 6.0)
+	assert_almost(cap.radius, 1.4, 0.001, "cápsula del torso (el cuerpo real mide ~1.2 m de radio)")
+	assert_almost(cap.height, 5.0)
 	var model := boss.get_node(^"Model") as Node3D
-	assert_almost(model.scale.y, 2.4, 0.001, "escala del modelo x2.4 (10 m de alto)")
+	assert_almost(model.scale.y, 1.95, 0.001, "escala del modelo x1.95 (8.1 m de alto, ~14 m con la cola)")
 	assert_almost((_shape(boss, "BiteHitbox") as SphereShape3D).radius, 1.5, 0.001, "mordida r 1.5")
 	assert_almost((_shape(boss, "BeamHitbox") as BoxShape3D).size.z, 20.0, 0.001, "rayo de 20 m")
 	assert_almost((_shape(boss, "BeamHitbox") as BoxShape3D).size.x, 1.5)
@@ -170,38 +174,10 @@ func test_ghidorah_scene() -> void:
 	for leg in ["LegLHurtbox", "LegRHurtbox"]:
 		assert_true(boss.get_node_or_null(NodePath(leg)) is Hurtbox, leg)
 		assert_true((boss.get_node(NodePath(leg)) as Hurtbox).monitorable)
-	var driver := boss.get_node_or_null(^"AttackDriver") as AttackDriver
-	assert_true(driver != null)
-	if driver:
-		assert_eq(driver.exposed_attack, &"bite")
-		assert_eq(driver.exposed_hurtboxes.size(), 3, "las 3 cabezas")
+	assert_true(boss.get_node_or_null(^"AttackDriver") == null, "el AttackDriver ya no existe")
+	assert_eq(boss.gated_hurtboxes.size(), 3, "las 3 cabezas solo se golpean durante la mordida")
+	for path in boss.gated_hurtboxes:
+		assert_true(boss.get_node_or_null(path) is Hurtbox, str(path))
 	var lock := boss.get_node(^"LockOnPoint") as Marker3D
 	assert_true(lock.position.y > 2.0 and lock.position.y < 5.0, "LockOnPoint en el torso, a media altura")
 	boss.free()
-
-
-# --- AttackDriver (lógica pura) -----------------------------------------------------------------
-
-func test_driver_window_open() -> void:
-	assert_true(AttackDriver.window_open(true, 0.0))
-	assert_true(AttackDriver.window_open(false, 0.1), "margen tras el ataque")
-	assert_true(not AttackDriver.window_open(false, 0.0))
-
-
-func test_driver_opener_rules() -> void:
-	var near := BossAttack.new()
-	near.id = &"near"
-	near.min_range = 0.0
-	near.max_range = 4.0
-	var far := BossAttack.new()
-	far.id = &"far"
-	far.min_range = 8.0
-	far.max_range = 16.0
-	far.phase_min = 2
-	var attacks: Array[BossAttack] = [near, far]
-	assert_true(not AttackDriver.opener_distance(attacks, 3.0, 3.0, 2, &""), "dentro del alcance base no hace falta")
-	assert_true(AttackDriver.opener_distance(attacks, 10.0, 3.0, 2, &""), "fase 2 a 10 m: embestida")
-	assert_true(not AttackDriver.opener_distance(attacks, 10.0, 3.0, 1, &""), "fase 1: no hay ataque a 10 m")
-	assert_true(not AttackDriver.opener_distance(attacks, 10.0, 3.0, 2, &"far"), "no repite el ultimo ataque")
-	assert_true(not AttackDriver.opener_distance(attacks, 6.0, 3.0, 2, &""), "entre 4 y 8 m se acerca")
-	assert_almost(AttackDriver.lunge_speed_for(12.0, 0.8), 15.0)
