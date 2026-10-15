@@ -3,7 +3,8 @@ extends RefCounted
 ## Modelo puro del Orquestador (spec §8.3): intensidad, máquina de fases y presupuesto de oleada.
 ## Sin nodos: el autoload Orchestrator le pasa el contexto cada tick y gasta el presupuesto.
 ##
-## Ritmo por oleadas con ventana del jefe: oleada de wave_size_min..wave_size_max esbirros -> se
+## Ritmo por oleadas con ventana del jefe: grupo de wave_size_min o wave_size_max esbirros (2 o 3;
+## nunca más de max_alive = 3 vivos; el Orquestador reemplaza a uno por la élite) -> se
 ## eliminan todos -> ventana del jefe de `clear_delay` s (escalada +-30 % por la intensidad) sin
 ## apariciones -> siguiente oleada. Nunca hay una oleada con algún esbirro vivo. La fase
 ## (RELAX / hp_ratio < 0.25 / boss_special) sigue vetando oleadas.
@@ -38,8 +39,6 @@ const PHASE2_MULTIPLIER := 1.5
 const WINDOW_SCALE_MIN := 0.9
 const WINDOW_SCALE_MAX := 1.3
 const RETRY_DELAY := 1.0
-const MINION_COST := 1
-const ELITE_COST := 3
 ## Puntos de aparición: nunca a <= SPAWN_MIN_DISTANCE de Kaelen; los que se ven (cono de la
 ## cámara) solo valen si están a > SPAWN_FAR_DISTANCE, o como último recurso (SpawnTier.FALLBACK).
 const SPAWN_MIN_DISTANCE := 8.0
@@ -50,12 +49,14 @@ enum SpawnTier { NONE, HIDDEN, FAR, FALLBACK }
 
 var intensity := 0.0
 var phase: Phase = Phase.BUILD_UP
-## Presupuesto base del nivel (ArenaConfig.base_budget); lo fija el Orquestador.
+## Umbral de presión del nivel (ArenaConfig.base_budget): con base x desempeño x fase >= base el
+## grupo es de wave_size_max; por debajo, de wave_size_min. Lo fija el Orquestador.
 var base_budget := 4.0
-var max_alive := 6
-## Tamaño de oleada (en coste: esbirro 1, élite 3), entre min y max; ArenaConfig los fija.
-var wave_size_min := 3
-var wave_size_max := 4
+## Máximo de esbirros vivos a la vez (élite incluida).
+var max_alive := 3
+## Tamaño del grupo (esbirros, élite incluida): 2 si el jugador va mal, 3 si va bien; ArenaConfig los fija.
+var wave_size_min := 2
+var wave_size_max := 3
 ## Segundos de ventana del jefe tras eliminar la oleada (sin apariciones).
 var clear_delay := 12.0
 ## Segundos hasta la primera oleada tras entrar a la arena.
@@ -125,14 +126,12 @@ func update(delta: float, ctx: Dictionary) -> int:
 		return 0
 	if wave_timer > 0.0:
 		return 0
-	var budget := budget_for(ctx, base_budget)
-	if budget <= 0:
+	var size := wave_size_for(ctx, base_budget)
+	if size <= 0:
 		return 0
-	# Una oleada nunca es un goteo: al menos wave_size_min (si caben) y como mucho wave_size_max.
-	budget = clampi(budget, mini(wave_size_min, max_alive), maxi(wave_size_max, 1))
 	_wave_out = true
 	cycle = Cycle.WAVE
-	return budget
+	return size
 
 
 ## Elige dónde aparecen los esbirros (lógica pura). `points`: posiciones; `in_view[i]`: ¿el punto i
@@ -183,14 +182,16 @@ func retry_wave_soon() -> void:
 	wave_timer = RETRY_DELAY
 
 
-## Presupuesto = base × desempeño × (1.5 en fase 2 del jefe), redondeado, sin pasar de los
-## huecos libres (max_alive - vivos): con 5 vivos como mucho 1.
-func budget_for(ctx: Dictionary, base: float) -> int:
+## Tamaño del grupo: presión = base x desempeño x (1.5 en fase 2 del jefe). Con presión >= base
+## (el jugador va bien o el jefe está en fase 2) salen wave_size_max esbirros; con menos,
+## wave_size_min. Nunca más que los huecos libres (max_alive - vivos).
+func wave_size_for(ctx: Dictionary, base: float) -> int:
 	var raw := base * performance_factor(ctx)
 	if int(ctx.get("boss_phase", 1)) == 2:
 		raw *= PHASE2_MULTIPLIER
+	var size := wave_size_max if raw >= base else wave_size_min
 	var free_slots := max_alive - int(ctx.get("enemies_alive", 0))
-	return clampi(roundi(raw), 0, maxi(0, free_slots))
+	return clampi(size, 0, maxi(0, free_slots))
 
 
 ## Factor de desempeño (0.6–1.4), determinista: media de la vida actual (hp_ratio, 0–1) y del

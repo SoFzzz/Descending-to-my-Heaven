@@ -170,39 +170,40 @@ func test_first_wave_delay_is_configurable() -> void:
 	assert_almost(r.t, 1.0)
 
 
-func test_wave_size_between_min_and_max() -> void:
+func test_wave_size_is_two_or_three() -> void:
 	var m := OrchestratorModel.new()
-	# Va bien (1.4 x 4 = 5.6) -> tope 4; va mal (0.72 x 4 = 2.9) -> 3.
+	assert_eq(m.max_alive, 3, "como mucho 3 esbirros vivos")
+	# Va bien (1.4 x 4 = 5.6 >= 4) -> 3; va mal (0.72 x 4 = 2.9 < 4) -> 2.
 	var good := _until_wave(m, _ctx({time_since_hit = 99.0}))
-	assert_eq(good.budget, 4)
+	assert_eq(good.budget, 3)
 	var m2 := OrchestratorModel.new()
 	var bad := _until_wave(m2, _ctx({hp_ratio = 0.3, time_since_hit = 0.0}))
-	assert_eq(bad.budget, 3)
+	assert_eq(bad.budget, 2)
 
 
-func test_wave_size_never_exceeds_max_even_in_phase2() -> void:
+func test_phase2_pushes_to_three() -> void:
 	var m := OrchestratorModel.new()
-	var r := _until_wave(m, _ctx({time_since_hit = 99.0, boss_phase = 2}))
-	assert_eq(r.budget, 4, "fase 2 x1.5 no pasa de wave_size_max")
+	# Con fase 2: desempeno minimo (0.6 x 4 x 1.5 = 3.6 < 4) -> 2; desempeno medio (5.3 >= 4) -> 3.
+	assert_eq(m.wave_size_for(_ctx({hp_ratio = 0.0, time_since_hit = 0.0, boss_phase = 2}), 4.0), 2)
+	assert_eq(m.wave_size_for(_ctx({hp_ratio = 0.5, time_since_hit = 4.0, boss_phase = 2}), 4.0), 3)
+
+
+func test_wave_size_never_exceeds_three() -> void:
+	var m := OrchestratorModel.new()
+	m.base_budget = 1.0
+	assert_eq(_until_wave(m, _ctx({time_since_hit = 99.0, boss_phase = 2})).budget, 3, "ni con presion maxima pasa de 3")
 	var m2 := OrchestratorModel.new()
-	m2.wave_size_max = 5
-	assert_eq(_until_wave(m2, _ctx({time_since_hit = 99.0, boss_phase = 2})).budget, 5)
+	m2.base_budget = 1000.0   # presion imposible: grupo minimo
+	assert_eq(_until_wave(m2, _ctx({hp_ratio = 0.5, time_since_hit = 0.0})).budget, 2)
 
 
-func test_wave_size_has_a_floor_of_min() -> void:
+func test_wave_size_respects_free_slots() -> void:
 	var m := OrchestratorModel.new()
-	m.base_budget = 1.0   # presupuesto bajo: la oleada sube al mínimo (3), no es un goteo
-	assert_eq(_until_wave(m, _ctx()).budget, 3)
+	m.max_alive = 2
+	assert_eq(_until_wave(m, _ctx({time_since_hit = 99.0})).budget, 2, "sin huecos para 3 se limita a max_alive")
 	var m2 := OrchestratorModel.new()
-	m2.base_budget = 1.0
-	m2.max_alive = 2   # sin huecos para 3: se limita a max_alive
-	assert_eq(_until_wave(m2, _ctx()).budget, 2)
-
-
-func test_wave_size_respects_max_alive() -> void:
-	var m := OrchestratorModel.new()
-	m.max_alive = 3
-	assert_true(_until_wave(m, _ctx({time_since_hit = 99.0})).budget <= 3)
+	assert_eq(m2.wave_size_for(_ctx({enemies_alive = 3}), 4.0), 0, "con 3 vivos no sale nadie")
+	assert_eq(m2.wave_size_for(_ctx({enemies_alive = 2, time_since_hit = 99.0}), 4.0), 1, "con 2 vivos solo cabe 1")
 
 
 func test_no_wave_while_minions_alive() -> void:
@@ -305,26 +306,11 @@ func test_cycle_state_labels() -> void:
 	assert_true(m.wave_timer > 5.0)
 
 
-func test_budget_phase2_multiplier() -> void:
-	var m := OrchestratorModel.new()
-	var phase1 := m.budget_for(_ctx({time_since_hit = 0.0}), 4.0)   # desempeño 1.0
-	var phase2 := m.budget_for(_ctx({time_since_hit = 0.0, boss_phase = 2}), 4.0)
-	assert_eq(phase1, 4)
-	assert_eq(phase2, 6)
-
-
 func test_performance_factor_range() -> void:
 	var m := OrchestratorModel.new()
 	assert_almost(m.performance_factor(_ctx({hp_ratio = 1.0, time_since_hit = 99.0})), 1.4)
 	assert_almost(m.performance_factor(_ctx({hp_ratio = 0.0, time_since_hit = 0.0})), 0.6)
 	assert_almost(m.performance_factor(_ctx({hp_ratio = 0.5, time_since_hit = 10.0})), 1.0)
-
-
-func test_budget_respects_max_alive() -> void:
-	var m := OrchestratorModel.new()
-	var b := m.budget_for(_ctx({enemies_alive = 5, boss_phase = 2}), 10.0)
-	assert_true(b <= 1, "con 5 vivos el presupuesto es %d" % b)
-	assert_eq(m.budget_for(_ctx({enemies_alive = 6}), 10.0), 0)
 
 
 func test_reset_returns_to_build_up() -> void:
