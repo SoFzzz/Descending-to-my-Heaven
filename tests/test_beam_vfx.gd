@@ -55,38 +55,68 @@ func _dist_to_box(point: Vector3, center: Vector3, basis: Basis, size: Vector3) 
 	return outside.length()
 
 
-## True si la capsula de Kaelen (r 0.30, alto 1.50, centro a 0.85 m de sus pies) toca la caja.
-func _kaelen_hit(feet: Vector3, beam: Dictionary) -> bool:
-	var size := Vector3(1.5, 1.5, beam.length)
+const HIT_SIZE := Vector3(1.5, 2.4, 2.0)   # ancho, alto y largo de la zona de daño que viaja con el impacto
+
+
+## True si la capsula de Kaelen (r 0.30, alto 1.50, centro a 0.85 m de sus pies) toca la zona de
+## daño cuando el impacto esta en `impact` y el rayo va en la direccion `dir`.
+func _kaelen_hit(feet: Vector3, impact: Vector3, dir: Vector3) -> bool:
+	var basis := Basis.looking_at(dir, Vector3.UP)
+	var center := impact + Vector3.UP * HIT_SIZE.y * 0.5
 	for i in 10:
 		var y := lerpf(0.4, 1.3, i / 9.0)   # eje de la capsula (sin los casquetes)
-		if _dist_to_box(feet + Vector3(0.0, y, 0.0), beam.center, beam.basis, size) <= 0.3:
+		if _dist_to_box(feet + Vector3(0.0, y, 0.0), center, basis, HIT_SIZE) <= 0.3:
 			return true
 	return false
 
 
-func test_beam_hits_kaelen_on_path_only() -> void:
+## Pasos de 1/60 s del recorrido (0,9 s) en los que Kaelen en `feet` recibe el rayo.
+func _hit_steps(line: Dictionary, feet: Vector3, steps := 54) -> int:
+	var n := 0
+	for i in steps + 1:
+		if _kaelen_hit(feet, GhidorahBeamAim.sweep_point(line, float(i) / steps), line.dir):
+			n += 1
+	return n
+
+
+func test_sweep_line_runs_from_boss_through_target() -> void:
+	var boss := Vector3(2.0, 0.0, 3.0)
+	var target := Vector3(2.0, 0.5, -9.0)   # a 12 m, recto delante
+	var line = GhidorahBeamAim.sweep_line(boss, target, 2.5, 2.0)
+	assert_almost((line.from as Vector3).distance_to(Vector3(2.0, 0.5, 0.5)), 0.0, 0.0001, "empieza a 2.5 m del jefe")
+	assert_almost((line.to as Vector3).distance_to(Vector3(2.0, 0.5, -11.0)), 0.0, 0.0001, "termina 2 m despues de Kaelen")
+	assert_almost(line.length, 11.5, 0.0001)
+	assert_almost((line.dir as Vector3).distance_to(Vector3(0.0, 0.0, -1.0)), 0.0, 0.0001)
+
+
+func test_sweep_point_interpolates() -> void:
+	var line = GhidorahBeamAim.sweep_line(Vector3.ZERO, Vector3(0.0, 0.0, -10.0), 2.0, 2.0)
+	assert_almost((GhidorahBeamAim.sweep_point(line, 0.0) as Vector3).z, -2.0, 0.0001)
+	assert_almost((GhidorahBeamAim.sweep_point(line, 0.5) as Vector3).z, -7.0, 0.0001)
+	assert_almost((GhidorahBeamAim.sweep_point(line, 1.0) as Vector3).z, -12.0, 0.0001)
+	assert_almost((GhidorahBeamAim.sweep_point(line, 2.0) as Vector3).z, -12.0, 0.0001, "no pasa del final")
+
+
+func test_beam_hits_only_where_impact_passes() -> void:
 	for dist in [8.0, 12.0, 20.0]:
 		var target := Vector3(0.0, 0.0, -dist)
-		var beam = GhidorahBeamAim.solve(MOUTH, target, 0.35)
-		assert_true(_kaelen_hit(target, beam), "Kaelen de pie en el impacto (%s m)" % dist)
-		# Dentro del tramo de daño sobre la trayectoria tambien la alcanza.
-		var slope := asin(-(beam.direction as Vector3).y)
-		var run = GhidorahBeamAim.danger_run(slope, 0.75, 0.35)
-		var inside := target + Vector3(0.0, 0.0, run * 0.6)
-		assert_true(_kaelen_hit(inside, beam), "Kaelen dentro del tramo de daño (%s m)" % dist)
-		# 2.5 m a un lado, o claramente detras del impacto, no la toca.
-		assert_true(not _kaelen_hit(target + Vector3(2.5, 0.0, 0.0), beam), "2.5 m al lado (%s m)" % dist)
-		assert_true(not _kaelen_hit(target + Vector3(0.0, 0.0, -3.0), beam), "pasado el impacto (%s m)" % dist)
-		# Bajo el tramo alto del rayo (cerca de la boca) puede caminar sin recibir daño.
-		var under := Vector3(0.0, 0.0, MOUTH.z - 1.0)
-		if dist >= 12.0:
-			assert_true(not _kaelen_hit(under, beam), "bajo el tramo alto (%s m)" % dist)
+		var line = GhidorahBeamAim.sweep_line(Vector3.ZERO, target, 2.5, 2.0)
+		var on_target := _hit_steps(line, target)
+		assert_true(on_target >= 3, "Kaelen quieta en el punto fijado recibe el rayo (%s m)" % dist)
+		assert_true(on_target <= 24, "...pero solo mientras pasa el impacto, no todo el recorrido (%s m: %d pasos)" % [dist, on_target])
+		# Cerca del jefe, antes de que el impacto llegue a Kaelen, no hay dano en su sitio.
+		assert_true(not _kaelen_hit(target, GhidorahBeamAim.sweep_point(line, 0.0), line.dir), "al inicio el impacto esta lejos (%s m)" % dist)
+		assert_true(not _kaelen_hit(target, GhidorahBeamAim.sweep_point(line, 1.0), line.dir), "al final ya paso de largo (%s m)" % dist)
+		# Fuera de la linea (2.5 m al lado) nunca la toca.
+		assert_eq(_hit_steps(line, target + Vector3(2.5, 0.0, 0.0)), 0, "a un lado no recibe dano (%s m)" % dist)
+		# Un poco antes del punto fijado tambien la alcanza (el impacto pasa por ahi).
+		assert_true(_hit_steps(line, target + Vector3(0.0, 0.0, 3.0)) > 0, "el impacto recorre la linea hacia ella (%s m)" % dist)
 
 
-func test_danger_run() -> void:
-	# Mas inclinado = tramo de daño en el suelo mas corto.
-	var steep = GhidorahBeamAim.danger_run(deg_to_rad(50.0), 0.75, 0.35)
-	var shallow = GhidorahBeamAim.danger_run(deg_to_rad(15.0), 0.75, 0.35)
-	assert_true(shallow > steep * 3.0, "rayo rasante, tramo largo")
-	assert_true(steep > 1.0 and steep < 3.0, "tramo corto con el rayo empinado")
+func test_beam_sweep_speed_is_dodgeable() -> void:
+	# Con 0.9 s de recorrido, un impacto que va de 2.5 m a (distancia + 2) m del jefe.
+	var attack := load("res://resources/attacks/ghidorah_beam.tres") as BossAttack
+	assert_true(attack.active_time >= 0.6 and attack.active_time <= 1.0, "recorrido de 0.6 a 1.0 s")
+	var line = GhidorahBeamAim.sweep_line(Vector3.ZERO, Vector3(0.0, 0.0, -20.0), 2.5, 2.0)
+	var speed: float = line.length / attack.active_time
+	assert_true(speed < 22.0, "en el peor caso (20 m) avanza a %.1f m/s" % speed)
