@@ -1,0 +1,11 @@
+[gd_resource type="AudioStreamRandomizer" format=3]
+
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/player/sword_hit_1.ogg" id="1_1pw2b"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/player/sword_hit_2.ogg" id="2_w7e8p"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/player/sword_hit_3.ogg" id="3_pv1tc"]
+
+[resource]
+streams_count = 3
+stream_0/stream = ExtResource("1_1pw2b")
+stream_1/stream = ExtResource("2_w7e8p")
+stream_2/stream = ExtResource("3_pv1tc")

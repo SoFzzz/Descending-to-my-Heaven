@@ -1,0 +1,17 @@
+[gd_resource type="AudioStreamRandomizer" format=3]
+
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/monsters/grunt_1.mp3" id="1_fjhag"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/monsters/grunt_3.mp3" id="2_blu1e"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/monsters/grunt_4.mp3" id="3_fexyi"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/monsters/grunt_6.mp3" id="4_d7fhf"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/monsters/grunt_7.mp3" id="5_5eoev"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/monsters/grunt_8.mp3" id="6_60my3"]
+
+[resource]
+streams_count = 6
+stream_0/stream = ExtResource("1_fjhag")
+stream_1/stream = ExtResource("2_blu1e")
+stream_2/stream = ExtResource("3_fexyi")
+stream_3/stream = ExtResource("4_d7fhf")
+stream_4/stream = ExtResource("5_5eoev")
+stream_5/stream = ExtResource("6_60my3")
