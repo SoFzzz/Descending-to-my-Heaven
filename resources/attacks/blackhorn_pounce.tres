@@ -17,3 +17,6 @@ hitbox_path = NodePath("PounceHitbox")
 phase_min = 1
 lateral = false
 spin_degrees = 0.0
+advance_distance = 3.0
+opener = true
+extra_hitbox_paths = Array[NodePath]([NodePath("ClawLHitbox"), NodePath("ClawRHitbox")])
