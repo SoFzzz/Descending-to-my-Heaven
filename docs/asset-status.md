@@ -154,7 +154,7 @@ Medido en Godot con el esqueleto y la malla (skinning en CPU, 25 muestras por cl
 | | `charge`, `charge` | 8–16 m | 25 | 1.0 s | 0.9 s | 1.4 s | solo 2 | caja 1.5×2.5×3 al frente; avanza 12 m (aviso: carril 1.5 × 15 m) |
 | Ghidorah (600 PV) | `bite`, `bite` | 0–6 m | 12 | 1.1 s | 0.6 s | 1.0 s | 1 | esfera r 1.5 en la mandíbula central |
 | | `tail_sweep`, `tail_sweep` | 0–8 m | 10 | 1.2 s | 0.8 s | 1.2 s | 1 | caja 2.5×3×6 detrás (a 3.5–9.5 m) y el cuerpo gira 360° (aviso: disco r 9.6) |
-| | `beam`, `beam` | 8–20 m | 14 | 1.1 s | 1.5 s | 1.3 s | 1 | caja 1.5×1.5×20 al frente (aviso: línea; efecto visual: `BeamVisual`, ver *Rayo de Ghidorah*) |
+| | `beam`, `beam` | 8–20 m | 14 | 1.1 s | 1.5 s | 1.3 s | 1 | caja 1.5×1.5×largo en diagonal de la boca al suelo bajo Kaelen (aviso: proyección en el suelo; efecto visual: `BeamVisual`, ver *Rayo de Ghidorah*) |
 
 Daño pensado para la vida máxima de Kaelen en cada arena (100/70/40 PV): ~25–30 % por golpe. Los clips `idle`/`charge` de Blackhorn duran lo mismo (0.90 s) y `walk`/`run` también (1.47 s): parecen duplicados; el clip `charge` se usa también como aviso de la embestida (corre en el sitio durante 1 s).
 
@@ -164,8 +164,12 @@ El antiguo `attack_driver.gd` se integró en `boss.gd` / `boss_attack.gd` y se b
 
 Efecto del pack "Beam VFX - Godot 3D" de Binbun (CC0, https://binbun3d.itch.io/beam-vfx; zip original en `_source/vfx/`). Está en `assets/vfx/beam/beam_vfx.tscn` (5 shaders y `vfx_beam_controller.gd` del pack), adaptado a gl_compatibility: tinte dorado, emisión 1.2 (sin glow se quemaba a blanco), ruido `FastNoiseLite` de 128 px con muestreo nearest, mallas de 12 segmentos y 32 partículas.
 
-- Es el nodo `BeamVisual` de `boss_ghidorah.tscn`, en (0, 0.9, −2) hacia −Z, 20 m de largo y radio 0.6, igual que `BeamHitbox` (1.5 × 1.5 × 20). No sigue la cabeza, para que lo que se ve sea lo que golpea. Para que salga de la boca habría que mover también la hitbox con `BoneAttachment3D` + `RemoteTransform3D`.
-- `scripts/vfx/beam_vfx.gd` (`BeamVfx`) abre el rayo en 0.18 s al encenderse el nodo; el jefe lo enciende y apaga con `visual_path` solo durante ACTIVE. Prueba: `tests/test_beam_vfx.gd`.
+- Es el nodo `BeamVisual` de `boss_ghidorah.tscn` (instancia de `beam_vfx.tscn`, radio 0.6). `BeamAim` (`scripts/vfx/ghidorah_beam_aim.gd`, `GhidorahBeamAim`, último hijo del jefe) lo coloca cada frame sobre la recta boca → suelo. La boca es el hueso `頭` (cabeza central) + 0.9 m a lo largo de su eje +Z (en `beam` el hueso queda estable en ~(0, 5.83, −2.6) del jefe entre 1.1 y 2.6 s). El rayo baja en diagonal hasta el suelo bajo Kaelen (eje 0.35 m sobre el suelo, con la esfera final del pack como impacto); el largo es la distancia boca → impacto.
+- Apuntado: durante el aviso el impacto sigue a Kaelen (distancia horizontal limitada al rango del ataque, 8–20 m, leído de `ghidorah_beam.tres`) y se fija al 70 % del aviso (`Boss.TRACK_FRACTION`, ajustado por la velocidad de fase 2); en ACTIVE el origen sigue a la cabeza y el impacto queda fijo, así que se esquiva apartándose. `BeamAim` solo lee la visibilidad de `Telegraphs/beam` y `BeamVisual`; no toca `boss.gd` ni `boss_attack.gd`.
+- Lo que se ve es lo que golpea: `BeamHitbox` recibe la misma base y el punto medio de la recta (caja 1.5 × 1.5 × largo; el `BoxShape3D` se duplica en `_ready` porque el sub_resource es compartido). Comprobado en el juego: Kaelen de pie en el impacto (12 y 19 m) recibe 14 de daño; apartada 4 m, 0.
+- Aviso: `Telegraphs/beam` es la proyección del rayo en el suelo (de bajo la boca al impacto, grosor 1.5 m) y su hijo `HitZone` (más oscuro) marca el tramo donde el rayo aún alcanza a una Kaelen de pie; es corto con el rayo empinado (~1–3 m, a 8 m) y largo con el rasante (a 20 m).
+- `scripts/vfx/beam_vfx.gd` (`BeamVfx`) abre el rayo en 0.18 s al encenderse el nodo; el jefe lo enciende y apaga con `visual_path` solo durante ACTIVE. Pruebas: `tests/test_beam_vfx.gd` (recta boca → suelo, recorte de rango, cápsula de Kaelen contra la caja diagonal).
+- Pendiente de playtest: la esfera de impacto del pack se ve grande y casi blanca con la cámara cerca; la parte clara del aviso (fuera de `HitZone`) no hace daño y puede confundir.
 
 ## Niveles (Tarea 14)
 
