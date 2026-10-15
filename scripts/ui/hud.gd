@@ -35,7 +35,7 @@ const BLACKHORN_STYLE := {
 	&"empty": Rect2(240, 21, 48, 6),
 	&"fill": Vector2(2.0, 46.0),
 	&"scale": 5.0,
-	&"name_overlap": 0.0,
+	&"name_overlap": -6.0,
 }
 const BOSS_BAR_STYLES := {
 	"Bone Dragon": DRAGON_STYLE,
