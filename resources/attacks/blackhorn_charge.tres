@@ -17,3 +17,5 @@ hitbox_path = NodePath("ChargeHitbox")
 phase_min = 2
 lateral = false
 spin_degrees = 0.0
+advance_distance = 12.0
+opener = true
