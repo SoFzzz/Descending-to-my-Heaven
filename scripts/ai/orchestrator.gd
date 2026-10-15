@@ -149,28 +149,23 @@ static func is_boss_special(boss: Boss) -> bool:
 
 # --- Generación -------------------------------------------------------------------------------
 
-## Gasta `budget` (esbirro 1, élite 3) en puntos válidos. Devuelve cuántos generó.
-func spawn_wave(budget: int) -> int:
+## Genera un grupo de `count` esbirros (sin pasar de max_alive vivos) en puntos válidos; si la
+## arena tiene élite, el primero del grupo es el élite (1 élite + count-1 normales). Devuelve cuántos generó.
+func spawn_wave(count: int) -> int:
 	if _config == null or not _find_player():
 		return 0
 	var points := valid_spawn_points()
 	if points.is_empty():
 		return 0
 	var spawned := 0
-	var elite_in_wave := false
 	var index := _spawn_count
-	while budget > 0 and _minions.size() < model.max_alive:
+	while spawned < count and _minions.size() < model.max_alive:
 		var scene := _config.minion_scene
-		var cost := OrchestratorModel.MINION_COST
-		# Máximo una élite por oleada, y solo si el presupuesto da para ella más un esbirro.
-		if _config.elite_scene and not elite_in_wave and budget >= OrchestratorModel.ELITE_COST + 1:
+		if _config.elite_scene and spawned == 0:
 			scene = _config.elite_scene
-			cost = OrchestratorModel.ELITE_COST
-			elite_in_wave = true
 		var point := points[index % points.size()]
 		index += 1
 		_spawn_at(scene, point)
-		budget -= cost
 		spawned += 1
 	_spawn_count = index
 	return spawned

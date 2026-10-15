@@ -119,8 +119,8 @@ func test_blackhorn_scene() -> void:
 	var hurt := _shape(boss, "BodyHurtbox") as CapsuleShape3D
 	assert_true(hurt != null, "hurtbox del cuerpo (cápsula)")
 	if hurt:
-		assert_almost(hurt.radius, 0.8)
-		assert_almost(hurt.height, 3.0)
+		assert_almost(hurt.radius, 1.0)
+		assert_almost(hurt.height, 3.2)
 	assert_almost((_shape(boss, "SlamHitbox") as SphereShape3D).radius, 3.0, 0.001, "golpe al suelo: esfera r 3")
 	assert_almost((_shape(boss, "PounceHitbox") as BoxShape3D).size.x, 2.0)
 	assert_almost((_shape(boss, "PounceHitbox") as BoxShape3D).size.y, 2.0)
