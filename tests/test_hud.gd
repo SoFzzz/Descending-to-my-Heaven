@@ -2,10 +2,10 @@ extends TestCase
 # HUD tests: bar value mapping, heart beat and boss bar skins per boss.
 
 
-func test_bar_value_maps_ratio_into_the_bar_part() -> void:
-	assert_almost(Hud.bar_value(0.0, 25.0, 96.0, 112.0), 25.0 / 112.0)
-	assert_almost(Hud.bar_value(1.0, 25.0, 96.0, 112.0), 96.0 / 112.0)
-	assert_almost(Hud.bar_value(2.0, 25.0, 96.0, 112.0), 96.0 / 112.0, 0.001, "ratio is clamped")
+func test_fill_width_maps_ratio_between_the_insets() -> void:
+	assert_almost(Hud.fill_width(0.0, 12.0, 8.0, 304.0), 12.0)
+	assert_almost(Hud.fill_width(1.0, 12.0, 8.0, 304.0), 296.0)
+	assert_almost(Hud.fill_width(2.0, 12.0, 8.0, 304.0), 296.0, 0.001, "ratio is clamped")
 
 
 func test_heart_beats_faster_with_low_health() -> void:
@@ -34,7 +34,8 @@ func test_hud_bars_follow_health_stamina_and_boss() -> void:
 	boss_health.current = 100
 	boss_health.changed.emit(100, 200)
 	var style: Dictionary = Hud.BOSS_BAR_STYLES["Blackhorn"]
-	assert_almost(hud.get_node(^"BossBar/Bar").value, Hud.bar_value(0.5, style[&"fill"].x, style[&"fill"].y, 48.0))
+	assert_almost(hud.get_node(^"BossBar/Bar/Clip").size.x, Hud.fill_width(0.5, style[&"fill"].x, style[&"fill"].y, Hud.BOSS_BAR_WIDTH / style[&"scale"]))
+	assert_almost(hud.get_node(^"BossBar/Bar").size.x * hud.get_node(^"BossBar/Bar").scale.x, Hud.BOSS_BAR_WIDTH)
 	assert_true(hud.get_node(^"BossBar").visible)
 	hud.hide_boss()
 	assert_true(not hud.get_node(^"BossBar").visible)
@@ -45,3 +46,10 @@ func test_hud_bars_follow_health_stamina_and_boss() -> void:
 func test_every_boss_has_a_bar_skin() -> void:
 	for boss_name in ["Bone Dragon", "Blackhorn", "Mecha King Ghidorah"]:
 		assert_true(Hud.BOSS_BAR_STYLES.has(boss_name), boss_name)
+
+
+func test_all_boss_bars_share_the_original_length_and_stay_thin() -> void:
+	for boss_name in Hud.BOSS_BAR_STYLES:
+		var style: Dictionary = Hud.BOSS_BAR_STYLES[boss_name]
+		var height: float = (style[&"full"] as Rect2).size.y * style[&"scale"]
+		assert_true(height <= 16.0, boss_name + " bar is thin")

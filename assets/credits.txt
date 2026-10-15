@@ -99,7 +99,7 @@ Interfaz
 Free PSX UI
 Autor: rohhsa (rohhsa.itch.io). Licencia: CC0.
 
-dragonhpbar (barra de vida de Bone Dragon y Ghidorah)
+dragonhpbar (barra de vida de Bone Dragon y Ghidorah; se usa una copia reducida a la mitad, dragonhpbar_thin.png)
 Autor y licencia por confirmar.
 
 Pulsing Heart (barra de vida y estamina de Kaelen)

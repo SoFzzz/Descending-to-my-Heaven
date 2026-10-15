@@ -39,7 +39,7 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 90.0
 offset_bottom = 28.0
-scale = Vector2(2, 2)
+scale = Vector2(1.5, 1.5)
 mouse_filter = 2
 
 [node name="Empty" type="TextureRect" parent="Bars/Frame"]
@@ -89,7 +89,7 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -152.0
-offset_top = -90.0
+offset_top = -44.0
 offset_right = 152.0
 offset_bottom = -12.0
 grow_horizontal = 2
@@ -108,12 +108,24 @@ text = "Jefe"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Bar" type="TextureProgressBar" parent="BossBar"]
+[node name="Bar" type="Control" parent="BossBar"]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="Under" type="NinePatchRect" parent="BossBar/Bar"]
 layout_mode = 0
 mouse_filter = 2
-max_value = 1.0
-step = 0.0
-value = 1.0
+
+[node name="Clip" type="Control" parent="BossBar/Bar"]
+clip_contents = true
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="Over" type="NinePatchRect" parent="BossBar/Bar/Clip"]
+layout_mode = 0
+mouse_filter = 2
 
 [node name="LockOnMarker" type="TextureRect" parent="."]
 visible = false
