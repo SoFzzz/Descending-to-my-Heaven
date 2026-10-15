@@ -40,6 +40,13 @@ const WINDOW_SCALE_MAX := 1.3
 const RETRY_DELAY := 1.0
 const MINION_COST := 1
 const ELITE_COST := 3
+## Puntos de aparición: nunca a <= SPAWN_MIN_DISTANCE de Kaelen; los que se ven (cono de la
+## cámara) solo valen si están a > SPAWN_FAR_DISTANCE, o como último recurso (SpawnTier.FALLBACK).
+const SPAWN_MIN_DISTANCE := 8.0
+const SPAWN_FAR_DISTANCE := 14.0
+
+## Preferencia de aparición (menor número = mejor): ver select_spawn_points().
+enum SpawnTier { NONE, HIDDEN, FAR, FALLBACK }
 
 var intensity := 0.0
 var phase: Phase = Phase.BUILD_UP
@@ -126,6 +133,43 @@ func update(delta: float, ctx: Dictionary) -> int:
 	_wave_out = true
 	cycle = Cycle.WAVE
 	return budget
+
+
+## Elige dónde aparecen los esbirros (lógica pura). `points`: posiciones; `in_view[i]`: ¿el punto i
+## se ve (cono de la cámara)? (los que falten cuentan como visibles). Distancias en planta.
+## Intención: que Kaelen no vea aparecer enemigos de la nada ni nazcan encima de ella.
+##   1 HIDDEN:   fuera del cono y a > 8 m (todos los que cumplan).
+##   2 FAR:      si no hay, los que estén a > 14 m aunque se vean.
+##   3 FALLBACK: si tampoco y `allow_visible_fallback` (el reintento), SOLO el más lejano que esté a > 8 m.
+##   NONE:       ninguno -> el Orquestador retrasa la oleada (retry_wave_soon).
+## Devuelve {tier: SpawnTier, indices: Array[int]} (índices de `points`, en orden de entrada).
+static func select_spawn_points(points: Array[Vector3], player_pos: Vector3, in_view: Array[bool], allow_visible_fallback: bool) -> Dictionary:
+	var hidden: Array[int] = []
+	var far: Array[int] = []
+	var farthest := -1
+	var farthest_d := SPAWN_MIN_DISTANCE
+	for i in points.size():
+		var flat := points[i] - player_pos
+		flat.y = 0.0
+		var d := flat.length()
+		if d <= SPAWN_MIN_DISTANCE:
+			continue
+		var visible := i >= in_view.size() or in_view[i]
+		if not visible:
+			hidden.append(i)
+		if d > SPAWN_FAR_DISTANCE:
+			far.append(i)
+		if d > farthest_d:
+			farthest_d = d
+			farthest = i
+	if not hidden.is_empty():
+		return {tier = SpawnTier.HIDDEN, indices = hidden}
+	if not far.is_empty():
+		return {tier = SpawnTier.FAR, indices = far}
+	if allow_visible_fallback and farthest >= 0:
+		var only: Array[int] = [farthest]
+		return {tier = SpawnTier.FALLBACK, indices = only}
+	return {tier = SpawnTier.NONE, indices = [] as Array[int]}
 
 
 ## Duración de la ventana del jefe con la intensidad actual: clear_delay x [0.9, 1.3].
