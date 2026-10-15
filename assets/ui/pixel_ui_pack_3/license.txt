@@ -1,0 +1,4 @@
+Pixel UI pack 3
+Autor: por confirmar
+Licencia: por confirmar (el pack no incluye licencia ni readme)
+Se usan 05_boss_bar.png (barra del jefe Blackhorn) y 03_reticle.png (marcador de fijado), copias sin modificar de 05.png y 03.png.

@@ -1,59 +1,61 @@
-[gd_resource type="Theme" load_steps=6 format=3]
+[gd_resource type="Theme" load_steps=9 format=3]
 
-[sub_resource type="StyleBoxFlat" id="normal"]
+[ext_resource type="Texture2D" path="res://assets/ui/free_psx_ui/selection_square.png" id="1_sel"]
+[ext_resource type="Texture2D" path="res://assets/ui/free_psx_ui/skin01_text_block.png" id="2_panel"]
+
+[sub_resource type="StyleBoxEmpty" id="normal"]
 content_margin_left = 12.0
-content_margin_top = 3.0
+content_margin_top = 4.0
 content_margin_right = 12.0
-content_margin_bottom = 3.0
-bg_color = Color(0.06, 0.05, 0.06, 0.78)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.35, 0.3, 0.26, 1)
+content_margin_bottom = 4.0
 
-[sub_resource type="StyleBoxFlat" id="hover"]
+[sub_resource type="StyleBoxTexture" id="hover"]
 content_margin_left = 12.0
-content_margin_top = 3.0
+content_margin_top = 4.0
 content_margin_right = 12.0
-content_margin_bottom = 3.0
-bg_color = Color(0.2, 0.08, 0.07, 0.9)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.85, 0.7, 0.45, 1)
+content_margin_bottom = 4.0
+texture = ExtResource("1_sel")
+texture_margin_left = 3.0
+texture_margin_top = 3.0
+texture_margin_right = 3.0
+texture_margin_bottom = 3.0
+modulate_color = Color(1, 1, 1, 0.55)
 
-[sub_resource type="StyleBoxFlat" id="focus"]
-draw_center = false
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.95, 0.8, 0.5, 1)
-expand_margin_left = 1.0
-expand_margin_top = 1.0
-expand_margin_right = 1.0
-expand_margin_bottom = 1.0
-
-[sub_resource type="StyleBoxFlat" id="pressed"]
+[sub_resource type="StyleBoxTexture" id="focus"]
 content_margin_left = 12.0
-content_margin_top = 3.0
+content_margin_top = 4.0
 content_margin_right = 12.0
-content_margin_bottom = 3.0
-bg_color = Color(0.35, 0.1, 0.08, 0.95)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.95, 0.8, 0.5, 1)
+content_margin_bottom = 4.0
+texture = ExtResource("1_sel")
+texture_margin_left = 3.0
+texture_margin_top = 3.0
+texture_margin_right = 3.0
+texture_margin_bottom = 3.0
 
-[sub_resource type="StyleBoxFlat" id="disabled"]
+[sub_resource type="StyleBoxTexture" id="pressed"]
 content_margin_left = 12.0
-content_margin_top = 3.0
+content_margin_top = 4.0
 content_margin_right = 12.0
-content_margin_bottom = 3.0
-bg_color = Color(0.05, 0.05, 0.05, 0.5)
+content_margin_bottom = 4.0
+texture = ExtResource("1_sel")
+texture_margin_left = 3.0
+texture_margin_top = 3.0
+texture_margin_right = 3.0
+texture_margin_bottom = 3.0
+modulate_color = Color(1, 0.75, 0.6, 1)
+
+[sub_resource type="StyleBoxEmpty" id="disabled"]
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxTexture" id="panel"]
+content_margin_left = 24.0
+content_margin_top = 16.0
+content_margin_right = 24.0
+content_margin_bottom = 16.0
+texture = ExtResource("2_panel")
 
 [resource]
 default_font_size = 16
@@ -70,6 +72,7 @@ Button/styles/focus = SubResource("focus")
 Button/styles/hover = SubResource("hover")
 Button/styles/normal = SubResource("normal")
 Button/styles/pressed = SubResource("pressed")
+PanelContainer/styles/panel = SubResource("panel")
 Label/colors/font_color = Color(0.9, 0.85, 0.75, 1)
 Label/colors/font_outline_color = Color(0, 0, 0, 1)
 Label/constants/outline_size = 4
