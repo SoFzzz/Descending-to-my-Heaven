@@ -1,11 +1,17 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/enemies/minion_plague.tscn" id="1_plague"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/knight_spawn.mp3" id="a_spawn"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/knight_hurt.mp3" id="a_hurt"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/knight_death.mp3" id="a_death"]
 
 [node name="MinionPlagueElite" instance=ExtResource("1_plague")]
 cost = 3
 damage = 30
 tint = Color(0.55, 0.9, 0.45, 1)
+sfx_spawn = ExtResource("a_spawn")
+sfx_hurt = ExtResource("a_hurt")
+sfx_death = ExtResource("a_death")
 
 [node name="Health" parent="."]
 max_value = 90
