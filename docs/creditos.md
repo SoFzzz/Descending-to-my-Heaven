@@ -1,6 +1,6 @@
 # Créditos y licencias
 
-Base para la pantalla de créditos (día 7). Cada modelo usado tiene su `license.txt` junto al `.glb` en `assets/` (o en `_source/models/<modelo>/`).
+Base para la pantalla de créditos (día 7). Algunos modelos tienen su `license.txt` junto al `.glb` en `assets/`; otros solo lo tienen en `_source/models/<modelo>/`. Faltan `license.txt` en varias carpetas de `assets/` (ver `asset-status.md`).
 
 ## Equipo
 
@@ -16,7 +16,7 @@ Base para la pantalla de créditos (día 7). Cada modelo usado tiene su `license
 | Elysia | Ancient Elf Lady PSX | Seifert (Peter_Seifert) | CC BY 4.0 (crédito obligatorio) | https://sketchfab.com/3d-models/ancient-elf-lady-psx-ff06ac3ff7474fe3b9f51bf8e68d96bb |
 | Élite 1 | Knight \| PS1 PSX | crimsongcat | Sketchfab Standard | https://sketchfab.com/3d-models/knight-ps1-psx-66c3a171c44c403684fbc6ae2c7b94c1 |
 | Jefe 2 | Blackhorn of the Shattered Peaks | imaginais | Sin licencia formal; el autor autoriza su uso en juegos (comentarios de la página) | https://imaginais.itch.io/blackhorn-of-the-shattered-peaks |
-| Élite 3 | The Straw Reaper | imaginais | Uso comercial permitido, crédito opcional | `_source/models/straw_reaper/` |
+| Élite 3 | The Straw Reaper | imaginais | Uso comercial permitido, crédito opcional (sin `license.txt` local: confirmar la fuente) | `_source/models/straw_reaper/` |
 | Reserva jefe 3 | PSX Insectoid Demon | Seifert (Peter_Seifert) | CC BY 4.0 | `_source/models/psx_insectoid_demon/license.txt` |
 | Jefe 1 | Bone Dragon | **Pendiente** | **Pendiente** | — |
 | Jefe 3 | Mecha King Ghidorah | **Pendiente** (fan-art de una propiedad con copyright) | **Pendiente** | — |
@@ -24,13 +24,13 @@ Base para la pantalla de créditos (día 7). Cada modelo usado tiene su `license
 | Esbirros 2 | Plague Arcanist | **Pendiente** | **Pendiente** | — |
 | Esbirros 3 | TheWrapper V2 | **Pendiente** | **Pendiente** | — |
 
-Animaciones: Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist y Blackhorn. Las del Bone Dragon y Ghidorah se hicieron por script en el proyecto.
+Animaciones: Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist, Straw Reaper y Blackhorn (`hurt` y `death` de Blackhorn). Las del Bone Dragon y Ghidorah se hicieron por script en el proyecto.
 
 ## Escenario, armas y objetos
 
 | Asset | Autor | Licencia | Fuente |
 |---|---|---|---|
-| Floating island | Katydid | CC BY 4.0 | `_source/models/floating_island/license.txt` |
+| Floating island (no se usa en el juego: descartada en el diseño §6.2) | Katydid | CC BY 4.0 | `_source/models/floating_island/license.txt` |
 | Low-Poly Fantasy RPG Items (Lite) | Game Dev Skill Up | ver README | `_source/models/Low Poly Fantasy RPG Items Asset Pack (Lite Version)/` |
 | PSX_Dungeon, Modular Dungeon, demonic weapons pack, Fantasy Weapon Starter Pack, float-islands, Retro PSX Style Mansion | **Pendiente** | **Pendiente** | — |
 
@@ -42,4 +42,13 @@ Animaciones: Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist y Bla
 
 ## Audio
 
-Ver §11.5 del documento de diseño. Música "Blazing Honor": EpicOrderSounds (royalty-free, no se puede redistribuir suelta).
+Según §11.5 del documento de diseño:
+
+| Asset | Autor | Licencia | Crédito |
+|---|---|---|---|
+| Música "Blazing Honor" (jefe 2) | EpicOrderSounds | Uso libre, no redistribuir suelta | "Music by EpicOrderSounds" (opcional) |
+| Free Fantasy SFX Pack By TomMusic | TomMusic | Ver `ReadMe.txt` del pack | TomMusic |
+| Monsters SFX Vol.1 | Riria / Ririsaurus | Uso libre, no redistribuir | Riria / Ririsaurus |
+| Be Not Afraid UI | Atelier Magicae | Uso libre, no redistribuir | "Atelier Magicae" (obligatorio) |
+| 40 Free PSX Footsteps | Por confirmar | Por confirmar | — |
+| Resto de pistas BGM (`celtic melancholy`, `LVS04_10_Battlefield`, `skull dragon battle`, `black dragon battle`, `ancient creature battle`, `hellhound battle`, `wyvern battle`, `sadness piano4`) | Por confirmar | Por confirmar | — |
