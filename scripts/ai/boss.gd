@@ -9,6 +9,13 @@ extends CharacterBody3D
 ## Scene conventions (boss_base.tscn): children Health, CollisionShape3D, NavigationAgent3D,
 ## LockOnPoint, Telegraphs/<attack id> (hidden flat meshes) and an AnimationPlayer anywhere under
 ## Model. Hurtboxes anywhere below report to the boss, which applies the damage to Health.
+##
+## Approach vs attack: while CHASE, the boss asks BossBrain every frame (after the cooldown). Once
+## it is within `engage_range` every attack valid at that distance competes; while it is still
+## farther away only `BossAttack.opener` attacks (lunge, pounce, beam) can start, if the distance
+## is inside their [min_range, max_range]. Otherwise it keeps walking (`walk_animation`).
+## During ACTIVE an attack may move the boss (`advance_distance`), open extra hitboxes
+## (`extra_hitbox_paths`), show a visual (`visual_path`) and expose gated hurtboxes.
 
 signal state_changed(state: State)
 signal attack_started(attack: BossAttack)
@@ -28,16 +35,27 @@ const SAME_SWING_WINDOW := 0.3
 @export var max_health: int = 400
 @export var move_speed := 3.0
 @export var detect_radius := 20.0
-## Approaches until this distance (origin to origin); then it may attack.
+## Approaches until this distance (origin to origin); from there every attack may start. Attacks
+## flagged `opener` may start earlier, from their own range.
 @export var engage_range := 3.2
 ## Pause between the end of one recovery and the next decision.
 @export var attack_cooldown := 0.4
 @export var idle_animation: StringName = &"idle"
-@export var walk_animation: StringName = &""   # Bone Dragon has no walk clip: it glides with idle
+## The single locomotion clip of the scene (Blackhorn: "run"). Empty = glides with idle (Bone Dragon).
+@export var walk_animation: StringName = &""
 @export var roar_animation: StringName = &"roar"
 @export var death_animation: StringName = &"death"
 ## Fixed seed for repeatable tests; 0 = random.
 @export var rng_seed := 0
+## Hurtboxes (relative to the boss) that only take hits during an attack with `exposes_hurtboxes`
+## (+ `gated_grace` s): Ghidorah's heads while `bite` lasts.
+@export var gated_hurtboxes: Array[NodePath] = []
+@export var gated_grace := 0.2
+## After dying, lowers the model until the body rests on the floor (Blackhorn's `death` ends in the air).
+@export var settle_on_death := false
+## Height of the lowest bone above the sole when settled.
+@export var death_clearance := 0.07
+@export var model_path := NodePath("Model")
 
 var phase: int = 1
 var state: State = State.IDLE
@@ -45,6 +63,8 @@ var brain := BossBrain.new()
 var current_attack: BossAttack
 ## Attack ids in the order they were used (debug and verification).
 var attack_log: Array[StringName] = []
+var gated_open := false
+var settled_offset := 0.0
 
 @onready var health: Health = $Health
 @onready var agent: NavigationAgent3D = $NavigationAgent3D
@@ -66,6 +86,13 @@ var _was_rolling := false
 var _defeated_emitted := false
 var _clock := 0.0                 # game time, for SAME_SWING_WINDOW
 var _swing_hits: Dictionary = {}  # source instance id → {time, amount}
+var _advance_done := 0.0
+var _advance_blocked := false
+var _gate_grace := 0.0
+var _extra_hitboxes: Array[Hitbox] = []
+var _visual: Node3D
+var _model: Node3D
+var _skeleton: Skeleton3D
 
 
 func _ready() -> void:
@@ -89,16 +116,29 @@ func _ready() -> void:
 		var hb := _hitbox_for(attack)
 		if hb:
 			hb.damage = attack.damage
+		for path in attack.extra_hitbox_paths:
+			var extra := get_node_or_null(path) as Hitbox
+			if extra:
+				extra.damage = attack.damage
+		var visual := _visual_for(attack)
+		if visual:
+			visual.visible = false
 		var tg := _telegraph_for(attack)
 		if tg:
 			tg.visible = false
 	_anim = find_child("AnimationPlayer", true, false) as AnimationPlayer
+	_model = get_node_or_null(model_path) as Node3D
+	if _model:
+		var skeletons := _model.find_children("*", "Skeleton3D", true, false)
+		_skeleton = skeletons.front() as Skeleton3D if not skeletons.is_empty() else null
+	_set_gated(false)
 	_play(idle_animation)
 
 
 func _physics_process(delta: float) -> void:
 	_clock += delta
 	if state == State.DEAD:
+		_settle(delta)
 		return
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
@@ -120,6 +160,7 @@ func _physics_process(delta: float) -> void:
 		_set_state(State.IDLE)
 		_play(idle_animation)
 	_run_state(delta, target_ok)
+	_update_gate(delta)
 	move_and_slide()
 
 
@@ -133,14 +174,17 @@ func _run_state(delta: float, target_ok: bool) -> void:
 				_set_state(State.CHASE)
 		State.CHASE:
 			var distance := _flat_distance()
-			if distance <= engage_range:
+			var approaching := distance > engage_range
+			if _cooldown <= 0.0 and _try_start_attack(distance, approaching):
 				_stop()
-				_face(_player.global_position, delta)
-				if _cooldown <= 0.0 and _try_start_attack(distance):
-					return
-			else:
+				return
+			if approaching:
 				_navigate_to(_player.global_position, move_speed * speed)
 				_face(global_position + Vector3(velocity.x, 0.0, velocity.z), delta)
+			else:
+				_stop()
+				_face(_player.global_position, delta)
+			_play_locomotion(approaching and Vector2(velocity.x, velocity.z).length() > 0.3)
 		State.TELEGRAPH:
 			_stop()
 			var telegraph := current_attack.telegraph_time / speed
@@ -149,12 +193,15 @@ func _run_state(delta: float, target_ok: bool) -> void:
 			if _state_time >= telegraph:
 				_set_state(State.ACTIVE)
 				_spin_done = 0.0
-				if _hitbox:
-					_hitbox.activate()
+				_advance_done = 0.0
+				_advance_blocked = false
+				_begin_active()
 		State.ACTIVE:
 			_stop()
 			var active := current_attack.active_time / speed
-			_apply_spin(minf(_state_time / active, 1.0))
+			var progress := minf(_state_time / active, 1.0)
+			_apply_spin(progress)
+			_apply_advance(progress)
 			if _state_time >= active:
 				_end_active()
 				_set_state(State.RECOVER)
@@ -174,8 +221,8 @@ func _run_state(delta: float, target_ok: bool) -> void:
 
 # --- Attacks ----------------------------------------------------------------------------------
 
-func _try_start_attack(distance: float) -> bool:
-	var attack := brain.choose(attacks, distance, phase, _rng)
+func _try_start_attack(distance: float, approaching := false) -> bool:
+	var attack := brain.choose(attacks, distance, phase, _rng, approaching)
 	if attack == null:
 		return false
 	current_attack = attack
@@ -191,9 +238,29 @@ func _try_start_attack(distance: float) -> bool:
 	return true
 
 
+func _begin_active() -> void:
+	if _hitbox:
+		_hitbox.activate()
+	for path in current_attack.extra_hitbox_paths:
+		var extra := get_node_or_null(path) as Hitbox
+		if extra:
+			extra.activate()
+			_extra_hitboxes.append(extra)
+	_visual = _visual_for(current_attack)
+	if _visual:
+		_visual.visible = true
+
+
 func _end_active() -> void:
 	if _hitbox:
 		_hitbox.deactivate()
+	for extra in _extra_hitboxes:
+		if is_instance_valid(extra):
+			extra.deactivate()
+	_extra_hitboxes.clear()
+	if _visual and is_instance_valid(_visual):
+		_visual.visible = false
+	_visual = null
 	if _telegraph:
 		_telegraph.visible = false
 
@@ -214,6 +281,32 @@ func _apply_spin(progress: float) -> void:
 	var target := deg_to_rad(current_attack.spin_degrees) * progress
 	rotation.y += target - _spin_done
 	_spin_done = target
+
+
+## Moves the boss forward (its -Z) so that it has covered attack.advance_at(progress) metres;
+## stops for good on the first collision (wall or Kaelen).
+func _apply_advance(progress: float) -> void:
+	if current_attack.advance_distance <= 0.0 or _advance_blocked:
+		return
+	var forward := -global_basis.z
+	forward.y = 0.0
+	if forward.length_squared() < 0.0001:
+		return
+	var step := current_attack.advance_at(progress) - _advance_done
+	if step <= 0.0:
+		return
+	var hit := move_and_collide(forward.normalized() * step)
+	if hit:
+		_advance_blocked = true
+		_advance_done += hit.get_travel().length()
+	else:
+		_advance_done += step
+
+
+func _visual_for(attack: BossAttack) -> Node3D:
+	if attack == null or attack.visual_path.is_empty():
+		return null
+	return get_node_or_null(attack.visual_path) as Node3D
 
 
 func _hitbox_for(attack: BossAttack) -> Hitbox:
@@ -308,6 +401,52 @@ func spawn_at(marker: Node3D, look_at_point = null) -> void:
 		rotation.y = atan2(-forward.x, -forward.z)
 
 
+## Plays the single locomotion clip while walking and idle otherwise (only if the scene has one).
+func _play_locomotion(moving: bool) -> void:
+	if _anim == null or walk_animation == &"":
+		return
+	var wanted := walk_animation if moving else idle_animation
+	if _anim.current_animation != wanted and _anim.has_animation(wanted):
+		_anim.play(wanted, ANIM_BLEND)
+
+
+## True while the gated hurtboxes must take hits: attack in ACTIVE, or just finished.
+static func gate_open(attacking: bool, grace_left: float) -> bool:
+	return attacking or grace_left > 0.0
+
+
+func _update_gate(delta: float) -> void:
+	if gated_hurtboxes.is_empty():
+		return
+	var attacking := state == State.ACTIVE and current_attack != null and current_attack.exposes_hurtboxes
+	_gate_grace = gated_grace if attacking else maxf(0.0, _gate_grace - delta)
+	var open := gate_open(attacking, _gate_grace)
+	if open != gated_open:
+		_set_gated(open)
+
+
+func _set_gated(open: bool) -> void:
+	gated_open = open
+	for path in gated_hurtboxes:
+		var hurtbox := get_node_or_null(path) as Hurtbox
+		if hurtbox:
+			# Deferred: may run inside a physics signal.
+			hurtbox.set_deferred(&"monitorable", open)
+
+
+## After death: lowers the model (never raises it) until the lowest bone rests on the floor, smoothly.
+func _settle(delta: float) -> void:
+	if not settle_on_death or _model == null or _skeleton == null:
+		return
+	var lowest := INF
+	for i in _skeleton.get_bone_count():
+		lowest = minf(lowest, (_skeleton.global_transform * _skeleton.get_bone_global_pose(i)).origin.y)
+	var at_zero_offset := lowest - global_position.y - _model.position.y
+	var wanted := -maxf(0.0, at_zero_offset - death_clearance)
+	settled_offset = move_toward(settled_offset, wanted, 1.5 * delta)
+	_model.position.y = settled_offset
+
+
 # --- Health, phase and death ------------------------------------------------------------------
 
 ## Damage from any hurtbox (already multiplied: head × 1.25). Hits from the same source within
@@ -343,6 +482,7 @@ func _on_died() -> void:
 	if state == State.DEAD:
 		return
 	_cancel_attack()
+	_set_gated(false)
 	_pending_roar = false
 	_play(death_animation)
 	_set_state(State.DEAD)
