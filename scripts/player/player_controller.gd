@@ -20,7 +20,7 @@ const ROLL_COST := 25.0
 const ROLL_SPEED := 7.0          # constant m/s during the whole roll
 
 # --- Combo (spec §4) ---
-const COMBO_DAMAGE: Array[int] = [10, 10, 18]
+const COMBO_DAMAGE: Array[int] = [20, 20, 36]
 const ATTACK_COST := 20.0
 ## When each hit's damage window closes, there are COMBO_WINDOW s to chain the next one;
 ## after that window the hit ends and it returns to MOVE (the tail of the clip is cut).
