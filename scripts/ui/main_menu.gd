@@ -1,13 +1,10 @@
-extends Node3D
-## Menú principal (spec §10.1): la isla de fondo (instancia de exterior.tscn, sin Kaelen) con una
-## cámara girando lento, el título y los botones Iniciar / Créditos / Salir. Créditos se oculta si
+extends Node
+## Menú principal (spec §10.1): fondo 2D (cielo burdeos con luna y la silueta negra de la mazmorra,
+## generados con scripts/tools/gen_menu_bg.py), el título y los botones Iniciar / Créditos / Salir. Créditos se oculta si
 ## aún no existe scenes/ui/credits.tscn. Foco inicial en Iniciar; navegable con flechas + Enter y ratón.
 
-const ORBIT_SPEED := 0.06   # radianes por segundo
 const MENU_MUSIC := preload("res://assets/audio/bgm/menu_sadness_piano.mp3")
 
-@onready var _pivot: Node3D = $CameraPivot
-@onready var _camera: Camera3D = $CameraPivot/Camera3D
 @onready var _start: Button = %Start
 @onready var _credits: Button = %Credits
 @onready var _quit: Button = %Quit
@@ -15,7 +12,6 @@ const MENU_MUSIC := preload("res://assets/audio/bgm/menu_sadness_piano.mp3")
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	_camera.look_at(_pivot.global_position)
 	_credits.visible = ResourceLoader.exists(GameState.CREDITS_SCENE)
 	_start.pressed.connect(_on_start)
 	_credits.pressed.connect(_on_credits)
@@ -24,10 +20,6 @@ func _ready() -> void:
 	var audio := get_node_or_null(^"/root/AudioManager")
 	if audio:
 		audio.play_music(MENU_MUSIC, 1.5)
-
-
-func _process(delta: float) -> void:
-	_pivot.rotate_y(ORBIT_SPEED * delta)
 
 
 func _on_start() -> void:
