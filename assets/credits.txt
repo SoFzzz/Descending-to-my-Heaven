@@ -1,0 +1,104 @@
+Descending to my Heaven
+
+
+Equipo
+
+Paula Sofia Gonzalez Zambrano
+David Alejandro Aza Jojoa
+Stehven Alexander Obando Cordoba
+
+
+Personajes y jefes
+
+Kaelen: Low poly woman knight
+Autor: desconocido (créditos a quien corresponda). Licencia: desconocida. Fuente: no encontrada.
+
+Elysia: Ancient Elf Lady PSX
+Autor: Seifert (Peter_Seifert). Licencia: CC BY 4.0.
+Fuente: https://sketchfab.com/3d-models/ancient-elf-lady-psx-ff06ac3ff7474fe3b9f51bf8e68d96bb
+
+Élite 1: Knight | PS1 PSX
+Autor: crimsongcat. Licencia: Sketchfab Standard.
+Fuente: https://sketchfab.com/3d-models/knight-ps1-psx-66c3a171c44c403684fbc6ae2c7b94c1
+
+Jefe 2: Blackhorn of the Shattered Peaks
+Autor: imaginais. Sin licencia formal; el autor autoriza su uso en juegos.
+Fuente: https://imaginais.itch.io/blackhorn-of-the-shattered-peaks
+
+Élite 3: The Straw Reaper
+Autor: imaginais. Uso comercial permitido.
+
+Reserva jefe 3: PSX Insectoid Demon
+Autor: Seifert (Peter_Seifert). Licencia: CC BY 4.0 (texto en license.txt del modelo).
+
+Jefe 1: Bone Dragon
+Autor y licencia por confirmar.
+
+Jefe 3: Mecha King Ghidorah
+Autor y licencia por confirmar.
+
+Esbirros 1: Skeleton
+Autor y licencia por confirmar.
+
+Esbirros 2: Plague Arcanist
+Autor y licencia por confirmar.
+
+Esbirros 3: TheWrapper V2
+Autor y licencia por confirmar.
+
+
+Escenario, armas y objetos
+
+Floating island
+Autor: Katydid. Licencia: CC BY 4.0 (texto en license.txt del modelo).
+
+Low-Poly Fantasy RPG Items (Lite)
+Autor: Game Dev Skill Up. Licencia: ver README del paquete.
+
+PSX_Dungeon: autor y licencia por confirmar.
+Modular Dungeon: autor y licencia por confirmar.
+Demonic weapons pack: autor y licencia por confirmar.
+Fantasy Weapon Starter Pack: autor y licencia por confirmar.
+Float-islands: autor y licencia por confirmar.
+Retro PSX Style Mansion: autor y licencia por confirmar.
+
+
+Shaders
+
+Godot-PSX-Starter-kit (portado a Godot 4)
+Autor: DruidCZ; shaders de MenacingMecha y Ahopness. Licencia: MIT.
+
+
+Audio
+
+Música "Blazing Honor"
+Autor: EpicOrderSounds (música libre de derechos). Music by EpicOrderSounds.
+
+Pistas de música: celtic melancholy, LVS04_10_Battlefield, skull dragon battle, black dragon battle, ancient creature battle, hellhound battle, wyvern battle, sadness piano4.
+Autor y licencia por confirmar.
+
+Free Fantasy SFX Pack By TomMusic
+Autor: TomMusic. Licencia: ver ReadMe.txt del pack.
+
+Monsters SFX Vol.1
+Autor: Riria / Ririsaurus. Licencia: uso libre.
+
+Be Not Afraid UI
+Autor: Atelier Magicae. Licencia: uso libre. Crédito: "Atelier Magicae".
+
+40 Free PSX Footsteps
+Autor y licencia por confirmar.
+
+
+Animaciones
+
+Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist y Blackhorn.
+Las animaciones del Bone Dragon y de Mecha King Ghidorah se hicieron por script en el proyecto.
+
+
+Motor
+
+Godot Engine (MIT)
+
+
+Gracias por jugar
