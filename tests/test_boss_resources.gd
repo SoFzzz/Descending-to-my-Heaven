@@ -56,7 +56,7 @@ func test_ghidorah_attack_ranges() -> void:
 		return
 	assert_eq(bite.id, &"bite")
 	assert_almost(bite.min_range, 0.0)
-	assert_almost(bite.max_range, 6.0)
+	assert_almost(bite.max_range, 5.0)
 	assert_eq(tail.id, &"tail_sweep")
 	assert_almost(tail.max_range, 8.0)
 	assert_true(tail.lateral, "el barrido cubre los costados")
@@ -156,8 +156,8 @@ func test_ghidorah_scene() -> void:
 	assert_almost(cap.height, 5.0)
 	var model := boss.get_node(^"Model") as Node3D
 	assert_almost(model.scale.y, 1.95, 0.001, "escala del modelo x1.95 (8.1 m de alto, ~14 m con la cola)")
-	assert_almost((_shape(boss, "BiteHitbox") as SphereShape3D).radius, 1.5, 0.001, "mordida r 1.5")
-	assert_almost((_shape(boss, "BeamHitbox") as BoxShape3D).size.z, 20.0, 0.001, "rayo de 20 m")
+	assert_almost((_shape(boss, "BiteHitbox") as BoxShape3D).size.z, 7.0, 0.001, "mordida: zona fija de 7 m de fondo (de pegado al cuerpo a 5 m)")
+	assert_almost((_shape(boss, "BeamHitbox") as BoxShape3D).size.z, 2.0, 0.001, "rayo: zona corta que viaja con el impacto")
 	assert_almost((_shape(boss, "BeamHitbox") as BoxShape3D).size.x, 1.5)
 	assert_almost((_shape(boss, "TailSweepHitbox") as BoxShape3D).size.z, 6.0, 0.001, "cola de 6 m")
 	# Cabezas: solo hurtbox (esfera r 1.0), cerradas hasta que baje la cabeza.
