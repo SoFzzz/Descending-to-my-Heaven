@@ -1,7 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="1_pm"]
 [ext_resource type="Theme" path="res://scenes/ui/menu_theme.tres" id="2_th"]
+
+[ext_resource type="Texture2D" path="res://assets/ui/free_psx_ui/pause_text.png" id="3_pt"]
 
 [sub_resource type="LabelSettings" id="title"]
 font_size = 32
@@ -20,6 +22,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+texture_filter = 4
 theme = ExtResource("2_th")
 
 [node name="Dim" type="ColorRect" parent="Root"]
@@ -37,26 +40,32 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Box" type="VBoxContainer" parent="Root/Center"]
-custom_minimum_size = Vector2(240, 0)
+[node name="Panel" type="PanelContainer" parent="Root/Center"]
+layout_mode = 2
+
+[node name="Box" type="VBoxContainer" parent="Root/Center/Panel"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Title" type="Label" parent="Root/Center/Box"]
-text = "PAUSA"
-label_settings = SubResource("title")
-horizontal_alignment = 1
+[node name="Title" type="TextureRect" parent="Root/Center/Panel/Box"]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+texture = ExtResource("3_pt")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="Spacer" type="Control" parent="Root/Center/Box"]
+[node name="Spacer" type="Control" parent="Root/Center/Panel/Box"]
 custom_minimum_size = Vector2(0, 8)
 
-[node name="Continue" type="Button" parent="Root/Center/Box"]
+[node name="Continue" type="Button" parent="Root/Center/Panel/Box"]
 unique_name_in_owner = true
 text = "Continuar"
 
-[node name="MainMenu" type="Button" parent="Root/Center/Box"]
+[node name="MainMenu" type="Button" parent="Root/Center/Panel/Box"]
 unique_name_in_owner = true
 text = "Volver al menú principal"
 
-[node name="Quit" type="Button" parent="Root/Center/Box"]
+[node name="Quit" type="Button" parent="Root/Center/Panel/Box"]
 unique_name_in_owner = true
 text = "Salir del juego"

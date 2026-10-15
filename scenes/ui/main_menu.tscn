@@ -41,6 +41,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+texture_filter = 4
 theme = ExtResource("3_th")
 
 [node name="Vignette" type="ColorRect" parent="UI/Root"]
@@ -63,30 +64,33 @@ label_settings = SubResource("title")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Buttons" type="VBoxContainer" parent="UI/Root"]
+[node name="Panel" type="PanelContainer" parent="UI/Root"]
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -90.0
-offset_top = -170.0
-offset_right = 90.0
-offset_bottom = -50.0
+offset_left = -110.0
+offset_top = -192.0
+offset_right = 110.0
+offset_bottom = -34.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_constants/separation = 8
+
+[node name="Buttons" type="VBoxContainer" parent="UI/Root/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 6
 alignment = 1
 
-[node name="Start" type="Button" parent="UI/Root/Buttons"]
+[node name="Start" type="Button" parent="UI/Root/Panel/Buttons"]
 unique_name_in_owner = true
 text = "Iniciar"
 
-[node name="Credits" type="Button" parent="UI/Root/Buttons"]
+[node name="Credits" type="Button" parent="UI/Root/Panel/Buttons"]
 unique_name_in_owner = true
 text = "Créditos"
 
-[node name="Quit" type="Button" parent="UI/Root/Buttons"]
+[node name="Quit" type="Button" parent="UI/Root/Panel/Buttons"]
 unique_name_in_owner = true
 text = "Salir"
 
