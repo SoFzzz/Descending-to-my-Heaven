@@ -93,6 +93,11 @@ const SCALED_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"a
 @export var sfx_swing: AudioStream
 ## Sonido de los pasos al correr; lo asigna el nivel (level_gameplay.gd: piedra en arenas, tierra fuera).
 @export var footstep_stream: AudioStream
+## Sonidos de Kaelen: rodar, recibir un golpe, morir (cae al suelo) y quedarse sin estamina.
+@export var sfx_roll: AudioStream
+@export var sfx_hurt: AudioStream
+@export var sfx_death: AudioStream
+@export var sfx_tired: AudioStream
 
 var state: State = State.MOVE
 ## If nobody assigned them before, they are looked up in _ready (children "Health", "Stamina" and "Hurtbox"). Tests
@@ -130,6 +135,7 @@ var _attack_time := 0.0
 var _hitbox_on := false
 var _hurt_time := 0.0
 var _last_hp := -1
+var _last_stamina := 0.0
 var _attack_pressed := false   # from _unhandled_input: the click that recaptures the mouse does not attack
 var _buffered_action: StringName = &""
 var _buffer_left := 0.0
@@ -164,6 +170,9 @@ func _connect_components() -> void:
 		health.changed.connect(_on_health_changed)
 	if not health.died.is_connected(_on_died):
 		health.died.connect(_on_died)
+	if stamina and not stamina.changed.is_connected(_on_stamina_changed):
+		_last_stamina = stamina.current
+		stamina.changed.connect(_on_stamina_changed)
 
 
 func _events() -> Node:
@@ -365,6 +374,7 @@ func try_roll() -> bool:
 	if _model:
 		_model.rotation.y = atan2(_roll_dir.x, _roll_dir.z)
 	_play_action(&"roll")
+	_play_sfx(sfx_roll)
 	return true
 
 
@@ -543,9 +553,22 @@ func _on_health_changed(current: int, max_value: int) -> void:
 		events.player_damaged.emit(previous - current, current, max_value)
 	if current <= 0 or state == State.DEAD:
 		return
+	_play_sfx(sfx_hurt)
 	_start_hurt_iframes()
 	if state != State.ATTACK:   # hyper armor: the slash goes on, without the hurt animation
 		_enter_hurt()
+
+
+## True when the stamina has just run out (it was above 0 and is now 0).
+static func stamina_ran_out(previous: float, current: float) -> bool:
+	return previous > 0.0 and current <= 0.0
+
+
+func _on_stamina_changed(current: float, _max_value: float) -> void:
+	var previous := _last_stamina
+	_last_stamina = current
+	if stamina_ran_out(previous, current) and state != State.DEAD:
+		_play_sfx(sfx_tired)
 
 
 ## HURT interrupts the roll (an attack is not interrupted by damage: hyper armor).
@@ -607,6 +630,7 @@ func _on_died() -> void:
 	if _lock_on:
 		_lock_on.target = null
 	_play_action(&"death")
+	_play_sfx(sfx_death)
 	if death_count == 1:
 		var events := _events()
 		if events:
