@@ -2,7 +2,7 @@
 
 - **Fecha:** 2026-10-10
 - **Equipo:** 3 personas, dedicación completa durante 7 días: Paula Sofia Gonzalez Zambrano, David Alejandro Aza Jojoa y Stehven Alexander Obando Cordoba
-- **Motor:** Godot 4.3+ (GDScript)
+- **Motor:** Godot 4.7.2 (GDScript, renderizador Compatibility)
 - **Objetivo de éxito:** un juego 3D lowpoly estilo PSX, jugable de principio a fin, donde se puede **derrotar a los 3 jefes** y ver el final. La inteligencia artificial de los enemigos debe ser demostrable y explicable.
 
 ---
@@ -77,7 +77,7 @@ Estado real de cada modelo (rig y animaciones verificados): ver [`asset-status.m
 | Estamina | 100; regenera 30/s tras 0.6 s sin gastar |
 | Costo rodar / atacar | 25 / 20 |
 | Invulnerabilidad al rodar | 0.35 s de 0.6 s |
-| Daño de Kaelen | 10 / 10 / 18 (golpe 3 del combo) |
+| Daño de Kaelen | 20 / 20 / 36 (golpes 1, 2 y 3 del combo; duplicado el 2026-10-14, el valor original era 10 / 10 / 18) |
 | Vida esbirro | 30 |
 | Vida jefe | 400 / 500 / 600 |
 | Fase 2 del jefe | al 50% de vida: +25% velocidad de ataque, más presupuesto al Orquestador |
@@ -198,7 +198,7 @@ Se descartó `floating_island` (61 MB, texturas fotográficas). El exterior usa:
 **Generador de niveles (`scripts/tools/level_builder.gd`):**
 - **Regla:** las escenas generadas se sobrescriben al ejecutar el generador; **nunca se editan a mano ni se les agregan nodos**. Todo el gameplay va en `scenes/levels/<nivel>_gameplay.tscn`, que instancia el nivel (hijo `Level`) + Kaelen + enemigos, y busca los puntos del mapa por nombre (`scripts/game/level_gameplay.gd` coloca a Kaelen en `PlayerStart`).
 - Ejecutar: `godot --headless --path . -s res://scripts/tools/level_builder.gd` (todas) o `... -- arena_2` (una). Sobrescribe `scenes/levels/{exterior,arena_1,arena_2,arena_3}.tscn`, así que **no se editan a mano**: los cambios van en las tablas `LEVELS` y `EXTERIOR` del script. Lo que se agregue va en escenas aparte: `arena_N_gameplay.tscn` instancia el nivel como hijo `Level`.
-- Arenas 1 y 3: muros, suelo y techo en `GridMap` con `assets/environment/kit/dungeon_kit.meshlib` (piezas de `PSX_Dungeon` normalizadas por `_source/tools/export_dungeon_kit.py`). Arena 2 (octogonal) sigue en CSG con textura triplanar, porque no encaja en la grilla. Pasillos, escaleras, jambas y dintel de las rejas son CSG.
+- Arenas 1 y 3: muros, suelo y techo en `GridMap` con `assets/environment/kit/dungeon_kit.meshlib` (piezas de `PSX_Dungeon` normalizadas por `_source/tools/export_dungeon_kit.py`). Arena 2 (octogonal): suelo y techo en `GridMap` en las celdas que tocan el octágono, muros con piezas del kit giradas 45° y colisión por cajas. Escalones, pasillos, jambas y dintel de las rejas son CSG.
 - Navegación: se hornea al generar (`NavigationSmall` capa 1, r 0.5; `NavigationLarge` capa 2, r 2.5).
 - Rejas: `GateEntry` y `GateExit` son `AnimatableBody3D` de 6 × 6 m, ambas cerradas; la meta `open_offset` (0, −6.1, 0) indica cuánto bajarlas para abrirlas.
 - Exterior: `island_main` (pieza `IslandSkull` de `float-islands`, ≈ 104 m, exportada por `_source/tools/export_float_island.py`) con colisión trimesh, sendero de 67 m con paredes invisibles, templo escalonado con arco y pilares del kit, islotes y `ExitTrigger` en la puerta.
@@ -539,9 +539,11 @@ Descending-to-my-Heaven/          (raíz del repo = raíz del proyecto Godot)
 
 ### 13.2 Visibilidad del repositorio
 El repositorio debe ser **privado**. Varios packs prohíben redistribuir los archivos originales (Ririsaurus, Atelier Magicae, licencia estándar de Sketchfab) y Ghidorah es fan-art de una propiedad con copyright. Lo que se publica es el juego exportado, no los archivos originales.
-- **Regla de trabajo:** una sola persona edita cada escena `.tscn` a la vez (dueño por escena) para evitar conflictos de merge.
+- **Regla de trabajo (histórica, desde 2026-10-14 no aplica):** una sola persona editaba cada escena `.tscn` a la vez (dueño por escena) para evitar conflictos de merge.
 
 ## 14. Roles
+
+> Desde 2026-10-14 no hay roles A/B/C ni dueños de archivos. La tabla queda como referencia histórica (ver "Estado actual" del plan de trabajo).
 
 | Persona | Responsabilidad principal |
 |---|---|
