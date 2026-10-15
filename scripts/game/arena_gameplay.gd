@@ -4,10 +4,8 @@ extends "res://scripts/game/level_gameplay.gd"
 ## cierra las rejas, emite Events.arena_entered y arranca al Orquestador
 ## (Orchestrator.begin_arena), que genera los esbirros en los `spawn_point`; muestra la barra
 ## del jefe en el HUD de Kaelen. Con Events.boss_defeated oculta la barra y, GATE_OPEN_DELAY s
-## después, baja GateExit (meta `open_offset`) y emite Events.arena_cleared. Cuando Kaelen cruza ExitTrigger con la reja abierta emite `exit_reached`
-## y llama a GameState.advance_level() (el paso de nivel es de las Tareas 10/15).
-
-signal exit_reached
+## después, baja GateExit (meta `open_offset`) y emite Events.arena_cleared. El ExitTrigger lo gestiona
+## level_gameplay.gd; aquí solo se exige que la arena esté despejada (`_can_exit`).
 
 const GATE_OPEN_DELAY := 3.0
 const GATE_OPEN_TIME := 2.0
@@ -21,7 +19,6 @@ var arena_cleared := false
 
 var _gate_entry: Node3D
 var _gate_exit: Node3D
-var _exit_used := false
 
 
 func _ready() -> void:
@@ -38,9 +35,6 @@ func _ready() -> void:
 	_gate_entry = level.get_node_or_null("GateEntry") as Node3D
 	_gate_exit = level.get_node_or_null("GateExit") as Node3D
 	_close_entry_gate()
-	var exit_trigger := level.get_node_or_null("ExitTrigger") as Area3D
-	if exit_trigger:
-		exit_trigger.body_entered.connect(_on_exit_trigger_body_entered)
 	var hud := player.get_node_or_null(^"HUD") as Hud
 	if hud and boss:
 		hud.show_boss(boss.display_name, boss.health)
@@ -99,11 +93,6 @@ func _on_gate_delay_finished() -> void:
 		events.arena_cleared.emit(config.arena_id if config else 1)
 
 
-func _on_exit_trigger_body_entered(body: Node3D) -> void:
-	if _exit_used or not arena_cleared or body != player:
-		return
-	_exit_used = true
-	exit_reached.emit()
-	var game_state := get_node_or_null(^"/root/GameState")
-	if game_state and game_state.has_method(&"advance_level"):
-		game_state.call_deferred(&"advance_level")   # deferred: we are inside a physics signal
+## Se puede salir por el ExitTrigger solo con el jefe derrotado (la reja ya se abrió o se abre).
+func _can_exit() -> bool:
+	return arena_cleared
