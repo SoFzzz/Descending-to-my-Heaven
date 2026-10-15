@@ -17,3 +17,5 @@ hitbox_path = NodePath("BeamHitbox")
 phase_min = 1
 lateral = false
 spin_degrees = 0.0
+opener = true
+visual_path = NodePath("BeamVisual")
