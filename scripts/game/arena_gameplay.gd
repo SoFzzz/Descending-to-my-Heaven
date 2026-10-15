@@ -10,10 +10,15 @@ extends "res://scripts/game/level_gameplay.gd"
 const GATE_OPEN_DELAY := 3.0
 const GATE_OPEN_TIME := 2.0
 const GATE_CLOSE_TIME := 1.0
+## El sonido de la reja dura más que el movimiento: se corta con un fundido pasado este tiempo.
+const GATE_SOUND_MAX_TIME := 6.0
+const GATE_SOUND_FADE := 1.5
 
 @export var config: ArenaConfig
 ## Música del combate con el jefe: arranca (con fundido) cuando el jefe detecta a Kaelen.
 @export var boss_music: AudioStream
+## Sonido de las rejas de piedra al abrirse o cerrarse (3D, en la reja).
+@export var gate_sound: AudioStream
 
 var arena_cleared := false
 
@@ -61,6 +66,7 @@ func _close_entry_gate() -> void:
 	# _ready, before it is in the physics space, gets its old transform back).
 	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tween.tween_property(_gate_entry, "position", closed, GATE_CLOSE_TIME).from(closed + _open_offset(_gate_entry))
+	_play_gate_sound(_gate_entry)
 
 
 func _open_exit_gate() -> void:
@@ -68,6 +74,23 @@ func _open_exit_gate() -> void:
 		return
 	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tween.tween_property(_gate_exit, "position", _gate_exit.position + _open_offset(_gate_exit), GATE_OPEN_TIME)
+	_play_gate_sound(_gate_exit)
+
+
+func _play_gate_sound(gate: Node3D) -> void:
+	if gate_sound == null:
+		return
+	var sound := AudioStreamPlayer3D.new()
+	sound.stream = gate_sound
+	sound.bus = &"SFX"
+	sound.unit_size = 12.0
+	add_child(sound)
+	sound.global_position = gate.global_position
+	sound.play()
+	var tween := create_tween()   # pauses with the tree, like the sound
+	tween.tween_interval(GATE_SOUND_MAX_TIME - GATE_SOUND_FADE)
+	tween.tween_property(sound, "volume_db", -60.0, GATE_SOUND_FADE)
+	tween.tween_callback(sound.queue_free)
 
 
 static func _open_offset(gate: Node3D) -> Vector3:

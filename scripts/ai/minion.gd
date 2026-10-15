@@ -58,9 +58,21 @@ const WORLD_MASK := 1
 @export var sfx_attack: AudioStream
 @export var sfx_hurt: AudioStream
 @export var sfx_death: AudioStream
+## Pasos de un esbirro normal: pista larga de varias pisadas que suena en bucle mientras camina.
+## Los élites (los que tienen `sfx_spawn`) no la usan ni el sonido de ataque de los normales.
+@export var sfx_step: AudioStream
+
+## Pasos: solo se oyen los de esbirros a menos de STEP_HEARING_DISTANCE m de Kaelen y nunca más de
+## STEP_MAX_VOICES a la vez en toda la escena (cada uno es un reproductor 3D en bucle).
+const STEP_HEARING_DISTANCE := 14.0
+const STEP_MAX_VOICES := 3
+const STEP_VOLUME_DB := -6.0
+const STEP_MIN_SPEED := 0.4
+static var _step_voices_in_use := 0
 
 var state: MinionState = MinionState.IDLE
 var brain := MinionBrain.new()
+var _step_player: AudioStreamPlayer3D
 
 @onready var health: Health = $Health
 @onready var hurtbox: Hurtbox = $Hurtbox
@@ -128,6 +140,7 @@ func _physics_process(delta: float) -> void:
 	if next != state or ctx.was_hit:
 		_change_state(next)
 	_run_state(delta)
+	_update_steps()
 	_update_animation()
 
 
@@ -181,8 +194,9 @@ func _change_state(next: MinionState) -> void:
 			_set_hitbox(false)
 			_release_token(true)
 		MinionState.DEAD:
+			_stop_steps()
 			_die()
-	if next == MinionState.ATTACK:
+	if next == MinionState.ATTACK and sfx_spawn == null:   # elites have their own sounds
 		_play_sfx(sfx_attack)
 	# Attack and hurt always restart their clip (a new hit while stunned too).
 	_update_animation(next == MinionState.ATTACK or next == MinionState.STUNNED)
@@ -555,6 +569,48 @@ func _play_death() -> void:
 	tween.tween_property(holder, "rotation:x", PI * 0.5, DEATH_FALL_TIME) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.tween_property(holder, "position:y", holder.position.y - DEATH_SINK, DEATH_FALL_TIME)
+
+
+## ¿Puede sonar el bucle de pasos? `has_voice`: este esbirro ya tiene uno de los reproductores.
+static func step_voice_allowed(walking: bool, distance: float, voices_in_use: int, has_voice: bool) -> bool:
+	if not walking or distance > STEP_HEARING_DISTANCE:
+		return false
+	return has_voice or voices_in_use < STEP_MAX_VOICES
+
+
+func _update_steps() -> void:
+	if sfx_step == null or sfx_spawn != null or not is_inside_tree():
+		return
+	var walking := (state == MinionState.CHASE or state == MinionState.CIRCLE) and is_on_floor() 			and Vector2(velocity.x, velocity.z).length() > STEP_MIN_SPEED
+	var distance := global_position.distance_to(_player.global_position) if _player else INF
+	if step_voice_allowed(walking, distance, _step_voices_in_use, _step_player != null):
+		if _step_player == null:
+			_step_voices_in_use += 1
+			_step_player = AudioStreamPlayer3D.new()
+			_step_player.name = "StepSound"
+			_step_player.stream = sfx_step
+			_step_player.bus = &"SFX"
+			_step_player.max_distance = STEP_HEARING_DISTANCE
+			_step_player.unit_size = 4.0
+			_step_player.volume_db = STEP_VOLUME_DB
+			add_child(_step_player)
+			_step_player.play(randf() * maxf(sfx_step.get_length() - 0.1, 0.0))   # out of phase with the others
+		elif not _step_player.playing:
+			_step_player.play()
+	else:
+		_stop_steps()
+
+
+func _stop_steps() -> void:
+	if _step_player == null:
+		return
+	_step_voices_in_use = maxi(0, _step_voices_in_use - 1)
+	_step_player.queue_free()
+	_step_player = null
+
+
+func _exit_tree() -> void:
+	_stop_steps()
 
 
 func _play_sfx(stream: AudioStream) -> void:

@@ -18,6 +18,8 @@ const TORCH_HEARING_DISTANCE := 9.0
 const TORCH_UNIT_SIZE := 2.5
 const TORCH_VOLUME_DB := -8.0
 const MUSIC_FADE := 2.0
+## Ambiente de la sala: bucle suave por debajo de la música.
+const AMBIENCE_VOLUME_DB := -14.0
 
 ## Si es false no se conecta el ExitTrigger (p. ej. la arena 3, donde el final lo dirige otro nodo).
 @export var exit_advances_level := true
@@ -29,6 +31,8 @@ const MUSIC_FADE := 2.0
 @export var footstep_stream: AudioStream
 ## Bucle de las antorchas (luces dentro del nodo `Level/Torches`).
 @export var torch_loop: AudioStream
+## Ambiente del nivel en bucle (sin posición), a poco volumen para que quede debajo de la música.
+@export var ambience: AudioStream
 
 @onready var level: Node3D = $Level
 @onready var player: Player = $Kaelen
@@ -41,6 +45,7 @@ func _ready() -> void:
 	player.footstep_stream = footstep_stream
 	_start_level_music()
 	_add_torch_sounds()
+	_start_ambience()
 	var start := level.get_node_or_null("PlayerStart") as Node3D
 	if start:
 		player.spawn_at(start)
@@ -60,6 +65,18 @@ func _start_level_music() -> void:
 	var audio := _audio()
 	if audio:
 		audio.play_music(level_music, MUSIC_FADE)
+
+
+func _start_ambience() -> void:
+	if ambience == null:
+		return
+	var sound := AudioStreamPlayer.new()
+	sound.name = "Ambience"
+	sound.stream = ambience
+	sound.bus = &"SFX"
+	sound.volume_db = AMBIENCE_VOLUME_DB
+	sound.autoplay = true
+	add_child(sound)
 
 
 ## Luces de `Level/Torches`: las escenas del nivel son generadas (no se editan), así que el sonido se
