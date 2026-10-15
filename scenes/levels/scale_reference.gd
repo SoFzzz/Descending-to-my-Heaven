@@ -6,7 +6,7 @@ extends Node3D
 
 const EXPECTED := {
 	"Kaelen": 1.70, "Skeleton": 1.75, "Knight": 2.10, "PlagueArcanist": 1.80,
-	"TheWrapper": 2.00, "Blackhorn": 3.20, "BoneDragon": 3.6, "Ghidorah": 10.0,
+	"TheWrapper": 2.00, "Blackhorn": 3.20, "BoneDragon": 3.6, "Ghidorah": 8.1,
 }
 
 
