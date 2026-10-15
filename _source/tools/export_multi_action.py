@@ -1,8 +1,9 @@
-"""Exporta personajes que traen varias animaciones dentro de un solo FBX (Plague Arcanist, TheWrapper).
+"""Exporta personajes que traen varias animaciones dentro de un solo FBX (Plague Arcanist, TheWrapper,
+Straw Reaper).
 
 Uso (desde la raíz del repo), uno por ejecución:
     blender -b --factory-startup -P _source/tools/export_multi_action.py -- plague_arcanist
-    (plague_arcanist | thewrapper | blackhorn)
+    (plague_arcanist | thewrapper | straw_reaper | blackhorn)
 
 Cada tabla dice: clip final -> (acción del FBX, frame final o None). Con un frame final se
 recorta la acción (sirve para sacar "hurt" y "death" de una animación más larga). Los nombres
@@ -22,6 +23,7 @@ ROOT_MOTION = {"death"}
 
 PA = "Armature|Armature|Armature{}|mixamo.com|Layer0"
 BH = "Armature.003|Armature.003|{}"
+SR = "Armature.001|Armature.001|{}"
 CHARACTERS = {
     "plague_arcanist": {
         "fbx": "_source/models/Plague Arcanist/Plague Arcanist/Plague Arcanist.fbx",
@@ -56,6 +58,25 @@ CHARACTERS = {
             "scream": ("MonsterPSX_Rig|MonsterPSX_Rig|Scream.lol", None),
         },
     },
+    # Élite de la arena 3 (reemplaza al Wrapper élite, 2026-10-15). Clips Mixamo sin nombre en
+    # el FBX: se identificaron con capturas (las acciones .006 y .007 de "Armature" son iguales).
+    "straw_reaper": {
+        "fbx": "_source/models/straw_reaper/THE STRAW REAPER new.fbx",
+        "textures": "_source/models/straw_reaper/texture",
+        "out": "assets/minions/straw_reaper/straw_reaper.glb",
+        "height": 1.90,  # algo más alto que Kaelen (1.70); la hoz sobresale por encima
+        "center_xy": True,  # la armadura del FBX está ~1 m fuera del origen
+        "clips": {
+            "idle-loop": (SR.format("Armature.004|mixamo.com|Layer0"), None),
+            "walk-loop": (SR.format("Armature.005|mixamo.com|Layer0"), None),    # carrera corta (17 frames)
+            "lurch-loop": (SR.format("Armature.006|mixamo.com|Layer0"), None),   # zancada encorvada
+            "attack": (SR.format("Armature|mixamo.com|Layer0"), None),           # tajo por encima de la cabeza
+            "attack_2": (SR.format("Armature|mixamo.com|Layer0.002"), None),     # giro con la hoz
+            "combo": (SR.format("Armature.002|mixamo.com|Layer0"), None),        # tajos agachado
+            "hurt": (SR.format("Armature.001|mixamo.com|Layer0"), 20),           # inicio de la caída
+            "death": (SR.format("Armature.001|mixamo.com|Layer0"), None),        # cae y queda tendido
+        },
+    },
     # Jefe 2 (reemplaza a Dead Oath Hunter, 2026-10-14). Bestia con cuernos, rig Mixamo.
     "blackhorn": {
         "fbx": "_source/models/blackhorn/Blackhorn of the Shattered Peaks.fbx",
@@ -80,6 +101,27 @@ CHARACTERS = {
         },
     },
 }
+
+
+def center_on_hips(arm):
+    """Mueve el objeto raíz en X/Y para que la cadera quede sobre el origen en el frame 1 del idle
+    (algunos FBX traen la armadura desplazada y el modelo saldría lejos de su collider en Godot)."""
+    tracks = list(arm.animation_data.nla_tracks)
+    for t in tracks:
+        t.mute = True
+    arm.animation_data.action = next(t.strips[0].action for t in tracks if t.name == "idle-loop")
+    bpy.context.scene.frame_set(1)
+    root = arm
+    while root.parent:
+        root = root.parent
+    hips = arm.matrix_world @ arm.pose.bones["mixamorig:Hips"].head
+    root.location.x -= hips.x
+    root.location.y -= hips.y
+    bpy.context.view_layer.update()
+    arm.animation_data.action = None
+    for t in tracks:
+        t.mute = False
+    print(f"  centrado: cadera desplazada ({-hips.x:.3f}, {-hips.y:.3f}) m")
 
 
 def trimmed_copy(action, end):
@@ -155,6 +197,8 @@ def main():
         print(f"  + {clip} ({int(action.frame_range[1])} frames) <- {Path(path).name}")
 
     normalize_height(arm, cfg["height"])
+    if cfg.get("center_xy"):
+        center_on_hips(arm)
     out = REPO / cfg["out"]
     out.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.export_scene.gltf(filepath=str(out), export_format="GLB",
