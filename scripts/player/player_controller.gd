@@ -108,6 +108,7 @@ var _iframes := false   # roll window
 var _hurt_iframes_left := 0.0   # after taking a hit (HURT_IFRAMES)
 var _victory := false   # after Events.boss_defeated
 var _god := false       # debug (action "debug_god", F6)
+var _cutscene := false  # scripted sequence (set_cutscene): no control, invulnerable
 # Hyper armor: the Hurtbox's multiplier is scaled while attacking and restored afterwards.
 var _armor_on := false
 var _base_damage_multiplier := 1.0
@@ -169,6 +170,15 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("debug_god"):
 		_god = not _god
 		print("debug_god: ", _god)
+
+	if _cutscene:
+		_attack_pressed = false
+		_stand_still()
+		_tick_hurt_iframes(delta)
+		_update_invulnerability()
+		_follow_sword()
+		_update_animation(0.0)
+		return
 
 	var want_roll := false
 	var want_attack := false
@@ -560,7 +570,47 @@ func _on_boss_defeated(_boss: Node3D) -> void:
 
 
 func is_invulnerable() -> bool:
-	return _iframes or _hurt_iframes_left > 0.0 or _victory or _god
+	return _iframes or _hurt_iframes_left > 0.0 or _victory or _god or _cutscene
+
+
+## Hands Kaelen over to a scripted sequence (the ending) or gives control back. While on: movement,
+## roll, attack and lock-on are ignored, she stands in idle and cannot be hurt. Turning it on cancels
+## any roll / attack / hurt in progress and the target lock.
+func set_cutscene(on: bool) -> void:
+	if on == _cutscene:
+		return
+	_cutscene = on
+	if on:
+		if state != State.DEAD:
+			_end_attack()
+			_roll_time = 0.0
+			_hurt_time = 0.0
+			state = State.MOVE
+		_clear_buffer()
+		_iframes = false
+		_hurt_iframes_left = 0.0
+		_update_blink()
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if _lock_on and _lock_on.target != null:
+			_lock_on.toggle()   # with a target, toggle() releases it
+		if state != State.DEAD:
+			_play_action(&"locomotion")
+	_update_invulnerability()
+
+
+func is_cutscene() -> bool:
+	return _cutscene
+
+
+## Turns the model toward a world point (horizontal only). The Mixamo model faces +Z.
+func face_point(point: Vector3) -> void:
+	if _model == null:
+		return
+	var dir := point - global_position
+	dir.y = 0.0
+	if dir.length_squared() > 0.0001:
+		_model.rotation.y = atan2(dir.x, dir.z)
 
 
 func _update_invulnerability() -> void:
