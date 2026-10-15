@@ -313,7 +313,7 @@ En las pruebas de `AttackTokens` instanciar el script directamente (`load("res:/
 **Interfaces:**
 - Produce: `docs/asset-status.md` con una fila por modelo: ruta en `assets/`, factor de escala, altura medida, lista exacta de animaciones, estado (`listo` / `falta rig` / `falta animación` / `reemplazado`).
 
-- [x] **Paso 1: Importar** los 11 modelos del reparto (§3 de la spec) a `assets/`. Los FBX con escalas internas raras (knight, skeleton, bonedragon, TheWrapper, woman knight) se abren en Blender vía MCP, se aplica escala y se exportan a GLB.
+- [x] **Paso 1: Importar** los 11 modelos del reparto (§3 de la spec) a `assets/`. Los FBX con escalas internas raras (knight, skeleton, bonedragon, TheWrapper, woman knight) se abren en Blender, se aplica escala y se exportan a GLB.
 - [x] **Paso 2: Armar `scale_reference.tscn`** — grilla de 1 m, cápsula de 1.70 m, cada modelo a su altura de la tabla §7.4 (Kaelen 1.70, Elysia 1.60, Skeleton 1.75, Knight 2.10, Plague Arcanist 1.80, TheWrapper 2.00, Aura Battler 3.00, Blackhorn 3.20, Bone Dragon 8 m de largo, Ghidorah 10 m de alto), módulo de muro de `PSX_Dungeon` a 4 × 4 m.
 - [x] **Paso 3: Verificar** con un script de herramienta que imprima la `AABB` de cada modelo instanciado; cada altura dentro de ±5 % de la tabla.
 - [x] **Paso 4: Completar `docs/asset-status.md`** y la tabla de §7.8.
