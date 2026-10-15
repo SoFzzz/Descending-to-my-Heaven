@@ -10,10 +10,64 @@
 
 **Spec:** [2026-10-10-descending-to-my-heaven-design.md](2026-10-10-descending-to-my-heaven-design.md)
 
+## Estado actual (2026-10-14, día 4)
+
+> Esta sección es el resumen vivo del avance. Las tareas de abajo conservan su texto original; las casillas y las notas "Resultado" reflejan lo hecho. **Ya no hay roles A/B/C ni dueños de archivos** (decisión del 2026-10-14): las tablas de dueños de más abajo son históricas. Lo único que sigue vigente es la regla de las escenas generadas.
+
+### Qué tenemos
+
+- **Pruebas:** 126/126 (`tests/run_tests.gd`), código 0.
+- **Autoloads:** `Events`, `GameState`, `AttackTokens`, `Orchestrator` (completo), `AudioManager` (stub). `run/main_scene = scenes/ui/main_menu.tscn`.
+- **Combate** (`scripts/combat`): `Health`, `Stamina`, `Hitbox`, `Hurtbox`.
+- **Kaelen:** estados MOVE/ROLL/ATTACK/HURT/DEAD, rodada con i-frames, combo de 3 golpes (daño 20/20/36), defensa con 1 s de i-frames tras un golpe y ×0.5 de daño mientras ataca, lock-on, HUD, mandoble a dos manos, buffer de entrada de 0.2 s. F6 = modo dios.
+- **Esbirros:** `MinionBrain` (pura) + `Minion` (FSM, fichas de ataque: máximo 2 atacando, espera de 2 s para volver a pedirla). `Minion.alert()` los pone en persecución. Hoy todos usan el placeholder `minion_base.tscn` (cápsula roja).
+- **Orquestador** (`orchestrator_model.gd` puro + `orchestrator.gd` autoload):
+  - Intensidad 0–100 y fases BUILD_UP / PEAK / RELAX según spec §8.3.
+  - **Ciclo por oleadas con ventana del jefe:** primera oleada a los 3 s; oleada de 3–4 esbirros; cuando muere el último, `clear_delay` (12 s ×0.9–1.3 según intensidad) sin apariciones para que el jugador ataque al jefe; después, otra oleada. Nunca aparecen esbirros con alguno vivo. Parámetros en `ArenaConfig` (`wave_size_min/max`, `clear_delay`, `first_wave_delay`, `base_budget`, `max_alive`).
+  - **Puntos de aparición por niveles:** 1) fuera del cono de cámara y a > 8 m; 2) a > 14 m aunque se vean; 3) el más lejano a > 8 m tras un intento fallido; si no hay, reintenta.
+  - `end_arena()` libera esbirros y fichas al morir Kaelen o al ganar.
+  - Overlay F3 (intensidad, fase, presupuesto, ciclo, vivos, fichas); F5 salta de nivel.
+- **Jefes:** `Boss`, `BossAttack` (Resource), `BossBrain` (puntaje por utilidad). El antiguo `attack_driver.gd` se integró en `boss.gd`/`boss_attack.gd` y se borró. Campos nuevos de `BossAttack`: `advance_distance`, `opener`, `extra_hitbox_paths`, `visual_path`, `exposes_hurtboxes`. Regla: dentro de `engage_range` compiten todos los ataques válidos; fuera solo los `opener`, nunca repitiendo el último; si ninguno vale, el jefe camina. El cuerpo del jefe ya no atraviesa a Kaelen (máscara 3).
+  - **Bone Dragon** (400 PV), **Blackhorn** (500 PV; ataques `slam` 0–4 m, `pounce` 2–7 m, `charge` 8–16 m solo fase 2; `slam`, `pounce` y `charge` son `opener`; solo usa el clip `run` para desplazarse), **Ghidorah** (600 PV; `bite` 0–6 m, `tail_sweep` 0–8 m, `beam` 8–20 m; escala ×1.95 → 8.1 m de alto y 13.7 m de largo; las cabezas solo reciben golpes en la ventana de `bite`).
+- **Niveles** (generados por `scripts/tools/level_builder.gd`, nunca a mano): `exterior`, `arena_1`, `arena_2` (octógono), `arena_3` (40×40 m con pasillo y sala de Elysia) con arte de kit (`GridMap` + `dungeon_kit.meshlib`, material `kit_std.tres`). Navegación horneada solo a la altura del suelo. Escenas de gameplay: `arena_1/2/3_gameplay.tscn` y `exterior_gameplay.tscn`.
+- **Flujo:** menú principal, pausa (Esc), "HAS MUERTO" con recarga, transición con fundido, `GameState.advance_level()`; vida máxima 100/70/40 según nivel. Al ganar una arena la reja de salida se abre 3 s después y `ExitTrigger` avanza de nivel. Desde `arena_3_gameplay` el avance va hoy a `main_menu` (el final aún no existe).
+
+### Qué hicimos en esta etapa (días 3–4)
+
+| Tarea | Resultado |
+|---|---|
+| T9 Jefes + Bone Dragon + arena 1 | Hecha. Hito del día 3 probado a mano: menú → arena 1 → ganar y perder. |
+| T10 Menús, pausa, muerte, flujo | Hecha. |
+| T11 Arte de arena 1 + animaciones de jefes | Hecha. `GridMap` en `arena_1`; se cambió el material del kit a `kit_std.tres` porque `psx_lit` hacía desaparecer baldosas grandes. Blackhorn y Ghidorah verificados en `scale_reference`. |
+| T12 Orquestador + overlay | Hecha, con el ciclo de oleadas y ventana del jefe pedido tras probar a mano (los esbirros eran excesivos). |
+| T13 Blackhorn y Ghidorah | Hecha, incluidas `arena_2_gameplay` y `arena_3_gameplay`. Se corrigió el arte de Ghidorah (colas y alas bajo el suelo, `death`) y se redujo su escala. |
+| T14 Arenas 2 y 3 + exterior | Hecha (pendiente de commit). Arte de kit en arenas 2 y 3 y en el exterior; el sendero del exterior rodea la nariz abierta de la isla; PlayerStart a 6 m de la pared (cámara a 4 m); `spawn_point` recolocados; navegación limitada en altura. |
+| Deuda técnica | `attack_driver.gd` integrado en `Boss`; apariciones por niveles; Ghidorah ×1.95; Blackhorn solo corre; daño de Kaelen ×2; `slam` de Blackhorn como `opener`. (Pendiente de commit.) |
+
+### Qué nos falta
+
+| Tarea | Pendiente |
+|---|---|
+| **T15** Flujo completo, final y créditos | `ending_director.gd` dentro de `arena_3_gameplay` (no en `arena_3.tscn`); Elysia con `Tween` de respiración; créditos (`credits.tscn`, `assets/credits.txt`); botón Créditos del menú; `advance_level()` de arena 3 → final en lugar de menú. Decidir cómo se crean las cámaras del final (ver "Riesgos"). |
+| **T16** Variantes de esbirros y élites | Skeleton/Knight/Plague/Wrapper/Aura con sus modelos, animaciones y costos (élite = 3, vida 90); sustituir el placeholder rojo. |
+| **T17** Audio | `AudioManager`, música por escena, SFX, `assets/credits.txt` con licencias. |
+| **T18–T19** Pulido, playtest, exportar Windows | Ver tareas 18 y 19. |
+
+### Riesgos y mejoras anotadas
+
+- **Probar a mano** (no medido por los arneses): la sensación de las tres peleas con el daño duplicado y las oleadas, `arena_2` y `arena_3` completas, jefe y oleadas juntos, y el exterior de principio a fin.
+- **Cámaras del final:** Godot activa la primera `Camera3D` que entra al árbol aunque no sea `current`; por eso `arena_3_gameplay.tscn` conserva un override `current = true` en la cámara de Kaelen. La solución limpia: que `EndingCam1/2` sean `Marker3D` en el generador y que el final cree la cámara por código (cambia el contrato de la T15).
+- **Recorrido del exterior:** dura ~14 s (la spec pide 1–2 min). Alargar el sendero es opcional.
+- **Combate:** el rayo de Ghidorah es una caja amarilla a nivel del suelo; faltan efectos y audio. Aviso del jefe: disco rojo opaco (hacerlo semitransparente, con borde y pulso). `hit_landed` se emite una vez por hurtbox tocada (se oiría doble con el audio). El dragón y Ghidorah se deslizan con `idle`. Parry opcional. Los avisos del suelo de `pounce`, `charge` y `slam` no se revisaron con capturas.
+- **Arte:** el suelo de la sala de Elysia sigue con textura triplanar; línea fina en una unión de pared de `arena_2`; revisar capturas de las escenas finales regeneradas. Si se regeneran las arenas, repetir la medición de la cola de Ghidorah contra el muro norte de `arena_3` (margen actual 1.9 m, 1.35 m en `death`).
+- **Esbirros:** hoy son un placeholder; el tercer nivel de aparición solo tiene pruebas unitarias.
+- **Otros:** `player_died` solo se emite en la primera muerte de cada instancia de Kaelen (funciona porque la recarga crea otra). Blackhorn: `idle`/`charge` y `walk`/`run` duran lo mismo (posibles clips duplicados; solo se usa `run`). El error `Parameter "material" is null` al cerrar corridas headless con Kaelen es del renderizador dummy y es inofensivo.
+- **Documentación pendiente:** la regla vieja de escenas ("instanciada bajo Gameplay") sigue en §6.4 del documento de diseño y en el texto original de las tareas 8 y 15.
+
 ## Restricciones globales
 
 - Godot **4.7.2**, GDScript con tipos estáticos (`var x: int`), renderizador `gl_compatibility`. 1 unidad = 1 metro.
-- Valores de combate exactos de la spec §4: vida Kaelen 100/70/40 por nivel; estamina 100, regenera 30/s tras 0.6 s; costo rodar 25, atacar 20; invulnerabilidad 0.35 s de 0.6 s de rodada; daño Kaelen 10/10/18; vida esbirro 30; vida jefes 400/500/600; fase 2 al 50 %.
+- Valores de combate exactos de la spec §4: vida Kaelen 100/70/40 por nivel; estamina 100, regenera 30/s tras 0.6 s; costo rodar 25, atacar 20; invulnerabilidad 0.35 s de 0.6 s de rodada; daño Kaelen 20/20/36 (duplicado el 2026-10-14 para acortar los combates; el valor original de la spec era 10/10/18); vida esbirro 30; vida jefes 400/500/600; fase 2 al 50 %.
 - Medidas exactas de la spec §7.4–7.6 (alturas, cápsulas, hurtbox, cámara, navegación). Capas de colisión de §7.7 (ya nombradas en `project.godot`).
 - Capas de navegación: 1 = `small` (radio 0.5, alto 2.0), 2 = `large` (radio 2.5, alto 4.0); celda 0.25 m.
 - Todos los modelos pasan por `scale_reference` (§7.8) antes de usarse.
@@ -298,7 +352,7 @@ Meta: se puede matar a un esbirro y morir ante él.
 - [x] **Paso 2: Ejecutar** — FAIL.
 - [x] **Paso 3: Implementar** combo (ventana para encadenar 0.4 s tras cada golpe), hitbox del mandoble (caja 0.2 × 0.2 × 1.4 m, capa 5, máscara 8) activada solo en la ventana de daño, estado `HURT` (0.4 s, interrumpe ataque), `DEAD` (emite `Events.player_died`), y el HUD conectado a `Health.changed` y `Stamina.changed`.
 - [x] **Paso 4: Ejecutar pruebas** — pasan.
-- [x] **Paso 5: Verificación manual** en `test_arena` con un muñeco (`StaticBody3D` + `Hurtbox` + `Health` 30): 3 golpes de combo lo matan (10 + 10 + 18 ≥ 30); la estamina baja 20 por golpe; el lock-on gira la cámara hacia el muñeco.
+- [x] **Paso 5: Verificación manual** en `test_arena` con un muñeco (`StaticBody3D` + `Hurtbox` + `Health` 30): 3 golpes de combo lo matan (con el daño original 10 + 10 + 18 ≥ 30; hoy 20 + 20 ya mata al esbirro de 30); la estamina baja 20 por golpe; el lock-on gira la cámara hacia el muñeco.
 - [x] **Paso 6: Commit** — `feat: add player combo, lock-on, death and HUD`
 
 ### Tarea 7 (B): Esbirro con máquina de estados y navegación
@@ -400,11 +454,13 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Ya existe: `assets/bosses/blackhorn/blackhorn.glb` (jefe 2, 10 animaciones; ver `docs/asset-status.md`)
 - Ya existe: `assets/bosses/ghidorah/ghidorah.glb` (9.1k triángulos; `idle`, `roar`, `bite`, `tail_sweep`, `beam`, `death`)
 
-- [ ] **Paso 1:** importar piezas del kit con escala de 4 m y colisión (caja para muros/pilares, trimesh para pisos/escaleras); exportar `MeshLibrary` (puede usarse `export_mesh_library` del MCP de Godot).
-- [ ] **Paso 2:** el mismo `level_builder.gd` pinta un `GridMap` en lugar de las cajas (mismo plano, otra salida), sin mover la posición de pilares, rejas ni límites (B ya horneó la navegación sobre ellos; si cambian, avisar a B para rehornear).
+- [x] **Paso 1:** importar piezas del kit con escala de 4 m y colisión (caja para muros/pilares, trimesh para pisos/escaleras); exportar `MeshLibrary` (puede usarse `export_mesh_library` del MCP de Godot).
+- [x] **Paso 2:** el mismo `level_builder.gd` pinta un `GridMap` en lugar de las cajas (mismo plano, otra salida), sin mover la posición de pilares, rejas ni límites (B ya horneó la navegación sobre ellos; si cambian, avisar a B para rehornear).
 - [x] **Paso 3:** Ghidorah: reducido a 9.1k triángulos y 6 animaciones por script (`_source/tools/animate_ghidorah.py`).
-- [ ] **Paso 4: Verificación** — `arena_1` con arte se juega igual que el bloqueo; Blackhorn y Ghidorah reproducen todas sus animaciones en `scale_reference`.
-- [ ] **Paso 5: Commit** — `feat: arena 1 art pass and ghidorah animations`
+- [x] **Paso 4: Verificación** — `arena_1` con arte se juega igual que el bloqueo; Blackhorn y Ghidorah reproducen todas sus animaciones en `scale_reference`.
+- [x] **Paso 5: Commit** — `feat: arena 1 art pass and ghidorah animations`
+
+**Resultado T11:** arena 1 con `GridMap` verificada (colisiones, navegación, FPS ≈ 60 con vsync); material del kit `kit_std.tres`; Blackhorn y Ghidorah reproducen todos sus clips. Ghidorah medía 4.15 m (no 3.5 m) y sus colas colgaban bajo el suelo: corregido en `animate_ghidorah.py`.
 
 **Fin del día 3 — HITO:** menú → arena 1 → ganar y perder contra el Bone Dragon. **Si no se cumple**, aplicar los recortes de la spec §15 antes de seguir.
 
@@ -424,13 +480,15 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Produce: `class_name OrchestratorModel extends RefCounted` — `enum Phase { BUILD_UP, PEAK, RELAX }`; `var intensity: float` (0–100); `var phase: Phase`; `func on_player_damaged(amount: int) -> void` (+ amount × 1.5); `func update(delta: float, ctx: Dictionary) -> int` (devuelve presupuesto a gastar ahora, 0 si no se genera) con `ctx = {hp_ratio: float, enemies_near: int, enemies_alive: int, time_since_hit: float, boss_phase: int, boss_special: bool}`; `func reset() -> void`; `func budget_for(ctx: Dictionary, base_budget: float) -> int`.
 - Reglas exactas (spec §8.3): sube +5/s si `hp_ratio < 0.3`, +2/s por enemigo a < 5 m; baja −8/s, −15/s si `enemies_near == 0`; `BUILD_UP → PEAK` con intensidad ≥ 80; `PEAK → RELAX` tras 5 s; `RELAX` dura entre 10 y 20 s y vuelve a `BUILD_UP` solo si intensidad < 30; `hp_ratio < 0.25` fuerza `RELAX`; `boss_special` → no genera; presupuesto = `base_budget × factor_desempeño (0.6–1.4) × (1.5 si boss_phase == 2)`; esbirro 1, élite 3; máximo 6 vivos. Puntos de aparición: fuera del cono de cámara y a > 8 m de Kaelen.
 
-- [ ] **Paso 1: Pruebas que fallan** — `test_damage_raises_intensity` (20 de daño → +30); `test_natural_decay` (intensidad 50, `update(1.0)` sin enemigos cerca → 35); `test_build_up_to_peak_at_80`; `test_peak_lasts_5s`; `test_relax_waits_for_low_intensity`; `test_low_hp_forces_relax`; `test_no_spawn_during_boss_special`; `test_budget_phase2_multiplier`; `test_budget_respects_max_alive` (5 vivos → presupuesto ≤ 1); `test_reset_returns_to_build_up`.
-- [ ] **Paso 2: Ejecutar** — FAIL.
-- [ ] **Paso 3: Implementar** el modelo y el autoload (genera esbirros/élites en los `spawn_point` válidos; `begin_arena` lo llama `arena_N_gameplay` con `Events.arena_entered`; `end_arena` con `boss_defeated` o `player_died` → `reset()` + liberar esbirros + `AttackTokens.reset()`).
-- [ ] **Paso 4: Ejecutar pruebas** — pasan.
-- [ ] **Paso 5: Overlay F3** — muestra intensidad, fase, presupuesto, vivos y fichas (`get_debug_info()` + `AttackTokens.holders_count()`); F5 salta al siguiente nivel; F6 alterna invulnerabilidad de Kaelen.
-- [ ] **Paso 6: Verificación manual** — en `arena_1` la intensidad oscila (no se queda en 0 ni en 100), aparecen oleadas fuera de cámara, y al bajar de 25 % de vida dejan de aparecer.
-- [ ] **Paso 7: Commit** — `feat: add orchestrator and debug overlay`
+- [x] **Paso 1: Pruebas que fallan** — `test_damage_raises_intensity` (20 de daño → +30); `test_natural_decay` (intensidad 50, `update(1.0)` sin enemigos cerca → 35); `test_build_up_to_peak_at_80`; `test_peak_lasts_5s`; `test_relax_waits_for_low_intensity`; `test_low_hp_forces_relax`; `test_no_spawn_during_boss_special`; `test_budget_phase2_multiplier`; `test_budget_respects_max_alive` (5 vivos → presupuesto ≤ 1); `test_reset_returns_to_build_up`.
+- [x] **Paso 2: Ejecutar** — FAIL.
+- [x] **Paso 3: Implementar** el modelo y el autoload (genera esbirros/élites en los `spawn_point` válidos; `begin_arena` lo llama `arena_N_gameplay` con `Events.arena_entered`; `end_arena` con `boss_defeated` o `player_died` → `reset()` + liberar esbirros + `AttackTokens.reset()`).
+- [x] **Paso 4: Ejecutar pruebas** — pasan.
+- [x] **Paso 5: Overlay F3** — muestra intensidad, fase, presupuesto, vivos y fichas (`get_debug_info()` + `AttackTokens.holders_count()`); F5 salta al siguiente nivel; F6 alterna invulnerabilidad de Kaelen.
+- [x] **Paso 6: Verificación manual** — en `arena_1` la intensidad oscila (no se queda en 0 ni en 100), aparecen oleadas fuera de cámara, y al bajar de 25 % de vida dejan de aparecer.
+- [x] **Paso 7: Commit** — `feat: add orchestrator and debug overlay`
+
+**Resultado T12:** hecha. Overlay F3/F5; F6 ya existía en `player_controller.gd`. Ciclo de oleadas con ventana del jefe, `Minion.alert()` y puntos de aparición por niveles (ver "Estado actual"). Reemplaza los esbirros colocados a mano de `arena_1_gameplay`.
 
 ### Tarea 13 (A): Jefes 2 (Blackhorn) y 3 (Ghidorah)
 
@@ -441,9 +499,11 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Consume: `Boss`, `BossAttack` (Tarea 9) — **sin modificar sus scripts**; si falta algo, pedirlo a B.
 - Medidas (§7.4): Blackhorn cápsula r 0.70 · alto 3.20, hurtbox r 0.80 · alto 3.0, garras esferas r 0.6 en las manos, zarpazo caja 2 × 2 × 4 m, golpe al suelo esfera r 3, embestida caja 1.5 × 2.5 × 3 m, navegación capa 2, vida 500; `roar` como transición a fase 2. Ghidorah cápsula torso r 2.5 · alto 6 + patas, cabezas solo con hurtbox (esferas r 1.0) y bajan al suelo durante `bite`, mordida esfera r 1.5, cola caja 6 m, rayo 1.5 × 1.5 × 20 m con aviso en línea, navegación capa 2, vida 600, `LockOnPoint` en el torso a media altura.
 
-- [ ] **Paso 1:** crear las escenas y los 6 recursos de ataque con rangos coherentes (Blackhorn: `attack_slam` 0–4 m, `attack_pounce` 2–7 m, `charge` 8–16 m solo fase 2; Ghidorah: `bite` 0–6 m, `tail_sweep` 0–8 m, `beam` 8–20 m).
-- [ ] **Paso 2: Verificación manual** en `test_arena` (cambiando el jefe instanciado): ambos jefes se pueden matar y matan a Kaelen; las cabezas de Ghidorah solo reciben golpes al bajar en `bite`; la cámara con lock-on encuadra a Ghidorah sin meterse en su cuerpo.
-- [ ] **Paso 3: Commit** — `feat: add blackhorn and ghidorah bosses`
+- [x] **Paso 1:** crear las escenas y los 6 recursos de ataque con rangos coherentes (Blackhorn: `attack_slam` 0–4 m, `attack_pounce` 2–7 m, `charge` 8–16 m solo fase 2; Ghidorah: `bite` 0–6 m, `tail_sweep` 0–8 m, `beam` 8–20 m).
+- [x] **Paso 2: Verificación manual** en `test_arena` (cambiando el jefe instanciado): ambos jefes se pueden matar y matan a Kaelen; las cabezas de Ghidorah solo reciben golpes al bajar en `bite`; la cámara con lock-on encuadra a Ghidorah sin meterse en su cuerpo.
+- [x] **Paso 3: Commit** — `feat: add blackhorn and ghidorah bosses`
+
+**Resultado T13:** hecha. Blackhorn (500 PV) y Ghidorah (600 PV) con 6 ataques, `arena_2_gameplay` y `arena_3_gameplay`. Los ataques que `Boss` no soportaba (avance en ACTIVE, ataques a distancia, clip de desplazamiento, choque con Kaelen) se integraron en `boss.gd`/`boss_attack.gd`/`boss_brain.gd`. Ghidorah a ×1.95. Las cabezas solo reciben golpes en `bite`.
 
 ### Tarea 14 (C): Bloqueo y arte de arenas 2 y 3 + exterior
 
@@ -452,14 +512,16 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Genera: `scenes/levels/exterior.tscn`, `arena_1.tscn`, `arena_2.tscn` (octogonal, 24 m, techo 8 m, 6 columnas), `arena_3.tscn` (40 × 40 m, sin techo, pilares rotos, puerta bloqueada `GateExit` → pasillo ~20 m → sala de Elysia con altar, Elysia y `EndingTrigger`)
 - ~~`island_intro.tscn` y `floating_island`~~: reemplazados por `exterior.tscn` con `float-islands` (§6.2).
 
-- [ ] **Paso 1:** generar el bloqueo CSG de las 4 escenas con nodo `Gameplay` vacío; entregar a B para que cree `arena_N_gameplay.tscn` y revise la navegación.
-- [ ] **Paso 2:** exterior según §6.2: `float-islands`, sendero con colisión invisible, fachada del templo con `PSX_Dungeon`, cielo y niebla.
-- [ ] **Paso 3: Verificación** — `exterior` se recorre de inicio a puerta en 1–2 min sin caer al vacío; el pasillo y la sala de Elysia de `arena_3` son transitables; ≥ 60 FPS en la PC más lenta.
+- [x] **Paso 1:** generar el bloqueo CSG de las 4 escenas con nodo `Gameplay` vacío; las escenas `arena_N_gameplay.tscn` se crean aparte (hecho en T9 y T13).
+- [x] **Paso 2:** exterior según §6.2: `float-islands`, sendero con colisión invisible, fachada del templo con `PSX_Dungeon`, cielo y niebla.
+- [x] **Paso 3: Verificación** — `exterior` se recorre de inicio a puerta en 1–2 min sin caer al vacío; el pasillo y la sala de Elysia de `arena_3` son transitables; ≥ 60 FPS en la PC más lenta.
 - [ ] **Paso 4: Commit** — `feat: add level builder, arenas blockout and exterior`
 
 **(B, final del día 4):** `arena_2_gameplay.tscn` y `arena_3_gameplay.tscn` con navegación, spawns y `ArenaConfig` (arena 2: Plague Arcanist; arena 3: TheWrapper + élite Aura Battler si existe).
 
 ---
+
+**Resultado T14:** hecha (falta el commit). Arenas 2 y 3 y exterior con arte de kit; `EndingCam1/2` ya no son `current`, pero el override de cámara de `arena_3_gameplay.tscn` se mantiene (ver "Riesgos"); navegación solo a la altura del suelo; `spawn_point` recolocados; sendero del exterior rodea la nariz de la isla. Pruebas nuevas en `tests/test_level_generator.gd`.
 
 # DÍA 5 — Partida completa
 
@@ -468,10 +530,10 @@ Meta: se puede matar a un esbirro y morir ante él.
 **Archivos:**
 - Modificar: `scripts/game/game_state.gd`
 - Crear: `scenes/ui/credits.tscn`, `scripts/ui/credits.gd`, `scripts/game/ending_director.gd`
-- Ya en `arena_3.tscn` (de C): nodo `Ending` con `EndingTrigger` (`Area3D`), cámaras fijas `EndingCam1`/`EndingCam2` y Elysia estática (A le agrega el `Tween` de respiración y el fundido del abrazo). **No hay escena `ending` aparte.**
+- Ya en `arena_3.tscn` (generada): nodo `Ending` con `EndingTrigger` (`Area3D`), cámaras fijas `EndingCam1`/`EndingCam2` y Elysia estática (la T15 le agrega el `Tween` de respiración y el fundido del abrazo desde el gameplay). **No hay escena `ending` aparte.**
 
 **Interfaces:**
-- Produce: `ending_director.gd` (A lo adjunta al nodo `Ending` de `arena_3.tscn`; se dispara con `EndingTrigger.body_entered`) con `func play() -> void`: corta entre `EndingCam1`–`EndingCam2` con texto en pantalla y termina en `credits.tscn`. `credits.tscn` muestra el texto de `res://assets/credits.txt` (C lo escribe con autores y licencias).
+- Produce: `ending_director.gd` (se adjunta desde `arena_3_gameplay.tscn`, no en `arena_3.tscn`, que es generada; se dispara con `EndingTrigger.body_entered`) con `func play() -> void`: corta entre `EndingCam1`–`EndingCam2` con texto en pantalla y termina en `credits.tscn`. `credits.tscn` muestra el texto de `res://assets/credits.txt` (C lo escribe con autores y licencias).
 
 - [ ] **Paso 1:** `ExitTrigger` de `exterior` → `advance_level()`; `boss_defeated` → espera 3 s → `GateExit` abierta → `ExitTrigger` → `advance_level()` (en la arena 3 Kaelen recorre el pasillo hasta `EndingTrigger`); vida máxima de Kaelen = `GameState.get_player_max_hp()` al entrar a cada arena.
 - [ ] **Paso 2:** final y créditos (botón "Volver al menú").
