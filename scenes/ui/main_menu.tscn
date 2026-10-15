@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_mm"]
-[ext_resource type="PackedScene" path="res://scenes/levels/exterior.tscn" id="2_ext"]
+[ext_resource type="Texture2D" path="res://assets/ui/menu/menu_sky.png" id="2_sky"]
+[ext_resource type="Texture2D" path="res://assets/ui/menu/menu_silhouette.png" id="2_sil"]
 [ext_resource type="Theme" path="res://scenes/ui/menu_theme.tres" id="3_th"]
 
 [sub_resource type="LabelSettings" id="title"]
@@ -19,19 +20,8 @@ font_color = Color(0.75, 0.7, 0.62, 1)
 outline_size = 4
 outline_color = Color(0, 0, 0, 1)
 
-[node name="MainMenu" type="Node3D"]
+[node name="MainMenu" type="Node"]
 script = ExtResource("1_mm")
-
-[node name="Background" parent="." instance=ExtResource("2_ext")]
-
-[node name="CameraPivot" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-
-[node name="Camera3D" type="Camera3D" parent="CameraPivot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 32, 92)
-current = true
-fov = 60.0
-far = 1000.0
 
 [node name="UI" type="CanvasLayer" parent="."]
 
@@ -44,6 +34,30 @@ grow_vertical = 2
 texture_filter = 4
 theme = ExtResource("3_th")
 
+[node name="Sky" type="TextureRect" parent="UI/Root"]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_sky")
+expand_mode = 1
+
+[node name="Silhouette" type="TextureRect" parent="UI/Root"]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_sil")
+expand_mode = 1
+
 [node name="Vignette" type="ColorRect" parent="UI/Root"]
 anchors_preset = 15
 anchor_right = 1.0
@@ -51,7 +65,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0, 0, 0.3)
+color = Color(0, 0, 0, 0.15)
 
 [node name="Title" type="Label" parent="UI/Root"]
 anchors_preset = 10

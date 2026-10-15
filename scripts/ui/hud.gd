@@ -5,9 +5,10 @@ extends CanvasLayer
 ## and a reticle over the locked target's LockOnPoint.
 ## It is a child of kaelen.tscn, so it exists in any playable scene.
 
-const MARKER_SIZE := 48.0   # reticle sprite size, in pixels of the 640×360 view
+const MARKER_SIZE := 24.0   # reticle sprite size (03_reticle_thin.png), in pixels of the 640×360 view
 const BOSS_NAME_HEIGHT := 14.0
-const BOSS_BAR_AREA := Vector2(304.0, 78.0)
+const BOSS_BAR_WIDTH := 304.0   # same length as the original plain bar
+const BOSS_BAR_HEIGHT := 32.0   # name row + bar, matches the BossBar control height
 
 ## Heart: frame 1 of the sheet is held for BEAT_HOLD of every period; the period shortens as
 ## health drops (BEAT_SLOW at full health, BEAT_FAST near death).
@@ -15,27 +16,33 @@ const BEAT_SLOW := 1.1
 const BEAT_FAST := 0.38
 const BEAT_HOLD := 0.3
 
-const DRAGON_BAR := preload("res://assets/ui/dragonhpbar/dragonhpbar.png")
+const DRAGON_BAR := preload("res://assets/ui/dragonhpbar/dragonhpbar_thin.png")
 const PIXEL_BAR := preload("res://assets/ui/pixel_ui_pack_3/05_boss_bar.png")
 
-## Boss bar skins: texture, full and empty frame regions inside it, the horizontal range (in pixels
-## of a frame) the fill travels over, and the integer scale. To give a boss another bar change its
-## entry in BOSS_BAR_STYLES (key = Boss.display_name); bosses not listed use DEFAULT_BOSS_BAR.
+## Boss bar skins: texture, full and empty frame regions inside it, the stretchable middle (the
+## frame keeps `margin_l` px on the left and `margin_r` px on the right, the rest stretches to
+## BOSS_BAR_WIDTH), the inset of the fill travel from each end and the scale. To give a boss
+## another bar change its entry in BOSS_BAR_STYLES (key = Boss.display_name); bosses not listed
+## use DEFAULT_BOSS_BAR. dragonhpbar_thin.png is dragonhpbar.png halved (head and body in 56×16).
 const DRAGON_STYLE := {
 	&"texture": DRAGON_BAR,
-	&"full": Rect2(0, 0, 112, 32),
-	&"empty": Rect2(784, 0, 112, 32),
-	&"fill": Vector2(25.0, 96.0),
-	&"scale": 2.0,
-	&"name_overlap": 4.0,
+	&"full": Rect2(0, 0, 56, 16),
+	&"empty": Rect2(56, 0, 56, 16),
+	&"margin_l": 24,
+	&"margin_r": 8,
+	&"fill": Vector2(12.0, 8.0),
+	&"scale": 1.0,
+	&"name_overlap": 2.0,
 }
 const BLACKHORN_STYLE := {
 	&"texture": PIXEL_BAR,
 	&"full": Rect2(0, 21, 48, 6),
 	&"empty": Rect2(240, 21, 48, 6),
-	&"fill": Vector2(2.0, 46.0),
-	&"scale": 5.0,
-	&"name_overlap": -6.0,
+	&"margin_l": 3,
+	&"margin_r": 3,
+	&"fill": Vector2(2.0, 2.0),
+	&"scale": 1.0,
+	&"name_overlap": 0.0,
 }
 const BOSS_BAR_STYLES := {
 	"Bone Dragon": DRAGON_STYLE,
@@ -57,7 +64,10 @@ var _health_ratio := 1.0
 @onready var _heart: TextureRect = $Bars/Frame/Heart
 @onready var _boss_bar: Control = $BossBar
 @onready var _boss_name: Label = $BossBar/BossName
-@onready var _boss_fill: TextureProgressBar = $BossBar/Bar
+@onready var _boss_bar_root: Control = $BossBar/Bar
+@onready var _boss_under: NinePatchRect = $BossBar/Bar/Under
+@onready var _boss_clip: Control = $BossBar/Bar/Clip
+@onready var _boss_over: NinePatchRect = $BossBar/Bar/Clip/Over
 @onready var _marker: TextureRect = $LockOnMarker
 
 
@@ -130,20 +140,22 @@ func _update_marker() -> void:
 func _apply_boss_style(style: Dictionary) -> void:
 	_boss_style = style
 	var tex := style[&"texture"] as Texture2D
-	var full: Rect2 = style[&"full"]
 	var scale_f: float = style[&"scale"]
-	var under := AtlasTexture.new()
-	under.atlas = tex
-	under.region = style[&"empty"]
-	var over := AtlasTexture.new()
-	over.atlas = tex
-	over.region = full
-	_boss_fill.texture_under = under
-	_boss_fill.texture_progress = over
-	_boss_fill.size = full.size
-	_boss_fill.scale = Vector2(scale_f, scale_f)
-	var bar_y := BOSS_BAR_AREA.y - full.size.y * scale_f
-	_boss_fill.position = Vector2(roundf((BOSS_BAR_AREA.x - full.size.x * scale_f) * 0.5), bar_y)
+	var frame_h: float = (style[&"full"] as Rect2).size.y
+	var local_w := BOSS_BAR_WIDTH / scale_f
+	_boss_under.texture = tex
+	_boss_under.region_rect = style[&"empty"]
+	_boss_over.texture = tex
+	_boss_over.region_rect = style[&"full"]
+	for patch: NinePatchRect in [_boss_under, _boss_over]:
+		patch.patch_margin_left = style[&"margin_l"]
+		patch.patch_margin_right = style[&"margin_r"]
+		patch.size = Vector2(local_w, frame_h)
+	_boss_clip.size = Vector2(local_w, frame_h)
+	_boss_bar_root.size = Vector2(local_w, frame_h)
+	_boss_bar_root.scale = Vector2(scale_f, scale_f)
+	var bar_y := BOSS_BAR_HEIGHT - frame_h * scale_f
+	_boss_bar_root.position = Vector2(0.0, bar_y)
 	_boss_name.position.y = maxf(0.0, bar_y - BOSS_NAME_HEIGHT + float(style[&"name_overlap"]))
 
 
@@ -157,10 +169,10 @@ static func beat_frame(time: float, period: float) -> int:
 	return 1 if fposmod(time, period) < period * BEAT_HOLD else 0
 
 
-## Value (0–1) a TextureProgressBar needs so that the fill covers `ratio` of the bar part, which
-## spans [fill_lo, fill_hi] pixels of a frame that is `width` pixels wide.
-static func bar_value(ratio: float, fill_lo: float, fill_hi: float, width: float) -> float:
-	return (fill_lo + (fill_hi - fill_lo) * clampf(ratio, 0.0, 1.0)) / width
+## Width (in frame pixels) the boss bar's fill covers for `ratio` of the health: it travels from
+## `inset_l` to `width - inset_r`.
+static func fill_width(ratio: float, inset_l: float, inset_r: float, width: float) -> float:
+	return inset_l + (width - inset_l - inset_r) * clampf(ratio, 0.0, 1.0)
 
 
 static func _ratio(current: float, max_value: float) -> float:
@@ -178,5 +190,5 @@ func _on_stamina_changed(current: float, max_value: float) -> void:
 
 func _on_boss_changed(current: int, max_value: int) -> void:
 	var fill: Vector2 = _boss_style[&"fill"]
-	var width: float = (_boss_style[&"full"] as Rect2).size.x
-	_boss_fill.value = bar_value(_ratio(current, max_value), fill.x, fill.y, width)
+	var local_w: float = BOSS_BAR_WIDTH / float(_boss_style[&"scale"])
+	_boss_clip.size.x = fill_width(_ratio(current, max_value), fill.x, fill.y, local_w)

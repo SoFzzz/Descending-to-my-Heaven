@@ -98,14 +98,18 @@ Interfaz
 
 Free PSX UI
 Autor: rohhsa (rohhsa.itch.io). Licencia: CC0.
+El título de pausa en español (pausa_text.png) recompone las letras de su imagen PAUSE.
 
-dragonhpbar (barra de vida de Bone Dragon y Ghidorah)
+Fondo del menú principal (cielo burdeos y silueta de la mazmorra)
+Dibujado por script en el proyecto (scripts/tools/gen_menu_bg.py).
+
+dragonhpbar (barra de vida de Bone Dragon y Ghidorah; se usa una copia reducida a la mitad, dragonhpbar_thin.png)
 Autor y licencia por confirmar.
 
 Pulsing Heart (barra de vida y estamina de Kaelen)
 Autor y licencia por confirmar.
 
-Pixel UI pack 3 (barra de Blackhorn y marcador de fijado)
+Pixel UI pack 3 (barra de Blackhorn y marcador de fijado; el marcador es una copia reducida a la mitad, 03_reticle_thin.png)
 Autor y licencia por confirmar.
 
 
