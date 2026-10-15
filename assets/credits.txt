@@ -100,7 +100,7 @@ Free PSX UI
 Autor: rohhsa (rohhsa.itch.io). Licencia: CC0.
 El título de pausa en español (pausa_text.png) recompone las letras de su imagen PAUSE.
 
-Fondo del menú principal (cielo burdeos y silueta de la mazmorra)
+Fondo del menú principal (degradado oscuro; la silueta de la isla es el modelo de la isla del juego en negro)
 Dibujado por script en el proyecto (scripts/tools/gen_menu_bg.py).
 
 dragonhpbar (barra de vida de Bone Dragon y Ghidorah; se usa una copia reducida a la mitad, dragonhpbar_thin.png)
