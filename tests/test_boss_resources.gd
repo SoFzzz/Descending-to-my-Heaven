@@ -56,7 +56,7 @@ func test_ghidorah_attack_ranges() -> void:
 		return
 	assert_eq(bite.id, &"bite")
 	assert_almost(bite.min_range, 0.0)
-	assert_almost(bite.max_range, 6.0)
+	assert_almost(bite.max_range, 5.0)
 	assert_eq(tail.id, &"tail_sweep")
 	assert_almost(tail.max_range, 8.0)
 	assert_true(tail.lateral, "el barrido cubre los costados")
