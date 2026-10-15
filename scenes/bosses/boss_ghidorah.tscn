@@ -8,6 +8,7 @@
 [ext_resource type="Resource" path="res://resources/attacks/ghidorah_bite.tres" id="7_bite"]
 [ext_resource type="Resource" path="res://resources/attacks/ghidorah_tail_sweep.tres" id="8_tail"]
 [ext_resource type="Resource" path="res://resources/attacks/ghidorah_beam.tres" id="9_beam"]
+[ext_resource type="PackedScene" path="res://assets/vfx/beam/beam_vfx.tscn" id="10_beamvfx"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 1.4
@@ -40,12 +41,6 @@ albedo_color = Color(1, 0.08, 0.04, 0.4)
 cull_mode = 2
 no_depth_test = false
 
-[sub_resource type="StandardMaterial3D" id="Mat_beam"]
-transparency = 1
-shading_mode = 0
-albedo_color = Color(1, 0.75, 0.2, 0.55)
-cull_mode = 2
-
 [sub_resource type="CylinderMesh" id="Cyl_bite"]
 material = SubResource("Mat_telegraph")
 top_radius = 1.5
@@ -65,10 +60,6 @@ rings = 1
 [sub_resource type="BoxMesh" id="Box_beam"]
 material = SubResource("Mat_telegraph")
 size = Vector3(1.5, 0.02, 20)
-
-[sub_resource type="BoxMesh" id="Box_beam_fx"]
-material = SubResource("Mat_beam")
-size = Vector3(1.1, 1.1, 20)
 
 [node name="BossGhidorah" instance=ExtResource("1_base")]
 display_name = "Mecha King Ghidorah"
@@ -245,11 +236,9 @@ damage = 14
 [node name="CollisionShape3D" type="CollisionShape3D" parent="BeamHitbox"]
 shape = SubResource("BoxShape3D_beam")
 
-[node name="BeamVisual" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -12)
+[node name="BeamVisual" parent="." instance=ExtResource("10_beamvfx")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -2)
 visible = false
-cast_shadow = 0
-mesh = SubResource("Box_beam_fx")
 
 [node name="bite" type="MeshInstance3D" parent="Telegraphs"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -3.5)
