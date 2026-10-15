@@ -29,6 +29,9 @@ var current_level: int = 0   # 0, 1, 2
 var scene_index: int = 0     # 0 = exterior, 1..3 = arenas
 ## Última ruta pedida a _change_scene (para pruebas y depuración).
 var last_requested_scene: String = ""
+## true durante una secuencia dirigida (el final de la arena 3): no se puede pausar. Se limpia al
+## cambiar de escena.
+var cutscene_active := false
 
 var transition: Node = null
 var pause_menu: Node = null
@@ -96,8 +99,10 @@ func go_to_main_menu() -> void:
 	_change_scene(MAIN_MENU_SCENE)
 
 
-## true si no hay fundido en curso ni pantalla de muerte (el menú de pausa lo consulta).
+## true si no hay fundido en curso, pantalla de muerte ni secuencia dirigida (el menú de pausa lo consulta).
 func can_pause() -> bool:
+	if cutscene_active:
+		return false
 	if transition and transition.call(&"is_busy"):
 		return false
 	if death_screen and death_screen.call(&"is_active"):
@@ -140,6 +145,7 @@ func _change_scene(path: String) -> bool:
 func _swap_scene(path: String) -> void:
 	get_tree().paused = false
 	Engine.time_scale = 1.0
+	cutscene_active = false
 	var tokens := get_node_or_null(^"/root/AttackTokens")
 	if tokens:
 		tokens.call(&"reset")
