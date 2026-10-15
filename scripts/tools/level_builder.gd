@@ -14,6 +14,8 @@ extends SceneTree
 ## ExitTrigger, Gameplay y, en la arena 3, Ending/EndingTrigger, Ending/EndingCam1..2.
 
 const OUT_DIR := "res://scenes/levels/"
+# Salida alternativa para probar sin tocar las escenas del juego: `-- out=C:/ruta/` (con barra final).
+var _out_dir := OUT_DIR
 const TEX := "res://assets/environment/textures/"
 const BASE_ENV := "res://assets/environment/base_env.tres"
 const ELYSIA := "res://assets/characters/elysia/elysia.glb"
@@ -28,6 +30,9 @@ const GATE_W := 6.0          # reja de arena: 6 × 6 m (§7.3)
 const GATE_H := 6.0
 const STEP_H := 0.25         # escalón (§7.3)
 const STEP_D := 0.4
+# Volumen de horneado de la navegación: x ±40, z de −90 a 60 (llega al fondo de la sala de Elysia),
+# y de −0.5 a 1.5 m (el suelo está en 0; los escalones de más de 1.5 m y todo lo alto quedan fuera).
+const NAV_AABB := AABB(Vector3(-40, -0.5, -90), Vector3(80, 2.0, 150))
 
 # --- Plano de cada nivel --------------------------------------------------------------------
 # shape: "rect" (size = ancho x fondo interior) u "oct" (size.x = distancia entre caras).
@@ -42,8 +47,10 @@ const LEVELS := {
 		# Pilar: [x, z, ancho/diámetro, alto, forma ("box"/"cyl"), inclinación en grados]
 		"pillars": [[-9, -9, 2.0, 8.0, "box", 0], [9, -9, 2.0, 8.0, "box", 0],
 			[-9, 9, 2.0, 8.0, "box", 0], [9, 9, 2.0, 8.0, "box", 0]],
-		# Spawns detrás de los pilares (vistos desde el centro) y en los muros este/oeste.
-		"spawns": [[-12, -12], [12, -12], [-12, 12], [12, 12], [-18, 0], [18, 0]],
+		# Spawns detrás de los pilares (vistos desde el centro) y en los muros este/oeste. Los laterales
+		# estaban en (±18, 0), dentro del cono de la cámara al inicio (solo 2 puntos válidos); en (±18, 7)
+		# quedan junto a la pared lateral, fuera del cono y a > 8 m de PlayerStart (4 válidos).
+		"spawns": [[-12, -12], [12, -12], [-12, 12], [12, 12], [-18, 7], [18, 7]],
 		"player_start": 16.0, "boss_start": Vector3(0, 0, -9),
 		"torches": [[-19, -10], [19, -10], [-19, 10], [19, 10], [0, -19], [0, 19]],
 		"exit": "stairs",
@@ -52,10 +59,13 @@ const LEVELS := {
 	"arena_2": {
 		"title": "Claustro (Blackhorn)",
 		"shape": "oct", "size": Vector2(30, 30), "height": 8.0, "ceiling": true,
+		"output": "gridmap", "wall_rows": [["wall"], ["wall", "wall_window"]],
 		"floor_tex": "concrete_512_indexed", "wall_tex": "concrete_512_indexed",
 		"tint": Color(0.82, 0.88, 1.0), "light": Color(0.75, 0.85, 1.0),
 		"pillars": "ring6",   # 6 columnas de 1.2 m en anillo de radio 8, a 30° + k·60°
-		"spawns": "ring6",    # detrás de cada columna, radio 12.5
+		# Antes "ring6" (radio 12.5): al inicio los 6 estaban en el cono de la cámara o a < 8 m. Ahora van
+		# hacia las paredes laterales y traseras (la entrada está al sur, Kaelen mira al norte).
+		"spawns": [[-8, 10], [8, 10], [-12.5, 6], [12.5, 6], [-12.5, -6], [12.5, -6]],
 		"player_start": 11.0, "boss_start": Vector3(0, 0, -6),
 		"torches": [[-11, -6], [11, -6], [-11, 6], [11, 6], [0, 0]],
 		"exit": "stairs",
@@ -70,7 +80,8 @@ const LEVELS := {
 		"pillars": [[-14, -14, 1.2, 5.0, "cyl", 0], [14, -14, 1.2, 3.0, "cyl", 0],
 			[-14, 14, 1.2, 3.5, "cyl", 0], [14, 14, 1.2, 6.0, "cyl", 0],
 			[-19, 0, 1.2, 2.0, "cyl", 0], [19, 2, 1.2, 7.0, "cyl", 75]],
-		"spawns": [[-16, -16], [16, -16], [-16, 16], [16, 16], [-21, 0], [21, -3]],
+		# (±21, 9) en vez de (-21, 0) y (21, -3): esos quedaban dentro del cono de la cámara al inicio.
+		"spawns": [[-16, -16], [16, -16], [-16, 16], [16, 16], [-21, 9], [21, 9]],
 		"player_start": 20.0, "boss_start": Vector3(0, 0, -12),
 		"torches": [[-22, -22], [22, -22], [-22, 22], [22, 22]],
 		"exit": "ending",
@@ -84,11 +95,19 @@ const LEVELS := {
 # quede cerca de Y=0; el sendero va de sur a norte por x=0 hasta la fachada del templo.
 const EXTERIOR := {
 	"island": "island_main", "island_pos": Vector3(5, 8, 0),
-	"path_half_w": 2.5, "path_start_z": 36.0,          # ancho del sendero 5 m
+	# Sendero de 7 m; la pared invisible del fondo está en path_start_z y Kaelen empieza a 6 m de ella
+	# (a 2 m el SpringArm de la cámara chocaba con la pared y quedaba a 1.7 m de Kaelen, no a 4 m).
+	"path_half_w": 3.5, "path_start_z": 40.0, "start_back": 6.0,
+	# Línea central del sendero (x, z): recto hasta z = 19, curva a la izquierda para rodear el hueco
+	# de la nariz de la calavera, y vuelve al eje x = 0 antes de la explanada.
+	"path": [Vector2(0, 40), Vector2(0, 19), Vector2(-5.5, 13.5), Vector2(-5.5, 1), Vector2(0, -4.5),
+		Vector2(0, -22)],
 	"plaza": Rect2(-10, -31, 20, 9),                    # explanada ante la puerta (x, z, ancho, fondo)
 	# Templo: cuerpos apilados [ancho, alto, fondo]; la cara sur del primero está en temple_z.
 	"temple_z": -31.0, "temple": [Vector3(22, 12, 20), Vector3(16, 10, 15), Vector3(10, 8, 10)],
-	"door": Vector2(3, 4),                              # puerta normal 3 × 2 m (§7.3) agrandada a 3 × 4
+	# Puerta = hueco con el contorno del arco del kit (arch.glb, estirado ×1.6 en vertical): ancho
+	# interior 3.2 m, alto 3.2 m (la puerta normal de §7.3 mide 3 × 2; esta es la del templo).
+	"door": Vector2(3.2, 3.2),
 	"islets": [["islet_round", Vector3(-75, -18, -35), 30.0], ["islet_long", Vector3(65, -28, 15), 70.0],
 		["islet_l", Vector3(-60, -6, 55), 120.0], ["islet_small", Vector3(35, 6, -70), 0.0],
 		["islet_hole", Vector3(110, -35, -70), 200.0]],
@@ -99,7 +118,12 @@ var _mats := {}
 
 
 func _initialize() -> void:
-	var only := OS.get_cmdline_user_args()
+	var only: Array = []
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("out="):
+			_out_dir = a.substr(4)
+		else:
+			only.append(a)
 	_kit_library()
 	for id in LEVELS:
 		if only.is_empty() or id in only:
@@ -161,7 +185,7 @@ func _build_exterior(cfg: Dictionary) -> void:
 
 	# Templo: cuerpos apilados con textura de muro, puerta al sur, arco y pilares del kit.
 	var geo := _node(root, Node3D.new(), "Temple")
-	var wall_mat := _mat("concrete_512_indexed_dark", Color(0.75, 0.72, 0.7))
+	var wall_mat := _mat("concrete_512_indexed_dark", Color(0.45, 0.46, 0.5))
 	var tz: float = cfg.temple_z
 	var base_y: float = ground.call(0.0, tz - 1.0)
 	var comb := _combiner(geo, "Body")
@@ -172,18 +196,45 @@ func _build_exterior(cfg: Dictionary) -> void:
 		var hh := sz.y + (8.0 if i == 0 else 0.0)
 		_box(comb, "Tier%d" % (i + 1), Vector3(sz.x, hh, sz.z), Vector3(0, y + hh / 2, tz - parts[0].z / 2), wall_mat)
 		y += hh
+	# Hueco de la puerta: tramo recto (0.2 m del arco × 1.6) + semielipse de a = 1.6, b = 1.8 × 1.6 m,
+	# igual al interior de arch.glb escalado; el arco queda pegado al hueco sin franja de muro.
 	var door: Vector2 = cfg.door
-	_box(comb, "Door", Vector3(door.x, door.y, 3), Vector3(0, base_y + door.y / 2, tz), wall_mat,
+	var arch_sy := 1.6
+	var leg := 0.2 * arch_sy
+	_box(comb, "Door", Vector3(door.x, leg, 3), Vector3(0, base_y + leg / 2, tz), wall_mat,
 		CSGShape3D.OPERATION_SUBTRACTION)
+	var dome := CSGCylinder3D.new()
+	dome.radius = door.x / 2
+	dome.height = 3
+	dome.sides = 24
+	dome.operation = CSGShape3D.OPERATION_SUBTRACTION
+	dome.material = wall_mat
+	dome.transform = Transform3D(Basis(Vector3.RIGHT, PI / 2).scaled_local(Vector3(1, 1, 1.8 * arch_sy / (door.x / 2))),
+		Vector3(0, base_y + leg, tz))
+	_node(comb, dome, "DoorTop")
 	var arch := _kit_mesh("arch")
-	arch.position = Vector3(0, base_y + door.y - 0.4, tz + 0.5)
+	arch.position = Vector3(0, base_y, tz + 0.5)
+	arch.scale = Vector3(1, arch_sy, 1)
 	_node(geo, arch, "Arch")
+	# Fachada con muros del kit sobre el cuerpo CSG: cada cuerpo del templo lleva piezas en su cara sur
+	# y en las laterales (a 5 cm del plano, sin colisión: la da el CSG). La cara de la puerta deja libre
+	# la columna central de 4 m hasta el alto del arco.
+	var facade := _node(geo, Node3D.new(), "Facade")
+	var fy := base_y
+	for i in parts.size():
+		var sz: Vector3 = parts[i]
+		var zf: float = tz - parts[0].z / 2 + sz.z / 2   # cara sur del cuerpo i
+		_facade(facade, "T%dS" % (i + 1), Vector3(0, fy, zf), 0.0, sz.x, sz.y, Vector2(4.0, 4.0) if i == 0 else Vector2.ZERO)
+		for sx in [1, -1]:
+			_facade(facade, "T%d%s" % [i + 1, "E" if sx == 1 else "W"], Vector3(sx * sz.x / 2, fy, zf - sz.z / 2),
+				sx * PI / 2, sz.z, sz.y, Vector2.ZERO)
+		fy += sz.y
 	for sx in [-1, 1]:
 		var pil := _kit_mesh("pillar")
 		pil.position = Vector3(sx * 4.0, base_y - 1.0, tz + 1.0)
 		pil.scale = Vector3(1.4, 1.6, 1.4)
 		_node(geo, pil, "DoorPillar%s" % ("W" if sx < 0 else "E"))
-	_area(root, "ExitTrigger", Vector3(door.x, 3, 1.5), Vector3(0, base_y + 1.5, tz + 0.5)) 		.set_meta("doc", "Kaelen entra al templo → GameState.advance_level() (A)")
+	_area(root, "ExitTrigger", Vector3(door.x, 3, 1.5), Vector3(0, base_y + 1.5, tz + 0.5)).set_meta("doc", "Kaelen entra al templo → GameState.advance_level() (A)")
 	var torch := OmniLight3D.new()
 	torch.light_color = Color(1.0, 0.6, 0.3)
 	torch.light_energy = 2.0
@@ -191,58 +242,148 @@ func _build_exterior(cfg: Dictionary) -> void:
 	torch.position = Vector3(0, base_y + 5, tz + 3)
 	_node(geo, torch, "DoorLight")
 
-	# Sendero: pilares bajos cada 8 m a los lados y paredes invisibles que lo encierran.
+	# Sendero: polilínea `path` (x, z) de sur a norte con curvas a 45° (la isla "calavera" tiene un hueco
+	# en la nariz, x ∈ [-1, 11], z ∈ [2, 12], justo en la línea recta), pilares bajos cada 8 m a los
+	# lados y paredes invisibles que lo encierran.
 	var hw: float = cfg.path_half_w
 	var z0: float = cfg.path_start_z
+	var start_back: float = cfg.start_back
 	var plaza: Rect2 = cfg.plaza
+	var path: Array = cfg.path
 	var deco := _node(root, Node3D.new(), "PathMarkers")
-	var z := z0 - 4.0
 	var n := 0
-	while z > plaza.end.y:
+	var dist := start_back + 2.0
+	var path_len := 0.0
+	for i in path.size() - 1:
+		path_len += (path[i + 1] - path[i]).length()
+	while dist < path_len - 6.0:
+		var at := _path_at(path, dist)
 		for sx in [-1, 1]:
+			var q: Vector2 = at[0] + at[1] * sx * (hw + 0.8)
 			var m := _kit_mesh("pillar_collapsed")
-			m.position = Vector3(sx * (hw + 0.8), ground.call(sx * (hw + 0.8), z) - 0.3, z)
+			m.position = Vector3(q.x, ground.call(q.x, q.y) - 0.3, q.y)
 			n += 1
 			_node(deco, m, "Marker%d" % n)
-		z -= 8.0
+		dist += 8.0
+	# Paredes: una cadena a cada lado de la polilínea. En cada curva el lado exterior se alarga
+	# hw·tan(θ/2) (+0.2 de solape) y el interior se acorta lo mismo (si no, taparía el sendero).
+	var chunks := []   # [a, b, ext_a, ext_b]
+	var last: int = path.size() - 1
+	for i in last:
+		var d: Vector2 = (path[i + 1] - path[i]).normalized()
+		var nrm := Vector2(-d.y, d.x)
+		var cross_a := 0.0
+		var ang_a := 0.0
+		var cross_b := 0.0
+		var ang_b := 0.0
+		if i > 0:
+			var din: Vector2 = (path[i] - path[i - 1]).normalized()
+			cross_a = din.cross(d)
+			ang_a = absf(din.angle_to(d))
+		if i < last - 1:
+			var dout: Vector2 = (path[i + 2] - path[i + 1]).normalized()
+			cross_b = d.cross(dout)
+			ang_b = absf(d.angle_to(dout))
+		for side in [-1, 1]:
+			var ea := 0.0
+			var eb := 0.0
+			if ang_a > 0.001:
+				ea = hw * tan(ang_a / 2.0) * (-1.0 if side * cross_a > 0.0 else 1.0)
+				ea += 0.2 if ea > 0.0 else 0.0
+			if ang_b > 0.001:
+				eb = hw * tan(ang_b / 2.0) * (-1.0 if side * cross_b > 0.0 else 1.0)
+				eb += 0.2 if eb > 0.0 else 0.0
+			chunks.append([path[i] + nrm * side * hw, path[i + 1] + nrm * side * hw, ea, eb])
 	var walls := StaticBody3D.new()
 	walls.collision_layer = 1
 	walls.collision_mask = 0
 	_node(root, walls, "InvisibleWalls")
-	var pts_w := [Vector2(-hw, z0), Vector2(-hw, plaza.end.y), Vector2(plaza.position.x, plaza.end.y),
-		Vector2(plaza.position.x, plaza.position.y)]
-	var pts_e := pts_w.map(func(p: Vector2) -> Vector2: return Vector2(-p.x, p.y))
-	var segs := []
-	for i in pts_w.size() - 1:
-		segs.append([pts_w[i], pts_w[i + 1]])
-		segs.append([pts_e[i], pts_e[i + 1]])
-	segs.append([pts_w[0], pts_e[0]])
-	for i in segs.size():
-		var a: Vector2 = segs[i][0]
-		var b: Vector2 = segs[i][1]
+	var boxes := []   # [centro 2D, largo, yaw, alto de suelo]
+	for c in chunks:
+		var a: Vector2 = c[0]
+		var b: Vector2 = c[1]
+		var d := (b - a).normalized()
+		a -= d * c[2]
+		b += d * c[3]
+		var total := (b - a).length()
+		var pieces := maxi(1, ceili(total / 8.0))
+		for k in pieces:
+			var p0 := a + d * (total * k / pieces)
+			var p1 := a + d * (total * (k + 1) / pieces)
+			var mid := (p0 + p1) / 2
+			boxes.append([mid, (p1 - p0).length() + 0.1, atan2(-d.y, d.x), ground.call(mid.x, mid.y)])
+	# Pared del fondo (perpendicular al primer tramo, 6 m detrás de Kaelen) y explanada ante la puerta.
+	var pe: Vector2 = path[last]
+	var plaza_walls := [[Vector2(-hw, pe.y), Vector2(plaza.position.x, plaza.end.y)],
+		[Vector2(plaza.position.x, plaza.end.y), Vector2(plaza.position.x, plaza.position.y)],
+		[Vector2(hw, pe.y), Vector2(plaza.end.x, plaza.end.y)],
+		[Vector2(plaza.end.x, plaza.end.y), Vector2(plaza.end.x, plaza.position.y)]]
+	for pw in plaza_walls:
+		var a: Vector2 = pw[0]
+		var b: Vector2 = pw[1]
 		var mid := (a + b) / 2
+		var ang := 0.0 if absf(b.y - a.y) < 0.01 else PI / 2
+		boxes.append([mid, maxf(absf(b.x - a.x), absf(b.y - a.y)) + 0.5, 0.0 if ang == 0.0 else PI / 2, ground.call(mid.x, mid.y)])
+	boxes.append([Vector2(path[0].x, z0), hw * 2 + 0.5, 0.0, ground.call(path[0].x, z0 - 1.0)])
+	for i in boxes.size():
+		var bx: Array = boxes[i]
 		var col := CollisionShape3D.new()
 		var box := BoxShape3D.new()
-		box.size = Vector3(max(abs(b.x - a.x), 0.5), 30, max(abs(b.y - a.y), 0.5))
+		box.size = Vector3(bx[1], 30, 0.5)
 		col.shape = box
-		col.position = Vector3(mid.x, ground.call(mid.x, mid.y) + 5, mid.y)
+		col.transform = Transform3D(Basis(Vector3.UP, bx[2]), Vector3(bx[0].x, bx[3] + 5, bx[0].y))
 		_node(walls, col, "Wall%d" % (i + 1))
 
 	var ps := _node(root, Marker3D.new(), "PlayerStart") as Marker3D
-	ps.position = Vector3(0, ground.call(0.0, z0 - 2.0), z0 - 2.0)
+	ps.position = Vector3(0, ground.call(0.0, z0 - start_back), z0 - start_back)
 	_node(root, Node3D.new(), "Gameplay")
-	print("  sendero: inicio y=%.2f, puerta y=%.2f, %d m" % [ps.position.y, base_y, int(z0 - tz)])
-	_save(root, OUT_DIR + "exterior.tscn")
+	print("  sendero: inicio z=%.1f y=%.2f, puerta y=%.2f, recorrido ≈ %d m" % [ps.position.z, ps.position.y, base_y,
+		int(path_len - start_back + (pe.y - tz))])
+	_save(root, _out_dir + "exterior.tscn")
 	root.queue_free()
 	await process_frame
 
 
+# Punto de la polilínea a `dist` metros del inicio: [posición, normal a la izquierda del avance].
+func _path_at(path: Array, dist: float) -> Array:
+	var left := dist
+	for i in path.size() - 1:
+		var seg: Vector2 = path[i + 1] - path[i]
+		if left <= seg.length() or i == path.size() - 2:
+			var d := seg.normalized()
+			return [path[i] + d * minf(left, seg.length()), Vector2(-d.y, d.x)]
+		left -= seg.length()
+	return [path[0], Vector2.RIGHT]
+
+
+# Cara de muro del kit: `pos` = centro inferior de la cara, `yaw` hace que +Z mire hacia fuera. Piezas de
+# ~4 m estiradas para llenar ancho × alto; `gap` (ancho, alto) deja un hueco centrado abajo (la puerta).
+func _facade(parent: Node, name: String, pos: Vector3, yaw: float, width: float, height: float, gap: Vector2) -> void:
+	var basis := Basis(Vector3.UP, yaw)
+	var rows := maxi(1, ceili(height / 4.0))
+	var sy := height / (4.0 * rows)
+	var segs: Array = [[-width / 2, width / 2, 0]]
+	if gap.x > 0.0:
+		var gr := ceili(gap.y / 4.0)
+		segs = [[-width / 2, -gap.x / 2, 0], [gap.x / 2, width / 2, 0], [-gap.x / 2, gap.x / 2, gr]]
+	var n := 0
+	for sg in segs:
+		var t0: float = sg[0]
+		var t1: float = sg[1]
+		var cols := maxi(1, roundi((t1 - t0) / 4.0))
+		var sx := (t1 - t0) / cols / 4.0
+		for r in range(sg[2], rows):
+			for c in cols:
+				var tc := t0 + (c + 0.5) * (t1 - t0) / cols
+				n += 1
+				_piece(parent, "%s_%d" % [name, n], "wall",
+					pos + basis * Vector3(tc, r * 4.0 * sy, 1.05), yaw, Vector3(sx, sy, 1))
+
+
 # Copia de una malla del kit con material PSX como MeshInstance3D suelto (se guarda en la escena).
 func _kit_mesh(name: String) -> MeshInstance3D:
-	var src := _kit_instance(name)
 	var mi := MeshInstance3D.new()
-	mi.mesh = _first_mesh(src).mesh
-	src.free()
+	mi.mesh = _kit_mesh_res(name)
 	return mi
 
 
@@ -267,7 +408,10 @@ func _build_level(id: String, cfg: Dictionary) -> void:
 	var wall_mat := _mat(cfg.wall_tex, cfg.tint)
 	var shell := _combiner(geo, "Shell")
 	if cfg.get("output", "csg") == "gridmap":
-		_grid_shell(geo, shell, cfg, wall_mat)
+		if cfg.shape == "oct":
+			_oct_shell(geo, shell, cfg, wall_mat)
+		else:
+			_grid_shell(geo, shell, cfg, wall_mat)
 	elif cfg.shape == "rect":
 		_box(shell, "Floor", Vector3(w + 2 * WALL_T, 1, d + 2 * WALL_T), Vector3(0, -0.5, 0), floor_mat)
 		_box(shell, "WallN", Vector3(w + 2 * WALL_T, h, WALL_T), Vector3(0, h / 2, -d / 2 - WALL_T / 2), wall_mat)
@@ -308,10 +452,10 @@ func _build_level(id: String, cfg: Dictionary) -> void:
 	# Esperar a que el CSG genere sus mallas y hornear la navegación.
 	for i in 3:
 		await process_frame
-	_navigation(root, "NavigationSmall", 1, 0.5, 2.0, 0.3, 35.0)
+	_navigation(root, "NavigationSmall", 1, 0.5, 2.0, 0.25, 35.0)
 	_navigation(root, "NavigationLarge", 2, 2.5, 4.0, 0.5, 25.0)
 
-	_save(root, OUT_DIR + id + ".tscn")
+	_save(root, _out_dir + id + ".tscn")
 	root.queue_free()
 	await process_frame
 
@@ -530,6 +674,10 @@ func _torches(root: Node3D, cfg: Dictionary) -> void:
 func _navigation(root: Node3D, name: String, layer: int, radius: float, height: float,
 		climb: float, slope: float) -> void:
 	var nm := NavigationMesh.new()
+	# Solo el suelo: sin esto el horneado generaba polígonos en las cimas de muros, pilares y techo
+	# (y ≈ 8–12 m). Se conservan las primeras huellas de las escaleras (sin ellas no hay sitio donde
+	# apoyar la malla de la entrada) y se corta todo lo que pasa de NAV_MAX_Y.
+	nm.filter_baking_aabb = NAV_AABB
 	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
 	nm.geometry_collision_mask = 1
 	nm.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_WITH_CHILDREN
@@ -555,13 +703,7 @@ func _navigation(root: Node3D, name: String, layer: int, radius: float, height: 
 # se cierran a 6 × 6 m con jambas y dintel CSG. El suelo sigue siendo un bloque CSG (colisión
 # continua y sin juntas para la navegación); encima se pintan las baldosas del kit.
 func _grid_shell(geo: Node3D, shell: CSGCombiner3D, cfg: Dictionary, wall_mat: Material) -> void:
-	var gm := GridMap.new()
-	gm.mesh_library = load(KIT_LIB)
-	gm.cell_size = Vector3(4, 4, 4)
-	gm.cell_center_y = false
-	gm.collision_layer = 1
-	gm.collision_mask = 0
-	_node(geo, gm, "GridMap")
+	var gm := _new_gridmap(geo)
 	var w: float = cfg.size.x
 	var d: float = cfg.size.y
 	var h: float = cfg.height
@@ -599,18 +741,142 @@ func _grid_shell(geo: Node3D, shell: CSGCombiner3D, cfg: Dictionary, wall_mat: M
 			n += 1
 			gm.set_cell_item(Vector3i(nx / 2, y, z), item, rot.call(90))
 			gm.set_cell_item(Vector3i(-nx / 2 - 1, y, z), item, rot.call(-90))
-	# Esquinas (1 × 1 m que el GridMap deja libres) y marco de las rejas.
+	# Esquinas (1 × 1 m que el GridMap deja libres, tapadas por los muros) y marco de las rejas.
 	var top := float(int(GATE_H / 4) + 1) * 4.0   # alto del hueco en la grilla (8 m)
 	for sx in [1, -1]:
 		for sz in [1, -1]:
 			_box(shell, "Corner%d%d" % [sx, sz], Vector3(1, h, 1),
 				Vector3(sx * (w / 2 + 0.5), h / 2, sz * (d / 2 + 0.5)), wall_mat)
-		for sz in [1, -1]:
-			_box(shell, "Jamb%d%d" % [sx, sz], Vector3(1, top, 1),
-				Vector3(sx * (GATE_W / 2 + 0.5), top / 2, sz * (d / 2 + 0.5)), wall_mat)
+	var frame := StaticBody3D.new()
+	frame.collision_layer = 1
+	frame.collision_mask = 0
+	_node(geo, frame, "GateFrame")
+	var pieces := _node(geo, Node3D.new(), "GatePieces")
 	for sz in [1, -1]:
-		_box(shell, "Lintel%d" % sz, Vector3(GATE_W, top - GATE_H, 1),
-			Vector3(0, GATE_H + (top - GATE_H) / 2, sz * (d / 2 + 0.5)), wall_mat)
+		var yaw := 0.0 if sz == 1 else PI
+		for sx in [1, -1]:   # jambas: 1 m de ancho, a ambos lados del hueco de 6 m
+			_frame_box(frame, "Jamb%d%d" % [sx, sz], Vector3(1, top, 1),
+				Vector3(sx * (GATE_W / 2 + 0.5), top / 2, sz * (d / 2 + 0.5)))
+			for r in int(top / 4):
+				_piece(pieces, "Jamb%d%d_%d" % [sx, sz, r], "wall",
+					Vector3(sx * (GATE_W / 2 + 0.5), r * 4.0, sz * (d / 2 + 2.0)), yaw, Vector3(0.25, 1, 1))
+		_frame_box(frame, "Lintel%d" % sz, Vector3(GATE_W, top - GATE_H, 1),
+			Vector3(0, GATE_H + (top - GATE_H) / 2, sz * (d / 2 + 0.5)))
+		_piece(pieces, "Lintel%d" % sz, "wall", Vector3(0, GATE_H, sz * (d / 2 + 2.0)), yaw,
+			Vector3(GATE_W / 4.0, (top - GATE_H) / 4.0, 1))
+
+
+# Caja de colisión (sin malla) para jambas y dinteles: el aspecto lo dan las piezas del kit.
+func _frame_box(body: StaticBody3D, name: String, size: Vector3, pos: Vector3) -> void:
+	var col := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	col.shape = box
+	col.position = pos
+	_node(body, col, name)
+
+
+# Pieza del kit como MeshInstance3D suelta (origen en el centro de la cara de 4 m; la cara interior
+# del muro está en z local = −2, así que `pos` va 2 m hacia fuera del plano interior del muro).
+func _piece(parent: Node, name: String, item: String, pos: Vector3, yaw: float, scl: Vector3) -> MeshInstance3D:
+	var m := MeshInstance3D.new()
+	m.mesh = _kit_mesh_res(item)
+	m.transform = Transform3D(Basis(Vector3.UP, yaw).scaled_local(scl), pos)
+	return _node(parent, m, name) as MeshInstance3D
+
+
+func _new_gridmap(geo: Node3D) -> GridMap:
+	var gm := GridMap.new()
+	gm.mesh_library = load(KIT_LIB)
+	gm.cell_size = Vector3(4, 4, 4)
+	gm.cell_center_y = false
+	gm.collision_layer = 1
+	gm.collision_mask = 0
+	_node(geo, gm, "GridMap")
+	return gm
+
+
+# Octógono (cfg.size.x = distancia entre caras, p. ej. 30 m = 24 de combate + 3 m de margen por lado)
+# con piezas del kit. No encaja en la grilla de 4 m, así que:
+# - suelo y techo: baldosas de GridMap en las celdas que tocan el octágono (las que sobresalen por las
+#   esquinas quedan fuera del muro, de 1 m de grosor, que llega al borde de la grilla); debajo, un
+#   cilindro CSG de 8 lados cierra la colisión y la navegación sin juntas;
+# - muros: 3 piezas por cara y fila, giradas k × 45° y estiradas al largo de la cara (12.43 / 3 m);
+#   en las caras sur y norte quedan solo las piezas de los lados y el dintel CSG sobre la reja;
+# - colisión de los muros: una caja por cara (dos en las caras de las rejas).
+func _oct_shell(geo: Node3D, shell: CSGCombiner3D, cfg: Dictionary, wall_mat: Material) -> void:
+	var apo: float = cfg.size.x * 0.5
+	var h: float = cfg.height
+	var rows: Array = cfg.wall_rows
+	var gm := _new_gridmap(geo)
+	var floor_id := KIT_ITEMS.find("floor")
+	var ceil_id := KIT_ITEMS.find("ceiling")
+	var n := int(ceil(apo / 4.0))
+	for x in range(-n, n):
+		for z in range(-n, n):
+			var near_x := maxf(absf((x + 0.5) * 4.0) - 2.0, 0.0)
+			var near_z := maxf(absf((z + 0.5) * 4.0) - 2.0, 0.0)
+			if near_x + near_z >= apo * sqrt(2.0) - 0.1:   # fuera de las caras diagonales
+				continue
+			gm.set_cell_item(Vector3i(x, 0, z), floor_id)
+			if cfg.ceiling:
+				gm.set_cell_item(Vector3i(x, int(h / 4), z), ceil_id)
+	_cyl(shell, "Floor", (apo + WALL_T) / cos(PI / 8), 1, Vector3(0, -0.55, 0), wall_mat, 8)
+
+	var face_len := 2.0 * apo * tan(PI / 8)           # largo de la cara por dentro
+	var half_out := (apo + WALL_T) * tan(PI / 8) + 0.1   # semilargo por fuera + solape con la vecina
+	var body := StaticBody3D.new()
+	body.collision_layer = 1
+	body.collision_mask = 0
+	_node(geo, body, "WallBodies")
+	var walls := _node(geo, Node3D.new(), "WallPieces")
+	for k in 8:
+		var a := k * PI / 4.0                       # 0 = cara sur; el giro lleva +Z (hacia fuera) a o
+		var o := Vector3(sin(a), 0, cos(a))
+		var tangent := Vector3(cos(a), 0, -sin(a))
+		var gate := k == 0 or k == 4
+		# Tramos de la cara [t0, t1] (a lo largo de la tangente) que llevan muro: piezas por dentro
+		# (largo exacto de la cara) y cajas de colisión por fuera (con el solape de las esquinas).
+		var hole := GATE_W / 2
+		var spans: Array = [[-face_len / 2, face_len / 2]]
+		var col_spans: Array = [[-half_out, half_out]]
+		if gate:
+			spans = [[-face_len / 2, -hole], [hole, face_len / 2]]
+			col_spans = [[-half_out, -hole], [hole, half_out]]
+		for si in spans.size():
+			var t0: float = spans[si][0]
+			var t1: float = spans[si][1]
+			var pieces := maxi(1, roundi((t1 - t0) / 4.0))
+			var width := (t1 - t0) / pieces
+			for r in int(h / 4):
+				var row: Array = rows[min(r, rows.size() - 1)]
+				for j in pieces:
+					var piece := MeshInstance3D.new()
+					piece.mesh = _kit_mesh_res(row[(j + si) % row.size()])
+					var tc := t0 + (j + 0.5) * width
+					piece.transform = Transform3D(Basis(Vector3.UP, a).scaled_local(Vector3(width / 4.0, 1, 1)),
+						o * (apo + 2.0) + tangent * tc + Vector3(0, r * 4.0, 0))
+					_node(walls, piece, "F%d_S%d_R%d_%d" % [k, si, r, j])
+			var lo: float = col_spans[si][0]
+			var hi: float = col_spans[si][1]
+			var col := CollisionShape3D.new()
+			var box := BoxShape3D.new()
+			box.size = Vector3(hi - lo, h, WALL_T)
+			col.shape = box
+			col.transform = Transform3D(Basis(Vector3.UP, a),
+				o * (apo + WALL_T / 2) + tangent * ((lo + hi) / 2) + Vector3(0, h / 2, 0))
+			_node(body, col, "Wall%d_%d" % [k, si])
+		if gate:   # dintel sobre la reja: de 6 m a h (pieza de muro achatada; colisión en el cuerpo)
+			var lcol := CollisionShape3D.new()
+			var lbox := BoxShape3D.new()
+			lbox.size = Vector3(GATE_W, h - GATE_H, WALL_T)
+			lcol.shape = lbox
+			lcol.transform = Transform3D(Basis(Vector3.UP, a),
+				o * (apo + WALL_T / 2) + Vector3(0, GATE_H + (h - GATE_H) / 2, 0))
+			_node(body, lcol, "Lintel%d" % k)
+			_piece(walls, "Lintel%d" % k, "wall", o * (apo + 2.0) + Vector3(0, GATE_H, 0), a,
+				Vector3(GATE_W / 4.0, (h - GATE_H) / 4.0, 1))
+	print("  octógono: apotema %.1f m, cara %.2f m, %d baldosas" % [apo, face_len, gm.get_used_cells().size()])
 
 
 # MeshLibrary con las piezas exportadas por Blender, material PSX con el atlas y colisión simple.
@@ -668,6 +934,17 @@ func _kit_instance(name: String) -> Node3D:
 		mesh.surface_set_material(s, _kit_mat)
 	mi.mesh = mesh
 	return node
+
+
+var _kit_meshes := {}
+
+# Malla de una pieza del kit con material estándar, una sola por nombre (las escenas comparten el recurso).
+func _kit_mesh_res(name: String) -> Mesh:
+	if not _kit_meshes.has(name):
+		var src := _kit_instance(name)
+		_kit_meshes[name] = _first_mesh(src).mesh
+		src.free()
+	return _kit_meshes[name]
 
 
 func _first_mesh(n: Node) -> MeshInstance3D:
@@ -734,6 +1011,9 @@ func _camera(parent: Node, name: String, pos: Vector3, target: Vector3) -> void:
 	cam.fov = 60
 	_node(parent, cam, name)
 	cam.look_at_from_position(pos, target)
+	# La primera Camera3D que entra al árbol (el del generador) queda como actual y se guardaría con
+	# `current = true`, secuestrando la cámara de Kaelen. El final (Tarea 15) las activa por código.
+	cam.clear_current(false)
 
 
 # Material de bloqueo: textura del kit con proyección triplanar en coordenadas de mundo
