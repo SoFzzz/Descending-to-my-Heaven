@@ -10,6 +10,9 @@
 [ext_resource type="Script" path="res://scripts/combat/hitbox.gd" id="8_hitbox"]
 [ext_resource type="Script" path="res://scripts/player/lock_on.gd" id="9_lockon"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="10_hud"]
+[ext_resource type="AudioStream" path="res://resources/audio/sword_swing.tres" id="a_swing"]
+[ext_resource type="AudioStream" path="res://resources/audio/sword_hit.tres" id="a_hit"]
+[ext_resource type="AudioStream" path="res://resources/audio/sword_block.tres" id="a_block"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -28,6 +31,7 @@ collision_mask = 13
 floor_max_angle = 0.785398
 floor_snap_length = 0.4
 script = ExtResource("1_ctrl")
+sfx_swing = ExtResource("a_swing")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
@@ -85,6 +89,8 @@ collision_layer = 16
 collision_mask = 128
 monitorable = false
 script = ExtResource("8_hitbox")
+sfx_impact = ExtResource("a_hit")
+sfx_impact_metal = ExtResource("a_block")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SwordHitbox"]
 shape = SubResource("BoxShape3D_sword")

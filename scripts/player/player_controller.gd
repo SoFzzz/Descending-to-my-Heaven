@@ -72,6 +72,13 @@ const ATTACK_DAMAGE_TAKEN_MULT := 0.5
 ## Orders (roll, attack) pressed while they cannot be executed are kept for this long.
 const BUFFER_TIME := 0.2
 
+# --- Audio ---
+## Metros recorridos entre dos pasos (la muestra de carrera dura 0,5 s: a 5 m/s suena cada ~0,4 s).
+const FOOTSTEP_STRIDE := 2.0
+## Por debajo de esta velocidad horizontal (m/s) no hay pasos.
+const FOOTSTEP_MIN_SPEED := 0.5
+const FOOTSTEP_VOLUME_DB := -4.0
+
 # Ground speed at which each clip looks right without sliding (measured by eye with captures; see
 # docs/asset-status.md). Above RUN_ANIM_SPEED the `run` clip is sped up.
 const WALK_ANIM_SPEED := 1.4
@@ -81,6 +88,11 @@ const RUN_ANIM_SPEED := 4.2
 const ACTION_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"attack_3", &"hurt", &"death"]
 # States whose clip is adjusted with a TimeScale (parameters/<state>/speed/scale).
 const SCALED_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"attack_3", &"hurt"]
+
+## Sonido del golpe de espada al empezar cada ataque (assign a randomizer to vary it).
+@export var sfx_swing: AudioStream
+## Sonido de los pasos al correr; lo asigna el nivel (level_gameplay.gd: piedra en arenas, tierra fuera).
+@export var footstep_stream: AudioStream
 
 var state: State = State.MOVE
 ## If nobody assigned them before, they are looked up in _ready (children "Health", "Stamina" and "Hurtbox"). Tests
@@ -113,6 +125,7 @@ var _cutscene := false  # scripted sequence (set_cutscene): no control, invulner
 var _armor_on := false
 var _base_damage_multiplier := 1.0
 
+var _footstep_distance := 0.0
 var _attack_time := 0.0
 var _hitbox_on := false
 var _hurt_time := 0.0
@@ -221,7 +234,42 @@ func _physics_process(delta: float) -> void:
 	_tick_hurt_iframes(delta)
 	_update_invulnerability()
 	_follow_sword()
-	_update_animation(Vector3(velocity.x, 0.0, velocity.z).length())
+	var ground_speed := Vector3(velocity.x, 0.0, velocity.z).length()
+	_tick_footsteps(delta, ground_speed)
+	_update_animation(ground_speed)
+
+
+# --- Audio ---
+
+## Distancia acumulada tras avanzar `delta` s a `speed` m/s. Por debajo de FOOTSTEP_MIN_SPEED o si
+## no `walking` (rodando, atacando, en el aire, cinemática) se reinicia.
+static func footstep_progress(accumulated: float, speed: float, delta: float, walking: bool) -> float:
+	if not walking or speed < FOOTSTEP_MIN_SPEED:
+		return 0.0
+	return accumulated + speed * delta
+
+
+## true si la distancia acumulada completa una zancada.
+static func footstep_due(accumulated: float) -> bool:
+	return accumulated >= FOOTSTEP_STRIDE
+
+
+## Pasos sincronizados con la velocidad real; solo en MOVE y con los pies en el suelo.
+func _tick_footsteps(delta: float, ground_speed: float) -> void:
+	var walking := state == State.MOVE and is_on_floor() and not _cutscene
+	_footstep_distance = footstep_progress(_footstep_distance, ground_speed, delta, walking)
+	if footstep_due(_footstep_distance):
+		_footstep_distance -= FOOTSTEP_STRIDE
+		_play_sfx(footstep_stream, FOOTSTEP_VOLUME_DB)
+
+
+## 3D sound at Kaelen. By path: tests run with -s, without autoloads.
+func _play_sfx(stream: AudioStream, volume_db := 0.0) -> void:
+	if stream == null or not is_inside_tree():
+		return
+	var audio := get_node_or_null(^"/root/AudioManager")
+	if audio:
+		audio.play_sfx_3d(stream, global_position, 0.1, volume_db)
 
 
 func _buffer_input(want_roll: bool, want_attack: bool) -> void:
@@ -376,6 +424,7 @@ func try_attack() -> bool:
 	if _anim_tree:
 		_anim_tree.set(StringName("parameters/%s/speed/scale" % ATTACK_ANIMS[hit]), ATTACK_ANIM_SPEED[hit])
 	_play_action(ATTACK_ANIMS[hit])
+	_play_sfx(sfx_swing)
 	return true
 
 
