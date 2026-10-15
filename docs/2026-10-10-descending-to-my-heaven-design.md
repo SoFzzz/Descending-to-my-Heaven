@@ -1,7 +1,7 @@
 # Descending to my Heaven — Documento de Diseño
 
 - **Fecha:** 2026-10-10
-- **Equipo:** 3 personas, dedicación completa durante 7 días
+- **Equipo:** 3 personas, dedicación completa durante 7 días: Paula Sofia Gonzalez Zambrano, David Alejandro Aza Jojoa y Stehven Alexander Obando Cordoba
 - **Motor:** Godot 4.3+ (GDScript)
 - **Objetivo de éxito:** un juego 3D lowpoly estilo PSX, jugable de principio a fin, donde se puede **derrotar a los 3 jefes** y ver el final. La inteligencia artificial de los enemigos debe ser demostrable y explicable.
 
@@ -49,11 +49,11 @@ Estética: fantasía oscura PSX (baja resolución interna, texturas con filtro *
 | Esbirros 1 | `Skeleton` | Sin rig → Mixamo |
 | Élite 1 | `knight__ps1_psx` | Trae rig propio (26 huesos) solo con `Idle` → re-rig en Mixamo |
 | Jefe 2 | `blackhorn` (Blackhorn of the Shattered Peaks; reemplaza a Dead Oath Hunter desde 2026-10-14) | Rig Mixamo con 8 animaciones propias (idle, burla, rugido, caminar, correr, embestida, zarpazo con salto, golpe al suelo) + `hurt`/`death` tomadas de otro personaje Mixamo; exportado a 3.20 m con `_source/tools/export_multi_action.py -- blackhorn` |
-| Reserva (esbirro) | `straw_reaper` (The Straw Reaper, imaginais) | Rig Mixamo con 9 animaciones; sustituto de cualquier esbirro que falle o se vea peor |
+| Élite 3 | `straw_reaper` (The Straw Reaper, imaginais) | Rig Mixamo; 8 clips nombrados (`idle`, `walk`, `lurch`, `attack`, `attack_2`, `combo`, `hurt`, `death`). Sustituye al Aura Battler como élite de la arena 3 (2026-10-15) |
 | Esbirros 2 | `Plague Arcanist` | Rig Mixamo + 10 animaciones (nombres genéricos, hay que identificarlas y renombrarlas) |
 | Jefe 3 | `mecha-king-ghidorah` (reducir de 26k a ~8k triángulos) | Ya trae rig con skin (3 cuellos, 2 colas, alas), sin animaciones; decimar conservando pesos; animaciones creadas en Blender + movimiento procedural |
 | Esbirros 3 | `TheWrapper V2` | Rig propio + 6 animaciones (embestida, idle, correr, grito, caminar, golpe) |
-| Élite 3 (opcional) | `aura_battler_dunbine` | Sin rig: mecha flotante animado por piezas rígidas (flotar, embestida, giro) |
+| Reserva (élite 3) | `aura_battler_dunbine` | Sin uso desde 2026-10-15 (el élite 3 es el Straw Reaper). Sin rig: mecha flotante animado por piezas rígidas (flotar, embestida, giro) |
 | Escenarios | `floating_island`, `float-islands`, `PSX_Dungeon`, `Modular Dungeon Free Edition`, `modulardungeontextures` (detalle en sección 6) | Estáticos |
 | Reserva | `psx_insectoid_demon` (jefe 3 si Ghidorah falla), `DoriOri` | Sustitutos si algo falla al importar |
 
@@ -125,7 +125,7 @@ El juego ocurre en un solo lugar: **un templo de 3 pisos construido sobre una is
 | `exterior` | Kaelen aparece en la isla y camina por un sendero corto hasta la puerta del templo. | 1-2 min |
 | `arena_1` | Catacumba — Bone Dragon + esqueletos (+ knight élite) | 3-6 min |
 | `arena_2` | Claustro — Blackhorn + Plague Arcanists | 3-6 min |
-| `arena_3` | Ruinas — Mecha King Ghidorah + TheWrapper; al morir el jefe se abre la puerta norte → pasillo → sala de Elysia (`EndingTrigger`) | 5-10 min |
+| `arena_3` | Ruinas — Mecha King Ghidorah + TheWrapper (+ Straw Reaper élite); al morir el jefe se abre la puerta norte → pasillo → sala de Elysia (`EndingTrigger`) | 5-10 min |
 
 **Generación:** las 4 escenas se generan con un script paramétrico y determinista (`scripts/tools/level_builder.gd`, ver 6.4). No hay generación procedural ni addons: el plano está en una tabla y para cambiarlo se edita un número y se vuelve a ejecutar.
 
@@ -197,7 +197,7 @@ Se descartó `floating_island` (61 MB, texturas fotográficas). El exterior usa:
 
 **Generador de niveles (`scripts/tools/level_builder.gd`):**
 - **Regla:** las escenas generadas se sobrescriben al ejecutar el generador; **nunca se editan a mano ni se les agregan nodos**. Todo el gameplay va en `scenes/levels/<nivel>_gameplay.tscn`, que instancia el nivel (hijo `Level`) + Kaelen + enemigos, y busca los puntos del mapa por nombre (`scripts/game/level_gameplay.gd` coloca a Kaelen en `PlayerStart`).
-- Ejecutar: `godot --headless --path . -s res://scripts/tools/level_builder.gd` (todas) o `... -- arena_2` (una). Sobrescribe `scenes/levels/{exterior,arena_1,arena_2,arena_3}.tscn`, así que **no se editan a mano**: los cambios van en las tablas `LEVELS` y `EXTERIOR` del script. Lo que A y B agreguen va en escenas aparte (`arena_N_gameplay.tscn` instanciada bajo `Gameplay`).
+- Ejecutar: `godot --headless --path . -s res://scripts/tools/level_builder.gd` (todas) o `... -- arena_2` (una). Sobrescribe `scenes/levels/{exterior,arena_1,arena_2,arena_3}.tscn`, así que **no se editan a mano**: los cambios van en las tablas `LEVELS` y `EXTERIOR` del script. Lo que se agregue va en escenas aparte: `arena_N_gameplay.tscn` instancia el nivel como hijo `Level`.
 - Arenas 1 y 3: muros, suelo y techo en `GridMap` con `assets/environment/kit/dungeon_kit.meshlib` (piezas de `PSX_Dungeon` normalizadas por `_source/tools/export_dungeon_kit.py`). Arena 2 (octogonal) sigue en CSG con textura triplanar, porque no encaja en la grilla. Pasillos, escaleras, jambas y dintel de las rejas son CSG.
 - Navegación: se hornea al generar (`NavigationSmall` capa 1, r 0.5; `NavigationLarge` capa 2, r 2.5).
 - Rejas: `GateEntry` y `GateExit` son `AnimatableBody3D` de 6 × 6 m, ambas cerradas; la meta `open_offset` (0, −6.1, 0) indica cuánto bajarlas para abrirlas.
@@ -278,7 +278,8 @@ Cada personaje tiene cinco "tamaños" distintos que **no** deben confundirse:
 | **Knight (élite 1)** | 2.10 m (escalado ×1.15) | r 0.40 · alto 2.10 | Cápsula r 0.45 · alto 2.10 | Caja de espada 0.2 × 0.2 × 1.2 m | Capa chica |
 | **Plague Arcanist** | 1.80 m | r 0.35 · alto 1.80 | Cápsula r 0.40 · alto 1.85 | Esfera r 0.5 a 1.3 m al frente | Capa chica |
 | **TheWrapper** | 2.00 m | r 0.45 · alto 2.00 | Cápsula r 0.50 · alto 2.05 | Embestida: caja 1 × 1.5 × 2.5 m al frente | Capa chica |
-| **Aura Battler (élite 3)** | 3.00 m (flota a 0.5 m) | r 0.80 · alto 2.50 | Cápsula r 0.90 · alto 2.80 | Giro: esfera r 2.5 alrededor | Capa grande |
+| **Straw Reaper (élite 3)** | 1.90 m (con la hoz) | r 0.40 · alto 1.90 | Cápsula r 0.45 · alto 1.95 | Hoz: caja 1.4 × 1.2 × 1.8 m al frente | Capa chica |
+| **Aura Battler (reserva, sin uso)** | 3.00 m (flota a 0.5 m) | r 0.80 · alto 2.50 | Cápsula r 0.90 · alto 2.80 | Giro: esfera r 2.5 alrededor | Capa grande |
 
 **Jefes** — un solo collider no alcanza; usan varias formas unidas a huesos (`BoneAttachment3D`).
 
@@ -314,7 +315,7 @@ Dos capas de navegación por arena, horneadas con parámetros distintos (`Naviga
 
 | Capa | Quién la usa | Radio del agente | Alto del agente | Escalón máx. | Pendiente máx. |
 |---|---|---|---|---|---|
-| **Chica** (capa 1) | Esqueletos, Knight, Plague Arcanist, TheWrapper | 0.5 m | 2.0 m | 0.3 m | 35° |
+| **Chica** (capa 1) | Esqueletos, Knight, Plague Arcanist, TheWrapper, Straw Reaper | 0.5 m | 2.0 m | 0.3 m | 35° |
 | **Grande** (capa 2) | Bone Dragon, Blackhorn, Ghidorah, Aura Battler | 2.5 m | 4.0 m | 0.5 m | 25° |
 
 Parámetros comunes del horneado: celda 0.25 m, alto de celda 0.25 m.
