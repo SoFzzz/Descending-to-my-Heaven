@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="1_pm"]
 [ext_resource type="Theme" path="res://scenes/ui/menu_theme.tres" id="2_th"]
 
-[ext_resource type="Texture2D" path="res://assets/ui/free_psx_ui/pause_text.png" id="3_pt"]
+[ext_resource type="Texture2D" path="res://assets/ui/free_psx_ui/pausa_text.png" id="3_pt"]
 
 [sub_resource type="LabelSettings" id="title"]
 font_size = 32
