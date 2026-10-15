@@ -92,3 +92,11 @@ func test_advance_keeps_state_if_scene_missing() -> void:
 	assert_eq(gs.scene_index, 1, "no avanza si la escena no existe")
 	assert_eq(gs.current_level, 0, "nivel sin cambios")
 	gs.free()
+
+
+func test_cutscene_blocks_pause() -> void:
+	var gs: Node = GameStateScript.new()
+	assert_true(gs.can_pause(), "sin secuencia se puede pausar")
+	gs.cutscene_active = true
+	assert_true(not gs.can_pause(), "durante la secuencia no")
+	gs.free()
