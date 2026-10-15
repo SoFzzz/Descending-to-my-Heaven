@@ -90,6 +90,9 @@ Autor: Atelier Magicae (Atelier Magicae || Bunnixia || Rin Hinasaki). Licencia: 
 40 Free PSX Footsteps
 Autor y licencia por confirmar. (No se usa en el juego.)
 
+Efectos de sonido aportados: ataque, pasos y muerte de los esbirros; golpe recibido, caída, cansancio y rodada de Kaelen; ataques de los jefes (mordida, coletazo, golpe al suelo, embestida, salto); ambiente de las arenas 1 a 3; puerta de piedra; pantalla de muerte
+Autor y licencia: por confirmar.
+
 
 Efectos visuales
 

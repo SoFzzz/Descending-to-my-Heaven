@@ -50,6 +50,7 @@ Usado en el juego (2026-10-15, Tarea 17):
 | Free Fantasy SFX Pack By TomMusic | Espada, pasos, antorcha, impacto del rayo, ambiente del exterior (`Forest Night`) | TomMusic | Por confirmar (el ReadMe no da términos) | TomMusic |
 | Monsters SFX Vol.1 | Jefes, esbirros, élites, rayo de Ghidorah | Riria / Ririsaurus | Uso libre, crédito no necesario, no redistribuir los archivos | Riria / Ririsaurus |
 | Be Not Afraid UI | Menús y pausa | Atelier Magicae | Uso libre, no redistribuir | "Atelier Magicae" (obligatorio) |
+| Efectos aportados (esbirros: ataque, muerte y pasos; Kaelen: golpe recibido, caída, cansancio, rodada; jefes: mordida, coletazo, golpe al suelo, embestida, salto; ambiente de las arenas 1–3; puerta de piedra; pantalla de muerte) | Esbirros, Kaelen, ataques de jefes, escenarios y pantalla de muerte | Por confirmar | Por confirmar | — |
 | `sadness piano4`, `ancient creature battle`, `hellhound battle`, `LVS04_10_Battlefield_bpm180_loop`, `celtic melancholy` | Menú, jefes 1–3, final y créditos | Por confirmar | Por confirmar | — |
 
 Sin uso: música "Blazing Honor" (EpicOrderSounds; uso libre, no redistribuir suelta), `skull dragon battle`, `black dragon battle`, `wyvern battle` y 40 Free PSX Footsteps (autor y licencia por confirmar).
