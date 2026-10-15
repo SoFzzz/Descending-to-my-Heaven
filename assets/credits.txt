@@ -72,22 +72,29 @@ Autor: DruidCZ; shaders de MenacingMecha y Ahopness. Licencia: MIT.
 Audio
 
 Música "Blazing Honor"
-Autor: EpicOrderSounds (música libre de derechos). Music by EpicOrderSounds.
+Autor: EpicOrderSounds. Licencia: Royalty-Free Music License v1.0 (uso personal y comercial; el crédito se agradece; prohibido redistribuir la pista suelta y usarla para entrenar IA).
+Music by EpicOrderSounds.
 
-Pistas de música: celtic melancholy, LVS04_10_Battlefield, skull dragon battle, black dragon battle, ancient creature battle, hellhound battle, wyvern battle, sadness piano4.
+Pistas de música usadas: sadness piano4 (menú), ancient creature battle (jefe 1), hellhound battle (jefe 2), LVS04_10_Battlefield (jefe 3), celtic melancholy (encuentro con Elysia y créditos).
 Autor y licencia por confirmar.
 
-Free Fantasy SFX Pack By TomMusic
-Autor: TomMusic. Licencia: ver ReadMe.txt del pack.
+Free Fantasy SFX Pack By TomMusic (espada, pasos, antorchas, hechizos y ambiente Forest Night)
+Autor: TomMusic (https://tommusic.itch.io/). Licencia: por confirmar (el ReadMe.txt del pack no indica términos de uso).
 
-Monsters SFX Vol.1
-Autor: Riria / Ririsaurus. Licencia: uso libre.
+Monsters SFX Vol.1 (rugidos, gruñidos y aliento de dragón)
+Autor: Riria / Ririsaurus. Licencia: uso comercial, no comercial y personal; no redistribuir los archivos. El crédito es agradecido pero no necesario.
 
-Be Not Afraid UI
-Autor: Atelier Magicae. Licencia: uso libre. Crédito: "Atelier Magicae".
+Be Not Afraid UI (--Unholy), sonidos de interfaz
+Autor: Atelier Magicae (Atelier Magicae || Bunnixia || Rin Hinasaki). Licencia: uso comercial, no comercial y personal; no redistribuir. Crédito obligatorio: Atelier Magicae.
 
 40 Free PSX Footsteps
-Autor y licencia por confirmar.
+Autor y licencia por confirmar. (No se usa en el juego.)
+
+
+Efectos visuales
+
+Beam VFX - Godot 3D
+Autor: Binbun. Licencia: CC0.
 
 
 Animaciones
