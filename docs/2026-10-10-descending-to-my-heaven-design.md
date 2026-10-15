@@ -272,7 +272,7 @@ Cada personaje tiene cinco "tamaños" distintos que **no** deben confundirse:
 
 | Personaje | a) Visual (alto) | b) Collider (cápsula) | c) Hurtbox | c) Hitbox de ataque | e) Navegación |
 |---|---|---|---|---|---|
-| **Kaelen** | 1.70 m (1.75 con capucha) | r 0.35 · alto 1.70 | Cápsula r 0.30 · alto 1.50 | Caja a lo largo del mandoble: 0.2 × 0.2 × 1.4 m, en el hueso de la mano | — (jugador) |
+| **Kaelen** | 1.70 m (1.75 con capucha) | r 0.35 · alto 1.70 | Cápsula r 0.30 · alto 1.50 | Caja a lo largo del mandoble: 0.25 × 0.25 × 2.15 m, en el hueso de la mano (hoja de ≈ 2.3 m; alcance efectivo ≈ 2.6 m desde Kaelen, 3.0 m hasta el centro de un esbirro y 3.5 m hasta el de Blackhorn) | — (jugador) |
 | **Elysia** | 1.60 m | r 0.30 · alto 1.60 (solo bloquea) | — | — | — |
 | **Skeleton** | 1.75 m | r 0.35 · alto 1.75 | Cápsula r 0.40 · alto 1.80 | Esfera r 0.5 a 1.2 m al frente | Capa chica |
 | **Knight (élite 1)** | 2.10 m (escalado ×1.15) | r 0.40 · alto 2.10 | Cápsula r 0.45 · alto 2.10 | Caja de espada 0.2 × 0.2 × 1.2 m | Capa chica |
@@ -286,7 +286,7 @@ Cada personaje tiene cinco "tamaños" distintos que **no** deben confundirse:
 | Jefe | a) Visual | b) Collider físico | c) Hurtboxes | c) Hitboxes por ataque | e) Navegación |
 |---|---|---|---|---|---|
 | **Bone Dragon** | 8 m de largo · 3.5 m de alto · 10 m de envergadura | Cápsula horizontal r 1.2 × 4 m en el torso; la cola **sin** collider físico | Torso (caja), cabeza (esfera r 0.8, daño ×1.25), 4 patas (cápsulas) | Mordida: esfera r 1.2 en la cabeza · Barrido de cola: caja curva 5 m · Pisotón: esfera r 2.5 bajo la pata | Capa grande |
-| **Blackhorn** | 3.20 m (ya exportado a esa altura; casi el doble que Kaelen) | r 0.70 · alto 3.20 | Cápsula r 0.80 · alto 3.0 | Garras: esferas r 0.6 en ambas manos · Zarpazo con salto: caja 2 × 2 × 4 m al frente · Golpe al suelo: esfera r 3 alrededor · Embestida: caja 1.5 × 2.5 × 3 m al frente | Capa grande |
+| **Blackhorn** | 3.20 m (ya exportado a esa altura; casi el doble que Kaelen) | r 0.70 · alto 3.20 | Cápsula r 1.0 · alto 3.2 | Garras: esferas r 0.6 en ambas manos · Zarpazo con salto: caja 2 × 2 × 4 m al frente · Golpe al suelo: esfera r 3 alrededor · Embestida: caja 1.5 × 2.5 × 3 m al frente | Capa grande |
 | **Mecha King Ghidorah** | 10 m de alto · 14 m de largo · 14 m de envergadura | Cápsula r 2.5 · alto 6 en el torso + cápsulas en patas; cuellos y cabezas **sin** collider físico | Torso y patas (siempre alcanzables); 3 cabezas (esferas r 1.0) solo alcanzables cuando bajan para morder | Mordida: zona fija en el suelo de 4.6 × 2.4 × 7 m delante del jefe (de pegado al cuerpo a 5 m; no sigue la altura de la mandíbula, así que quedarse debajo o pegado no es seguro) · Barrido de cola: caja 6 m · Rayo: el aviso es una franja roja en el piso desde Ghidorah hasta Kaelen (fijada al 70 % del aviso) y al disparar el impacto la recorre en 0.9 s (de 2.5 m del jefe hasta 2 m más allá de Kaelen) con una zona de daño corta (1.5 × 2.4 × 2 m) que viaja con él | Capa grande |
 
 **Por qué los cuellos, cabezas y colas no tienen collider físico:** se mueven mucho y empujarían a Kaelen o a la cámara de forma errática. Solo tienen hurtbox/hitbox (`Area3D`), que detectan sin empujar.
@@ -385,17 +385,18 @@ Un nodo autoload `Orchestrator` que ajusta la presión del combate según cómo 
 **Fases (máquina de estados):**
 | Fase | Comportamiento | Transición |
 |---|---|---|
-| Crecimiento | Genera oleadas con presupuesto creciente | intensidad ≥ 80 → Pico |
+| Crecimiento | Genera grupos de 2 o 3 esbirros | intensidad ≥ 80 → Pico |
 | Pico | No genera nada; deja que los enemigos actuales presionen | 5 s → Respiro |
 | Respiro | No genera nada durante 10-20 s | tiempo cumplido e intensidad < 30 → Crecimiento |
 
-**Presupuesto de oleada:**
+**Tamaño del grupo:**
 ```
-presupuesto = base_nivel
-            × factor_desempeño   (0.6 a 1.4, según vida actual y tiempo sin recibir daño)
-            × multiplicador_fase_jefe (1.0; 1.5 en fase 2)
+presión = base_nivel
+        × factor_desempeño   (0.6 a 1.4, según vida actual y tiempo sin recibir daño)
+        × multiplicador_fase_jefe (1.0; 1.5 en fase 2)
+grupo = 3 esbirros si presión ≥ base_nivel, 2 si no
 ```
-Esbirro normal cuesta 1, esbirro élite (más vida/daño, mismo modelo con otro tinte) cuesta 3. Límite de esbirros vivos: 6.
+Límite de esbirros vivos: 3. Cada grupo lleva exactamente 1 élite (más vida/daño) en lugar de uno de sus esbirros: 1 élite + 1 o 2 normales. Si el élite muere no se repone dentro del grupo; el siguiente grupo, tras la ventana del jefe, trae otro élite.
 
 **Puntos de aparición:** `Marker3D` en cada arena; el Orquestador elige los que están fuera del cono de la cámara y a más de 8 m de Kaelen.
 
@@ -403,7 +404,7 @@ Esbirro normal cuesta 1, esbirro élite (más vida/daño, mismo modelo con otro 
 
 **Comunicación:** señales globales (`player_damaged`, `enemy_died`, `boss_phase_changed`, `arena_entered`, `arena_cleared`).
 
-**Vista de depuración (F3):** muestra en pantalla intensidad, fase, presupuesto, esbirros vivos y fichas de ataque asignadas. Sirve para la presentación y para ajustar valores.
+**Vista de depuración (F3):** muestra en pantalla intensidad, fase, tamaño del último grupo, esbirros vivos y fichas de ataque asignadas. Sirve para la presentación y para ajustar valores.
 
 ## 9. HUD
 - Barras de vida y estamina (esquina superior izquierda).
