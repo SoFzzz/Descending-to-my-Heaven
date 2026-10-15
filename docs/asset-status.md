@@ -77,6 +77,8 @@ Licencias y créditos: [`creditos.md`](creditos.md).
 
 1. ~~Animaciones de Bone Dragon y Ghidorah~~ (hecho, 2026-10-13).
 2. ~~Kaelen, esbirros y élite~~ (hecho, 2026-10-13). Pendiente: probar todos los `.glb` en `scale_reference` de Godot.
+3. **Peso de `ghidorah.glb`:** ~26 MB con 9.1k triángulos. Probablemente hay texturas incrustadas sin reducir (la regla es 256 px). Revisarlo antes de exportar (T19).
+4. **Licencias por carpeta:** solo `assets/bosses/blackhorn`, `assets/characters/elysia`, `assets/characters/kaelen` y `assets/minions/knight` tienen `license.txt`. Faltan en `bosses/bonedragon`, `bosses/ghidorah`, `environment/island`, `environment/kit`, `environment/textures`, `minions/plague_arcanist`, `minions/skeleton`, `minions/straw_reaper`, `minions/thewrapper` y `weapons/greatsword`.
 
 ## Revisar un `.glb` en Blender
 
