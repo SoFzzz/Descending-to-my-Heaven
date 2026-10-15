@@ -13,6 +13,7 @@ extends CanvasLayer
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_root.visible = false
+	_continue.set_meta(&"ui_sound", &"none")   # closing already plays its own sound
 	_continue.pressed.connect(close)
 	_menu.pressed.connect(_on_main_menu)
 	_quit.pressed.connect(_on_quit)
@@ -48,10 +49,19 @@ func open() -> void:
 	get_tree().paused = true
 	_root.visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	_continue.grab_focus()
+	var audio := get_node_or_null(^"/root/AudioManager")
+	if audio:
+		audio.play_ui(audio.UI_PAUSE_OPEN)
+		audio.grab_focus_silent(_continue)
+	else:
+		_continue.grab_focus()
 
 
 func close() -> void:
+	if _root.visible:
+		var audio := get_node_or_null(^"/root/AudioManager")
+		if audio:
+			audio.play_ui(audio.UI_PAUSE_CLOSE)
 	_root.visible = false
 	get_tree().paused = false
 	if DisplayServer.get_name() != "headless":

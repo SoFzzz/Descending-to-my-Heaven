@@ -4,6 +4,7 @@ extends Control
 ## sube solo, despacio. Al usar la rueda del ratón o las flechas arriba/abajo, el desplazamiento
 ## automático se pausa un rato. Esc o el botón vuelven al menú principal con el fundido de GameState.
 
+const CREDITS_MUSIC := preload("res://assets/audio/bgm/ending_celtic_melancholy.mp3")
 const CREDITS_PATH := "res://assets/credits.txt"
 const MAIN_MENU_PATH := "res://scenes/ui/main_menu.tscn"
 const FALLBACK_TEXT := "Descending to my Heaven\n\nNo se pudo cargar la lista de créditos."
@@ -25,7 +26,12 @@ func _ready() -> void:
 	_text.text = _credits_bbcode(_load_credits())
 	_scroll.gui_input.connect(_on_scroll_gui_input)
 	_back.pressed.connect(_go_back)
+	_back.set_meta(&"ui_sound", &"back")
 	_back.grab_focus()
+	# Sin pista propia sigue la de Elysia (si ya suena, no se reinicia).
+	var audio := get_node_or_null(^"/root/AudioManager")
+	if audio:
+		audio.play_music(CREDITS_MUSIC, 1.5)
 
 
 func _process(delta: float) -> void:

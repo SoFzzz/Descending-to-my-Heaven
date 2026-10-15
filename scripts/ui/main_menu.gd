@@ -4,6 +4,7 @@ extends Node3D
 ## aún no existe scenes/ui/credits.tscn. Foco inicial en Iniciar; navegable con flechas + Enter y ratón.
 
 const ORBIT_SPEED := 0.06   # radianes por segundo
+const MENU_MUSIC := preload("res://assets/audio/bgm/menu_sadness_piano.mp3")
 
 @onready var _pivot: Node3D = $CameraPivot
 @onready var _camera: Camera3D = $CameraPivot/Camera3D
@@ -19,7 +20,10 @@ func _ready() -> void:
 	_start.pressed.connect(_on_start)
 	_credits.pressed.connect(_on_credits)
 	_quit.pressed.connect(_on_quit)
-	_start.grab_focus()
+	_start.grab_focus()   # the AudioManager ignores the focus of a button that has just appeared
+	var audio := get_node_or_null(^"/root/AudioManager")
+	if audio:
+		audio.play_music(MENU_MUSIC, 1.5)
 
 
 func _process(delta: float) -> void:

@@ -12,8 +12,23 @@ signal exit_reached
 
 const PSX := preload("res://scenes/levels/psx_test.gd")
 
+## Antorchas con sonido: máximo de reproductores por nivel y alcance (m) de su crepitar.
+const TORCH_MAX_PLAYERS := 8
+const TORCH_HEARING_DISTANCE := 9.0
+const TORCH_UNIT_SIZE := 2.5
+const TORCH_VOLUME_DB := -8.0
+const MUSIC_FADE := 2.0
+
 ## Si es false no se conecta el ExitTrigger (p. ej. la arena 3, donde el final lo dirige otro nodo).
 @export var exit_advances_level := true
+
+@export_group("Audio")
+## Música (o ambiente) del nivel; null = silencio (la música anterior se apaga con un fundido).
+@export var level_music: AudioStream
+## Pasos de Kaelen en este suelo (piedra en arenas y templo, tierra en el exterior).
+@export var footstep_stream: AudioStream
+## Bucle de las antorchas (luces dentro del nodo `Level/Torches`).
+@export var torch_loop: AudioStream
 
 @onready var level: Node3D = $Level
 @onready var player: Player = $Kaelen
@@ -23,6 +38,9 @@ var _exit_used := false
 
 func _ready() -> void:
 	PSX.apply_psx(player.get_node("Model"))
+	player.footstep_stream = footstep_stream
+	_start_level_music()
+	_add_torch_sounds()
 	var start := level.get_node_or_null("PlayerStart") as Node3D
 	if start:
 		player.spawn_at(start)
@@ -32,6 +50,42 @@ func _ready() -> void:
 		var exit_trigger := level.get_node_or_null("ExitTrigger") as Area3D
 		if exit_trigger:
 			exit_trigger.body_entered.connect(_on_exit_trigger_body_entered)
+
+
+func _audio() -> Node:
+	return get_node_or_null(^"/root/AudioManager")
+
+
+func _start_level_music() -> void:
+	var audio := _audio()
+	if audio:
+		audio.play_music(level_music, MUSIC_FADE)
+
+
+## Luces de `Level/Torches`: las escenas del nivel son generadas (no se editan), así que el sonido se
+## cuelga aquí, en ejecución, como un AudioStreamPlayer3D por antorcha con alcance limitado.
+func _add_torch_sounds() -> void:
+	if torch_loop == null:
+		return
+	var torches := level.get_node_or_null(^"Torches")
+	if torches == null:
+		return
+	var added := 0
+	for light in torches.get_children():
+		if added >= TORCH_MAX_PLAYERS:
+			break
+		if not light is OmniLight3D:
+			continue
+		var sound := AudioStreamPlayer3D.new()
+		sound.name = "TorchSound"
+		sound.stream = torch_loop
+		sound.bus = &"SFX"
+		sound.max_distance = TORCH_HEARING_DISTANCE
+		sound.unit_size = TORCH_UNIT_SIZE
+		sound.volume_db = TORCH_VOLUME_DB
+		sound.autoplay = true
+		light.add_child(sound)
+		added += 1
 
 
 ## Virtual: true si Kaelen puede salir del nivel por el ExitTrigger.

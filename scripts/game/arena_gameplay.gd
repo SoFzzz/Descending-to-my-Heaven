@@ -12,6 +12,8 @@ const GATE_OPEN_TIME := 2.0
 const GATE_CLOSE_TIME := 1.0
 
 @export var config: ArenaConfig
+## Música del combate con el jefe: arranca (con fundido) cuando el jefe detecta a Kaelen.
+@export var boss_music: AudioStream
 
 var arena_cleared := false
 
@@ -32,6 +34,7 @@ func _ready() -> void:
 		else:
 			push_warning("%s no tiene BossStart" % level.name)
 		boss.health.died.connect(_on_boss_died)
+		boss.state_changed.connect(_on_boss_state_changed)
 	_gate_entry = level.get_node_or_null("GateEntry") as Node3D
 	_gate_exit = level.get_node_or_null("GateExit") as Node3D
 	_close_entry_gate()
@@ -73,6 +76,15 @@ static func _open_offset(gate: Node3D) -> Vector3:
 
 # --- Jefe -------------------------------------------------------------------------------------
 
+## La música del jefe empieza cuando deja de estar en reposo (detecta a Kaelen).
+func _on_boss_state_changed(state: Boss.State) -> void:
+	if state == Boss.State.IDLE or boss_music == null or boss.health.is_dead():
+		return
+	var audio := _audio()
+	if audio:
+		audio.play_music(boss_music, MUSIC_FADE)
+
+
 func _on_boss_died() -> void:
 	var hud := player.get_node_or_null(^"HUD") as Hud
 	if hud:
@@ -83,6 +95,9 @@ func _on_boss_defeated(defeated: Node3D) -> void:
 	if defeated != boss or arena_cleared:
 		return
 	arena_cleared = true
+	var audio := _audio()
+	if audio:
+		audio.stop_music(MUSIC_FADE)
 	get_tree().create_timer(GATE_OPEN_DELAY, false, true).timeout.connect(_on_gate_delay_finished)
 
 

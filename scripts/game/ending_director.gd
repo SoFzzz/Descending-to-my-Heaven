@@ -33,6 +33,10 @@ const TEXT_BOTTOM_MARGIN := 24.0
 const SHOT_1_TEXT := "Tres pisos de acero y sangre...\ny en lo alto del templo, tu luz seguía encendida."
 const SHOT_2_TEXT := "Kaelen: \"Elysia... por fin te encuentro.\"\nElysia: \"Sabía que vendrías por mí.\""
 
+## Música del encuentro con Elysia (también suena en los créditos).
+@export var music: AudioStream
+@export var music_fade := 2.0
+
 var _played := false
 var _breath_tween: Tween
 var _ending: Node3D
@@ -127,6 +131,7 @@ func play() -> void:
 	var game_state := _game_state()
 	if game_state:
 		game_state.set(&"cutscene_active", true)
+	_start_music()
 	var player := _player()
 	if player == null:
 		push_warning("EndingDirector: no hay Kaelen; se salta el final")
@@ -150,6 +155,12 @@ func play() -> void:
 	if not await _wait(EMBRACE_FADE_TIME + EMBRACE_BLACK_HOLD):
 		return
 	_finish()
+
+
+func _start_music() -> void:
+	var audio := get_node_or_null(^"/root/AudioManager") if is_inside_tree() else null
+	if audio and music:
+		audio.play_music(music, music_fade)
 
 
 ## Bloquea a Kaelen, oculta su HUD y coloca a ambas frente a frente.
