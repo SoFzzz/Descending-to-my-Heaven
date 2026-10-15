@@ -43,13 +43,15 @@ Animaciones: Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist, Stra
 
 ## Audio
 
-Según §11.5 del documento de diseño:
+Usado en el juego (2026-10-15, Tarea 17):
 
-| Asset | Autor | Licencia | Crédito |
-|---|---|---|---|
-| Música "Blazing Honor" (jefe 2) | EpicOrderSounds | Uso libre, no redistribuir suelta | "Music by EpicOrderSounds" (opcional) |
-| Free Fantasy SFX Pack By TomMusic | TomMusic | Ver `ReadMe.txt` del pack | TomMusic |
-| Monsters SFX Vol.1 | Riria / Ririsaurus | Uso libre, no redistribuir | Riria / Ririsaurus |
-| Be Not Afraid UI | Atelier Magicae | Uso libre, no redistribuir | "Atelier Magicae" (obligatorio) |
-| 40 Free PSX Footsteps | Por confirmar | Por confirmar | — |
-| Resto de pistas BGM (`celtic melancholy`, `LVS04_10_Battlefield`, `skull dragon battle`, `black dragon battle`, `ancient creature battle`, `hellhound battle`, `wyvern battle`, `sadness piano4`) | Por confirmar | Por confirmar | — |
+| Asset | Uso | Autor | Licencia | Crédito |
+|---|---|---|---|---|
+| Free Fantasy SFX Pack By TomMusic | Espada, pasos, antorcha, impacto del rayo, ambiente del exterior (`Forest Night`) | TomMusic | Por confirmar (el ReadMe no da términos) | TomMusic |
+| Monsters SFX Vol.1 | Jefes, esbirros, élites, rayo de Ghidorah | Riria / Ririsaurus | Uso libre, crédito no necesario, no redistribuir los archivos | Riria / Ririsaurus |
+| Be Not Afraid UI | Menús y pausa | Atelier Magicae | Uso libre, no redistribuir | "Atelier Magicae" (obligatorio) |
+| `sadness piano4`, `ancient creature battle`, `hellhound battle`, `LVS04_10_Battlefield_bpm180_loop`, `celtic melancholy` | Menú, jefes 1–3, final y créditos | Por confirmar | Por confirmar | — |
+
+Sin uso: música "Blazing Honor" (EpicOrderSounds; uso libre, no redistribuir suelta), `skull dragon battle`, `black dragon battle`, `wyvern battle` y 40 Free PSX Footsteps (autor y licencia por confirmar).
+
+**Aviso:** Ririsaurus y Atelier Magicae prohíben redistribuir los archivos originales, que están en `_source/sfx/` del repositorio: el repositorio debe seguir privado (§13.2 del diseño).

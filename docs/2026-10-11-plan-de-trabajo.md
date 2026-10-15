@@ -53,7 +53,7 @@
 |---|---|
 | **T15** Verificación manual | Paso 3 de la Tarea 15: partida completa con F6/F5 (el commit ya está en `feat/aza`). Pendiente además: añadir `assets/credits.txt` al filtro de exportación de recursos no-recurso (T19). |
 | **T16** Revisión a mano | Ver en juego animaciones, espada del Knight, hoz del Straw Reaper y caída de TheWrapper. El Aura Battler no se usa: el élite de la arena 3 es el Straw Reaper (2026-10-15). |
-| **T17** Audio | Sin empezar. `scripts/audio/audio_manager.gd` es un stub; `assets/audio/bgm/` y `assets/audio/sfx/` están vacíos (los originales están en `_source/bgm/` y `_source/sfx/`). `assets/credits.txt` existe, pero faltan licencias y autores de varias pistas y packs ("por confirmar"). |
+| **T17** Audio | Implementado (2026-10-15): `AudioManager`, música por escena, SFX de espada, pasos, monstruos, jefes, rayo de Ghidorah, antorchas y UI. Falta el Paso 4 (escucharlo con altavoces) y los sonidos faltantes (ver Tarea 17). Licencias "por confirmar": TomMusic y las pistas BGM salvo Blazing Honor. |
 | **T18–T19** Pulido, playtest, exportar Windows | Ver tareas 18 y 19. `docs/playtest.md` aún no existe. |
 | **Integración** | `feat/aza` va 55 commits por delante de `main`. No hay merge ni PR a `main` todavía. |
 
@@ -64,7 +64,7 @@
 - **Recorrido del exterior:** dura ~14 s (la spec pide 1–2 min). Alargar el sendero es opcional.
 - **Combate:** el rayo de Ghidorah usa el VFX "Beam VFX" de Binbun (2026-10-15), y baja en diagonal de la boca central al suelo bajo Kaelen, con la hitbox y el aviso siguiéndolo (ver `asset-status.md`). Aviso del jefe: disco rojo opaco (hacerlo semitransparente, con borde y pulso). `hit_landed` se emite una vez por hurtbox tocada (se oiría doble con el audio). El dragón y Ghidorah se deslizan con `idle`. Parry opcional. Los avisos del suelo de `pounce`, `charge` y `slam` no se revisaron con capturas.
 - **Arte:** el suelo de la sala de Elysia sigue con textura triplanar; línea fina en una unión de pared de `arena_2`; revisar capturas de las escenas finales regeneradas. Si se regeneran las arenas, repetir la medición de la cola de Ghidorah contra el muro norte de `arena_3` (margen actual 1.9 m, 1.35 m en `death`).
-- **Esbirros:** el tercer nivel de aparición solo tiene pruebas unitarias. Los sonidos de esbirros (`sfx_attack/hurt/death`) están conectados pero vacíos hasta la T17. Los cadáveres desaparecen a los 2 s (`corpse_time`).
+- **Esbirros:** el tercer nivel de aparición solo tiene pruebas unitarias. Los esbirros tienen sonido de daño (y aparecer/daño/muerte en los élites Knight y Straw Reaper); ataque y muerte de esbirros normales siguen sin sonido. Los cadáveres desaparecen a los 2 s (`corpse_time`).
 - **Final:** en el plano de `EndingCam2` Kaelen tapa a Elysia (la cámara está detrás de Kaelen); se ajusta en el generador si se quiere.
 - **Otros:** `player_died` solo se emite en la primera muerte de cada instancia de Kaelen (funciona porque la recarga crea otra). Blackhorn: `idle`/`charge` y `walk`/`run` duran lo mismo (posibles clips duplicados; solo se usa `run`). El error `Parameter "material" is null` al cerrar corridas headless con Kaelen es del renderizador dummy y es inofensivo.
 - **Peso de Ghidorah:** `assets/bosses/ghidorah/ghidorah.glb` pesa ~26 MB con 9.1k triángulos; probablemente tiene texturas incrustadas sin reducir (la regla del proyecto es 256 px). Revisarlo antes de exportar (T19).
@@ -574,14 +574,18 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Crear: `assets/audio/bgm/*.ogg`, `assets/audio/sfx/**` (solo los usados, convertidos de `_source`), `assets/credits.txt`
 
 **Interfaces:**
-- Produce: `AudioManager` con buses `Music`/`SFX`/`UI`; fundido de música; variación de tono ±10 %; escucha `Events.hit_landed` y reproduce impacto según `surface` (`flesh`, `bone`, `metal`); baja 10 dB la música en pausa.
-- Asignación de música (spec §11.3): menú `celtic melancholy`, isla `LVS04_10_Battlefield`, jefe 1 `skull dragon battle`, jefe 2 `Blazing Honor`, jefe 3 `black dragon battle`, final/créditos `sadness piano4`.
+- Produce: `AudioManager` con buses `Music`/`SFX`/`UI`; fundido de música; variación de tono ±10 %; impacto de espada desde `Hitbox.sfx_impact` (una vez por golpe, no por hurtbox; `sfx_impact_metal` para `metal`), sin escuchar `Events.hit_landed` para no sonar doble; baja 10 dB la música en pausa.
+- Asignación de música (cambiada el 2026-10-15; sustituye a la de spec §11.3): menú `sadness piano4`, exterior ambiente `Forest Night` (TomMusic), jefe 1 `ancient creature battle`, jefe 2 `hellhound battle`, jefe 3 `LVS04_10_Battlefield_bpm180_loop`, final con Elysia y créditos `celtic melancholy`. La música del jefe arranca cuando el jefe detecta a Kaelen y se apaga con fundido al derrotarlo.
 
-- [ ] **Paso 1:** convertir y copiar solo los archivos usados a `assets/audio/`.
-- [ ] **Paso 2:** implementar `AudioManager` y conectar música por escena.
-- [ ] **Paso 3:** escribir `assets/credits.txt` con autor y licencia de cada asset y pista usados (Atelier Magicae y CC-BY obligatorios). *Parcial: el archivo ya existe con equipo, personajes, jefes, escenario, shaders y audio; faltan licencias y autores de varios assets y pistas ("por confirmar").*
-- [ ] **Paso 4: Verificación manual** — cada escena suena con su pista; pasos, swings, impactos, rugidos y menús suenan; la pausa baja la música.
-- [ ] **Paso 5: Commit** — `feat: add audio manager, music and sfx`
+- [x] **Paso 1:** copiados a `assets/audio/` (bgm, `sfx/{player,bosses,elites,ui,ambient}`; mp3/ogg nativos, wav para UI; 43 archivos en LFS). Bucle activado en las 6 BGM y la antorcha (solo `boss3_battlefield_loop.ogg` es un bucle limpio de origen).
+- [x] **Paso 2:** `AudioManager` (fundido, pool de reproductores 3D, ±10 % de tono, música −10 dB en pausa, sonidos de UI enganchados a todos los botones) y música por escena. Variantes con `AudioStreamRandomizer` en `resources/audio/`. Pasos cada 2 m (`FOOTSTEP_STRIDE`), piedra en arenas y tierra en el exterior. Antorchas: `AudioStreamPlayer3D` creado en tiempo de ejecución en cada luz de `Level/Torches` (máx. 8, 9 m). Exports nuevos: `Boss.sfx_hurt/phase2/death`, `BossAttack.sfx_active/sfx_hit`, `Minion.sfx_spawn`, `Player.sfx_swing/footstep_stream`, `LevelGameplay.level_music/footstep_stream/torch_loop`, `ArenaGameplay.boss_music`, `EndingDirector.music`. Pruebas: `tests/test_audio.gd`.
+- [x] **Paso 3:** `assets/credits.txt` con los packs de audio usados. Por confirmar: licencia de TomMusic y autor/licencia de las pistas BGM salvo Blazing Honor (que ya no se usa).
+- [ ] **Paso 4: Verificación manual** — cada escena suena con su pista; pasos, swings, impactos, rugidos y menús suenan; la pausa baja la música. *Sin hacer: solo se comprobó con el driver de audio Dummy (qué stream se asigna y cuándo). Revisar a oído: que los pasos no suenen dobles (si la muestra trae dos pasos, bajar `FOOTSTEP_STRIDE`), los cortes de bucle de los mp3 y los 5 sonidos de UI (elegidos por duración).*
+- [x] **Paso 5: Commit** — commits `977ade5`…`0b5d9da` en `feat/aza`.
+
+**Asignación de SFX (2026-10-15):** rayo de Ghidorah `Dragon_FireBreath4` (sale de la boca) e impacto `Spell Impact 1`; rugido de fase 2 `Monster_Roar22/14/12` y muerte `Monster_LongGrowl3/1/4` (Bone Dragon / Blackhorn / Ghidorah); daño de jefes y esbirros `Monster_Grunt1/3/4/6/7/8` al azar; Knight élite `Dinosaur_Shriek1` / `Monster_Groan1` / `Leviathan_Growl1` (aparecer / daño / muerte); Straw Reaper `Monster_Growl19` / `Dinosaur_Shriek2` / `Monster_Rumble1`; espada `Sword Attack 1–3` (swing), `Sword Impact Hit 1–3` (impacto), `Sword Blocked 1–3` (metal); pasos `Stone Run 2` y `Dirt Run 3`; antorcha `Torch Loop`; UI del pack Be Not Afraid UI (`--Unholy`).
+
+**Sonidos faltantes (para la T18):** ataque y muerte de esbirros normales y sus pasos; Kaelen recibe golpe, muere, rueda y recupera aliento; avisos y ataques de los jefes (mordida, cola, pisotón, embestida, salto, golpe) y sus pasos; aparecer/muerte/ataque propios del Plague élite (hoy usa los de esbirro normal); ambiente de las arenas, pantalla de muerte y apertura de rejas. El reparto de los sets de élite (Knight = set 1, Straw Reaper = set 2) y el `Dinosaur_Shriek2` del Straw Reaper están pendientes de confirmar.
 
 ---
 
