@@ -40,7 +40,7 @@ Animaciones: Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist, Stra
 |---|---|---|---|
 | Free PSX UI (Skin01, `fullres_1440p`) | Menú principal, pausa, pantalla de muerte y créditos (`assets/ui/free_psx_ui/`) | rohhsa (https://rohhsa.itch.io) | CC0 1.0 |
 | dragonhpbar | Barra de vida de Bone Dragon y Mecha King Ghidorah (`assets/ui/dragonhpbar/`; `dragonhpbar_thin.png` es una copia reducida a la mitad) | Por confirmar | Por confirmar |
-| Fondo del menú principal | Cielo y silueta de la mazmorra (`assets/ui/menu/`), dibujados por script con `scripts/tools/gen_menu_bg.py` | Equipo del proyecto | — |
+| Fondo del menú principal | Degradado del fondo (`assets/ui/menu/`), dibujado por script con `scripts/tools/gen_menu_bg.py` | Equipo del proyecto | — |
 | Pulsing Heart | Barra de vida (corazón latiendo) y de estamina de Kaelen (`assets/ui/pulsing_heart/`) | Por confirmar | Por confirmar |
 | Pixel UI pack 3 | Barra de vida de Blackhorn y marcador de fijado, reducido a la mitad en `03_reticle_thin.png` (`assets/ui/pixel_ui_pack_3/`) | Por confirmar | Por confirmar |
 
