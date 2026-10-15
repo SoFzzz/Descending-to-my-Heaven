@@ -38,12 +38,17 @@ static func score(attack: BossAttack, distance: float, last_attack_id: StringNam
 
 
 ## Weighted draw between the two attacks with the highest score (> 0). Null if none can be used.
-func choose(attacks: Array[BossAttack], distance: float, phase: int, rng: RandomNumberGenerator) -> BossAttack:
+## `approaching`: the boss has not reached its engage_range yet, so only `opener` attacks (long
+## range) are candidates and the last one used is never repeated (otherwise it would keep
+## launching the same far attack instead of closing in).
+func choose(attacks: Array[BossAttack], distance: float, phase: int, rng: RandomNumberGenerator, approaching := false) -> BossAttack:
 	var best: BossAttack = null
 	var best_score := 0.0
 	var second: BossAttack = null
 	var second_score := 0.0
 	for attack in attacks:
+		if approaching and (not attack.opener or attack.id == last_attack_id):
+			continue
 		var s := score(attack, distance, last_attack_id, dodge_bias, phase)
 		if s <= 0.0:
 			continue
