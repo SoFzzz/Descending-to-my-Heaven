@@ -19,10 +19,10 @@ func _free_all(nodes: Array) -> void:
 
 
 func test_combo_damage_sequence() -> void:
-	assert_eq(Player.combo_damage(0), 10, "golpe 1")
-	assert_eq(Player.combo_damage(1), 10, "golpe 2")
-	assert_eq(Player.combo_damage(2), 18, "golpe 3")
-	assert_eq(Player.combo_damage(3), 10, "vuelve a empezar")
+	assert_eq(Player.combo_damage(0), 20, "golpe 1")
+	assert_eq(Player.combo_damage(1), 20, "golpe 2")
+	assert_eq(Player.combo_damage(2), 36, "golpe 3")
+	assert_eq(Player.combo_damage(3), 20, "vuelve a empezar")
 
 
 func test_attack_needs_stamina() -> void:
