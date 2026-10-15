@@ -53,3 +53,7 @@ func test_all_boss_bars_share_the_original_length_and_stay_thin() -> void:
 		var style: Dictionary = Hud.BOSS_BAR_STYLES[boss_name]
 		var height: float = (style[&"full"] as Rect2).size.y * style[&"scale"]
 		assert_true(height <= 16.0, boss_name + " bar is thin")
+	var blackhorn: Dictionary = Hud.BOSS_BAR_STYLES["Blackhorn"]
+	assert_almost((blackhorn[&"full"] as Rect2).size.y * blackhorn[&"scale"], 8.0)
+	var dragon: Dictionary = Hud.BOSS_BAR_STYLES["Bone Dragon"]
+	assert_almost((dragon[&"full"] as Rect2).size.y * dragon[&"scale"], 16.0)

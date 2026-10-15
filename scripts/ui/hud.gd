@@ -41,7 +41,7 @@ const BLACKHORN_STYLE := {
 	&"margin_l": 3,
 	&"margin_r": 3,
 	&"fill": Vector2(2.0, 2.0),
-	&"scale": 1.0,
+	&"scale": 4.0 / 3.0,   # 6 px frame -> 8 px high, same 304 px length
 	&"name_overlap": 0.0,
 }
 const BOSS_BAR_STYLES := {
