@@ -9,7 +9,7 @@ height = 4.0
 
 [node name="BossBase" type="CharacterBody3D" groups=["boss", "lockable"]]
 collision_layer = 8
-collision_mask = 1
+collision_mask = 3
 script = ExtResource("1_boss")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
