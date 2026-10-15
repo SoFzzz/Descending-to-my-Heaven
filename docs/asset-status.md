@@ -154,11 +154,18 @@ Medido en Godot con el esqueleto y la malla (skinning en CPU, 25 muestras por cl
 | | `charge`, `charge` | 8–16 m | 25 | 1.0 s | 0.9 s | 1.4 s | solo 2 | caja 1.5×2.5×3 al frente; avanza 12 m (aviso: carril 1.5 × 15 m) |
 | Ghidorah (600 PV) | `bite`, `bite` | 0–6 m | 12 | 1.1 s | 0.6 s | 1.0 s | 1 | esfera r 1.5 en la mandíbula central |
 | | `tail_sweep`, `tail_sweep` | 0–8 m | 10 | 1.2 s | 0.8 s | 1.2 s | 1 | caja 2.5×3×6 detrás (a 3.5–9.5 m) y el cuerpo gira 360° (aviso: disco r 9.6) |
-| | `beam`, `beam` | 8–20 m | 14 | 1.1 s | 1.5 s | 1.3 s | 1 | caja 1.5×1.5×20 al frente (aviso: línea; efecto visual amarillo mientras está activo) |
+| | `beam`, `beam` | 8–20 m | 14 | 1.1 s | 1.5 s | 1.3 s | 1 | caja 1.5×1.5×20 al frente (aviso: línea; efecto visual: `BeamVisual`, ver *Rayo de Ghidorah*) |
 
 Daño pensado para la vida máxima de Kaelen en cada arena (100/70/40 PV): ~25–30 % por golpe. Los clips `idle`/`charge` de Blackhorn duran lo mismo (0.90 s) y `walk`/`run` también (1.47 s): parecen duplicados; el clip `charge` se usa también como aviso de la embestida (corre en el sitio durante 1 s).
 
 El antiguo `attack_driver.gd` se integró en `boss.gd` / `boss_attack.gd` y se borró (2026-10-14). Campos de `BossAttack`: `advance_distance` (m que avanza el jefe durante `ACTIVE`, con `move_and_collide`: se detiene en muros y en Kaelen), `opener` (puede empezar mientras el jefe aún se acerca; los demás ataques solo a ≤ `engage_range`), `extra_hitbox_paths` (garras del salto), `visual_path` (efecto del rayo) y `exposes_hurtboxes` (con `Boss.gated_hurtboxes`/`gated_grace`: cabezas de Ghidorah golpeables solo en `bite` + 0.25 s). `Boss.walk_animation` es el único clip de desplazamiento de la escena (Blackhorn: `run`; nunca `walk`; Bone Dragon y Ghidorah no tienen y deslizan con `idle`) y `Boss.settle_on_death` apoya el cuerpo en el suelo al morir (la `death` de Blackhorn terminaba 0.83 m en el aire). La máscara de colisión del jefe incluye ahora a Kaelen (capa 2): ya no la atraviesa ni la empuja. Regla de decisión: dentro de `engage_range` compiten todos los ataques válidos a esa distancia; fuera, solo los `opener` (embestida 8–16 m en fase 2, salto 2–7 m, rayo 8–20 m), nunca repitiendo el último; si ninguno vale, camina.
+
+## Rayo de Ghidorah (2026-10-15)
+
+Efecto del pack "Beam VFX - Godot 3D" de Binbun (CC0, https://binbun3d.itch.io/beam-vfx; zip original en `_source/vfx/`). Está en `assets/vfx/beam/beam_vfx.tscn` (5 shaders y `vfx_beam_controller.gd` del pack), adaptado a gl_compatibility: tinte dorado, emisión 1.2 (sin glow se quemaba a blanco), ruido `FastNoiseLite` de 128 px con muestreo nearest, mallas de 12 segmentos y 32 partículas.
+
+- Es el nodo `BeamVisual` de `boss_ghidorah.tscn`, en (0, 0.9, −2) hacia −Z, 20 m de largo y radio 0.6, igual que `BeamHitbox` (1.5 × 1.5 × 20). No sigue la cabeza, para que lo que se ve sea lo que golpea. Para que salga de la boca habría que mover también la hitbox con `BoneAttachment3D` + `RemoteTransform3D`.
+- `scripts/vfx/beam_vfx.gd` (`BeamVfx`) abre el rayo en 0.18 s al encenderse el nodo; el jefe lo enciende y apaga con `visual_path` solo durante ACTIVE. Prueba: `tests/test_beam_vfx.gd`.
 
 ## Niveles (Tarea 14)
 
