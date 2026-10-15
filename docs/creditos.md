@@ -34,6 +34,16 @@ Animaciones: Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist, Stra
 | Low-Poly Fantasy RPG Items (Lite) | Game Dev Skill Up | ver README | `_source/models/Low Poly Fantasy RPG Items Asset Pack (Lite Version)/` |
 | PSX_Dungeon, Modular Dungeon, demonic weapons pack, Fantasy Weapon Starter Pack, float-islands, Retro PSX Style Mansion | **Pendiente** | **Pendiente** | — |
 
+## Interfaz
+
+| Asset | Uso | Autor | Licencia |
+|---|---|---|---|
+| Free PSX UI (Skin01, `fullres_1440p`) | Menú principal, pausa, pantalla de muerte y créditos (`assets/ui/free_psx_ui/`) | rohhsa (https://rohhsa.itch.io) | CC0 1.0 |
+| dragonhpbar | Barra de vida de Bone Dragon y Mecha King Ghidorah (`assets/ui/dragonhpbar/`) | Por confirmar | Por confirmar |
+| Pulsing Heart | Barra de vida (corazón latiendo) y de estamina de Kaelen (`assets/ui/pulsing_heart/`) | Por confirmar | Por confirmar |
+| Pixel UI pack 3 | Barra de vida de Blackhorn y marcador de fijado (`assets/ui/pixel_ui_pack_3/`) | Por confirmar | Por confirmar |
+
+
 ## Shaders
 
 | Asset | Autor | Licencia |

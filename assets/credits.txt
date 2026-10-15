@@ -91,6 +91,21 @@ Autor: Atelier Magicae (Atelier Magicae || Bunnixia || Rin Hinasaki). Licencia: 
 Autor y licencia por confirmar. (No se usa en el juego.)
 
 
+Interfaz
+
+Free PSX UI
+Autor: rohhsa (rohhsa.itch.io). Licencia: CC0.
+
+dragonhpbar (barra de vida de Bone Dragon y Ghidorah)
+Autor y licencia por confirmar.
+
+Pulsing Heart (barra de vida y estamina de Kaelen)
+Autor y licencia por confirmar.
+
+Pixel UI pack 3 (barra de Blackhorn y marcador de fijado)
+Autor y licencia por confirmar.
+
+
 Efectos visuales
 
 Beam VFX - Godot 3D
