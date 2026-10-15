@@ -17,3 +17,4 @@ hitbox_path = NodePath("SlamHitbox")
 phase_min = 1
 lateral = false
 spin_degrees = 0.0
+opener = true
