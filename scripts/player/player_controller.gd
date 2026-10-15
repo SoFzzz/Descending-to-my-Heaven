@@ -138,6 +138,10 @@ var _last_hp := -1
 var _last_stamina := 0.0
 var _attack_pressed := false   # from _unhandled_input: the click that recaptures the mouse does not attack
 var _buffered_action: StringName = &""
+# Shove (Boss repel): outward velocity that fades linearly to 0 over _shove_total s, inside HURT.
+var _shove_velocity := Vector3.ZERO
+var _shove_total := 0.0
+var _shove_left := 0.0
 var _buffer_left := 0.0
 
 
@@ -236,7 +240,7 @@ func _physics_process(delta: float) -> void:
 		State.HURT:
 			_tick_buffer(delta)
 			_buffer_input(want_roll, want_attack)
-			_stand_still()
+			_shove_step(delta)
 			_advance_hurt(delta)
 		State.DEAD:
 			_stand_still()
@@ -574,6 +578,7 @@ func _on_stamina_changed(current: float, _max_value: float) -> void:
 ## HURT interrupts the roll (an attack is not interrupted by damage: hyper armor).
 func _enter_hurt() -> void:
 	_end_attack()
+	_shove_left = 0.0
 	_roll_time = 0.0
 	_iframes = false
 	_hurt_time = 0.0
@@ -588,6 +593,46 @@ func _advance_hurt(delta: float) -> void:
 		_hurt_time = 0.0
 		state = State.MOVE
 		_consume_buffer()
+
+
+# --- Shove (boss repel) ------------------------------------------------------------------------
+
+## Pushes Kaelen with horizontal `push` (m/s) fading to 0 over `duration` s, without damage. She
+## stays in HURT (no control) until the push ends (at least HURT_DURATION). Interrupts attacks too
+## (hyper armor stops damage, not a shove). The roll's i-frames dodge it, as do death, cutscenes and
+## victory. Returns true if it was applied.
+func apply_shove(push: Vector3, duration: float) -> bool:
+	if state == State.DEAD or _iframes or _cutscene or _victory or duration <= 0.0:
+		return false
+	push.y = 0.0
+	if push.length_squared() < 0.0001:
+		return false
+	_enter_hurt()
+	_hurt_time = minf(0.0, HURT_DURATION - duration)   # HURT lasts as long as the push
+	_shove_velocity = push
+	_shove_total = duration
+	_shove_left = duration
+	velocity.x = push.x
+	velocity.z = push.z
+	return true
+
+
+## Shove speed with `left` of `total` seconds remaining: linear fade from `initial` to 0.
+static func shove_velocity_at(initial: Vector3, total: float, left: float) -> Vector3:
+	if total <= 0.0 or left <= 0.0:
+		return Vector3.ZERO
+	return initial * clampf(left / total, 0.0, 1.0)
+
+
+func _shove_step(delta: float) -> void:
+	if _shove_left <= 0.0:
+		_stand_still()
+		return
+	var v := shove_velocity_at(_shove_velocity, _shove_total, _shove_left)
+	velocity.x = v.x
+	velocity.z = v.z
+	_shove_left = maxf(0.0, _shove_left - delta)
+	move_and_slide()
 
 
 func _start_hurt_iframes() -> void:
