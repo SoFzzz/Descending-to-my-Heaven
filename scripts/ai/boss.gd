@@ -56,6 +56,19 @@ const SAME_SWING_WINDOW := 0.3
 ## Height of the lowest bone above the sole when settled.
 @export var death_clearance := 0.07
 @export var model_path := NodePath("Model")
+@export_group("Repel")
+## Repel reaction (BossRepel): when the boss takes this fraction of its max health within
+## `repel_window` s it roars (roar_animation + sfx_phase2, no phase change), is invulnerable while
+## roaring and pushes Kaelen away if she is within `repel_radius` m. If it happens during RECOVER it
+## waits until the recovery ends (the punish window is never cut short).
+@export var repel_enabled := true
+@export_range(0.01, 1.0) var repel_threshold := 0.15
+@export var repel_window := 4.0
+@export var repel_cooldown := 9.0
+@export var repel_radius := 6.0
+## Initial outward speed (m/s) given to Kaelen; it fades to 0 over `repel_push_time` s.
+@export var repel_force := 11.0
+@export var repel_push_time := 0.4
 @export_group("Audio")
 ## Al recibir daño (suma de golpes de un mismo mandoble = un solo sonido).
 @export var sfx_hurt: AudioStream
@@ -66,6 +79,11 @@ const SAME_SWING_WINDOW := 0.3
 var phase: int = 1
 var state: State = State.IDLE
 var brain := BossBrain.new()
+var repel := BossRepel.new()
+## True while the current ROAR is a repel reaction (not the phase-2 roar).
+var repelling := false
+## How many repel reactions happened (debug and tests).
+var repel_count := 0
 var current_attack: BossAttack
 ## Attack ids in the order they were used (debug and verification).
 var attack_log: Array[StringName] = []
@@ -85,6 +103,7 @@ var _aggro := false
 var _state_time := 0.0
 var _cooldown := 0.0
 var _pending_roar := false
+var _pending_repel := false
 var _hitbox: Hitbox
 var _telegraph: Node3D
 var _spin_done := 0.0
@@ -108,6 +127,9 @@ func _ready() -> void:
 		_rng.seed = rng_seed
 	else:
 		_rng.randomize()
+	repel.threshold_fraction = repel_threshold
+	repel.window = repel_window
+	repel.cooldown = repel_cooldown
 	if max_health > 0:
 		health.reset(max_health)
 	health.changed.connect(_on_health_changed)
@@ -157,6 +179,7 @@ func _physics_process(delta: float) -> void:
 	_find_player()
 	_state_time += delta
 	_cooldown = maxf(0.0, _cooldown - delta)
+	repel.tick(delta)
 	var target_ok := _player_alive()
 	if target_ok:
 		_track_dodge()
@@ -166,6 +189,8 @@ func _physics_process(delta: float) -> void:
 		_play(roar_animation)
 		_play_sfx(sfx_phase2)
 		_set_state(State.ROAR)
+	elif _pending_repel and can_repel():
+		start_repel()
 	elif not target_ok and state != State.IDLE and state != State.ROAR:
 		_cancel_attack()   # Kaelen died: stop attacking
 		_set_state(State.IDLE)
@@ -220,12 +245,15 @@ func _run_state(delta: float, target_ok: bool) -> void:
 			_stop()
 			if _state_time >= current_attack.recovery_time / speed:
 				current_attack = null
+				if _pending_repel or repel.is_due(health.max_value):
+					_pending_repel = true   # deferred from the punish window: fires next frame
 				_cooldown = attack_cooldown / speed
 				_play(idle_animation)
 				_set_state(State.CHASE)
 		State.ROAR:
 			_stop()
 			if _state_time >= _anim_length(roar_animation, 2.0) / speed:
+				repelling = false
 				_play(idle_animation)
 				_set_state(State.CHASE if target_ok else State.IDLE)
 
@@ -465,7 +493,7 @@ func _settle(delta: float) -> void:
 ## Damage from any hurtbox (already multiplied: head × 1.25). Hits from the same source within
 ## SAME_SWING_WINDOW are the same swing touching several hurtboxes: only the largest one counts.
 func _on_hurt(amount: int, source: Node) -> void:
-	if state == State.DEAD:
+	if state == State.DEAD or repelling:
 		return
 	_aggro = true
 	var key := source.get_instance_id() if source else 0
@@ -475,11 +503,57 @@ func _on_hurt(amount: int, source: Node) -> void:
 		if amount > applied:
 			last.amount = amount
 			health.take_damage(amount - applied)
+			_register_repel_damage(amount - applied)
 		return
 	_swing_hits[key] = {time = _clock, amount = amount}
 	health.take_damage(amount)
+	_register_repel_damage(amount)
 	if not health.is_dead():
 		_play_sfx(sfx_hurt)
+
+
+# --- Repel reaction ---------------------------------------------------------------------------
+
+func _register_repel_damage(amount: int) -> void:
+	if not repel_enabled or health.is_dead():
+		return
+	if repel.register_damage(amount, health.max_value, not can_repel()):
+		_pending_repel = true   # handled in _physics_process (we may be inside a physics signal)
+
+
+## The repel can start now: not dead, not roaring (phase roar or another repel), no phase roar
+## pending and not in the punish window (RECOVER waits for its end).
+func can_repel() -> bool:
+	return repel_enabled and state != State.DEAD and state != State.ROAR and state != State.RECOVER 		and not _pending_roar and not repelling and not health.is_dead()
+
+
+## Interrupts the current action, roars (phase-2 clip and sound, without phase effects), starts the
+## cooldown and pushes Kaelen if she is close.
+func start_repel() -> void:
+	_pending_repel = false
+	if not can_repel():
+		return
+	repel.trigger()
+	repel_count += 1
+	_cancel_attack()
+	_stop()
+	repelling = true
+	_play(roar_animation)
+	_play_sfx(sfx_phase2)
+	_set_state(State.ROAR)
+	_push_player()
+
+
+func _push_player() -> void:
+	if not is_inside_tree():
+		return
+	_find_player()
+	if not _player_alive():
+		return
+	var push := BossRepel.push_velocity(global_position, _player.global_position, repel_radius,
+			repel_force, -global_basis.z)
+	if push != Vector3.ZERO and _player.has_method(&"apply_shove"):
+		_player.call(&"apply_shove", push, repel_push_time)
 
 
 func _on_health_changed(current: int, max_value: int) -> void:
@@ -499,6 +573,8 @@ func _on_died() -> void:
 	_cancel_attack()
 	_set_gated(false)
 	_pending_roar = false
+	_pending_repel = false
+	repelling = false
 	_play(death_animation)
 	_play_sfx(sfx_death)
 	_set_state(State.DEAD)
