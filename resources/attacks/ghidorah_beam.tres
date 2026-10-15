@@ -1,6 +1,8 @@
 [gd_resource type="Resource" script_class="BossAttack" format=3]
 
 [ext_resource type="Script" path="res://scripts/ai/boss_attack.gd" id="1_attack"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/ghidorah_beam_fire.mp3" id="2_fire"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/ghidorah_beam_impact.ogg" id="3_hit"]
 
 [resource]
 script = ExtResource("1_attack")
@@ -19,3 +21,5 @@ lateral = false
 spin_degrees = 0.0
 opener = true
 visual_path = NodePath("BeamVisual")
+sfx_active = ExtResource("2_fire")
+sfx_hit = ExtResource("3_hit")

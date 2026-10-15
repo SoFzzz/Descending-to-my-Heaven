@@ -35,6 +35,11 @@ extends Resource
 ## Mientras dura ACTIVE (+ Boss.gated_grace) las hurtboxes de Boss.gated_hurtboxes se pueden golpear
 ## (las cabezas de Ghidorah bajan al morder).
 @export var exposes_hurtboxes := false
+## Sonido al empezar ACTIVE (el disparo del rayo, p. ej.), en la posición del jefe.
+@export var sfx_active: AudioStream
+## Sonido de impacto cuando el golpe de este ataque alcanza a Kaelen (una vez por golpe). Boss lo
+## copia a `sfx_impact` del Hitbox del ataque y de sus `extra_hitbox_paths`.
+@export var sfx_hit: AudioStream
 
 
 ## Metros recorridos por el avance al `progress` (0–1) de ACTIVE.

@@ -2,6 +2,9 @@
 
 [ext_resource type="PackedScene" path="res://scenes/enemies/minion_base.tscn" id="1_base"]
 [ext_resource type="PackedScene" path="res://assets/minions/straw_reaper/straw_reaper.glb" id="2_model"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/reaper_spawn.mp3" id="a_spawn"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/reaper_hurt.mp3" id="a_hurt"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/reaper_death.mp3" id="a_death"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.4
@@ -18,6 +21,9 @@ size = Vector3(1.4, 1.2, 1.8)
 cost = 3
 damage = 30
 model_scene = ExtResource("2_model")
+sfx_spawn = ExtResource("a_spawn")
+sfx_hurt = ExtResource("a_hurt")
+sfx_death = ExtResource("a_death")
 
 [node name="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)

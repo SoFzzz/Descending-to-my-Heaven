@@ -8,6 +8,8 @@
 [ext_resource type="Resource" path="res://resources/attacks/bonedragon_bite.tres" id="6_bite"]
 [ext_resource type="Resource" path="res://resources/attacks/bonedragon_tail_sweep.tres" id="7_tail"]
 [ext_resource type="Resource" path="res://resources/attacks/bonedragon_stomp.tres" id="8_stomp"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/bonedragon_phase2_roar.mp3" id="a_roar"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/bonedragon_death.mp3" id="a_death"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_torso"]
 size = Vector3(1.6, 3.2, 1.4)
@@ -67,6 +69,8 @@ rings = 1
 display_name = "Bone Dragon"
 attacks = Array[ExtResource("5_attack")]([ExtResource("6_bite"), ExtResource("7_tail"), ExtResource("8_stomp")])
 max_health = 400
+sfx_phase2 = ExtResource("a_roar")
+sfx_death = ExtResource("a_death")
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)

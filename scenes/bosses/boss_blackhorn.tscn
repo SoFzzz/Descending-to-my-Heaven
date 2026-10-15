@@ -8,6 +8,8 @@
 [ext_resource type="Resource" path="res://resources/attacks/blackhorn_slam.tres" id="7_slam"]
 [ext_resource type="Resource" path="res://resources/attacks/blackhorn_pounce.tres" id="8_pounce"]
 [ext_resource type="Resource" path="res://resources/attacks/blackhorn_charge.tres" id="9_charge"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/blackhorn_phase2_roar.mp3" id="a_roar"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/blackhorn_death.mp3" id="a_death"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.7
@@ -56,6 +58,8 @@ size = Vector3(1.5, 0.02, 15)
 display_name = "Blackhorn"
 attacks = Array[ExtResource("5_attack")]([ExtResource("7_slam"), ExtResource("8_pounce"), ExtResource("9_charge")])
 max_health = 500
+sfx_phase2 = ExtResource("a_roar")
+sfx_death = ExtResource("a_death")
 move_speed = 4.5
 detect_radius = 40.0
 engage_range = 3.0

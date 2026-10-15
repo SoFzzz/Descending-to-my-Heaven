@@ -10,6 +10,8 @@
 [ext_resource type="Resource" path="res://resources/attacks/ghidorah_beam.tres" id="9_beam"]
 [ext_resource type="PackedScene" path="res://assets/vfx/beam/beam_vfx.tscn" id="10_beamvfx"]
 [ext_resource type="Script" path="res://scripts/vfx/ghidorah_beam_aim.gd" id="11_beamaim"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/ghidorah_phase2_roar.mp3" id="a_roar"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/ghidorah_death.mp3" id="a_death"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 1.4
@@ -70,6 +72,8 @@ size = Vector3(1.5, 0.02, 1)
 display_name = "Mecha King Ghidorah"
 attacks = Array[ExtResource("5_attack")]([ExtResource("7_bite"), ExtResource("8_tail"), ExtResource("9_beam")])
 max_health = 600
+sfx_phase2 = ExtResource("a_roar")
+sfx_death = ExtResource("a_death")
 move_speed = 3.0
 detect_radius = 50.0
 engage_range = 6.0

@@ -54,6 +54,7 @@ const WORLD_MASK := 1
 @export var weapon_transform := Transform3D.IDENTITY
 @export var corpse_time := 2.0                  ## s from death to queue_free
 @export_group("Audio")
+@export var sfx_spawn: AudioStream              ## elites: sound when they appear
 @export var sfx_attack: AudioStream
 @export var sfx_hurt: AudioStream
 @export var sfx_death: AudioStream
@@ -93,6 +94,8 @@ func _ready() -> void:
 	# Fixed orbit direction per minion so they do not all pile up on the same side.
 	_orbit_sign = 1.0 if get_instance_id() % 2 == 0 else -1.0
 	_setup_visuals()
+	# Deferred: whoever spawns it sets the position right after add_child.
+	_play_sfx.call_deferred(sfx_spawn)
 
 
 func _physics_process(delta: float) -> void:

@@ -56,6 +56,12 @@ const SAME_SWING_WINDOW := 0.3
 ## Height of the lowest bone above the sole when settled.
 @export var death_clearance := 0.07
 @export var model_path := NodePath("Model")
+@export_group("Audio")
+## Al recibir daño (suma de golpes de un mismo mandoble = un solo sonido).
+@export var sfx_hurt: AudioStream
+## Al entrar en la fase 2 (rugido).
+@export var sfx_phase2: AudioStream
+@export var sfx_death: AudioStream
 
 var phase: int = 1
 var state: State = State.IDLE
@@ -116,10 +122,14 @@ func _ready() -> void:
 		var hb := _hitbox_for(attack)
 		if hb:
 			hb.damage = attack.damage
+			if attack.sfx_hit:
+				hb.sfx_impact = attack.sfx_hit
 		for path in attack.extra_hitbox_paths:
 			var extra := get_node_or_null(path) as Hitbox
 			if extra:
 				extra.damage = attack.damage
+				if attack.sfx_hit:
+					extra.sfx_impact = attack.sfx_hit
 		var visual := _visual_for(attack)
 		if visual:
 			visual.visible = false
@@ -154,6 +164,7 @@ func _physics_process(delta: float) -> void:
 		_pending_roar = false
 		_cancel_attack()
 		_play(roar_animation)
+		_play_sfx(sfx_phase2)
 		_set_state(State.ROAR)
 	elif not target_ok and state != State.IDLE and state != State.ROAR:
 		_cancel_attack()   # Kaelen died: stop attacking
@@ -239,6 +250,8 @@ func _try_start_attack(distance: float, approaching := false) -> bool:
 
 
 func _begin_active() -> void:
+	var visual := _visual_for(current_attack)   # the beam fires from where its effect is (the mouth)
+	_play_sfx(current_attack.sfx_active, visual.global_position if visual else global_position)
 	if _hitbox:
 		_hitbox.activate()
 	for path in current_attack.extra_hitbox_paths:
@@ -465,6 +478,8 @@ func _on_hurt(amount: int, source: Node) -> void:
 		return
 	_swing_hits[key] = {time = _clock, amount = amount}
 	health.take_damage(amount)
+	if not health.is_dead():
+		_play_sfx(sfx_hurt)
 
 
 func _on_health_changed(current: int, max_value: int) -> void:
@@ -485,6 +500,7 @@ func _on_died() -> void:
 	_set_gated(false)
 	_pending_roar = false
 	_play(death_animation)
+	_play_sfx(sfx_death)
 	_set_state(State.DEAD)
 	_stop()
 	remove_from_group("lockable")
@@ -500,6 +516,15 @@ func _on_died() -> void:
 		var events := _events()
 		if events:
 			events.boss_defeated.emit(self)
+
+
+## Plays `stream` (if any) in 3D at the boss. By path: in tests run with -s there is no AudioManager.
+func _play_sfx(stream: AudioStream, at := Vector3.INF) -> void:
+	if stream == null or not is_inside_tree():
+		return
+	var audio := get_node_or_null(^"/root/AudioManager")
+	if audio:
+		audio.play_sfx_3d(stream, global_position if at == Vector3.INF else at, 0.1, 0.0, 16.0)
 
 
 func _events() -> Node:
