@@ -20,7 +20,7 @@ func test_yaw_toward() -> void:
 
 func test_total_duration_in_range() -> void:
 	var d: float = Director.total_duration()
-	assert_true(d >= 10.0 and d <= 14.0, "duración %s fuera de 10-14 s" % str(d))
+	assert_true(d >= 10.0 and d <= 16.0, "duración %s fuera de 10-16 s" % str(d))
 
 
 func test_play_runs_only_once() -> void:

@@ -20,8 +20,9 @@ const ELYSIA_FRONT_YAW_OFFSET := 0.0
 const LEAD_IN_TIME := 0.5
 const TEXT_FADE_IN := 1.0
 const TEXT_FADE_OUT := 1.0
-const SHOT_1_HOLD := 3.0
-const SHOT_2_HOLD := 2.5
+## Tiempo que el texto queda completo tras revelarse (el jugador puede saltarlo con el ataque).
+const SHOT_1_HOLD := 1.5
+const SHOT_2_HOLD := 1.5
 ## Fundido a negro que resuelve el abrazo y pausa en negro antes de pasar a los créditos.
 const EMBRACE_FADE_TIME := 1.8
 const EMBRACE_BLACK_HOLD := 0.6
@@ -48,12 +49,15 @@ var _end_point: Node3D
 var _text_layer: CanvasLayer
 var _label: Label
 var _overlay: ColorRect
+var _typewriter: Typewriter
+
+signal hold_over   ## fin de la pausa con el texto completo (por tiempo o por avanzar)
 
 
 ## Duración total aproximada de la secuencia (s), sin contar el fundido propio de GameState.
 static func total_duration() -> float:
-	var shot_1 := TEXT_FADE_IN + SHOT_1_HOLD + TEXT_FADE_OUT
-	var shot_2 := TEXT_FADE_IN + SHOT_2_HOLD + TEXT_FADE_OUT
+	var shot_1 := Typewriter.reveal_duration(SHOT_1_TEXT) + SHOT_1_HOLD + TEXT_FADE_OUT
+	var shot_2 := Typewriter.reveal_duration(SHOT_2_TEXT) + SHOT_2_HOLD + TEXT_FADE_OUT
 	return LEAD_IN_TIME + shot_1 + shot_2 + EMBRACE_FADE_TIME + EMBRACE_BLACK_HOLD
 
 
@@ -196,14 +200,35 @@ func _activate_camera(cam: Camera3D) -> void:
 	cam.make_current()
 
 
-## Fundido de entrada, texto visible `hold` s y fundido de salida. Devuelve false si el árbol cambió.
+## Fundido de entrada con el texto revelándose letra a letra (con voz), pausa de `hold` s con el texto
+## completo y fundido de salida. El ataque completa la línea y, ya completa, pasa a la siguiente.
+## Devuelve false si el árbol cambió.
 func _show_text(text: String, hold: float) -> bool:
-	_label.text = text
 	_tween_alpha(_label, 1.0, TEXT_FADE_IN)
-	if not await _wait(TEXT_FADE_IN + hold):
+	_typewriter.start(_label, text)
+	if _typewriter.is_revealing():
+		await _typewriter.finished
+	if not is_inside_tree():
+		return false
+	if not await _hold(hold):
 		return false
 	_tween_alpha(_label, 0.0, TEXT_FADE_OUT)
 	return await _wait(TEXT_FADE_OUT)
+
+
+## Espera `seconds` s con el texto completo o hasta que el jugador pulse avanzar.
+func _hold(seconds: float) -> bool:
+	if not is_inside_tree():
+		return false
+	var timer := get_tree().create_timer(seconds)
+	timer.timeout.connect(hold_over.emit)
+	_typewriter.advanced.connect(hold_over.emit)
+	await hold_over
+	if timer.timeout.is_connected(hold_over.emit):
+		timer.timeout.disconnect(hold_over.emit)
+	if _typewriter.advanced.is_connected(hold_over.emit):
+		_typewriter.advanced.disconnect(hold_over.emit)
+	return is_inside_tree()
 
 
 func _tween_alpha(item: CanvasItem, alpha: float, time: float) -> void:
@@ -242,6 +267,8 @@ func _build_text_layer() -> void:
 	_label.add_theme_constant_override(&"outline_size", 4)
 	_label.modulate.a = 0.0
 	_text_layer.add_child(_label)
+	_typewriter = Typewriter.new()
+	_text_layer.add_child(_typewriter)
 	add_child(_text_layer)
 
 

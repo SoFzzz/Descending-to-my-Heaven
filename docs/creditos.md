@@ -51,6 +51,7 @@ Usado en el juego (2026-10-15, Tarea 17):
 | Monsters SFX Vol.1 | Jefes, esbirros, élites, rayo de Ghidorah | Riria / Ririsaurus | Uso libre, crédito no necesario, no redistribuir los archivos | Riria / Ririsaurus |
 | Be Not Afraid UI | Menús y pausa | Atelier Magicae | Uso libre, no redistribuir | "Atelier Magicae" (obligatorio) |
 | `sadness piano4`, `ancient creature battle`, `hellhound battle`, `LVS04_10_Battlefield_bpm180_loop`, `celtic melancholy` | Menú, jefes 1–3, final y créditos | Por confirmar | Por confirmar | — |
+| Dialogue Bleeps Pack | Voces (blips) de Kaelen y Elysia en los diálogos del final (`assets/audio/sfx/dialogue/`) | dmochas | Por confirmar (el pack no incluye readme) | dmochas |
 
 Sin uso: música "Blazing Honor" (EpicOrderSounds; uso libre, no redistribuir suelta), `skull dragon battle`, `black dragon battle`, `wyvern battle` y 40 Free PSX Footsteps (autor y licencia por confirmar).
 

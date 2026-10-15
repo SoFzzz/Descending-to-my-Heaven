@@ -103,6 +103,12 @@ Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist y Blackhorn.
 Las animaciones del Bone Dragon y de Mecha King Ghidorah se hicieron por script en el proyecto.
 
 
+Audio
+
+Dialogue Bleeps Pack (voces de los dialogos del final)
+Autor: dmochas. Licencia: por confirmar (el pack no incluye readme).
+
+
 Motor
 
 Godot Engine (MIT)
