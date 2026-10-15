@@ -101,3 +101,52 @@ func test_boss_phase_change_at_half() -> void:
 	assert_true(BossBrain.should_enter_phase2(120, 400, 1), "por debajo también, si sigue en fase 1")
 	assert_true(not BossBrain.should_enter_phase2(150, 400, 2), "una sola vez: ya está en fase 2")
 	assert_true(not BossBrain.should_enter_phase2(0, 400, 1), "muerto no cambia de fase")
+
+
+# --- Ataques de apertura (largo alcance) mientras el jefe todavía se acerca -----------------------
+
+func _opener(id: StringName, min_range: float, max_range: float, phase_min := 1) -> BossAttack:
+	var a := _attack(id, min_range, max_range, 1.0, phase_min)
+	a.opener = true
+	return a
+
+
+func test_approaching_only_considers_openers() -> void:
+	var brain := BossBrain.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	var attacks: Array[BossAttack] = [_attack(&"bite", 0.0, 9.0, 5.0), _opener(&"beam", 8.0, 20.0)]
+	for i in 30:
+		assert_eq(brain.choose(attacks, 8.5, 1, rng, true).id, &"beam", "acercándose a 8.5 m: solo la apertura")
+	assert_true(brain.choose(attacks, 5.0, 1, rng, true) == null, "a 5 m la apertura no llega: sigue acercándose")
+
+
+func test_not_approaching_uses_every_attack() -> void:
+	var brain := BossBrain.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	var attacks: Array[BossAttack] = [_attack(&"bite", 0.0, 9.0, 5.0), _opener(&"beam", 8.0, 20.0)]
+	var seen := {}
+	for i in 60:
+		seen[brain.choose(attacks, 8.5, 1, rng).id] = true
+	assert_true(seen.has(&"bite") and seen.has(&"beam"), "ya llegó: todos los ataques válidos compiten")
+
+
+func test_opener_is_never_repeated_while_approaching() -> void:
+	var brain := BossBrain.new()
+	var rng := RandomNumberGenerator.new()
+	var attacks: Array[BossAttack] = [_opener(&"beam", 8.0, 20.0)]
+	brain.last_attack_id = &"beam"
+	assert_true(brain.choose(attacks, 12.0, 1, rng, true) == null, "tras el rayo se acerca en vez de repetir")
+	brain.last_attack_id = &"bite"
+	assert_eq(brain.choose(attacks, 12.0, 1, rng, true).id, &"beam")
+
+
+func test_opener_respects_phase_and_range() -> void:
+	var brain := BossBrain.new()
+	var rng := RandomNumberGenerator.new()
+	var attacks: Array[BossAttack] = [_opener(&"charge", 8.0, 16.0, 2)]
+	assert_true(brain.choose(attacks, 12.0, 1, rng, true) == null, "fase 1: no hay embestida")
+	assert_eq(brain.choose(attacks, 12.0, 2, rng, true).id, &"charge")
+	assert_true(brain.choose(attacks, 17.0, 2, rng, true) == null, "más lejos que max_range: se acerca")
+	assert_true(brain.choose(attacks, 7.0, 2, rng, true) == null, "más cerca que min_range")
