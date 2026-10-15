@@ -375,6 +375,16 @@ puntaje = peso_base
 
 Elige por sorteo ponderado entre los 2 mejores (para que no sea completamente predecible). El jefe guarda un historial corto de cómo esquiva el jugador para el bonus de anticipación.
 
+**Repulsión (anti ráfagas de daño).** Para que el jugador no le haga mucho daño de seguido, cada jefe suma el daño que recibe en una ventana deslizante. Si en los últimos **4 s** recibe al menos el **15 % de su vida máxima** (60 de 400 en Bone Dragon, 75 de 500 en Blackhorn, 90 de 600 en Ghidorah; en la práctica, un combo completo de Kaelen), reacciona:
+
+- Interrumpe lo que esté haciendo (aviso o ataque activo) y reproduce la misma animación de rugido y el mismo sonido que usa al pasar a la fase 2, pero sin cambiar de fase ni aplicar sus efectos.
+- Mientras ruge es **invulnerable**: los golpes no hacen daño.
+- Si Kaelen está a **6 m** o menos, sale empujada hacia fuera a **11 m/s**, velocidad que decae a 0 en **0,4 s**. No recibe daño ni i-frames, pero pierde el control mientras dura el empuje (estado de aturdimiento, el mismo que al recibir un golpe). La **rodada esquiva el empuje** durante sus i-frames, como en los souls; también lo ignoran la muerte, las cinemáticas y la victoria.
+- Después hay un **enfriamiento de 9 s** en el que no puede repetirse (el daño recibido en ese tiempo no cuenta).
+- No corta la ventana de castigo: si el umbral se alcanza mientras el jefe se recupera de un ataque, la reacción espera a que termine la recuperación. Tampoco ocurre durante el rugido de transición de fase ni tras la muerte; si el golpe que supera el umbral también activa la fase 2, gana la transición de fase.
+
+Todos los valores (`repel_threshold`, `repel_window`, `repel_cooldown`, `repel_radius`, `repel_force`, `repel_push_time`, `repel_enabled`) se exportan por jefe para ajustarlos en el inspector.
+
 ### 8.3 Orquestador
 Un nodo autoload `Orchestrator` que ajusta la presión del combate según cómo juega el jugador.
 
