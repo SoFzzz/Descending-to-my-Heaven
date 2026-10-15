@@ -2,11 +2,11 @@
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_mm"]
 [ext_resource type="Texture2D" path="res://assets/ui/menu/menu_sky.png" id="2_sky"]
-[ext_resource type="Texture2D" path="res://assets/ui/menu/menu_silhouette.png" id="2_sil"]
 [ext_resource type="Theme" path="res://scenes/ui/menu_theme.tres" id="3_th"]
+[ext_resource type="Script" path="res://scripts/ui/island_silhouette.gd" id="4_isl"]
 
 [sub_resource type="LabelSettings" id="title"]
-font_size = 40
+font_size = 36
 font_color = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_color = Color(0.08, 0.02, 0.02, 1)
@@ -46,17 +46,34 @@ mouse_filter = 2
 texture = ExtResource("2_sky")
 expand_mode = 1
 
-[node name="Silhouette" type="TextureRect" parent="UI/Root"]
+[node name="Island" type="SubViewportContainer" parent="UI/Root"]
 texture_filter = 1
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 11
+anchor_left = 0.5
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
+grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("2_sil")
-expand_mode = 1
+stretch = true
+script = ExtResource("4_isl")
+
+[node name="Ash" type="CPUParticles2D" parent="UI/Root"]
+position = Vector2(320, 380)
+amount = 36
+lifetime = 12.0
+preprocess = 12.0
+emission_shape = 3
+emission_rect_extents = Vector2(330, 4)
+direction = Vector2(0.25, -1)
+spread = 12.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 14.0
+initial_velocity_max = 30.0
+scale_amount_min = 1.0
+scale_amount_max = 2.0
+color = Color(0.85, 0.62, 0.58, 0.32)
 
 [node name="Vignette" type="ColorRect" parent="UI/Root"]
 anchors_preset = 15
@@ -65,58 +82,88 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0, 0, 0.15)
+color = Color(0, 0, 0, 0.12)
 
 [node name="Title" type="Label" parent="UI/Root"]
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = 44.0
-offset_bottom = 100.0
-grow_horizontal = 2
-text = "Descending to my Heaven"
+offset_left = 36.0
+offset_top = 58.0
+offset_right = 316.0
+offset_bottom = 148.0
+text = "Descending
+to my Heaven"
 label_settings = SubResource("title")
-horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Panel" type="PanelContainer" parent="UI/Root"]
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -110.0
-offset_top = -192.0
-offset_right = 110.0
-offset_bottom = -34.0
-grow_horizontal = 2
-grow_vertical = 0
+offset_left = 36.0
+offset_top = 172.0
+offset_right = 252.0
+offset_bottom = 310.0
 
 [node name="Buttons" type="VBoxContainer" parent="UI/Root/Panel"]
 layout_mode = 2
 theme_override_constants/separation = 6
 alignment = 1
 
-[node name="Start" type="Button" parent="UI/Root/Panel/Buttons"]
+[node name="StartSlot" type="Control" parent="UI/Root/Panel/Buttons"]
+custom_minimum_size = Vector2(168, 32)
+layout_mode = 2
+
+[node name="Start" type="Button" parent="UI/Root/Panel/Buttons/StartSlot"]
 unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 text = "Iniciar"
 
-[node name="Credits" type="Button" parent="UI/Root/Panel/Buttons"]
+[node name="CreditsSlot" type="Control" parent="UI/Root/Panel/Buttons"]
+custom_minimum_size = Vector2(168, 32)
+layout_mode = 2
+
+[node name="Credits" type="Button" parent="UI/Root/Panel/Buttons/CreditsSlot"]
 unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 text = "Créditos"
 
-[node name="Quit" type="Button" parent="UI/Root/Panel/Buttons"]
+[node name="QuitSlot" type="Control" parent="UI/Root/Panel/Buttons"]
+custom_minimum_size = Vector2(168, 32)
+layout_mode = 2
+
+[node name="Quit" type="Button" parent="UI/Root/Panel/Buttons/QuitSlot"]
 unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 text = "Salir"
 
 [node name="Hint" type="Label" parent="UI/Root"]
-anchors_preset = 12
+anchors_preset = 2
 anchor_top = 1.0
-anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 36.0
 offset_top = -26.0
+offset_right = 316.0
 offset_bottom = -8.0
-grow_horizontal = 2
 grow_vertical = 0
 text = "Flechas + Enter o ratón"
 label_settings = SubResource("hint")
-horizontal_alignment = 1
+
+[node name="Fade" type="ColorRect" parent="UI/Root"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
