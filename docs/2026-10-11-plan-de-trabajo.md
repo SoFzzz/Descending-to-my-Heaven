@@ -1,13 +1,12 @@
 # Descending to my Heaven — Plan de trabajo (7 días)
 
-> **Para agentes:** SUB-SKILL REQUERIDA: usar superpowers:subagent-driven-development (recomendado) o superpowers:executing-plans para implementar este plan tarea por tarea. Los pasos usan casillas (`- [ ]`) para seguimiento.
+> Los pasos usan casillas (`- [ ]`) para seguimiento.
 
 **Objetivo:** un boss rush 3D estilo PSX en Godot, jugable de principio a fin (menú → isla → 3 jefes → Elysia → créditos), construido por 3 personas en paralelo sin pisarse.
 
 **Arquitectura:** componentes pequeños reutilizables (`Health`, `Stamina`, `Hitbox`, `Hurtbox`) usados por Kaelen, esbirros y jefes; autoloads (`Events`, `GameState`, `AttackTokens`, `Orchestrator`, `AudioManager`) como contrato entre personas; cada arena separada en una escena de **arte** (dueño C) y una escena de **gameplay** (dueño B) para que nadie edite el mismo archivo. La lógica de IA y combate vive en clases puras testeables sin escena.
 
-**Stack:** Godot 4.7.2 (GDScript, renderizador Compatibility), Blender 5.2 + Mixamo, Git LFS. MCP de Godot y Blender para automatizar importación y modelado.
-
+**Stack:** Godot 4.7.2 (GDScript, renderizador Compatibility), Blender 5.2 + Mixamo, Git LFS.
 **Spec:** [2026-10-10-descending-to-my-heaven-design.md](2026-10-10-descending-to-my-heaven-design.md)
 
 ## Estado actual (2026-10-15, día 5)
@@ -32,7 +31,7 @@
 - **Niveles** (generados por `scripts/tools/level_builder.gd`, nunca a mano): `exterior`, `arena_1`, `arena_2` (octógono), `arena_3` (40×40 m con pasillo y sala de Elysia) con arte de kit (`GridMap` + `dungeon_kit.meshlib`, material `kit_std.tres`). Navegación horneada solo a la altura del suelo. Escenas de gameplay: `arena_1/2/3_gameplay.tscn` y `exterior_gameplay.tscn`.
 - **Flujo:** menú principal, pausa (Esc), "HAS MUERTO" con recarga, transición con fundido, `GameState.advance_level()`; vida máxima 100/70/40 según nivel. Al ganar una arena la reja de salida se abre 3 s después y `ExitTrigger` avanza de nivel.
 - **Salida del exterior (T15):** el `ExitTrigger` del exterior avanza a la arena 1. Antes no estaba conectado.
-- **Final y créditos (T15, sin verificar en Godot):** en `arena_3_gameplay`, `ending_director.gd` hace la respiración de Elysia, el corte entre dos cámaras con texto, el fundido del abrazo y el paso a los créditos (`scenes/ui/credits.tscn`, `assets/credits.txt`). El botón Créditos del menú principal aparece solo cuando existe la escena.
+- **Final y créditos (T15, verificado en Godot con un recorrido automático el 2026-10-15; falta la partida completa a mano):** en `arena_3_gameplay`, `ending_director.gd` hace la respiración de Elysia, el corte entre dos cámaras con texto, el fundido del abrazo y el paso a los créditos (`scenes/ui/credits.tscn`, `assets/credits.txt`). El botón Créditos del menú principal aparece solo cuando existe la escena.
 
 ### Qué hicimos en esta etapa (días 3–5)
 
@@ -43,30 +42,34 @@
 | T11 Arte de arena 1 + animaciones de jefes | Hecha. `GridMap` en `arena_1`; se cambió el material del kit a `kit_std.tres` porque `psx_lit` hacía desaparecer baldosas grandes. Blackhorn y Ghidorah verificados en `scale_reference`. |
 | T12 Orquestador + overlay | Hecha, con el ciclo de oleadas y ventana del jefe pedido tras probar a mano (los esbirros eran excesivos). |
 | T13 Blackhorn y Ghidorah | Hecha, incluidas `arena_2_gameplay` y `arena_3_gameplay`. Se corrigió el arte de Ghidorah (colas y alas bajo el suelo, `death`) y se redujo su escala. |
-| T14 Arenas 2 y 3 + exterior | Hecha (pendiente de commit). Arte de kit en arenas 2 y 3 y en el exterior; el sendero del exterior rodea la nariz abierta de la isla; PlayerStart a 6 m de la pared (cámara a 4 m); `spawn_point` recolocados; navegación limitada en altura. |
-| T15 Flujo completo, final y créditos | Hecha en la rama `feat/aza`, **sin commit**. Verificada en Godot con un recorrido automático (salida del exterior, final completo hasta créditos); falta la partida completa a mano. Detalles en la Tarea 15. |
-| T16 Esbirros por nivel y élites | Hecha en la rama `feat/aza`, **sin commit**. Verificado en Godot: cada arena genera su esbirro y su élite (coste 3, vida 90). Detalles en la Tarea 16. |
-| Deuda técnica | `attack_driver.gd` integrado en `Boss`; apariciones por niveles; Ghidorah ×1.95; Blackhorn solo corre; daño de Kaelen ×2; `slam` de Blackhorn como `opener`. (Pendiente de commit.) |
+| T14 Arenas 2 y 3 + exterior | Hecha y commiteada en `feat/aza`. Arte de kit en arenas 2 y 3 y en el exterior; el sendero del exterior rodea la nariz abierta de la isla; PlayerStart a 6 m de la pared (cámara a 4 m); `spawn_point` recolocados; navegación limitada en altura. |
+| T15 Flujo completo, final y créditos | Hecha y commiteada en `feat/aza`. Verificada en Godot con un recorrido automático (salida del exterior, final completo hasta créditos); falta la partida completa a mano. Detalles en la Tarea 15. |
+| T16 Esbirros por nivel y élites | Hecha y commiteada en `feat/aza`. Revisión a mano pendiente. Verificado en Godot: cada arena genera su esbirro y su élite (coste 3, vida 90). Detalles en la Tarea 16. |
+| Deuda técnica | `attack_driver.gd` integrado en `Boss`; apariciones por niveles; Ghidorah ×1.95; Blackhorn solo corre; daño de Kaelen ×2; `slam` de Blackhorn como `opener`. (Commiteada en `feat/aza`.) |
 
 ### Qué nos falta
 
 | Tarea | Pendiente |
 |---|---|
-| **T15** Verificación manual y commit | Pasos 3 y 4 de la Tarea 15: partida completa con F6/F5 y commit de la rama `feat/aza`. Pendiente además: añadir `assets/credits.txt` al filtro de exportación de recursos no-recurso (T19). |
+| **T15** Verificación manual | Paso 3 de la Tarea 15: partida completa con F6/F5 (el commit ya está en `feat/aza`). Pendiente además: añadir `assets/credits.txt` al filtro de exportación de recursos no-recurso (T19). |
 | **T16** Revisión a mano | Ver en juego animaciones, espada del Knight, hoz del Straw Reaper y caída de TheWrapper. El Aura Battler no se usa: el élite de la arena 3 es el Straw Reaper (2026-10-15). |
-| **T17** Audio | `AudioManager`, música por escena, SFX, `assets/credits.txt` con licencias. |
-| **T18–T19** Pulido, playtest, exportar Windows | Ver tareas 18 y 19. |
+| **T17** Audio | Sin empezar. `scripts/audio/audio_manager.gd` es un stub; `assets/audio/bgm/` y `assets/audio/sfx/` están vacíos (los originales están en `_source/bgm/` y `_source/sfx/`). `assets/credits.txt` existe, pero faltan licencias y autores de varias pistas y packs ("por confirmar"). |
+| **T18–T19** Pulido, playtest, exportar Windows | Ver tareas 18 y 19. `docs/playtest.md` aún no existe. |
+| **Integración** | `feat/aza` va 55 commits por delante de `main`. No hay merge ni PR a `main` todavía. |
 
 ### Riesgos y mejoras anotadas
 
 - **Probar a mano** (no medido por los arneses): la sensación de las tres peleas con el daño duplicado y las oleadas, `arena_2` y `arena_3` completas, jefe y oleadas juntos, y el exterior de principio a fin.
-- **Cámaras del final (resuelto en T15, sin verificar en Godot):** `ending_director.gd` activa `EndingCam1/2` con `make_current()` explícito, y la cámara de Kaelen conserva el override `current = true` en `arena_3_gameplay.tscn`, así que el final no le roba la vista. Mejora opcional: que `EndingCam1/2` sean `Marker3D` en el generador y que el final cree la cámara por código.
+- **Cámaras del final (resuelto en T15; verificado con un recorrido automático el 2026-10-15):** `ending_director.gd` activa `EndingCam1/2` con `make_current()` explícito, y la cámara de Kaelen conserva el override `current = true` en `arena_3_gameplay.tscn`, así que el final no le roba la vista. Mejora opcional: que `EndingCam1/2` sean `Marker3D` en el generador y que el final cree la cámara por código.
 - **Recorrido del exterior:** dura ~14 s (la spec pide 1–2 min). Alargar el sendero es opcional.
 - **Combate:** el rayo de Ghidorah es una caja amarilla a nivel del suelo; faltan efectos y audio. Aviso del jefe: disco rojo opaco (hacerlo semitransparente, con borde y pulso). `hit_landed` se emite una vez por hurtbox tocada (se oiría doble con el audio). El dragón y Ghidorah se deslizan con `idle`. Parry opcional. Los avisos del suelo de `pounce`, `charge` y `slam` no se revisaron con capturas.
 - **Arte:** el suelo de la sala de Elysia sigue con textura triplanar; línea fina en una unión de pared de `arena_2`; revisar capturas de las escenas finales regeneradas. Si se regeneran las arenas, repetir la medición de la cola de Ghidorah contra el muro norte de `arena_3` (margen actual 1.9 m, 1.35 m en `death`).
 - **Esbirros:** el tercer nivel de aparición solo tiene pruebas unitarias. Los sonidos de esbirros (`sfx_attack/hurt/death`) están conectados pero vacíos hasta la T17. Los cadáveres desaparecen a los 2 s (`corpse_time`).
 - **Final:** en el plano de `EndingCam2` Kaelen tapa a Elysia (la cámara está detrás de Kaelen); se ajusta en el generador si se quiere.
 - **Otros:** `player_died` solo se emite en la primera muerte de cada instancia de Kaelen (funciona porque la recarga crea otra). Blackhorn: `idle`/`charge` y `walk`/`run` duran lo mismo (posibles clips duplicados; solo se usa `run`). El error `Parameter "material" is null` al cerrar corridas headless con Kaelen es del renderizador dummy y es inofensivo.
+- **Peso de Ghidorah:** `assets/bosses/ghidorah/ghidorah.glb` pesa ~26 MB con 9.1k triángulos; probablemente tiene texturas incrustadas sin reducir (la regla del proyecto es 256 px). Revisarlo antes de exportar (T19).
+- **Licencias por carpeta:** solo 4 carpetas de `assets/` tienen `license.txt` (`bosses/blackhorn`, `characters/elysia`, `characters/kaelen`, `minions/knight`). Faltan en `bosses/bonedragon`, `bosses/ghidorah`, `environment/island`, `environment/kit`, `environment/textures`, `minions/plague_arcanist`, `minions/skeleton`, `minions/straw_reaper`, `minions/thewrapper` y `weapons/greatsword`. El diseño (§13.1) pide uno por carpeta.
+- **Playtest:** `docs/playtest.md` aún no existe; lo piden T18 y T19.
 - **Documentación:** la regla de escenas ("`<nivel>_gameplay.tscn` instancia el nivel como hijo `Level`") ya está corregida en §6.4 del documento de diseño. El texto original de las tareas 8 y 15 conserva la redacción antigua; lo vigente es lo que dice esta sección.
 
 ## Restricciones globales
@@ -312,7 +315,7 @@ En las pruebas de `AttackTokens` instanciar el script directamente (`load("res:/
 
 - [x] **Paso 1: Importar** los 11 modelos del reparto (§3 de la spec) a `assets/`. Los FBX con escalas internas raras (knight, skeleton, bonedragon, TheWrapper, woman knight) se abren en Blender vía MCP, se aplica escala y se exportan a GLB.
 - [x] **Paso 2: Armar `scale_reference.tscn`** — grilla de 1 m, cápsula de 1.70 m, cada modelo a su altura de la tabla §7.4 (Kaelen 1.70, Elysia 1.60, Skeleton 1.75, Knight 2.10, Plague Arcanist 1.80, TheWrapper 2.00, Aura Battler 3.00, Blackhorn 3.20, Bone Dragon 8 m de largo, Ghidorah 10 m de alto), módulo de muro de `PSX_Dungeon` a 4 × 4 m.
-- [x] **Paso 3: Verificar** con un script de herramienta (o el MCP de Godot) que imprima la `AABB` de cada modelo instanciado; cada altura dentro de ±5 % de la tabla.
+- [x] **Paso 3: Verificar** con un script de herramienta que imprima la `AABB` de cada modelo instanciado; cada altura dentro de ±5 % de la tabla.
 - [x] **Paso 4: Completar `docs/asset-status.md`** y la tabla de §7.8.
 - [x] **Paso 5: Decidir reservas** — todo modelo que no importe en 2 h se marca `reemplazado` con su sustituto (§3).
 - [x] **Paso 6: Commit** — `feat: import and normalize character and boss assets`
@@ -459,7 +462,7 @@ Meta: se puede matar a un esbirro y morir ante él.
 - Ya existe: `assets/bosses/blackhorn/blackhorn.glb` (jefe 2, 10 animaciones; ver `docs/asset-status.md`)
 - Ya existe: `assets/bosses/ghidorah/ghidorah.glb` (9.1k triángulos; `idle`, `roar`, `bite`, `tail_sweep`, `beam`, `death`)
 
-- [x] **Paso 1:** importar piezas del kit con escala de 4 m y colisión (caja para muros/pilares, trimesh para pisos/escaleras); exportar `MeshLibrary` (puede usarse `export_mesh_library` del MCP de Godot).
+- [x] **Paso 1:** importar piezas del kit con escala de 4 m y colisión (caja para muros/pilares, trimesh para pisos/escaleras); exportar `MeshLibrary` (puede usarse `export_mesh_library`).
 - [x] **Paso 2:** el mismo `level_builder.gd` pinta un `GridMap` en lugar de las cajas (mismo plano, otra salida), sin mover la posición de pilares, rejas ni límites (B ya horneó la navegación sobre ellos; si cambian, avisar a B para rehornear).
 - [x] **Paso 3:** Ghidorah: reducido a 9.1k triángulos y 6 animaciones por script (`_source/tools/animate_ghidorah.py`).
 - [x] **Paso 4: Verificación** — `arena_1` con arte se juega igual que el bloqueo; Blackhorn y Ghidorah reproducen todas sus animaciones en `scale_reference`.
@@ -520,13 +523,13 @@ Meta: se puede matar a un esbirro y morir ante él.
 - [x] **Paso 1:** generar el bloqueo CSG de las 4 escenas con nodo `Gameplay` vacío; las escenas `arena_N_gameplay.tscn` se crean aparte (hecho en T9 y T13).
 - [x] **Paso 2:** exterior según §6.2: `float-islands`, sendero con colisión invisible, fachada del templo con `PSX_Dungeon`, cielo y niebla.
 - [x] **Paso 3: Verificación** — `exterior` se recorre de inicio a puerta en 1–2 min sin caer al vacío; el pasillo y la sala de Elysia de `arena_3` son transitables; ≥ 60 FPS en la PC más lenta.
-- [ ] **Paso 4: Commit** — `feat: add level builder, arenas blockout and exterior`
+- [x] **Paso 4: Commit** — `feat: add level builder, arenas blockout and exterior`
 
 **(B, final del día 4):** `arena_2_gameplay.tscn` y `arena_3_gameplay.tscn` con navegación, spawns y `ArenaConfig` (arena 2: Plague Arcanist; arena 3: TheWrapper + élite Aura Battler si existe).
 
 ---
 
-**Resultado T14:** hecha (falta el commit). Arenas 2 y 3 y exterior con arte de kit; `EndingCam1/2` ya no son `current`, pero el override de cámara de `arena_3_gameplay.tscn` se mantiene (ver "Riesgos"); navegación solo a la altura del suelo; `spawn_point` recolocados; sendero del exterior rodea la nariz de la isla. Pruebas nuevas en `tests/test_level_generator.gd`.
+**Resultado T14:** hecha y commiteada en `feat/aza`. Arenas 2 y 3 y exterior con arte de kit; `EndingCam1/2` ya no son `current`, pero el override de cámara de `arena_3_gameplay.tscn` se mantiene (ver "Riesgos"); navegación solo a la altura del suelo; `spawn_point` recolocados; sendero del exterior rodea la nariz de la isla. Pruebas nuevas en `tests/test_level_generator.gd`.
 
 # DÍA 5 — Partida completa
 
@@ -543,14 +546,14 @@ Meta: se puede matar a un esbirro y morir ante él.
 - [x] **Paso 1:** `ExitTrigger` de `exterior` → `advance_level()`; `boss_defeated` → espera 3 s → `GateExit` abierta → `ExitTrigger` → `advance_level()` (en la arena 3 Kaelen recorre el pasillo hasta `EndingTrigger`); vida máxima de Kaelen = `GameState.get_player_max_hp()` al entrar a cada arena.
 - [x] **Paso 2:** final y créditos (botón "Volver al menú").
 - [ ] **Paso 3: Verificación manual** — partida completa menú → exterior → 3 jefes → pasillo → Elysia → créditos → menú usando F6 (invulnerable) y F5; luego otra muriendo una vez por jefe: la vida máxima es 100, 70 y 40.
-- [ ] **Paso 4: Commit** — `feat: complete game flow, ending and credits`
+- [x] **Paso 4: Commit** — `feat: complete game flow, ending and credits`
 
-**Resultado T15:** hecho en la rama `feat/aza`, sin commit. Verificado en Godot (2026-10-15) con un recorrido automático: el `ExitTrigger` del exterior lleva a la arena 1; vida máxima 100/70/40; en la arena 3 el final activa `EndingCam1` y luego `EndingCam2`, bloquea la pausa, coloca a Kaelen en `KaelenEndPoint` y a los ~15 s carga `credits.tscn`. Falta la partida completa a mano (Paso 3). Decisiones:
+**Resultado T15:** hecho y commiteado en la rama `feat/aza` (varios commits `feat:` y `test:`). Verificado en Godot (2026-10-15) con un recorrido automático: el `ExitTrigger` del exterior lleva a la arena 1; vida máxima 100/70/40; en la arena 3 el final activa `EndingCam1` y luego `EndingCam2`, bloquea la pausa, coloca a Kaelen en `KaelenEndPoint` y a los ~15 s carga `credits.tscn`. Falta la partida completa a mano (Paso 3). Decisiones:
 - El `ExitTrigger` se movió a `scripts/game/level_gameplay.gd` (señal `exit_reached`, `@export exit_advances_level` y virtual `_can_exit()`). El exterior avanza a la arena 1 al cruzarlo. `arena_gameplay.gd` solo sobrescribe `_can_exit()` (arena despejada).
 - `arena_3_gameplay.tscn` tiene `exit_advances_level = false`, para que el pasillo no salte el final, y el nodo `EndingDirector`.
 - `GameState.cutscene_active` bloquea la pausa durante el final y se limpia al cambiar de escena. `player_controller.gd` añade `set_cutscene()`, `is_cutscene()` y `face_point()` (invulnerable y sin control).
 - Créditos: `credits.tscn` con auto-scroll, rueda y flechas, botón "Volver al menú" y Esc.
-- Pruebas nuevas escritas, no ejecutadas: `tests/test_level_exit.gd`, `tests/test_ending_director.gd`, `tests/test_player_cutscene.gd` y `test_cutscene_blocks_pause` en `tests/test_game_state.gd`.
+- Pruebas nuevas (incluidas en las 145/145): `tests/test_level_exit.gd`, `tests/test_ending_director.gd`, `tests/test_player_cutscene.gd` y `test_cutscene_blocks_pause` en `tests/test_game_state.gd`.
 
 ### Tarea 16 (B): Esbirros por nivel, élites y ajuste de jefes
 
@@ -560,9 +563,9 @@ Meta: se puede matar a un esbirro y morir ante él.
 - [x] **Paso 1:** variantes con modelos y medidas de §7.4 (élite: `cost = 3`, vida 90, daño 30, tinte distinto). Aura Battler: flota a 0.5 m, se mueve con tweens, navegación capa 2.
 - [x] **Paso 2:** conectar animaciones (`idle`/`walk`/`attack`/`hurt`/`death`) y sonidos vía `AudioManager.play_sfx_3d`.
 - [x] **Paso 3: Verificación manual** — cada arena genera su tipo de esbirro; el overlay muestra costos correctos (élite = 3).
-- [ ] **Paso 4: Commit** — `feat: add per-level minions and elites`
+- [x] **Paso 4: Commit** — `feat: add per-level minions and elites`
 
-**Resultado T16:** hecho en la rama `feat/aza`, sin commit. `minion.gd` admite `model_scene`, `tint`, clips `anim_*`, `weapon_scene` (en `BoneAttachment3D`, acepta `mixamorig:` o `mixamorig_` y compensa la escala del hueso) y `sfx_*`. Variantes por arena: Skeleton + Knight élite (espada), Plague + Plague élite (tinte verdoso), Wrapper (sin clip de muerte, cae con un tween) + Straw Reaper élite (2026-10-15; sustituye al Wrapper élite con tinte: modelo propio con hoz, exportado con `export_multi_action.py -- straw_reaper`, 8 clips nombrados). Verificado en Godot: cada arena genera su esbirro y su élite (coste 3, vida 90, daño 30), alturas por huesos 1.60/2.07/1.85/1.98 m, espada a escala 1. El Aura Battler no se usa (está en `_source/models/` pero nunca se exportó a `assets/`). Pendiente: revisar en juego las animaciones de ataque/muerte.
+**Resultado T16:** hecho y commiteado en la rama `feat/aza`. `minion.gd` admite `model_scene`, `tint`, clips `anim_*`, `weapon_scene` (en `BoneAttachment3D`, acepta `mixamorig:` o `mixamorig_` y compensa la escala del hueso) y `sfx_*`. Variantes por arena: Skeleton + Knight élite (espada), Plague + Plague élite (tinte verdoso), Wrapper (sin clip de muerte, cae con un tween) + Straw Reaper élite (2026-10-15; sustituye al Wrapper élite con tinte: modelo propio con hoz, exportado con `export_multi_action.py -- straw_reaper`, 8 clips nombrados). Verificado en Godot: cada arena genera su esbirro y su élite (coste 3, vida 90, daño 30), alturas por huesos 1.60/2.07/1.85/1.98 m, espada a escala 1. El Aura Battler no se usa (está en `_source/models/` pero nunca se exportó a `assets/`). Pendiente: revisar en juego las animaciones de ataque/muerte.
 
 ### Tarea 17 (C): Audio completo
 
@@ -576,7 +579,7 @@ Meta: se puede matar a un esbirro y morir ante él.
 
 - [ ] **Paso 1:** convertir y copiar solo los archivos usados a `assets/audio/`.
 - [ ] **Paso 2:** implementar `AudioManager` y conectar música por escena.
-- [ ] **Paso 3:** escribir `assets/credits.txt` con autor y licencia de cada asset y pista usados (Atelier Magicae y CC-BY obligatorios).
+- [ ] **Paso 3:** escribir `assets/credits.txt` con autor y licencia de cada asset y pista usados (Atelier Magicae y CC-BY obligatorios). *Parcial: el archivo ya existe con equipo, personajes, jefes, escenario, shaders y audio; faltan licencias y autores de varios assets y pistas ("por confirmar").*
 - [ ] **Paso 4: Verificación manual** — cada escena suena con su pista; pasos, swings, impactos, rugidos y menús suenan; la pausa baja la música.
 - [ ] **Paso 5: Commit** — `feat: add audio manager, music and sfx`
 
