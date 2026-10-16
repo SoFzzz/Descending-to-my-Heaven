@@ -43,6 +43,8 @@ var _sfx_next := 0
 var _ui_players: Array[AudioStreamPlayer] = []
 var _ui_last_confirm_ms := -100000
 var _pause_drop_db := 0.0
+var _duck_db := 0.0
+var _duck_tween: Tween
 var _rng := RandomNumberGenerator.new()
 
 
@@ -124,7 +126,25 @@ func _apply_music_bus() -> void:
 		return
 	var settings := get_node_or_null(^"/root/UserSettings")
 	var base_db: float = settings.call(&"volume_db", BUS_MUSIC) if settings else 0.0
-	AudioServer.set_bus_volume_db(idx, base_db + _pause_drop_db)
+	AudioServer.set_bus_volume_db(idx, base_db + _pause_drop_db + _duck_db)
+
+
+## Baja la música `db` dB (negativo; 0 la devuelve) en `time` s, p. ej. mientras suenan los blips del
+## final. Se suma al volumen de opciones y al descuento de la pausa.
+func duck_music(db: float, time: float = 1.0) -> void:
+	if _duck_tween and _duck_tween.is_valid():
+		_duck_tween.kill()
+	_duck_tween = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS).set_ignore_time_scale(true)
+	_duck_tween.tween_method(_set_duck, _duck_db, minf(db, 0.0), maxf(time, 0.01))
+
+
+func _set_duck(db: float) -> void:
+	_duck_db = db
+	_apply_music_bus()
+
+
+func get_duck_db() -> float:
+	return _duck_db
 
 
 # --- Música -------------------------------------------------------------------------------------

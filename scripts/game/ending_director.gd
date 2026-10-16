@@ -5,8 +5,9 @@ extends Node
 ## - Al iniciar hace respirar a Elysia (sube y baja unos 2 cm en bucle) y escucha el EndingTrigger.
 ## - Cuando Kaelen entra al EndingTrigger con la arena despejada ejecuta `play()` una sola vez:
 ##   bloquea a Kaelen, oculta su HUD, la coloca frente a Elysia, gira a Elysia hacia ella, muestra
-##   dos cámaras con un texto cada una, resuelve el abrazo con un fundido a negro y pide
-##   GameState.advance_level() (que desde la arena 3 lleva a los créditos).
+##   dos cámaras que se alternan según el guion (ENDING_LINES), muestra los diálogos en una caja
+##   (DialogueBox) que avanza SOLO cuando el jugador pulsa, resuelve el abrazo con un fundido a negro y
+##   pide GameState.advance_level() (que desde la arena 3 lleva a los créditos).
 ## Si falta algún nodo avisa con push_warning y sigue; nunca se queda esperando.
 
 ## Respiración de Elysia: amplitud (m) y duración de cada medio ciclo (s).
@@ -16,13 +17,10 @@ const BREATH_HALF_CYCLE := 1.6
 const ELYSIA_TURN_TIME := 0.8
 const ELYSIA_FRONT_YAW_OFFSET := 0.0
 
-## Pausa inicial antes del primer plano y duración de los textos.
+## Pausa inicial antes de la primera línea y fundido de la caja de diálogo.
 const LEAD_IN_TIME := 0.5
-const TEXT_FADE_IN := 1.0
-const TEXT_FADE_OUT := 1.0
-## Tiempo que el texto queda completo tras revelarse (el jugador puede saltarlo con el ataque).
-const SHOT_1_HOLD := 1.5
-const SHOT_2_HOLD := 1.5
+const BOX_FADE_IN := 0.8
+const BOX_FADE_OUT := 0.8
 ## Fundido a negro que resuelve el abrazo y pausa en negro antes de pasar a los créditos.
 const EMBRACE_FADE_TIME := 1.8
 const EMBRACE_BLACK_HOLD := 0.6
@@ -30,13 +28,22 @@ const EMBRACE_BLACK_HOLD := 0.6
 ## Fundido de salida del viento de la caída al pasar a créditos (s).
 const WIND_FADE_OUT := 1.2
 
-const TEXT_LAYER := 20
-const TEXT_FONT_SIZE := 14
-const TEXT_BOTTOM_MARGIN := 24.0
+## Durante el diálogo la música baja este nivel (dB) para que se oigan los blips.
+const MUSIC_DUCK_DB := -7.0
+const MUSIC_DUCK_TIME := 1.0
 
-## Claves de traducción (localization/translations.csv); el prefijo "Kaelen:" / "Elysia:" se mantiene en ambos idiomas.
-const SHOT_1_TEXT := "ENDING_SHOT_1"
-const SHOT_2_TEXT := "ENDING_SHOT_2"
+const TEXT_LAYER := 20
+
+## Guion del final: clave de traducción (localization/translations.csv; el prefijo "Kaelen:" / "Elysia:"
+## se mantiene en ambos idiomas y solo sirve para saber quién habla) y plano de cámara de cada línea:
+## 1 = EndingCam1 (lejana, con la isla cayendo), 2 = EndingCam2 (cercana, las dos juntas).
+const ENDING_LINES: Array[Array] = [
+	["ENDING_01", 1], ["ENDING_02", 1], ["ENDING_03", 1], ["ENDING_04", 1],
+	["ENDING_05", 2], ["ENDING_06", 2], ["ENDING_07", 2], ["ENDING_08", 2], ["ENDING_09", 2],
+	["ENDING_10", 1], ["ENDING_11", 1], ["ENDING_12", 1],
+	["ENDING_13", 2], ["ENDING_14", 2], ["ENDING_15", 2], ["ENDING_16", 2],
+	["ENDING_17", 2], ["ENDING_18", 2], ["ENDING_19", 1],
+]
 
 ## Música del encuentro con Elysia (también suena en los créditos).
 @export var music: AudioStream
@@ -51,11 +58,8 @@ var _cam_1: Camera3D
 var _cam_2: Camera3D
 var _end_point: Node3D
 var _text_layer: CanvasLayer
-var _label: Label
 var _overlay: ColorRect
-var _typewriter: Typewriter
-
-signal hold_over   ## fin de la pausa con el texto completo (por tiempo o por avanzar)
+var _box: DialogueBox
 
 
 ## Texto de un plano en el idioma actual.
@@ -63,11 +67,18 @@ static func localized(key: String) -> String:
 	return TranslationServer.translate(StringName(key))
 
 
-## Duración total aproximada de la secuencia (s), sin contar el fundido propio de GameState.
+## Duración mínima de la secuencia (s): revelado de todas las líneas, la entrada y el abrazo. No incluye
+## lo que tarde el jugador en pulsar entre líneas (el diálogo ya no avanza solo).
 static func total_duration() -> float:
-	var shot_1 := Typewriter.reveal_duration(localized(SHOT_1_TEXT)) + SHOT_1_HOLD + TEXT_FADE_OUT
-	var shot_2 := Typewriter.reveal_duration(localized(SHOT_2_TEXT)) + SHOT_2_HOLD + TEXT_FADE_OUT
-	return LEAD_IN_TIME + shot_1 + shot_2 + EMBRACE_FADE_TIME + EMBRACE_BLACK_HOLD
+	var total := LEAD_IN_TIME + BOX_FADE_OUT + EMBRACE_FADE_TIME + EMBRACE_BLACK_HOLD
+	for entry in ENDING_LINES:
+		total += Typewriter.reveal_duration(DialogueBox.parse_line(localized(entry[0]))["body"])
+	return total
+
+
+## Número de líneas del guion.
+static func line_count() -> int:
+	return ENDING_LINES.size()
 
 
 ## true si la secuencia debe arrancar: no se ha reproducido, entró Kaelen y la arena está despejada.
@@ -156,14 +167,19 @@ func play() -> void:
 	if not await _wait(LEAD_IN_TIME):
 		return
 
-	# Plano 1: cámara lejana, primer texto.
-	_activate_camera(_cam_1)
-	if not await _show_text(localized(SHOT_1_TEXT), SHOT_1_HOLD):
-		return
-	# Plano 2: cámara cercana, segundo texto.
-	_activate_camera(_cam_2)
-	if not await _show_text(localized(SHOT_2_TEXT), SHOT_2_HOLD):
-		return
+	# Diálogo: cada línea se revela con el typewriter y espera a que el jugador pulse; el plano de
+	# cámara cambia cuando la línea que toca pertenece a otro plano.
+	_duck_music(MUSIC_DUCK_DB)
+	_box.fade(1.0, BOX_FADE_IN)
+	var shot := 0
+	for entry in ENDING_LINES:
+		if int(entry[1]) != shot:
+			shot = int(entry[1])
+			_activate_camera(_cam_1 if shot == 1 else _cam_2)
+		if not await _say(localized(entry[0])):
+			return
+	_box.fade(0.0, BOX_FADE_OUT)
+	_duck_music(0.0)
 	# Abrazo: se resuelve con un fundido a negro.
 	_tween_alpha(_overlay, 1.0, EMBRACE_FADE_TIME)
 	if not await _wait(EMBRACE_FADE_TIME + EMBRACE_BLACK_HOLD):
@@ -210,35 +226,19 @@ func _activate_camera(cam: Camera3D) -> void:
 	cam.make_current()
 
 
-## Fundido de entrada con el texto revelándose letra a letra (con voz), pausa de `hold` s con el texto
-## completo y fundido de salida. El ataque completa la línea y, ya completa, pasa a la siguiente.
+## Muestra una línea y espera a que el jugador la complete y pulse otra vez para pasar.
 ## Devuelve false si el árbol cambió.
-func _show_text(text: String, hold: float) -> bool:
-	_tween_alpha(_label, 1.0, TEXT_FADE_IN)
-	_typewriter.start(_label, text)
-	if _typewriter.is_revealing():
-		await _typewriter.finished
-	if not is_inside_tree():
-		return false
-	if not await _hold(hold):
-		return false
-	_tween_alpha(_label, 0.0, TEXT_FADE_OUT)
-	return await _wait(TEXT_FADE_OUT)
-
-
-## Espera `seconds` s con el texto completo o hasta que el jugador pulse avanzar.
-func _hold(seconds: float) -> bool:
-	if not is_inside_tree():
-		return false
-	var timer := get_tree().create_timer(seconds)
-	timer.timeout.connect(hold_over.emit)
-	_typewriter.advanced.connect(hold_over.emit)
-	await hold_over
-	if timer.timeout.is_connected(hold_over.emit):
-		timer.timeout.disconnect(hold_over.emit)
-	if _typewriter.advanced.is_connected(hold_over.emit):
-		_typewriter.advanced.disconnect(hold_over.emit)
+func _say(line: String) -> bool:
+	_box.show_line(line)
+	await _box.advanced
 	return is_inside_tree()
+
+
+## Baja (o devuelve a 0) la música mientras suenan los blips.
+func _duck_music(db: float) -> void:
+	var audio := get_node_or_null(^"/root/AudioManager") if is_inside_tree() else null
+	if audio and audio.has_method(&"duck_music"):
+		audio.duck_music(db, MUSIC_DUCK_TIME)
 
 
 func _tween_alpha(item: CanvasItem, alpha: float, time: float) -> void:
@@ -255,30 +255,18 @@ func _wait(seconds: float) -> bool:
 	return is_inside_tree()
 
 
-## Capa con el fundido a negro y la línea de texto, creada por código (sobre el HUD y la pausa).
+## Capa con el fundido a negro y la caja de diálogo, creada por código (sobre el HUD y la pausa).
 func _build_text_layer() -> void:
 	_text_layer = CanvasLayer.new()
 	_text_layer.layer = TEXT_LAYER
+	_box = DialogueBox.new()
+	_text_layer.add_child(_box)
 	_overlay = ColorRect.new()
 	_overlay.color = Color.BLACK
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_overlay.modulate.a = 0.0
 	_text_layer.add_child(_overlay)
-	_label = Label.new()
-	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_label.offset_bottom = -TEXT_BOTTOM_MARGIN
-	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_label.add_theme_font_size_override(&"font_size", TEXT_FONT_SIZE)
-	_label.add_theme_color_override(&"font_outline_color", Color.BLACK)
-	_label.add_theme_constant_override(&"outline_size", 4)
-	_label.modulate.a = 0.0
-	_text_layer.add_child(_label)
-	_typewriter = Typewriter.new()
-	_text_layer.add_child(_typewriter)
 	add_child(_text_layer)
 
 
