@@ -9,6 +9,9 @@ uniform sampler2D albedoTex : source_color, filter_nearest;
 uniform vec2 uv_scale = vec2(1.0, 1.0);
 uniform vec2 uv_offset = vec2(.0, .0);
 uniform vec2 uv_pan_velocity = vec2(0.0);
+// Parpadeo al recibir un golpe (HitFlash): 0 = normal, 1 = todo del color del golpe.
+uniform float hit_flash : hint_range(0.0, 1.0) = 0.0;
+uniform vec3 hit_flash_color : source_color = vec3(1.0);
 
 // https://github.com/dsoft20/psx_retroshader/blob/master/Assets/Shaders/psx-vertexlit.shader
 const vec2 base_snap_res = vec2(160.0, 120.0);
@@ -34,5 +37,7 @@ void vertex()
 
 void fragment()
 {
-	ALBEDO = (COLOR * texture(albedoTex, UV) * modulate_color).rgb;
+	vec3 base = (COLOR * texture(albedoTex, UV) * modulate_color).rgb;
+	ALBEDO = mix(base, hit_flash_color, hit_flash);
+	EMISSION = hit_flash_color * hit_flash * 0.5;
 }

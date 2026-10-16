@@ -18,4 +18,6 @@ func receive_hit(amount: int, source: Node) -> void:
 	var final := roundi(amount * damage_multiplier)
 	if health:
 		health.take_damage(final)
+	if final > 0 and is_inside_tree():
+		HitFlash.flash(HitFlash.model_for(self), HitFlash.color_for(self))
 	hurt.emit(final, source)
