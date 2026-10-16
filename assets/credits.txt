@@ -98,7 +98,10 @@ Interfaz
 
 Free PSX UI
 Autor: rohhsa (rohhsa.itch.io). Licencia: CC0.
-El título de pausa en español (pausa_text.png) recompone las letras de su imagen PAUSE.
+Se usa el Skin04 (panel y recuadro de selección, retocados de color).
+
+DungeonFont (tipografía de títulos y botones)
+Autor: 0x72 y vrtxrry (vrtxrry.itch.io/dungeonfont). Licencia: CC0, según los metadatos del archivo de la fuente (por confirmar en la página de origen).
 
 Fondo del menú principal (degradado oscuro; la silueta de la isla es el modelo de la isla del juego en negro)
 Dibujado por script en el proyecto (scripts/tools/gen_menu_bg.py).
