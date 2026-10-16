@@ -60,6 +60,7 @@ func _main() -> void:
 		for profile in profiles:
 			var repels := 0.0
 			var dmg := 0.0
+			var atk := 0.0
 			var ttk := 0.0
 			var ttk_n := 0
 			_lags.clear()
@@ -67,11 +68,12 @@ func _main() -> void:
 				var res := _run(BOSSES[boss_name], profile, MAX_TIME, 1000 + r)
 				repels += res.repels30
 				dmg += res.damage30
+				atk += res.attacks30
 				if res.dead:
 					ttk += res.time
 					ttk_n += 1
-			print("%-12s %-12s repulsiones/30s=%.2f  daño/30s=%.0f  TTK=%.1fs (%d/%d mueren)  retraso umbral-rugido=%.2fs" % [
-				boss_name, profile, repels / RUNS, dmg / RUNS, ttk / maxf(1, ttk_n), ttk_n, RUNS, _mean(_lags)])
+			print("%-12s %-12s repulsiones/30s=%.2f  daño/30s=%.0f  ataques/30s=%.1f  TTK=%.1fs (%d/%d mueren)  retraso umbral-rugido=%.2fs" % [
+				boss_name, profile, repels / RUNS, dmg / RUNS, atk / RUNS, ttk / maxf(1, ttk_n), ttk_n, RUNS, _mean(_lags)])
 	quit()
 
 
@@ -149,12 +151,12 @@ func _run(path: String, profile: String, duration: float, seed_value: int) -> Di
 				_lags.append(t - pend_t)
 			pend_t = -1.0
 		if snap.is_empty() and t >= 30.0:
-			snap = {repels = boss.repel_count, damage = boss.max_health - boss.health.current}
+			snap = {repels = boss.repel_count, damage = boss.max_health - boss.health.current, attacks = boss.attack_log.size()}
 	if snap.is_empty():
-		snap = {repels = boss.repel_count, damage = boss.max_health - boss.health.current}
+		snap = {repels = boss.repel_count, damage = boss.max_health - boss.health.current, attacks = boss.attack_log.size()}
 	if OS.get_cmdline_user_args().has("debug"):
 		print("  dbg estado=%d dist=%.2f hp=%d attacks=%d" % [boss.state, (player.global_position - boss.global_position).length(), boss.health.current, boss.attack_log.size()])
-	var out := {repels30 = snap.repels, damage30 = snap.damage,
+	var out := {repels30 = snap.repels, damage30 = snap.damage, attacks30 = snap.attacks,
 			dead = boss.state == Boss.State.DEAD, time = t}
 	boss.free()
 	player.free()

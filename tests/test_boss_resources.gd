@@ -107,7 +107,7 @@ func test_blackhorn_scene() -> void:
 	assert_true(boss != null, "boss_blackhorn.tscn carga como Boss")
 	if boss == null:
 		return
-	assert_eq(boss.max_health, 500)
+	assert_eq(boss.max_health, 625)
 	assert_eq(boss.display_name, "Blackhorn")
 	var nav := boss.get_node(^"NavigationAgent3D") as NavigationAgent3D
 	assert_eq(nav.navigation_layers, 2, "navegación capa grande")
@@ -121,14 +121,14 @@ func test_blackhorn_scene() -> void:
 	if hurt:
 		assert_almost(hurt.radius, 1.0)
 		assert_almost(hurt.height, 3.2)
-	assert_almost((_shape(boss, "SlamHitbox") as SphereShape3D).radius, 3.0, 0.001, "golpe al suelo: esfera r 3")
-	assert_almost((_shape(boss, "PounceHitbox") as BoxShape3D).size.x, 2.0)
-	assert_almost((_shape(boss, "PounceHitbox") as BoxShape3D).size.y, 2.0)
-	assert_almost((_shape(boss, "PounceHitbox") as BoxShape3D).size.z, 4.0, 0.001, "zarpazo 2 x 2 x 4")
+	assert_almost((_shape(boss, "SlamHitbox") as SphereShape3D).radius, 3.8, 0.001, "golpe al suelo: esfera r 3.8 (cubre hasta su max_range)")
+	assert_almost((_shape(boss, "PounceHitbox") as BoxShape3D).size.x, 3.2)
+	assert_almost((_shape(boss, "PounceHitbox") as BoxShape3D).size.y, 2.4)
+	assert_almost((_shape(boss, "PounceHitbox") as BoxShape3D).size.z, 5.0, 0.001, "zarpazo 3.2 x 2.4 x 5 (desde pegado al cuerpo)")
 	var charge := (_shape(boss, "ChargeHitbox") as BoxShape3D).size
-	assert_almost(charge.x, 1.5)
+	assert_almost(charge.x, 2.4)
 	assert_almost(charge.y, 2.5)
-	assert_almost(charge.z, 3.0, 0.001, "embestida 1.5 x 2.5 x 3")
+	assert_almost(charge.z, 4.0, 0.001, "embestida 2.4 x 2.5 x 4")
 	for claw in ["ClawLHitbox", "ClawRHitbox"]:
 		var s := _shape(boss, claw) as SphereShape3D
 		assert_true(s != null, claw)
@@ -147,7 +147,7 @@ func test_ghidorah_scene() -> void:
 	assert_true(boss != null, "boss_ghidorah.tscn carga como Boss")
 	if boss == null:
 		return
-	assert_eq(boss.max_health, 600)
+	assert_eq(boss.max_health, 750)
 	assert_eq(boss.display_name, "Mecha King Ghidorah")
 	assert_eq((boss.get_node(^"NavigationAgent3D") as NavigationAgent3D).navigation_layers, 2)
 	_check_attack_wiring(boss, "ghidorah")
@@ -159,7 +159,7 @@ func test_ghidorah_scene() -> void:
 	assert_almost((_shape(boss, "BiteHitbox") as BoxShape3D).size.z, 7.0, 0.001, "mordida: zona fija de 7 m de fondo (de pegado al cuerpo a 5 m)")
 	assert_almost((_shape(boss, "BeamHitbox") as BoxShape3D).size.z, 2.0, 0.001, "rayo: zona corta que viaja con el impacto")
 	assert_almost((_shape(boss, "BeamHitbox") as BoxShape3D).size.x, 1.5)
-	assert_almost((_shape(boss, "TailSweepHitbox") as BoxShape3D).size.z, 6.0, 0.001, "cola de 6 m")
+	assert_almost((_shape(boss, "TailSweepHitbox") as BoxShape3D).size.z, 9.6, 0.001, "cola de 9.6 m: del cuerpo al borde del aviso, sin hueco")
 	# Cabezas: solo hurtbox (esfera r 1.0), cerradas hasta que baje la cabeza.
 	for head in ["HeadCHurtbox", "HeadLHurtbox", "HeadRHurtbox"]:
 		var hurt := boss.get_node_or_null(NodePath(head)) as Hurtbox
