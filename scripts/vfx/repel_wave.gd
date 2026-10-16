@@ -1,7 +1,7 @@
 class_name RepelWave
 extends MeshInstance3D
-## Onda de choque de la repulsion de los jefes: un anillo plano que crece desde el jefe hasta el radio
-## del empuje y se desvanece. Se crea en codigo (sin escena) y se libera solo.
+## Shockwave of the bosses' repel: a flat ring that grows from the boss up to the shove radius
+## and fades out. Created in code (no scene) and frees itself.
 
 const DURATION := 0.4
 const START_FRACTION := 0.15
@@ -10,13 +10,13 @@ const COLOR := Color(1.0, 0.55, 0.25)
 static var _mesh: TorusMesh
 
 
-## Crea la onda en el suelo bajo `boss` (hermana suya, para que no gire con el jefe).
+## Creates the wave on the ground under `boss` (its sibling, so it does not turn with the boss).
 static func spawn(boss: Node3D, radius: float) -> RepelWave:
 	if not boss.is_inside_tree() or boss.get_parent() == null:
 		return null
 	var wave := RepelWave.new()
 	wave.mesh = _shared_mesh()
-	wave.material_override = _new_material()   # propio: son pocas (una cada >= 7 s) y cada una se desvanece
+	wave.material_override = _new_material()   # own material: there are few (one every >= 7 s) and each one fades out
 	wave.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	boss.get_parent().add_child(wave)
 	wave.global_position = boss.global_position + Vector3.UP * 0.15

@@ -1,9 +1,9 @@
 class_name HitFlash
 extends RefCounted
-## Parpadeo de material al recibir un golpe: sube el uniform `hit_flash` de los materiales PSX
-## (shaders/psx/psx_lit.gdshader) del modelo a 1 y lo baja a 0 en ~0,1 s. Barato: solo toca los
-## materiales ya aplicados por PSX.apply_psx (nada de overlays ni pases extra) y un Tween atado al
-## modelo (se libera con él y se pausa con el juego).
+## Material flash on taking a hit: raises the `hit_flash` uniform of the model's PSX materials
+## (shaders/psx/psx_lit.gdshader) to 1 and lowers it to 0 in ~0.1 s. Cheap: it only touches the
+## materials already applied by PSX.apply_psx (no overlays or extra passes) and a Tween bound to the
+## model (freed with it and paused with the game).
 
 const DURATION := 0.1
 const COLOR_ENEMY := Color(1.0, 1.0, 1.0)
@@ -12,7 +12,7 @@ const META_TWEEN := &"_hit_flash_tween"
 const META_MATS := &"_hit_flash_mats"
 
 
-## Parpadea el modelo `model` (nodo raíz de las mallas) con `color`.
+## Flashes `model` (root node of the meshes) with `color`.
 static func flash(model: Node, color: Color = COLOR_ENEMY, duration: float = DURATION) -> void:
 	if model == null or not model.is_inside_tree():
 		return
@@ -29,8 +29,8 @@ static func flash(model: Node, color: Color = COLOR_ENEMY, duration: float = DUR
 	tween.tween_callback(_set_all.bind(mats, 0.0, color))
 
 
-## Brillo suave y progresivo (sube a `peak` y baja a 0 en `duration` s): curación, buffs. A diferencia de
-## `flash`, nunca tapa del todo la textura (peak < 1).
+## Soft, progressive glow (rises to `peak` and falls to 0 in `duration` s): healing, buffs. Unlike
+## `flash`, it never fully covers the texture (peak < 1).
 static func glow(model: Node, color: Color, peak: float, duration: float) -> void:
 	if model == null or not model.is_inside_tree():
 		return
@@ -47,7 +47,7 @@ static func glow(model: Node, color: Color, peak: float, duration: float) -> voi
 	tween.tween_callback(_set_all.bind(mats, 0.0, color))
 
 
-## Apaga el parpadeo ya.
+## Turns the flash off immediately.
 static func clear(model: Node) -> void:
 	if model == null:
 		return
@@ -57,7 +57,7 @@ static func clear(model: Node) -> void:
 	_set_all(_materials(model), 0.0, Color.WHITE)
 
 
-## Valor actual del parpadeo del primer material (0 si no hay).
+## Current flash value of the first material (0 if there is none).
 static func amount(model: Node) -> float:
 	var mats := _materials(model)
 	if mats.is_empty():
@@ -65,8 +65,8 @@ static func amount(model: Node) -> float:
 	return float((mats[0] as ShaderMaterial).get_shader_parameter(&"hit_flash"))
 
 
-## Modelo que parpadea cuando `node` (una Hurtbox) recibe un golpe: el hijo `Model` (o el de
-## `model_path`) del primer ancestro jefe / esbirro / jugador.
+## Model that flashes when `node` (a Hurtbox) takes a hit: the `Model` child (or the one at
+## `model_path`) of the first boss / minion / player ancestor.
 static func model_for(node: Node) -> Node:
 	var cur := node.get_parent()
 	while cur != null:

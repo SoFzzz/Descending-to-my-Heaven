@@ -1,12 +1,12 @@
 class_name BeamVfx
 extends "res://assets/vfx/beam/vfx_beam_controller.gd"
-## Rayo de Mecha King Ghidorah (pack "Beam VFX" de Binbun, CC0). El jefe solo enciende y apaga el
-## nodo (`BossAttack.visual_path`): al encenderse el rayo se abre en OPEN_TIME segundos y al
-## apagarse se cierra de golpe. El largo (`beam_length`) y el radio coinciden con la hitbox.
+## Mecha King Ghidorah's beam (Binbun's "Beam VFX" pack, CC0). The boss only turns the node on and
+## off (`BossAttack.visual_path`): when turned on the beam opens over OPEN_TIME seconds and when
+## turned off it closes at once. Its length (`beam_length`) and radius match the hitbox.
 
 const OPEN_TIME := 0.18
-## Onda de brasas en el suelo donde el rayo impacta (MagicArea "ripple" de Magic Circles 3D Free):
-## anillos que se abren desde el punto de impacto; radio (m) y bajada desde el centro de la esfera.
+## Ember wave on the ground where the beam hits (MagicArea "ripple" from Magic Circles 3D Free):
+## rings that open from the impact point; radius (m) and drop from the sphere's center.
 const IMPACT_RIPPLE_RADIUS := 1.7
 const IMPACT_RIPPLE_DROP := 0.3
 
@@ -14,7 +14,7 @@ var _elapsed := 0.0
 var _ripple: MagicArea
 
 
-## Apertura (0-1) del rayo tras `elapsed` segundos encendido.
+## Opening (0-1) of the beam after `elapsed` seconds on.
 static func open_progress(elapsed: float, duration: float = OPEN_TIME) -> float:
 	if duration <= 0.0:
 		return 1.0
@@ -46,7 +46,7 @@ func _sync_ripple() -> void:
 		_ripple.appear = 0.25
 		_ripple.seed = 1.0
 		add_child(_ripple)
-		_ripple.top_level = true   # queda plana en el suelo aunque el rayo apunte en diagonal
+		_ripple.top_level = true   # stays flat on the ground even if the beam points diagonally
 	if _ripple:
 		_ripple.visible = visible
 		_ripple.process_mode = Node.PROCESS_MODE_INHERIT if visible else Node.PROCESS_MODE_DISABLED
