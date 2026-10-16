@@ -101,7 +101,7 @@ func _run() -> void:
 	_director = scene.get_node(^"EndingDirector")
 	scene.set(&"arena_cleared", true)
 	_director.play()
-	await _wait(1.8)
+	await _wait(2.7)
 	var box := _box()
 	_check(box != null and box.modulate.a > 0.9, "the dialogue box appears")
 	box.advanced.connect(func() -> void: _advances += 1)

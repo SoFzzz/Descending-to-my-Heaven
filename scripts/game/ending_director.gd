@@ -17,8 +17,13 @@ const BREATH_HALF_CYCLE := 1.6
 const ELYSIA_TURN_TIME := 0.8
 const ELYSIA_FRONT_YAW_OFFSET := 0.0
 
-## Initial pause before the first line and fades of the dialogue box.
-const LEAD_IN_TIME := 0.5
+## Cut to the meeting: fade to black (Kaelen is moved to her mark while the screen is black), then
+## fade in on the first shot. The player never sees Kaelen travel to the mark.
+const CUT_FADE_OUT := 0.5
+const CUT_FADE_IN := 0.6
+
+## Pause after the screen is clear and before the first line, and fades of the dialogue box.
+const LEAD_IN_TIME := 0.4
 const BOX_FADE_IN := 0.8
 const BOX_FADE_OUT := 0.8
 ## Fade to black that resolves the embrace, and the hold on black before the credits.
@@ -48,6 +53,10 @@ const ENDING_LINES: Array[Array] = [
 ## Music of the meeting with Elysia (it also plays in the credits).
 @export var music: AudioStream
 @export var music_fade := 2.0
+
+## Emitted while the screen is fully black, right after Kaelen was placed at her mark and the first
+## shot was set (tests use it to check nothing is seen in between).
+signal actors_placed
 
 var _played := false
 var _breath_tween: Tween
@@ -162,16 +171,28 @@ func play() -> void:
 		push_warning("EndingDirector: no Kaelen; skipping the ending")
 		_finish()
 		return
-	_prepare_actors(player)
+	# Lock Kaelen where she stands (she is in the trigger, running at most), cut to black, and only
+	# then move everything: the island starts falling under the black so the clouds and the wind
+	# are already moving when the picture comes back.
+	player.set_cutscene(true)
 	_build_text_layer()
-	if not await _wait(LEAD_IN_TIME):
+	_tween_alpha(_overlay, 1.0, CUT_FADE_OUT)
+	if not await _wait(CUT_FADE_OUT):
+		return
+	_prepare_actors(player)
+	var shot := 1
+	_activate_camera(_cam_1)
+	await get_tree().process_frame   # let the new transform and the idle pose reach the renderer
+	await get_tree().process_frame
+	actors_placed.emit()
+	_tween_alpha(_overlay, 0.0, CUT_FADE_IN)
+	if not await _wait(CUT_FADE_IN + LEAD_IN_TIME):
 		return
 
 	# Dialogue: each line is revealed by the typewriter and waits for the player to press; the camera
 	# shot changes when the next line belongs to another shot.
 	_duck_music(MUSIC_DUCK_DB)
 	_box.fade(1.0, BOX_FADE_IN)
-	var shot := 0
 	for entry in ENDING_LINES:
 		if int(entry[1]) != shot:
 			shot = int(entry[1])
@@ -193,9 +214,8 @@ func _start_music() -> void:
 		audio.play_music(music, music_fade)
 
 
-## Locks Kaelen, hides her HUD and places both face to face.
+## Hides her HUD and places both face to face. Call it only with the screen black.
 func _prepare_actors(player: Player) -> void:
-	player.set_cutscene(true)
 	var hud := player.get_node_or_null(^"HUD") as CanvasLayer
 	if hud:
 		hud.visible = false
