@@ -850,7 +850,7 @@ func _exit_ending(root: Node3D, geo: Node3D, cfg: Dictionary, half_d: float,
 	_corridor(comb, z0, length, -1, GATE_W, GATE_H + 1, floor_mat, wall_mat)
 	# Sala: caja hueca con hueco hacia el pasillo.
 	var zc := z0 - length - room.z / 2
-	var room_mat := _mat("gold512", Color(0.75, 0.7, 0.6))
+	var room_mat := wall_mat   # piedra de la mazmorra (antes dorada): el muro norte y el altar casan con la sala
 	_box(comb, "RoomFloor", Vector3(room.x + 2, 1, room.z + 2), Vector3(0, -0.5, zc), floor_mat)
 	_box(comb, "RoomCeiling", Vector3(room.x + 2, 1, room.z + 2), Vector3(0, room.y + 0.5, zc), wall_mat)
 	_box(comb, "RoomWallN", Vector3(room.x + 2, room.y, 1), Vector3(0, room.y / 2, zc - room.z / 2 - 0.5), room_mat)
