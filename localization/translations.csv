@@ -4,7 +4,7 @@ MENU_OPTIONS,Opciones,Options
 MENU_CREDITS,Créditos,Credits
 MENU_QUIT,Salir,Quit
 MENU_HINT,"Flechas / cruceta + Enter / A, o ratón","Arrows / D-pad + Enter / A, or mouse"
-PAUSE_TITLE,PAUSA,PAUSED
+PAUSE_TITLE,Pausa,Paused
 PAUSE_CONTINUE,Continuar,Resume
 PAUSE_OPTIONS,Opciones,Options
 PAUSE_MAIN_MENU,Volver al menú principal,Back to main menu
@@ -31,7 +31,7 @@ CREDITS_LICENSE,Licencia,License
 CREDITS_SOURCE,Fuente,Source
 CREDITS_AUTHOR_LICENSE_TBC,Autor y licencia por confirmar,Author and license to be confirmed
 CREDITS_TBC,por confirmar,to be confirmed
-OPT_TITLE,OPCIONES,OPTIONS
+OPT_TITLE,Opciones,Options
 OPT_TAB_CONTROLS,Controles,Controls
 OPT_TAB_VOLUME,Volumen,Volume
 OPT_TAB_LANGUAGE,Idioma,Language
@@ -41,7 +41,7 @@ OPT_COL_ACTION,Acción,Action
 OPT_COL_KEYBOARD,Teclado / ratón,Keyboard / mouse
 OPT_COL_GAMEPAD,Mando,Gamepad
 OPT_PRESS_ANY,Pulsa una tecla o botón... (Esc cancela),Press a key or button... (Esc cancels)
-OPT_PRESS_PAD,Pulsa un botón del mando... (B cancela),Press a gamepad button... (B cancels)
+OPT_PRESS_PAD,Pulsa un botón del mando... (Back cancela),Press a gamepad button... (Back cancels)
 OPT_ASSIGNED,Asignado: %s,Assigned: %s
 OPT_SWAPPED,Intercambiado con «%s»,"Swapped with ""%s"""
 OPT_RESTORED,Controles restaurados,Controls restored

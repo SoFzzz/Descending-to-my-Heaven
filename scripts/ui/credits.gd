@@ -1,3 +1,4 @@
+class_name Credits
 extends Control
 ## Pantalla de créditos (spec §10.4): equipo y lista de assets con autor y licencia (requisito CC BY)
 ## con botón para volver al menú. Lee res://assets/credits.txt y lo muestra en un ScrollContainer que
@@ -7,7 +8,21 @@ extends Control
 const CREDITS_MUSIC := preload("res://assets/audio/bgm/ending_celtic_melancholy.mp3")
 const CREDITS_PATH := "res://assets/credits.txt"
 const MAIN_MENU_PATH := "res://scenes/ui/main_menu.tscn"
-const FALLBACK_TEXT := "Descending to my Heaven\n\nNo se pudo cargar la lista de créditos."
+## Títulos de sección de credits.txt (en español) -> clave de traducción.
+const SECTION_KEYS := {
+	"Equipo": "CREDITS_SEC_TEAM", "Personajes y jefes": "CREDITS_SEC_CHARACTERS",
+	"Escenario, armas y objetos": "CREDITS_SEC_WORLD", "Shaders": "CREDITS_SEC_SHADERS",
+	"Audio": "CREDITS_SEC_AUDIO", "Interfaz": "CREDITS_SEC_UI", "Efectos visuales": "CREDITS_SEC_VFX",
+	"Animaciones": "CREDITS_SEC_ANIMATIONS", "Motor": "CREDITS_SEC_ENGINE",
+	"Gracias por jugar": "CREDITS_SEC_THANKS",
+}
+## Etiquetas que se traducen dentro de las líneas (la más larga primero).
+const TOKEN_KEYS := [
+	["Autor y licencia por confirmar", "CREDITS_AUTHOR_LICENSE_TBC"],
+	["autor y licencia por confirmar", "CREDITS_AUTHOR_LICENSE_TBC"],
+	["por confirmar", "CREDITS_TBC"],
+	["Autor:", "CREDITS_AUTHOR"], ["Licencia:", "CREDITS_LICENSE"], ["Fuente:", "CREDITS_SOURCE"],
+]
 const AUTO_SCROLL_SPEED := 30.0   # píxeles por segundo
 const MANUAL_SCROLL_SPEED := 300.0   # píxeles por segundo con las flechas
 const PAUSE_AFTER_MANUAL := 4.0   # segundos sin auto-scroll tras interactuar a mano
@@ -23,7 +38,7 @@ var _leaving := false
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	_text.text = _credits_bbcode(_load_credits())
+	_text.text = _credits_bbcode(localize(_load_credits()))
 	_scroll.gui_input.connect(_on_scroll_gui_input)
 	_back.pressed.connect(_go_back)
 	_back.set_meta(&"ui_sound", &"back")
@@ -88,8 +103,32 @@ func _load_credits() -> String:
 	var text := FileAccess.get_file_as_string(CREDITS_PATH)
 	if text.is_empty():
 		push_warning("Créditos: no se pudo leer '%s'; se muestra el texto de respaldo." % CREDITS_PATH)
-		return FALLBACK_TEXT
+		return tr("CREDITS_FALLBACK")
 	return text
+
+
+## Traduce los títulos de sección y las etiquetas (Autor / Licencia / Fuente / por confirmar) del
+## texto de créditos al idioma actual. En español no cambia nada. Los nombres de assets, autores y
+## licencias no se traducen.
+static func localize(plain: String) -> String:
+	var lines := plain.replace("\r", "").split("\n")
+	var out: PackedStringArray = []
+	for line in lines:
+		var key: String = SECTION_KEYS.get(line.strip_edges(), "")
+		if key != "":
+			out.append(TranslationServer.translate(StringName(key)))
+			continue
+		var text := line
+		for token: Array in TOKEN_KEYS:
+			var translated := TranslationServer.translate(StringName(token[1]))
+			var original: String = token[0]
+			if original.unicode_at(0) >= 97:   # empieza en minúscula
+				translated = translated.substr(0, 1).to_lower() + translated.substr(1)
+			if original.ends_with(":"):
+				translated += ":"
+			text = text.replace(original, translated)
+		out.append(text)
+	return "\n".join(out)
 
 
 ## Convierte el texto plano en BBCode centrado: escapa los corchetes para que no se interpreten como etiquetas.

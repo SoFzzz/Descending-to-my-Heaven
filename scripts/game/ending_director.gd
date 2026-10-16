@@ -31,8 +31,9 @@ const TEXT_LAYER := 20
 const TEXT_FONT_SIZE := 14
 const TEXT_BOTTOM_MARGIN := 24.0
 
-const SHOT_1_TEXT := "Tres pisos de acero y sangre...\ny en lo alto del templo, tu luz seguía encendida."
-const SHOT_2_TEXT := "Kaelen: \"Elysia... por fin te encuentro.\"\nElysia: \"Sabía que vendrías por mí.\""
+## Claves de traducción (localization/translations.csv); el prefijo "Kaelen:" / "Elysia:" se mantiene en ambos idiomas.
+const SHOT_1_TEXT := "ENDING_SHOT_1"
+const SHOT_2_TEXT := "ENDING_SHOT_2"
 
 ## Música del encuentro con Elysia (también suena en los créditos).
 @export var music: AudioStream
@@ -54,10 +55,15 @@ var _typewriter: Typewriter
 signal hold_over   ## fin de la pausa con el texto completo (por tiempo o por avanzar)
 
 
+## Texto de un plano en el idioma actual.
+static func localized(key: String) -> String:
+	return TranslationServer.translate(StringName(key))
+
+
 ## Duración total aproximada de la secuencia (s), sin contar el fundido propio de GameState.
 static func total_duration() -> float:
-	var shot_1 := Typewriter.reveal_duration(SHOT_1_TEXT) + SHOT_1_HOLD + TEXT_FADE_OUT
-	var shot_2 := Typewriter.reveal_duration(SHOT_2_TEXT) + SHOT_2_HOLD + TEXT_FADE_OUT
+	var shot_1 := Typewriter.reveal_duration(localized(SHOT_1_TEXT)) + SHOT_1_HOLD + TEXT_FADE_OUT
+	var shot_2 := Typewriter.reveal_duration(localized(SHOT_2_TEXT)) + SHOT_2_HOLD + TEXT_FADE_OUT
 	return LEAD_IN_TIME + shot_1 + shot_2 + EMBRACE_FADE_TIME + EMBRACE_BLACK_HOLD
 
 
@@ -148,11 +154,11 @@ func play() -> void:
 
 	# Plano 1: cámara lejana, primer texto.
 	_activate_camera(_cam_1)
-	if not await _show_text(SHOT_1_TEXT, SHOT_1_HOLD):
+	if not await _show_text(localized(SHOT_1_TEXT), SHOT_1_HOLD):
 		return
 	# Plano 2: cámara cercana, segundo texto.
 	_activate_camera(_cam_2)
-	if not await _show_text(SHOT_2_TEXT, SHOT_2_HOLD):
+	if not await _show_text(localized(SHOT_2_TEXT), SHOT_2_HOLD):
 		return
 	# Abrazo: se resuelve con un fundido a negro.
 	_tween_alpha(_overlay, 1.0, EMBRACE_FADE_TIME)
