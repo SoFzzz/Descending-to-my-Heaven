@@ -32,7 +32,7 @@ radius = 1.0
 size = Vector3(4.6, 2.4, 7)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_tail"]
-size = Vector3(2.5, 3, 6)
+size = Vector3(2.8, 3, 9.6)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_beam"]
 size = Vector3(1.5, 2.4, 2)
@@ -67,13 +67,13 @@ size = Vector3(1.5, 0.02, 1)
 [node name="BossGhidorah" instance=ExtResource("1_base")]
 display_name = "Mecha King Ghidorah"
 attacks = Array[ExtResource("5_attack")]([ExtResource("7_bite"), ExtResource("8_tail"), ExtResource("9_beam")])
-max_health = 600
+max_health = 750
 sfx_phase2 = ExtResource("a_roar")
 sfx_death = ExtResource("a_death")
 move_speed = 3.0
 detect_radius = 50.0
 engage_range = 5.0
-attack_cooldown = 0.6
+attack_cooldown = 0.35
 gated_hurtboxes = Array[NodePath]([NodePath("HeadCHurtbox"), NodePath("HeadLHurtbox"), NodePath("HeadRHurtbox")])
 gated_grace = 0.25
 
@@ -82,7 +82,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
 shape = SubResource("CapsuleShape3D_body")
 
 [node name="Health" parent="." index="1"]
-max_value = 600
+max_value = 750
 
 [node name="LockOnPoint" parent="." index="3"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
@@ -204,19 +204,19 @@ collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
-damage = 12
+damage = 14
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="BiteHitbox"]
 shape = SubResource("BoxShape3D_bite")
 
 [node name="TailSweepHitbox" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 6.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 4.8)
 collision_layer = 32
 collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
-damage = 10
+damage = 12
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TailSweepHitbox"]
 shape = SubResource("BoxShape3D_tail")
@@ -228,7 +228,7 @@ collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
-damage = 14
+damage = 16
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="BeamHitbox"]
 shape = SubResource("BoxShape3D_beam")

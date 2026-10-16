@@ -381,15 +381,56 @@ puntaje = peso_base
 
 Elige por sorteo ponderado entre los 2 mejores (para que no sea completamente predecible). El jefe guarda un historial corto de cómo esquiva el jugador para el bonus de anticipación.
 
-**Repulsión (anti ráfagas de daño).** Para que el jugador no le haga mucho daño de seguido, cada jefe suma el daño que recibe en una ventana deslizante. Si en los últimos **4 s** recibe al menos el **15 % de su vida máxima** (60 de 400 en Bone Dragon, 75 de 500 en Blackhorn, 90 de 600 en Ghidorah; en la práctica, un combo completo de Kaelen), reacciona:
+**Repulsión (anti ráfagas de daño).** Para que el jugador no encadene golpes sin parar ni se quede pegado al jefe, cada jefe reacciona cuando se cumple **cualquiera** de estas tres condiciones (y el enfriamiento terminó):
 
-- Interrumpe lo que esté haciendo (aviso o ataque activo) y reproduce la misma animación de rugido y el mismo sonido que usa al pasar a la fase 2, pero sin cambiar de fase ni aplicar sus efectos.
-- Mientras ruge es **invulnerable**: los golpes no hacen daño.
-- Si Kaelen está a **6 m** o menos, sale empujada hacia fuera a **11 m/s**, velocidad que decae a 0 en **0,4 s**. No recibe daño ni i-frames, pero pierde el control mientras dura el empuje (estado de aturdimiento, el mismo que al recibir un golpe). La **rodada esquiva el empuje** durante sus i-frames, como en los souls; también lo ignoran la muerte, las cinemáticas y la victoria.
-- Después hay un **enfriamiento de 9 s** en el que no puede repetirse (el daño recibido en ese tiempo no cuenta).
-- No corta la ventana de castigo: si el umbral se alcanza mientras el jefe se recupera de un ataque, la reacción espera a que termine la recuperación. Tampoco ocurre durante el rugido de transición de fase ni tras la muerte; si el golpe que supera el umbral también activa la fase 2, gana la transición de fase.
+1. Recibe al menos el **10 % de su vida máxima** en una ventana deslizante de **4 s** (50 de 500 en Bone Dragon, 63 de 625 en Blackhorn, 75 de 750 en Ghidorah; dos golpes del combo ya bastan en Bone Dragon). Antes era el 15 %.
+2. Recibe **3 golpes en 3 s**, aunque hagan poco daño.
+3. Kaelen permanece a **3,2 m o menos** del jefe durante **7 s** (el contador baja al doble de velocidad si se aleja). Evita esconderse bajo el cuerpo de Ghidorah.
 
-Todos los valores (`repel_threshold`, `repel_window`, `repel_cooldown`, `repel_radius`, `repel_force`, `repel_push_time`, `repel_enabled`) se exportan por jefe para ajustarlos en el inspector.
+La reacción:
+
+- Interrumpe lo que esté haciendo, **también la recuperación** (antes esperaba al final de la ventana de castigo y llegaba tarde): el objetivo es cortar el encadenado. Solo se pospone durante el rugido de transición de fase o tras la muerte; si el golpe que supera el umbral también activa la fase 2, gana la transición de fase.
+- Reproduce la misma animación de rugido y el mismo sonido que la fase 2, sin cambiar de fase. El rugido se corta a un máximo de **1,6 s** para que no sea un descanso. Mientras ruge es **invulnerable**.
+- **0,35 s después** de empezar a rugir (el aviso) sale una **onda de choque**: un anillo naranja que crece desde el suelo del jefe hasta el radio de **7 m** (antes 6 m) y una sacudida de cámara de 0,18 m durante 0,45 s.
+- Si Kaelen está dentro del radio, sale empujada hacia fuera a **18 m/s** con un pequeño salto de **3 m/s**; la velocidad decae a 0 en **0,5 s**, es decir, recorre unos **4,5 m** (antes 11 m/s y 0,4 s: 2,2 m, menos que el alcance de su espada, por eso no se notaba). No recibe daño pero pierde el control mientras dura (estado de aturdimiento).
+- La **rodada solo lo esquiva en el momento justo**: sus i-frames (0,05-0,40 s de la rodada) deben cubrir el instante de la onda. Con la onda 0,35 s después del rugido, hay que rodar entre 0,40 s y 0,05 s antes de ese instante; si se rueda demasiado pronto o tarde, la onda empuja igual. También lo ignoran la muerte, las cinemáticas y la victoria.
+- **Enfriamiento de 7 s** (antes 9 s); el daño recibido en ese tiempo no cuenta.
+
+Todos los valores (`repel_threshold`, `repel_window`, `repel_burst_hits`, `repel_burst_window`, `repel_glue_time`, `repel_glue_radius`, `repel_cooldown`, `repel_radius`, `repel_force`, `repel_push_time`, `repel_lift`, `repel_push_delay`, `repel_roar_max`, `repel_enabled`) se exportan por jefe.
+
+**Medición** (`scripts/tools/boss_pressure_sim.gd`: usa el `Boss` real, avanzado a 60 Hz, con una Kaelen simulada que encadena el combo 20/20/36 con 85 % de acierto, limitada por aguante y que rueda el 70 % de los ataques; 12 ejecuciones por celda). "Constante" golpea sin parar; "oportunista" solo golpea durante la recuperación del jefe (2 golpes por ventana).
+
+| Jefe / perfil | Repulsiones en 30 s (antes → ahora) | Ataques del jefe en 30 s | Tiempo para matarlo (antes → ahora) |
+|---|---|---|---|
+| Bone Dragon / constante | 2,00 → 2,83 | 7,7 → 10,3 | 31,5 s → 31,9 s* |
+| Bone Dragon / oportunista | 2,00 → 3,00 | 7,0 → 9,7 | 38,5 s → 42,1 s |
+| Blackhorn / constante | 2,25 → 3,00 | 9,5 → 11,2 | 35,9 s → 46,0 s |
+| Blackhorn / oportunista | 1,92 → 2,25 | 8,1 → 10,0 | 45,3 s → 50,4 s |
+| Ghidorah / constante | 1,75 → 3,00 | 8,6 → 10,8 | 43,3 s → 55,7 s |
+| Ghidorah / oportunista | 0,83 → 2,50 | 8,2 → 9,8 | 48,5 s → 60,7 s |
+
+\* El Bone Dragon es el primer jefe y se mantiene como el más fácil; la vida extra se compensa con un rugido más corto. La Kaelen simulada es mucho más eficiente que una persona, así que los tiempos reales serán mayores. Aun así, ahora la repulsión se activa cada ~9-10 s de presión (siete de enfriamiento más el rugido), y su efecto se nota: el empuje es de 4,5 m y la rodada ya no la esquiva sin cuidado.
+
+**Dificultad general (cifras).** Vida: Bone Dragon 400 → **500**, Blackhorn 500 → **625**, Ghidorah 600 → **750** (+25 %). Tiempo muerto entre ataques (`attack_cooldown`): 0,4 → **0,25 s** (Bone Dragon), 0,5 → **0,3 s** (Blackhorn), 0,6 → **0,35 s** (Ghidorah). Avisos y recuperaciones (s) y daño por ataque:
+
+| Ataque | Aviso | Recuperación | Daño |
+|---|---|---|---|
+| Bone Dragon: mordida | 1,10 → 0,95 | 1,00 → 0,80 | 25 → 28 |
+| Bone Dragon: pisotón | 1,45 → 1,20 | 1,20 → 0,95 | 30 → 34 |
+| Bone Dragon: barrido de cola | 1,20 → 1,00 | 1,00 → 0,80 | 20 → 23 |
+| Blackhorn: golpe al suelo | 1,35 → 1,15 | 0,90 → 0,75 | 20 → 23 |
+| Blackhorn: zarpazo | 1,90 → 1,50 | 1,10 → 0,90 | 18 → 21 |
+| Blackhorn: embestida | 1,00 → 0,90 | 1,40 → 1,10 | 25 → 28 |
+| Ghidorah: mordida | 1,10 → 0,95 | 1,00 → 0,80 | 12 → 14 |
+| Ghidorah: barrido de cola | 1,20 → 1,00 | 1,20 → 0,95 | 10 → 12 |
+| Ghidorah: rayo | 1,10 → 1,00 | 1,30 → 1,00 | 14 → 16 |
+
+**Hitboxes de ataque.** Las zonas de daño deben cubrir lo que muestra la animación y no dejar zonas seguras pegado al jefe. `scripts/tools/boss_hitbox_map.gd` reproduce cada ataque, recorre su ventana activa y dibuja qué puntos del suelo alcanzaría Kaelen; mide el porcentaje de zona libre dentro del rango del ataque (cono de unos 30° delante del jefe). Cambios (antes → ahora):
+
+- Bone Dragon: mordida, esfera r 1,2 → **1,7** (la zona libre en su cono bajó del 50 % al 19 %); pisotón r 2,5 → **2,9** y desplazada a z −1,2; barrido de cola, caja de 1,6 × 2 × 4,5 que empezaba a 0,75 m del cuerpo → **2,2 × 2,2 × 5,5** que empieza en el cuerpo.
+- Blackhorn: golpe al suelo, r 3,0 → **3,8** (llega a su `max_range` de 4 m; zona libre 18 % → 2 %); zarpazo 2 × 2 × 4 → **3,2 × 2,4 × 5** y adelantado hasta el cuerpo (zona libre 49 % → 30 %); embestida 1,5 × 2,5 × 3 → **2,4 × 2,5 × 4** (arranca pegada al jefe).
+- Ghidorah: la caja del barrido de cola (2,5 × 3 × 6, a 3,5-9,5 m) dejaba un hueco de 3,5 m alrededor del cuerpo aunque el aviso lo pintaba de rojo → **2,8 × 3 × 9,6** desde el cuerpo hasta el borde del aviso (zona libre 29 % → 0 %). La mordida ya no tenía huecos (0 %).
+- Los avisos del suelo se ajustaron al mismo tamaño que cada nueva zona de daño.
 
 ### 8.3 Orquestador
 Un nodo autoload `Orchestrator` que ajusta la presión del combate según cómo juega el jugador.
@@ -555,6 +596,18 @@ res://
 ```
 
 Principios: componentes pequeños (`Health`, `Hitbox`, `Hurtbox`, `Stamina`) que se reutilizan en Kaelen, esbirros y jefes. Los jefes comparten `boss_base` y solo cambian modelo y recursos `BossAttack`. Las arenas son escenas independientes cargadas por `game_state`.
+
+### 12.1 Rendimiento: precalentamiento de efectos de los jefes
+En gl_compatibility cada shader se compila la primera vez que se dibuja. En el nivel 3 eso producía tirones al lanzar ataques de Ghidorah. Se midió con `scripts/tools/ghidorah_profile.gd` (nivel `arena_3_gameplay` con ventana, sin vsync; fuerza dos rondas de mordida, barrido de cola y rayo y registra el tiempo de cada fotograma; GTX 1050, 1280 × 720):
+
+| Medida | Antes | Después |
+|---|---|---|
+| Fotograma más lento en el primer rayo | **71-125 ms** (según la caché de shaders del controlador) | **≤ 20 ms** |
+| Fotograma más lento de toda la sesión | 71-125 ms | 20 ms |
+| Primera mordida / primer barrido de cola | 20-47 ms | ≤ 17 ms |
+| Media / mediana / p99 durante los ataques | 3,6 / 3,3 / 6,2 ms | 3,6 / 3,3 / 6,2 ms |
+
+Causa: el rayo (5 shaders y 2 sistemas de partículas GPU) y los avisos rojos del suelo se compilaban en el primer disparo; el resto del coste de un ataque es despreciable (los fotogramas con ataque activo cuestan lo mismo que sin él). Corrección: `ShaderWarmup` dibuja una vez, en la carga y fuera de pantalla (un `SubViewport` de 64 × 64 con su propio mundo 3D), una copia de cada efecto y de cada aviso de los ataques del jefe, y se libera a los 3 fotogramas; además cada animación de ataque se reproduce una vez al cargar para que el `AnimationPlayer` resuelva sus pistas. No se ejecuta sin ventana (pruebas).
 
 ## 13. Repositorio y assets
 ### 13.1 Estructura
