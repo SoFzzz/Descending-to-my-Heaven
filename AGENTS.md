@@ -22,7 +22,7 @@ Guía única del proyecto para quien se incorpora al equipo: qué es el juego, e
 | T16: esbirros por nivel y élites | Hecha | Revisar en juego animaciones de ataque y muerte, espada del Knight, hoz del Straw Reaper y caída de TheWrapper |
 | T17: audio completo | Hecha | Licencias "por confirmar" (sección 12) |
 | T18: pulido y playtest | Casi hecha | **Playtest con 2 personas externas** (plantilla en la sección 14); decoración de arenas (pendiente); commit por persona |
-| T19: congelación, exportación Windows, tag `v1.0` | En curso | Exportación Windows lista (sección 2.6). Falta: congelación, probar el `.exe` en otra PC, revisar créditos, `v1.0` (Web, si funciona) |
+| T19: congelación, exportación Windows, tag `v1.0` | En curso | Exportación Windows lista (sección 2.6). Ya hay una release candidata `v1.0.0-rc1` en GitHub con el `.exe` (ver sección 2.6). Falta: congelación, probar el `.exe` en otra PC, revisar créditos, `v1.0` (Web, si funciona) |
 
 ### 1.2 Lo último que se hizo (2026-10-14 a 2026-10-16)
 
@@ -125,6 +125,14 @@ Solo escritorio Windows por ahora. El preset `Windows Desktop` está en `export_
 - **Sin firma de código** (`codesign` desactivado): Windows SmartScreen puede avisar al ejecutarlo en otra PC ("Más información" > "Ejecutar de todas formas").
 - **Icono:** el proyecto aún no define un icono propio (`config/icon` vacío), así que el `.exe` usa el de Godot. Si se añade uno, ponerlo también en `application/icon` del preset.
 - **Prueba hecha:** el `.exe` arranca en el menú, las traducciones (es/en), los créditos, las 7 músicas y todas las escenas de `scenes/` cargan sin errores. Quedan avisos inofensivos de UID inválido en los `.import` de `islet_small.glb` y `straw_reaper.glb` (Godot usa la ruta de texto). Falta probarlo en una PC distinta a la de desarrollo.
+
+#### Release en GitHub
+
+- **Release:** `v1.0.0-rc1`, marcada como *pre-release* ("release candidate"). La v1.0 definitiva se publica tras el playtest externo y la congelación de la Tarea 19.
+- **Enlace:** https://github.com/SoFzzz/Descending-to-my-Heaven/releases/tag/v1.0.0-rc1
+- **Archivo:** `DescendingToMyHeaven.exe` (Windows x86_64, un solo archivo de unos 166 MB con el `.pck` incrustado). SHA-256: `F4D7FED830464D7F90B0FA4F1F0BB19692A56013BC247454F55E270FA854ABC4`. Exportado desde el commit `42d2dcb` de `main`.
+- **Cómo jugar:** descargar el `.exe` de la release y ejecutarlo. SmartScreen puede avisar porque no está firmado ("Más información" > "Ejecutar de todas formas"). No requiere instalación. Los ajustes se guardan en `%APPDATA%\Godot\app_userdata\Descending to my Heaven\`.
+- **Cómo publicar una nueva:** exportar como indica esta sección; en GitHub, pestaña *Releases* > *Draft a new release*, con una etiqueta nueva sobre `main`, y adjuntar el `.exe`. El repositorio es privado y la release también: no hacer pública la release, porque varios assets no se pueden redistribuir.
 
 ---
 
