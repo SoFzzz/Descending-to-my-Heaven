@@ -1,8 +1,8 @@
 extends SceneTree
-## Perfil de fotogramas del nivel 3: fuerza ataques de Ghidorah (mordida, barrido de cola y rayo)
-## en dos rondas y registra el tiempo de cada fotograma. Ejecutar CON ventana (sin --headless):
+## Frame profile of level 3: forces Ghidorah attacks (bite, tail sweep and beam) in two rounds
+## and records the time of every frame. Run WITH a window (no --headless):
 ##   godot --path . --resolution 1280x720 -s res://scripts/tools/ghidorah_profile.gd
-## Imprime los fotogramas lentos (> SLOW_MS) con el estado del jefe y un resumen por ronda.
+## Prints the slow frames (> SLOW_MS) with the boss state and a per-round summary.
 
 const SLOW_MS := 12.0
 const PLAN := [
@@ -25,7 +25,7 @@ var _frame_no := 0
 func _initialize() -> void:
 	_level = (load("res://scenes/levels/arena_3_gameplay.tscn") as PackedScene).instantiate()
 	root.add_child(_level)
-	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)   # el tiempo real de cada fotograma, sin el tope de 60 Hz
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)   # real time of each frame, without the 60 Hz cap
 	RenderingServer.viewport_set_measure_render_time(root.get_viewport_rid(), true)
 	process_frame.connect(_on_frame)
 
@@ -70,20 +70,20 @@ func _force(id: StringName, distance: float) -> void:
 	dir.y = 0.0
 	dir = dir.normalized() if dir.length() > 0.1 else Vector3.BACK
 	_player.global_position = _boss.global_position + dir * distance + Vector3.UP * 0.2
-	print("[%.2f] fuerza %s (frame %d)" % [_t, id, _frame_no])
+	print("[%.2f] forcing %s (frame %d)" % [_t, id, _frame_no])
 
 
 func _report() -> void:
 	var sorted: Array = _frames.map(func(f): return f[1])
 	sorted.sort()
-	print("--- fotogramas lentos (> %.0f ms) ---" % SLOW_MS)
+	print("--- slow frames (> %.0f ms) ---" % SLOW_MS)
 	for f in _frames:
 		if f[1] > SLOW_MS:
-			print("t=%.2f  %.1f ms  estado=%d ataque=%s draws=%d nodos=%d proc=%.1f fis=%.1f gpu=%.1f rcpu=%.1f" % [f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[9]])
+			print("t=%.2f  %.1f ms  state=%d attack=%s draws=%d nodes=%d proc=%.1f phys=%.1f gpu=%.1f rcpu=%.1f" % [f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[9]])
 	var sum := 0.0
 	for v in sorted:
 		sum += v
-	print("--- resumen: %d fotogramas, media %.2f ms, mediana %.2f, p99 %.2f, max %.1f ---" % [
+	print("--- summary: %d frames, mean %.2f ms, median %.2f, p99 %.2f, max %.1f ---" % [
 			sorted.size(), sum / sorted.size(), sorted[sorted.size() / 2], sorted[int(sorted.size() * 0.99)], sorted.back()])
 	for round_i in 2:
 		var lo := 0.0 if round_i == 0 else 19.0
@@ -94,7 +94,7 @@ func _report() -> void:
 			if f[0] >= lo and f[0] < hi:
 				m = maxf(m, f[1])
 				n += 1
-		print("ronda %d: max %.1f ms (%d fotogramas)" % [round_i + 1, m, n])
+		print("round %d: max %.1f ms (%d frames)" % [round_i + 1, m, n])
 
 	var groups := {}
 	for f in _frames:
@@ -110,4 +110,4 @@ func _report() -> void:
 		var total := 0.0
 		for v in arr:
 			total += v
-		print("  %-14s n=%4d media=%.2f p95=%.2f max=%.1f ms" % [k, arr.size(), total / arr.size(), arr[int(arr.size() * 0.95)], arr.back()])
+		print("  %-14s n=%4d mean=%.2f p95=%.2f max=%.1f ms" % [k, arr.size(), total / arr.size(), arr[int(arr.size() * 0.95)], arr.back()])

@@ -1,9 +1,8 @@
 extends SceneTree
-## Mapa de cobertura de las zonas de daño de los jefes: para cada ataque reproduce su animacion,
-## recorre la ventana ACTIVE y marca los puntos del suelo (rejilla de 0.5 m en el marco del jefe,
-## -Z = delante) que alcanzaria Kaelen (capsula de 0.3 m de radio, ejes de 0.4 a 1.3 m). Imprime el
-## mapa ('#' alcanza, '.' libre dentro del rango del ataque, ' ' fuera de rango) y el porcentaje de
-## zona libre dentro del rango. Uso:
+## Boss damage-zone coverage map: for each attack, plays its animation, walks the ACTIVE window
+## and marks the floor points (0.5 m grid in the boss frame, -Z = forward) that would reach Kaelen
+## (capsule of 0.3 m radius, axis from 0.4 to 1.3 m). Prints the map ('#' reached, '.' free inside
+## the attack range, ' ' out of range) and the percentage of free area inside the range. Usage:
 ##   godot --headless --path . -s res://scripts/tools/boss_hitbox_map.gd
 
 const BOSSES := [
@@ -15,7 +14,7 @@ const STEP := 0.5
 const X_MAX := 8.0
 const Z_MAX := 9.0
 const KAELEN_RADIUS := 0.3
-const SAMPLES := 24   # fotogramas muestreados en la ventana ACTIVE
+const SAMPLES := 24   # frames sampled in the ACTIVE window
 
 
 func _initialize() -> void:
@@ -51,7 +50,7 @@ func _map(boss: Boss, attack: BossAttack) -> void:
 		var progress := (s + 0.5) / SAMPLES
 		var t := attack.telegraph_time + attack.active_time * progress
 		anim.seek(minf(t, anim.current_animation_length), true)
-		# Giro y avance del jefe durante ACTIVE, como hace boss.gd.
+		# Boss spin and advance during ACTIVE, as boss.gd does.
 		boss.global_transform = base_xf
 		boss.rotation.y += deg_to_rad(attack.spin_degrees) * progress
 		boss.global_position += -boss.global_basis.z * attack.advance_at(progress) if attack.spin_degrees == 0.0 else Vector3.ZERO
@@ -59,7 +58,6 @@ func _map(boss: Boss, attack: BossAttack) -> void:
 		await process_frame
 		for hb in hitboxes:
 			var cs := hb.get_node(^"CollisionShape3D") as CollisionShape3D
-			var inv := base_xf.affine_inverse()
 			for iz in nz:
 				for ix in nx:
 					var local := Vector3(-X_MAX + ix * STEP, 0.0, -Z_MAX + iz * STEP)
@@ -77,9 +75,9 @@ func _map(boss: Boss, attack: BossAttack) -> void:
 			var local := Vector3(-X_MAX + ix * STEP, 0.0, -Z_MAX + iz * STEP)
 			var flat := Vector2(local.x, local.z).length()
 			var hit := covered[iz * nx + ix] == 1
-			# "En rango": el jefe elige el ataque con Kaelen a una distancia de [min_range, max_range]
-			# DELANTE de el, dentro de un cono de unos 30 grados (gira hacia ella durante el aviso)
-			# y siempre a menos de 1.5 m de lado; a los lados lejanos / detras no se pide cobertura.
+			# "In range": the boss picks the attack with Kaelen at a distance of [min_range, max_range]
+			# IN FRONT of it, inside a cone of about 30 degrees (it turns toward her during the
+			# telegraph) and always within 1.5 m sideways; far sides / behind need no coverage.
 			var forward := local.z <= 0.0 and absf(local.x) <= maxf(1.5, absf(local.z) * 0.6)
 			var counted := flat >= maxf(attack.min_range, 0.5) and flat <= attack.max_range and forward
 			if counted:
@@ -88,7 +86,7 @@ func _map(boss: Boss, attack: BossAttack) -> void:
 					free += 1
 			row += "#" if hit else ("." if counted else " ")
 		lines.append(row)
-	print("== %s / %s: rango %.1f-%.1f m, zona libre dentro del rango: %d de %d celdas (%.0f %%)" % [
+	print("== %s / %s: range %.1f-%.1f m, free area inside the range: %d of %d cells (%.0f %%)" % [
 			boss.display_name, attack.id, attack.min_range, attack.max_range, free, in_range,
 			100.0 * free / maxf(1, in_range)])
 	if OS.get_cmdline_user_args().has("map"):

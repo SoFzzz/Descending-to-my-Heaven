@@ -1,10 +1,10 @@
 extends SceneTree
-## Simulación sin ventana de ráfagas reales de Kaelen contra cada jefe (boss.gd real, avanzado a mano
-## a 60 Hz). Mide cuántas veces se activa la repulsión en 30 s de presión y el tiempo estimado para
-## matar (TTK). Uso:
+## Windowless simulation of real Kaelen bursts against each boss (real boss.gd, stepped by hand at
+## 60 Hz). Measures how many times the repel triggers in 30 s of pressure and the estimated time to
+## kill (TTK). Usage:
 ##   godot --headless --path . -s res://scripts/tools/boss_pressure_sim.gd
-## Perfiles de Kaelen: "constante" (encadena el mandoble sin parar, limitada por aguante, rueda el 70 %
-## de los ataques) y "oportunista" (solo golpea mientras el jefe se recupera, 2 golpes por ventana).
+## Kaelen profiles: "steady" (chains the swing non-stop, limited by stamina, rolls 70 % of the
+## attacks) and "opportunist" (only hits while the boss recovers, 2 hits per window).
 
 const BOSSES := {
 	"Bone Dragon": "res://scenes/bosses/boss_bonedragon.tscn",
@@ -12,7 +12,7 @@ const BOSSES := {
 	"Ghidorah": "res://scenes/bosses/boss_ghidorah.tscn",
 }
 const DT := 1.0 / 60.0
-const REACH := 2.5          # distancia a la que Kaelen golpea (m)
+const REACH := 2.5          # distance at which Kaelen hits (m)
 const WALK := 5.0
 const RUNS := 12
 const MAX_TIME := 240.0
@@ -46,16 +46,16 @@ class Dummy extends Node3D:
 
 
 var _rng := RandomNumberGenerator.new()
-var _lags: Array[float] = []   # segundos entre alcanzar el umbral y empezar el rugido
+var _lags: Array[float] = []   # seconds between reaching the threshold and starting the roar
 
 
 func _initialize() -> void:
-	process_frame.connect(_main, CONNECT_ONE_SHOT)   # el árbol solo está listo tras el primer fotograma
+	process_frame.connect(_main, CONNECT_ONE_SHOT)   # the tree is only ready after the first frame
 
 
 func _main() -> void:
-	var profiles := ["constante", "oportunista"]
-	print("Presión simulada (%d ejecuciones por celda; ventana de 30 s, TTK hasta %d s)" % [RUNS, int(MAX_TIME)])
+	var profiles := ["steady", "opportunist"]
+	print("Simulated pressure (%d runs per cell; 30 s window, TTK up to %d s)" % [RUNS, int(MAX_TIME)])
 	for boss_name in BOSSES:
 		for profile in profiles:
 			var repels := 0.0
@@ -72,7 +72,7 @@ func _main() -> void:
 				if res.dead:
 					ttk += res.time
 					ttk_n += 1
-			print("%-12s %-12s repulsiones/30s=%.2f  daño/30s=%.0f  ataques/30s=%.1f  TTK=%.1fs (%d/%d mueren)  retraso umbral-rugido=%.2fs" % [
+			print("%-12s %-12s repels/30s=%.2f  damage/30s=%.0f  attacks/30s=%.1f  TTK=%.1fs (%d/%d die)  threshold-roar lag=%.2fs" % [
 				boss_name, profile, repels / RUNS, dmg / RUNS, atk / RUNS, ttk / maxf(1, ttk_n), ttk_n, RUNS, _mean(_lags)])
 	quit()
 
@@ -87,14 +87,14 @@ func _run(path: String, profile: String, duration: float, seed_value: int) -> Di
 	root.add_child(player)
 	player.global_position = player.home
 	boss.set_physics_process(false)
-	boss.set(&"_gravity", 0.0)   # sin suelo en la simulación
+	boss.set(&"_gravity", 0.0)   # no floor in the simulation
 	var sword := Node.new()
 	root.add_child(sword)
 	var stamina := 100.0
 	var since_spend := 9.0
 	var t := 0.0
-	var busy_until := 0.0       # Kaelen no puede iniciar otro golpe hasta aquí
-	var hits: Array = []        # [tiempo, daño]
+	var busy_until := 0.0       # Kaelen cannot start another hit until this time
+	var hits: Array = []        # [time, damage]
 	var combo := 0
 	var roll_until := -1.0
 	var decided_roll := false
@@ -113,7 +113,7 @@ func _run(path: String, profile: String, duration: float, seed_value: int) -> Di
 		since_spend += DT
 		if since_spend > 0.6:
 			stamina = minf(100.0, stamina + 30.0 * DT)
-		# Rodar un ataque: se decide al empezar el aviso, se rueda 0.3 s antes de que acabe.
+		# Rolling an attack: decided when the telegraph starts, rolls 0.3 s before it ends.
 		if boss.state == Boss.State.TELEGRAPH and not decided_roll:
 			decided_roll = true
 			if _rng.randf() < 0.7 and boss.current_attack:
@@ -124,7 +124,7 @@ func _run(path: String, profile: String, duration: float, seed_value: int) -> Di
 		var shoved: bool = player.shove_left > 0.0
 		var near: bool = (player.global_position - boss.global_position).length() <= REACH + 0.4
 		var can_swing := (not rolling and not shoved and near and t >= busy_until and stamina >= 20.0)
-		if can_swing and profile == "oportunista":
+		if can_swing and profile == "opportunist":
 			can_swing = boss.state == Boss.State.RECOVER and punish_hits < 2
 		if can_swing and _rng.randf() < 0.85:
 			var k := combo % 3
@@ -144,7 +144,7 @@ func _run(path: String, profile: String, duration: float, seed_value: int) -> Di
 		if pend_t < 0.0 and boss.repel.is_due(boss.health.max_value):
 			pend_t = t
 		elif pend_t >= 0.0 and not boss.repel.is_due(boss.health.max_value) and boss.repel_count == seen_repels:
-			pend_t = -1.0   # la ventana lo olvidó antes de reaccionar
+			pend_t = -1.0   # the window forgot it before the boss reacted
 		if boss.repel_count > seen_repels:
 			seen_repels = boss.repel_count
 			if pend_t >= 0.0:
@@ -155,7 +155,7 @@ func _run(path: String, profile: String, duration: float, seed_value: int) -> Di
 	if snap.is_empty():
 		snap = {repels = boss.repel_count, damage = boss.max_health - boss.health.current, attacks = boss.attack_log.size()}
 	if OS.get_cmdline_user_args().has("debug"):
-		print("  dbg estado=%d dist=%.2f hp=%d attacks=%d" % [boss.state, (player.global_position - boss.global_position).length(), boss.health.current, boss.attack_log.size()])
+		print("  dbg state=%d dist=%.2f hp=%d attacks=%d" % [boss.state, (player.global_position - boss.global_position).length(), boss.health.current, boss.attack_log.size()])
 	var out := {repels30 = snap.repels, damage30 = snap.damage, attacks30 = snap.attacks,
 			dead = boss.state == Boss.State.DEAD, time = t}
 	boss.free()
