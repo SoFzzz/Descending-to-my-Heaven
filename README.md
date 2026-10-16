@@ -23,7 +23,7 @@ SHA-256 del ejecutable: `F4D7FED830464D7F90B0FA4F1F0BB19692A56013BC247454F55E270
 ## Características
 
 - **Tres jefes:** Bone Dragon, Blackhorn y Mecha King Ghidorah. Cada uno tiene fase 2 al 50 % de vida y una repulsión que castiga el juego de ráfagas.
-- **IA táctica:** los jefes cortan la huida, se preparan para atacar desde la espalda o esperan, y los esbirros cierran pinzas y tienden emboscadas. Un orquestador regula la intensidad de cada oleada.
+- **IA táctica:** los jefes anticipan hacia dónde se mueve Kaelen para cortarle el paso, la acorralan en pinza junto a los esbirros, aprovechan cuando está distraída para emboscarla y a veces dejan de atacar para reposicionarse. Los esbirros se apartan cuando ataca el jefe y se retiran con poca vida. Un orquestador regula la intensidad de las oleadas.
 - **Combate soulslike:** combos de mandoble, rodada con invulnerabilidad, estamina y un frasco de curación con cargas limitadas por nivel.
 - **Final:** una secuencia de diálogo con voces, cámaras propias y la caída de la isla.
 - **Opciones completas:** controles reasignables, volumen por bus (general, música, efectos e interfaz), pantalla y resolución, y español o inglés.
@@ -98,7 +98,7 @@ Equipo:
 
 Los créditos completos de los assets de terceros y sus licencias están en `AGENTS.md` (sección 12) y en `assets/credits.txt`, que es el texto que muestra la pantalla de créditos del juego.
 
-Varios assets no permiten redistribución, por eso el repositorio es privado y solo se publica el juego exportado.
+Varios assets no permiten redistribución, por eso el repositorio y sus releases son privados.
 
 ---
 
