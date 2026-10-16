@@ -1,6 +1,6 @@
 class_name Health
 extends Node
-## Vida reutilizable (jugador, jefes, esbirros): recibe daño, avisa por señales y muere una sola vez.
+## Reusable health (player, bosses, minions): takes damage, reports through signals and dies only once.
 
 signal changed(current: int, max_value: int)
 signal died
@@ -23,7 +23,7 @@ func take_damage(amount: int) -> void:
 		died.emit()
 
 
-## Cura hasta `max_value`; devuelve lo recuperado realmente (0 si está muerto o ya al máximo).
+## Heals up to `max_value`; returns the amount actually restored (0 if dead or already full).
 func heal(amount: int) -> int:
 	if is_dead() or amount <= 0:
 		return 0

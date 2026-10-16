@@ -1,6 +1,6 @@
 class_name Stamina
 extends Node
-## Aguante: se gasta con acciones y se regenera pasado un retardo desde el último gasto.
+## Stamina: spent by actions and regenerated after a delay since the last expense.
 
 signal changed(current: float, max_value: float)
 
@@ -9,7 +9,7 @@ signal changed(current: float, max_value: float)
 @export var regen_delay := 0.6
 
 var current: float = 100.0
-var _time_since_spend: float = 1.0e9  # al crear, regenera sin esperar
+var _time_since_spend: float = 1.0e9  # on creation, regenerates without waiting
 
 
 func _ready() -> void:
@@ -20,14 +20,14 @@ func _process(delta: float) -> void:
 	tick(delta)
 
 
-## Llena el aguante al máximo y avisa (la barra del HUD lo refleja).
+## Fills the stamina to the maximum and reports it (the HUD bar reflects it).
 func refill() -> void:
 	current = max_value
 	_time_since_spend = 1.0e9
 	changed.emit(current, max_value)
 
 
-## Se permite gastar mientras quede algo (aunque no alcance); con 0 no se puede.
+## Spending is allowed while anything is left (even if it falls short); with 0 it is not.
 func try_spend(amount: float) -> bool:
 	if current <= 0.0:
 		return false

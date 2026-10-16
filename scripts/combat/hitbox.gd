@@ -1,10 +1,10 @@
 class_name Hitbox
 extends Area3D
-## Zona que hace daño mientras está activa; golpea cada Hurtbox una sola vez por activación.
+## Zone that deals damage while active; hits each Hurtbox only once per activation.
 
 @export var damage: int = 0
-## Sonido de impacto de este golpe: suena UNA vez por activación (aunque toque varias hurtboxes),
-## en la posición de la primera. `sfx_impact_metal` lo sustituye si esa hurtbox es de superficie `metal`.
+## Impact sound of this hit: plays ONCE per activation (even if it touches several hurtboxes),
+## at the position of the first. `sfx_impact_metal` replaces it if that hurtbox has a `metal` surface.
 @export var sfx_impact: AudioStream
 @export var sfx_impact_metal: AudioStream
 
@@ -14,14 +14,14 @@ var _impact_played := false
 
 
 func _init() -> void:
-	monitoring = false  # empieza inactiva, también fuera del árbol
+	monitoring = false  # starts inactive, also outside the tree
 
 
 func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 
 
-# Diferido: cambiar monitoring dentro de callbacks de física está bloqueado por Godot.
+# Deferred: Godot blocks changing monitoring inside physics callbacks.
 func activate() -> void:
 	_hit_ids.clear()
 	_impact_played = false
@@ -34,7 +34,7 @@ func deactivate() -> void:
 	set_deferred(&"monitoring", false)
 
 
-## true solo la primera vez por activación: el sonido de impacto se reproduce una vez por golpe.
+## true only the first time per activation: the impact sound plays once per hit.
 func claim_impact_sound() -> bool:
 	if _impact_played:
 		return false
@@ -42,7 +42,7 @@ func claim_impact_sound() -> bool:
 	return true
 
 
-## Sonido de impacto para una hurtbox de superficie `surface` (null si no hay).
+## Impact sound for a hurtbox of surface `surface` (null if there is none).
 func impact_stream_for(surface: StringName) -> AudioStream:
 	if surface == &"metal" and sfx_impact_metal != null:
 		return sfx_impact_metal
@@ -69,8 +69,8 @@ func _on_area_entered(area: Area3D) -> void:
 	hurtbox.receive_hit(damage, source)
 	_play_impact(hurtbox)
 	if source != null and source.is_in_group(&"player") and is_inside_tree():
-		HitStop.request(get_tree())   # pausa de impacto solo en los golpes de Kaelen
-	# Events puede no existir (pruebas con -s), por eso se busca por ruta.
+		HitStop.request(get_tree())   # hit-stop only on Kaelen's hits
+	# Events may not exist (tests run with -s), so it is looked up by path.
 	var events := get_node_or_null(^"/root/Events")
 	if events:
 		events.hit_landed.emit(hurtbox.global_position, hurtbox.surface)

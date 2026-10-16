@@ -1,15 +1,15 @@
 class_name HitStop
 extends Node
-## Pausa de impacto: baja Engine.time_scale unos milisegundos al acertar un golpe. El tiempo se
-## mide en reloj real (no se ve afectado por el propio time_scale) y se restaura SIEMPRE: al
-## terminar, si el juego se pausa, si se cambia de escena o si el nodo sale del árbol. Una petición
-## mientras hay otra activa se ignora (no se apilan, el tiempo nunca se queda lento).
-## Los Tween de la UI que usan set_ignore_time_scale(true) y los temporizadores de la pantalla de
-## muerte no se ven afectados; el resto va más lento durante esos ~60 ms.
+## Hit-stop: lowers Engine.time_scale for a few milliseconds when a hit lands. The time is
+## measured on the real clock (not affected by time_scale itself) and ALWAYS restored: when it
+## ends, if the game is paused, if the scene changes or if the node leaves the tree. A request
+## while another is active is ignored (they do not stack, time never stays slow).
+## UI Tweens that use set_ignore_time_scale(true) and the death screen timers are not
+## affected; everything else runs slower during those ~60 ms.
 
-const HIT_DURATION := 0.06      # golpe de Kaelen que acierta
-const HURT_DURATION := 0.04     # Kaelen recibe daño
-const SCALE := 0.05             # time_scale durante la pausa
+const HIT_DURATION := 0.06      # Kaelen's hit that lands
+const HURT_DURATION := 0.04     # Kaelen takes damage
+const SCALE := 0.05             # time_scale during the stop
 
 static var _driver: HitStop = null
 
@@ -19,8 +19,8 @@ var _end_ms := 0
 var _duration := 0.0
 
 
-## Pide una pausa de `duration` s. Devuelve true si se aplicó (false si ya había una, no hay árbol,
-## el juego está en pausa o la duración es 0).
+## Requests a stop of `duration` s. Returns true if applied (false if one was already active, there is
+## no tree, the game is paused or the duration is 0).
 static func request(tree: SceneTree, duration: float = HIT_DURATION) -> bool:
 	if tree == null or duration <= 0.0 or tree.paused:
 		return false
@@ -32,12 +32,12 @@ static func request(tree: SceneTree, duration: float = HIT_DURATION) -> bool:
 	return _driver._begin(duration)
 
 
-## true mientras hay una pausa de impacto en curso.
+## true while a hit-stop is in progress.
 static func is_active() -> bool:
 	return _driver != null and is_instance_valid(_driver) and _driver.active
 
 
-## Restaura el tiempo ya (cambio de escena, pruebas).
+## Restores the time immediately (scene change, tests).
 static func cancel() -> void:
 	if _driver != null and is_instance_valid(_driver):
 		_driver.end()
@@ -54,7 +54,7 @@ func _begin(duration: float) -> bool:
 	return true
 
 
-## Termina la pausa: el time_scale vuelve al valor previo solo si nadie más lo ha cambiado.
+## Ends the stop: time_scale returns to its previous value only if nobody else has changed it.
 func end() -> void:
 	if not active:
 		return
