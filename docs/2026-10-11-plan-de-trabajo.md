@@ -600,6 +600,7 @@ Meta: se puede matar a un esbirro y morir ante él.
   - [x] Parpadeo de material 0,1 s al recibir golpe (blanco en enemigos, rojo en Kaelen) con un uniform del shader `psx_lit`: `scripts/combat/hit_flash.gd`.
   - [x] Ajuste de cámara: sacudida con golpes de >= 15 % de vida y brazo más largo con jefes enormes lejanos.
   - [x] Menú de opciones (volumen por bus, sensibilidad, pantalla completa, `user://settings.cfg`).
+  - [x] Frasco de curación (justicia del juego): 10 usos por nivel, 38 % de la vida máxima en 0,9 s, acción `heal` (R / Y, reasignable), contador en el HUD; ver diseño §4 y `tests/test_heal.gd`.
 - **B:**
   - [x] Balance con el overlay F3: `scripts/tools/orchestrator_sim.gd` muestra que la intensidad oscila en las 3 arenas; daño escalado por vida máxima para que la arena 3 llegue al pico (ver diseño §8.3).
   - [ ] Prueba con 2 personas externas y registro de dónde mueren (manual).
