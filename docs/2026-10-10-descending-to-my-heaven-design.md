@@ -165,6 +165,11 @@ Se descartó `floating_island` (61 MB, texturas fotográficas). El exterior usa:
 
 **Final dentro de `arena_3`:** detrás de `GateExit` (la "puerta bloqueada") sale un pasillo de 6 m de ancho (el de la reja) y ~20 m de largo hacia la **sala de Elysia** (12 × 12 m, techo 6 m) con el altar, Elysia estática mirando hacia el pasillo y un `EndingTrigger` (`Area3D`) delante de ella. La lógica (texto, cámara, créditos) la conecta A con `ending_director.gd`; las cámaras fijas son `EndingCam1` y `EndingCam2` dentro de la sala.
 
+**Sala de Elysia rota (la isla cae):** la sala está dentro de la isla y la isla está cayendo. El muro norte tiene un hueco irregular (cortes sustractivos `BreakWall*` y `BreakCeil*` que añade `_break_room()` en `level_builder.gd`, solo en la sección de `arena_3`) que sube hasta el techo, así que desde el altar se ve el cielo. `scenes/props/ending_room.tscn` (`scripts/game/ending_room.gd`, instanciada en `arena_3_gameplay.tscn` con su origen en el centro del muro norte, z = −57,5) pone lo demás: fondo de cielo con degradado, escombros y bloques del kit (`wall_ruin`, `pillar_collapsed`) y primitivas con la textura de concreto, grietas oscuras en suelo y muros, luz fría del cielo y una `SafetyBarrier` invisible que tapa el hueco (Kaelen no puede salir ni caer; los bloques grandes también tienen colisión y nada estorba el camino entre la puerta y el `EndingTrigger`).
+- **Ilusión de caída:** la sala no se mueve; hacia arriba se desplazan nubes (`CPUParticles3D`), rachas de viento, los islotes del exterior (`islet_*`) y fragmentos de la propia isla, con parallax (lo lejano sube más despacio). Todo lo exterior solo se dibuja y se mueve con la cámara cerca de la sala.
+- **Activación:** durante el combate y al entrar a la sala el hueco muestra una deriva lenta (10 % de velocidad). `EndingDirector.play()` llama `start_fall()` (grupo `ending_room`): en 2,5 s la velocidad sube al 100 %, empieza a caer polvo y guijarros del techo y la cámara activa tiembla levemente. Los planos `EndingCam1` y `EndingCam2` miran hacia el norte con el hueco y la caída detrás de Elysia.
+- **Audio:** no hay en el repositorio un sonido de viento ni de derrumbe, así que esta parte no suena; queda pendiente añadir un loop de viento/derrumbe cuando exista.
+
 ### 6.4 Uso de los kits de dungeon y texturas en Godot
 
 | Pack | Rol | Uso |
