@@ -92,9 +92,11 @@ func _run() -> void:
 	key.keycode = KEY_SPACE
 	key.pressed = true
 	Input.parse_input_event(key)
+	await _frames(3)
+	_check(transition.card_skipped(), "pressing a key moves the card to its exit phase")
 	await _wait_free(transition)
 	var skipped := (Time.get_ticks_msec() - start) / 1000.0
-	_check(skipped < total - 0.3, "pressing a key shortens the card (%.2f s vs %.2f s)" % [skipped, total])
+	_check(skipped < total, "pressing a key shortens the transition (%.2f s vs %.2f s)" % [skipped, total])
 	_check(parent.swapped.size() == 2, "second transition swapped once")
 
 	# 3. Retry: quick and without a card, never paused, Kaelen not locked by the transition.
