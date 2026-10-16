@@ -38,7 +38,7 @@ const NAV_AABB := AABB(Vector3(-40, -0.5, -90), Vector3(80, 2.0, 150))
 # The interior = combat area of section 6.3 + a camera margin of 3-4 m per side.
 const LEVELS := {
 	"arena_1": {
-		"title": "Catacumba (Bone Dragon)",
+		"title": "Catacomb (Bone Dragon)",
 		"shape": "rect", "size": Vector2(40, 40), "height": 8.0, "ceiling": true,
 		"output": "gridmap", "wall_rows": [["wall", "wall", "wall_skull"], ["wall"]],
 		"floor_tex": "Floor512_indexed", "wall_tex": "concrete_512_indexed_dark",
@@ -56,7 +56,7 @@ const LEVELS := {
 		"fog_end": 48.0,   # the base fog (30 m) hid the boss from the start
 	},
 	"arena_2": {
-		"title": "Claustro (Blackhorn)",
+		"title": "Cloister (Blackhorn)",
 		"shape": "oct", "size": Vector2(30, 30), "height": 8.0, "ceiling": true,
 		"output": "gridmap", "wall_rows": [["wall"], ["wall", "wall_window"]],
 		"floor_tex": "concrete_512_indexed", "wall_tex": "concrete_512_indexed",
@@ -71,7 +71,7 @@ const LEVELS := {
 		"fog_end": 40.0,
 	},
 	"arena_3": {
-		"title": "Ruinas (Ghidorah)",
+		"title": "Ruins (Ghidorah)",
 		"shape": "rect", "size": Vector2(48, 48), "height": 12.0, "ceiling": false,
 		"output": "gridmap", "wall_rows": [["wall"], ["wall", "wall_window"], ["wall_ruin"]],
 		"floor_tex": "TerraCotta_512", "wall_tex": "concrete_512_indexed",
@@ -592,7 +592,7 @@ func _temple(root: Node3D, cfg: Dictionary, ground: Callable) -> Node3D:
 		pc.scale = Vector3(1.2, 1.0, 1.2)
 		_node(dec, pc, "FallenPillar%d" % sx)
 
-	_area(root, "ExitTrigger", Vector3(door.x, 3, 1.5), Vector3(0, b + 1.5, f + 0.5)).set_meta("doc", "Kaelen entra al templo → GameState.advance_level() (A)")
+	_area(root, "ExitTrigger", Vector3(door.x, 3, 1.5), Vector3(0, b + 1.5, f + 0.5)).set_meta("doc", "Kaelen enters the temple → GameState.advance_level() (A)")
 	var torch := OmniLight3D.new()
 	torch.light_color = Color(1.0, 0.6, 0.3)
 	torch.light_energy = 2.0
@@ -874,7 +874,7 @@ func _exit_ending(root: Node3D, geo: Node3D, cfg: Dictionary, half_d: float,
 	elysia.position = Vector3(0, 0.5, altar_z + 1.0)   # on the step, facing south (corridor)
 	ending.add_child(elysia)
 	var trig := _area(ending, "EndingTrigger", Vector3(room.x - 2, 3, 3), Vector3(0, 1.5, altar_z + 5.0))
-	trig.set_meta("doc", "Kaelen frente a Elysia → ending_director.gd (A)")
+	trig.set_meta("doc", "Kaelen in front of Elysia → ending_director.gd (A)")
 	var light := OmniLight3D.new()
 	light.light_color = Color(1.0, 0.85, 0.6)
 	light.light_energy = 1.6
@@ -957,7 +957,7 @@ func _stair_ramp(parent: Node, name: String, start: Vector3, dir: int, up: int, 
 	var body := StaticBody3D.new()
 	body.collision_layer = 1
 	body.collision_mask = 0
-	body.set_meta("doc", "Rampa de colisión de la escalera (los peldaños CSG son visuales)")
+	body.set_meta("doc", "Collision ramp of the staircase (the CSG steps are visual only)")
 	_node(parent, body, name)
 	var col := CollisionShape3D.new()
 	var shape := ConvexPolygonShape3D.new()
@@ -1011,7 +1011,7 @@ func _markers(root: Node3D, cfg: Dictionary) -> void:
 
 func _triggers(root: Node3D, info: Dictionary) -> void:
 	var t := _area(root, "ExitTrigger", info.size, info.pos)
-	t.set_meta("doc", "Kaelen la cruza → GameState.advance_level() (A)")
+	t.set_meta("doc", "Kaelen crosses it → GameState.advance_level() (A)")
 
 
 func _torches(root: Node3D, cfg: Dictionary) -> void:
