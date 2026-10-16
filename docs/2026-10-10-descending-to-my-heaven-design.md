@@ -198,6 +198,33 @@ Al derrotar al jefe aparece, con un fundido de 2,5 s, un tinte multiplicativo su
 - **Materiales y tono (final melancólico):** el muro norte y el altar de la sala dejaron la textura dorada y usan la misma piedra de la mazmorra que el resto de muros de `arena_3`; los bloques caídos usan el concreto del kit y las piezas `wall_ruin` / `pillar_collapsed`. El cielo visible por el hueco pasó de un atardecer cálido a uno frío y apagado (horizonte malva grisáceo, medios azul acero, resplandor tenue, nubes grisáceas) y la luz de cielo de la sala baja de 1,4 a 1,15 con tono más frío, sin ocultar a Kaelen ni a Elysia (la luz cálida del altar no cambia). FPS en el final, medidos sin vsync: sin diferencia apreciable (≈300 antes y después).
 - **Audio:** `assets/audio/sfx/ambient/wind_fall.mp3` (WIND-FALL, aportado por la autora del proyecto) suena en bucle desde `start_fall()` con su propio `AudioStreamPlayer` en el bus SFX a -9 dB (por debajo de los diálogos y la música): entra con un fundido de 2,5 s sincronizado con la aceleración y `EndingDirector._finish()` lo baja en 1,2 s (`stop_wind`) justo antes de pasar a créditos.
 
+**Diálogo del final (la isla cae y Kaelen no se arrepiente):** Kaelen derrotó a los tres guardianes (Bone Dragon, Blackhorn y Mecha King Ghidorah) para llegar a Elysia, y esos tres guardianes eran lo que mantenía la isla en el aire: al caer, condenó a todos sus habitantes. Elysia lo comprende en cuanto nota el temblor; el tono es melancólico y triste, sin reproche duro, y Kaelen no se arrepiente: solo quería verla otra vez. Terminan aceptando caer juntos. Son 19 líneas (`ENDING_01`..`ENDING_19` en `localization/translations.csv`, una línea por clave y por hablante; el prefijo "Kaelen:" / "Elysia:" se mantiene en ambos idiomas solo para detectar quién habla y no se muestra):
+
+1. (narrador) Tres pisos de acero y sangre. Y en lo alto del templo, una luz que seguía encendida.
+2. Kaelen: Elysia... por fin te encuentro.
+3. Elysia: Kaelen. Sabía que vendrías. Siempre lo supe.
+4. (narrador) El suelo tiembla. Del techo roto cae polvo, y el cielo se abre sobre el altar.
+5. Elysia: ¿Lo sientes? La isla ya no flota.
+6. Elysia: Los tres guardianes la mantenían en el aire. Y tú los has vencido.
+7. Kaelen: No había otro camino hasta ti.
+8. Elysia: Aquí vive gente, Kaelen. Familias. Niños. Todos caerán con nosotras.
+9. Elysia: Esa es la parte que más duele.
+10. Kaelen: Lo sé. Y aun así lo volvería a hacer.
+11. Kaelen: No vine a salvar a nadie. Vine a verte otra vez. Solo eso.
+12. (narrador) Elysia baja la mirada. Más allá del hueco, una torre se desprende y se pierde entre las nubes.
+13. Elysia: Debería odiarte por esto. Pero no puedo. Ni siquiera ahora.
+14. Elysia: Esperé tanto tu luz... y llega justo cuando todo se apaga.
+15. Kaelen: Entonces no la soltemos. Que la caída nos encuentre juntas.
+16. Elysia: Juntas, entonces. Aunque no quede cielo al que volver.
+17. (narrador) Se abrazan mientras el suelo se desprende del cielo.
+18. Elysia: Cierra los ojos, Kaelen. Caer también es una forma de volar.
+19. (narrador) Y el templo, con sus muertos y sus velas, se hundió despacio en las nubes.
+
+- **Avance:** el diálogo ya no pasa solo. Cada línea se revela con el `Typewriter` (30 car/s, pausas en la puntuación); una pulsación durante el revelado completa la línea y, con la línea completa, la siguiente pulsación pasa a la siguiente. Aceptan ataque (clic izquierdo, RB), `ui_accept` (Enter, Espacio, A del mando). Tras empezar o completar una línea se ignora (y se consume) la entrada durante 0,15 s y cada pulsación emite `advanced` una sola vez, así que una ráfaga no salta varias líneas. Con la línea completa parpadea un triángulo ▼ en la esquina de la caja.
+- **Caja (`DialogueBox`, `scripts/ui/dialogue_box.gd`):** banda negra semitransparente abajo (112 px, el mismo degradado vertical que la banda de "HAS MUERTO", opacidad 0,88) sobre la escena a 640x360; arriba el nombre del hablante en DungeonFont (`TitleLabel` de `menu_theme.tres`, 26 px; Kaelen rojo apagado, Elysia azul pálido) y debajo su texto (14 px, hasta 2 líneas). Se muestra una línea de un solo hablante cada vez; la narración no lleva nombre y va centrada en gris. Funciona igual en español e inglés.
+- **Cámara:** `ENDING_LINES` de `EndingDirector` asocia cada línea a un plano (1 = `EndingCam1` lejana, 2 = `EndingCam2` cercana): líneas 1-4 lejos (encuentro), 5-9 cerca (la verdad), 10-12 lejos (la isla se desprende), 13-18 cerca (despedida) y la última, lejos. La cámara cambia justo cuando empieza la primera línea del plano. `total_duration()` pasó a ser solo la duración mínima (revelado de las líneas + entrada + abrazo), porque el resto depende del jugador. La música del final baja 7 dB (ducking, `AudioManager.duck_music`) mientras dura el diálogo para que se oigan los blips y se recupera antes del fundido.
+- **Blips (causa de que no sonaran):** los archivos de dmochas llegan con pico de -17 a -25 dBFS y RMS de -30 a -36 dBFS; con el volumen que se les daba (-12 / -15 dB) y el cambio de tono 0,85 de Kaelen (fundamental ~200 Hz) el pico medido en el bus UI era de -33 dB (Kaelen) y -32 dB (Elysia), frente a -10 dB de un sonido de interfaz: ~22 dB más bajos, inaudibles bajo la música. El bus UI existía, no estaba silenciado ni atenuado (0 dB), y el árbol no se pausa en el final. Ahora los blips se normalizan a -3 dBFS de pico (`scripts/tools/make_dialogue_blips.py`): Kaelen usa tres sonidos graves (~280-410 Hz, tono 0,9, -4 dB) y Elysia tres agudos (~680-790 Hz, tono 1,12, -7 dB). Pico medido en el bus UI con la ventana abierta: -5,8 dB (Kaelen) y -8,8 dB (Elysia). Se alternan dos reproductores para que un blip no corte al anterior en seco. Las pruebas miden pico y RMS de cada archivo y que el bus UI exista y no esté silenciado. Los blips siguen en el bus UI, de modo que el volumen de Interfaz de Opciones también regula las voces.
+
 ### 6.4 Uso de los kits de dungeon y texturas en Godot
 
 | Pack | Rol | Uso |
@@ -589,7 +616,7 @@ Todo se guarda en `user://settings.cfg` (`ConfigFile`, autoload `UserSettings`) 
 | Opciones: cambiar de pestaña | — | LB / RB |
 | Depuración | F3 / F5 / F6 | — |
 
-Atacar también avanza los diálogos del final. Distribución tipo Dark Souls: RB ataque, B rodar,
+Atacar (o Enter / Espacio / A del mando / clic) avanza los diálogos del final: no pasan solos. Distribución tipo Dark Souls: RB ataque, B rodar,
 Y curarse, R3 fijar, sin botón de guardia (el juego no la tiene); LB, LT, RT y A quedan libres.
 
 ### 10.4 Pantalla de muerte y créditos

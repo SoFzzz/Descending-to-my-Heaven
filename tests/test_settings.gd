@@ -181,11 +181,13 @@ func test_every_key_has_both_languages() -> void:
 func test_ending_texts_keep_the_speaker_prefix_in_both_languages() -> void:
 	for loc in ["es", "en"]:
 		TranslationServer.set_locale(loc)
-		var lines: PackedStringArray = ED.localized(ED.SHOT_2_TEXT).split("\n")
-		assert_eq(lines.size(), 2, "two lines in " + loc)
-		assert_eq(Typewriter.speaker_of(lines[0]), &"kaelen", loc)
-		assert_eq(Typewriter.speaker_of(lines[1]), &"elysia", loc)
-		assert_eq(ED.localized(ED.SHOT_1_TEXT).split("\n").size(), 2, "narration in " + loc)
+		var speakers := {}
+		for entry in ED.ENDING_LINES:
+			var line: String = ED.localized(entry[0])
+			assert_true(not line.contains("
+"), "one speaker per line: " + entry[0] + " " + loc)
+			speakers[Typewriter.speaker_of(line)] = true
+		assert_true(speakers.has(&"kaelen") and speakers.has(&"elysia") and speakers.has(&""), "all voices in " + loc)
 	TranslationServer.set_locale("es")
 
 
