@@ -1,6 +1,6 @@
 extends TestCase
-# Feedback de combate (partes sin árbol): color del parpadeo y encuadre de cámara. La pausa de impacto y el
-# parpadeo con Tween necesitan árbol: tests/flow/hit_feedback_flow.tscn.
+# Combat feedback (parts without a tree): flash color and camera framing. The impact pause and the
+# flash with a Tween need a tree: tests/flow/hit_feedback_flow.tscn.
 
 
 func test_player_flash_is_red_and_enemy_white() -> void:
@@ -19,7 +19,7 @@ func test_player_flash_is_red_and_enemy_white() -> void:
 
 
 func test_camera_arm_grows_for_far_bosses_only() -> void:
-	assert_almost(CameraRig.boss_arm_extra(5.0), 0.0, 0.0001, "cerca no cambia")
+	assert_almost(CameraRig.boss_arm_extra(5.0), 0.0, 0.0001, "close does not change")
 	assert_almost(CameraRig.boss_arm_extra(8.0), 0.0, 0.0001)
-	assert_almost(CameraRig.boss_arm_extra(13.0), 2.0, 0.0001, "5 m de más = 2 m de brazo")
-	assert_almost(CameraRig.boss_arm_extra(40.0), CameraRig.ARM_EXTRA_MAX, 0.0001, "tope")
+	assert_almost(CameraRig.boss_arm_extra(13.0), 2.0, 0.0001, "5 m extra = 2 m of arm")
+	assert_almost(CameraRig.boss_arm_extra(40.0), CameraRig.ARM_EXTRA_MAX, 0.0001, "cap")

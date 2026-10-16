@@ -7,7 +7,7 @@ func test_alert_sets_chase_and_unlimited_lose_radius() -> void:
 	assert_eq(minion.state, MinionBrain.State.IDLE)
 	minion.alert()
 	assert_eq(minion.state, MinionBrain.State.CHASE)
-	assert_true(is_inf(minion.brain.lose_radius), "sin radio de pérdida")
+	assert_true(is_inf(minion.brain.lose_radius), "no loss radius")
 	minion.free()
 
 

@@ -1,5 +1,5 @@
 extends TestCase
-# Pruebas de Health (vida con señales y invulnerabilidad).
+# Tests for Health (health with signals and invulnerability).
 
 
 func test_damage_reduces_and_clamps_at_zero() -> void:

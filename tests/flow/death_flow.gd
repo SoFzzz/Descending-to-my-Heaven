@@ -1,8 +1,8 @@
 extends Node
-## Flujo real de muerte con los autoloads (GameState, AudioManager, Events): ejecutar con
-##   godot --headless --path . res://tests/flow/death_flow.tscn          (comprobaciones)
-##   godot --path . res://tests/flow/death_flow.tscn -- shots <carpeta>  (además, capturas)
-## Sale con código 1 si algo falla.
+## Real death flow with the autoloads (GameState, AudioManager, Events): run with
+##  godot --headless --path . res://tests/flow/death_flow.tscn          (checks)
+##  godot --path . res://tests/flow/death_flow.tscn -- shots <folder>  (additionally, screenshots)
+## Exits with code 1 if anything fails.
 
 var _fails := 0
 var _shots_dir := ""
@@ -16,7 +16,7 @@ func _ready() -> void:
 	_detach.call_deferred()
 
 
-## Se saca de la escena actual (que GameState libera al cambiar de escena) y empieza el flujo.
+## It is taken out of the current scene (which GameState frees on scene change) and the flow starts.
 func _detach() -> void:
 	var tree := get_tree()
 	reparent(tree.root)
@@ -73,66 +73,66 @@ func _shot(name: String) -> void:
 
 func _run() -> void:
 	await _wait(0.5)
-	# 1. Entrar a la arena 2 con vida y estamina llenas, HUD incluido.
+	# 1. Enter arena 2 with full health and stamina, HUD included.
 	await _load_arena(2)
 	var level := _scene()
 	var player: Player = level.get_node("Kaelen")
-	_check(level.scene_file_path.ends_with("arena_2_gameplay.tscn"), "arena 2 cargada")
-	_check(player.health.current == player.health.max_value and player.health.max_value == 70, "vida llena (70)")
-	_check(is_equal_approx(player.stamina.current, player.stamina.max_value), "estamina llena")
-	_check(is_equal_approx(player.get_node("HUD/Bars/Frame/HealthBar").value, 1.0), "HUD vida llena")
-	_check(is_equal_approx(player.get_node("HUD/Bars/Frame/StaminaBar").value, 1.0), "HUD estamina llena")
-	# 2. Música del jefe suena; Kaelen muere.
+	_check(level.scene_file_path.ends_with("arena_2_gameplay.tscn"), "arena 2 loaded")
+	_check(player.health.current == player.health.max_value and player.health.max_value == 70, "full health (70)")
+	_check(is_equal_approx(player.stamina.current, player.stamina.max_value), "stamina full")
+	_check(is_equal_approx(player.get_node("HUD/Bars/Frame/HealthBar").value, 1.0), "HUD full health")
+	_check(is_equal_approx(player.get_node("HUD/Bars/Frame/StaminaBar").value, 1.0), "HUD stamina full")
+	# 2. Boss music plays; Kaelen dies.
 	level._on_boss_state_changed(Boss.State.CHASE)
 	await _wait(2.5)
-	_check(_audio_playing() == 1 and AudioManager.get_current_music() == level.boss_music, "suena la música del jefe")
+	_check(_audio_playing() == 1 and AudioManager.get_current_music() == level.boss_music, "the boss music plays")
 	_kill()
 	await _wait_until(func() -> bool: return _audio_playing() == 0, 3.0)
-	_check(_audio_playing() == 0, "tras morir se para la música del jefe (reproductores: %d)" % _audio_playing())
-	_check(level.get_node("Ambience").playing == false, "se para el ambiente")
-	level._on_boss_state_changed(Boss.State.ACTIVE)   # el jefe detecta a Kaelen caída
+	_check(_audio_playing() == 0, "after dying the boss music stops (players: %d)" % _audio_playing())
+	_check(level.get_node("Ambience").playing == false, "the ambience stops")
+	level._on_boss_state_changed(Boss.State.ACTIVE)   # the boss detects the fallen Kaelen
 	await _wait(0.3)
-	_check(_audio_playing() == 0, "el jefe no reinicia su música con Kaelen muerta")
-	_check(not GameState.death_screen.buttons_visible(), "los botones aún no aparecen")
+	_check(_audio_playing() == 0, "the boss does not restart its music with Kaelen dead")
+	_check(not GameState.death_screen.buttons_visible(), "the buttons do not appear yet")
 	await _wait(2.4)
 	var ds: Node = GameState.death_screen
-	_check(ds.is_active() and ds.buttons_visible(), "aparece la pantalla de muerte con botones")
-	_check(get_tree().paused, "juego en pausa")
+	_check(ds.is_active() and ds.buttons_visible(), "the death screen appears with buttons")
+	_check(get_tree().paused, "game paused")
 	var retry: Button = ds.get_node("%Retry")
-	_check(get_viewport().gui_get_focus_owner() == retry, "foco inicial en Reintentar")
-	_check(ds.get_node("Root/Center/Panel/Box").get_child_count() == 3, "3 botones")
+	_check(get_viewport().gui_get_focus_owner() == retry, "initial focus on Retry")
+	_check(ds.get_node("Root/Center/Panel/Box").get_child_count() == 3, "3 buttons")
 	await _shot("death_screen")
-	# Navegación con teclado: ui_down mueve el foco.
+	# Keyboard navigation: ui_down moves the focus.
 	var down := InputEventAction.new()
 	down.action = &"ui_down"
 	down.pressed = true
 	Input.parse_input_event(down)
 	await _wait(0.2)
-	_check(get_viewport().gui_get_focus_owner() == ds.get_node("%Menu"), "ui_down pasa a Volver al menú")
+	_check(get_viewport().gui_get_focus_owner() == ds.get_node("%Menu"), "ui_down moves to Back to menu")
 	await _shot("death_screen_menu_focus")
-	# 3. Reintentar tres veces seguidas.
+	# 3. Retry three times in a row.
 	for attempt in 3:
 		retry = GameState.death_screen.get_node("%Retry")
 		retry.pressed.emit()
 		await _wait(2.2)
 		level = _scene()
 		player = level.get_node("Kaelen")
-		_check(level.scene_file_path.ends_with("arena_2_gameplay.tscn"), "reintento %d: misma arena" % attempt)
-		_check(player.health.current == 70 and is_equal_approx(player.stamina.current, player.stamina.max_value), "reintento %d: vida y estamina llenas" % attempt)
-		_check(not get_tree().paused and not GameState.death_screen.is_active(), "reintento %d: sin pausa ni pantalla" % attempt)
-		level._on_boss_state_changed(Boss.State.CHASE)   # el jefe detecta a Kaelen
+		_check(level.scene_file_path.ends_with("arena_2_gameplay.tscn"), "retry %d: same arena" % attempt)
+		_check(player.health.current == 70 and is_equal_approx(player.stamina.current, player.stamina.max_value), "retry %d: health and stamina full" % attempt)
+		_check(not get_tree().paused and not GameState.death_screen.is_active(), "retry %d: no pause or screen" % attempt)
+		level._on_boss_state_changed(Boss.State.CHASE)   # the boss detects Kaelen
 		await _wait(2.5)
-		_check(_audio_playing() == 1 and AudioManager.get_current_music() == level.boss_music, "reintento %d: un único reproductor con la música del jefe" % attempt)
+		_check(_audio_playing() == 1 and AudioManager.get_current_music() == level.boss_music, "retry %d: a single player with the boss music" % attempt)
 		_kill()
 		await _wait_until(func() -> bool: return _audio_playing() == 0, 3.0)
-		_check(_audio_playing() == 0, "reintento %d: silencio tras morir" % attempt)
+		_check(_audio_playing() == 0, "retry %d: silence after dying" % attempt)
 		await _wait(2.6)
-	# 4. Volver al menú.
+	# 4. Back to the menu.
 	GameState.death_screen.get_node("%Menu").pressed.emit()
 	await _wait(3.0)
-	_check(_scene().scene_file_path.ends_with("main_menu.tscn"), "vuelve al menú principal")
-	_check(_audio_playing() == 1 and AudioManager.get_current_music() != null, "suena la música del menú (reproductores: %d)" % _audio_playing())
-	_check(not get_tree().paused, "menú sin pausa")
+	_check(_scene().scene_file_path.ends_with("main_menu.tscn"), "returns to the main menu")
+	_check(_audio_playing() == 1 and AudioManager.get_current_music() != null, "the menu music plays (players: %d)" % _audio_playing())
+	_check(not get_tree().paused, "menu without pause")
 	# Idle music uses a single player, also after repeated and different play_music calls.
 	AudioManager.stop_music(0.0)
 	var track_a := load("res://assets/audio/bgm/boss1_ancient_creature_battle_loop.ogg") as AudioStream
@@ -152,9 +152,9 @@ func _run() -> void:
 			"music slider while paused keeps the pause drop")
 	get_tree().paused = false
 	UserSettings.set_volume(&"Music", 1.0, false)
-	# 5. Entrar a la arena 3 desde cero: vida 40 llena.
+	# 5. Enter arena 3 from scratch: health 40 full.
 	await _load_arena(3)
 	player = _scene().get_node("Kaelen")
-	_check(player.health.current == 40 and player.health.max_value == 40, "arena 3: vida llena (40)")
-	print("FLOW: %s" % ("OK" if _fails == 0 else "%d fallos" % _fails))
+	_check(player.health.current == 40 and player.health.max_value == 40, "arena 3: full health (40)")
+	print("FLOW: %s" % ("OK" if _fails == 0 else "%d failures" % _fails))
 	get_tree().quit(1 if _fails > 0 else 0)

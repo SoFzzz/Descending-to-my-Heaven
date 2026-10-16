@@ -1,8 +1,8 @@
 extends TestCase
-# Mando de Xbox (XInput): cada acción del juego tiene evento de mando, los menús se navegan con
-# D-pad / stick y A / B, y los eventos simulados (parse_input_event) activan las acciones.
-# Distribución: stick izq. mover, stick der. cámara, X / RB atacar, B rodar, Y curarse, R3 (RS) fijar objetivo,
-# Start pausa, A / B aceptar / cancelar en los menús, LB / RB cambian de pestaña en opciones.
+# Xbox gamepad (XInput): every game action has a gamepad event, menus are navigated with
+# D-pad / stick and A / B, and simulated events (parse_input_event) trigger the actions.
+# Layout: left stick move, right stick camera, X / RB attack, B roll, Y heal, R3 (RS) lock on,
+# Start pause, A / B accept / cancel in menus, LB / RB switch tabs in options.
 
 const GAMEPLAY_ACTIONS: Array[StringName] = [
 	&"move_forward", &"move_back", &"move_left", &"move_right",
@@ -105,7 +105,7 @@ func test_options_menu_captures_a_gamepad_button() -> void:
 	var settings := GameSettings.new()
 	settings.save_path = "user://test_gamepad_settings.cfg"
 	var menu := OptionsMenu.new()
-	# Sin árbol: apply_capture busca el autoload, así que se prueba la ruta de datos con GameSettings.
+	# Without a tree: apply_capture looks up the autoload, so the data path is tested with GameSettings.
 	var event := GameSettings.capture(_pad_button(JOY_BUTTON_DPAD_UP, true))
 	assert_true(event != null)
 	assert_eq(settings.rebind(&"lock_on", GameSettings.SLOT_PAD, event), &"")

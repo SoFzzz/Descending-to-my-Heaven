@@ -1,8 +1,8 @@
 extends Node
-## Pausa de impacto y parpadeo con el árbol real: ejecutar con
-##   godot --headless --path . res://tests/flow/hit_feedback_flow.tscn          (comprobaciones)
-##   godot --path . res://tests/flow/hit_feedback_flow.tscn -- shots <carpeta>  (además, capturas de las 3 arenas y un parpadeo)
-## Sale con código 1 si algo falla.
+## Impact pause and flash with the real tree: run with
+##  godot --headless --path . res://tests/flow/hit_feedback_flow.tscn          (checks)
+##  godot --path . res://tests/flow/hit_feedback_flow.tscn -- shots <folder>  (additionally, screenshots of the 3 arenas and a flash)
+## Exits with code 1 if anything fails.
 
 var _fails := 0
 var _shots_dir := ""
@@ -32,7 +32,7 @@ func _check(cond: bool, what: String) -> void:
 
 
 func _wait(seconds: float) -> void:
-	var end := Time.get_ticks_msec() + int(seconds * 1000.0)   # reloj real, no el del juego
+	var end := Time.get_ticks_msec() + int(seconds * 1000.0)   # real clock, not the game's
 	while Time.get_ticks_msec() < end:
 		await get_tree().process_frame
 
@@ -55,57 +55,57 @@ func _flash_model() -> Node3D:
 
 func _run() -> void:
 	var tree := get_tree()
-	# 1. Pausa de impacto: baja y vuelve sola en ~60 ms reales.
-	_check(HitStop.request(tree), "hit-stop aceptado")
-	_check(is_equal_approx(Engine.time_scale, HitStop.SCALE), "time_scale bajado a %s" % HitStop.SCALE)
-	_check(not HitStop.request(tree), "segunda petición ignorada (no se apila)")
+	# 1. Impact pause: drops and returns by itself in ~60 real ms.
+	_check(HitStop.request(tree), "hit-stop accepted")
+	_check(is_equal_approx(Engine.time_scale, HitStop.SCALE), "time_scale lowered to %s" % HitStop.SCALE)
+	_check(not HitStop.request(tree), "second request ignored (does not stack)")
 	await _wait(0.2)
-	_check(is_equal_approx(Engine.time_scale, 1.0), "time_scale restaurado a 1 tras ~60 ms")
-	_check(not HitStop.is_active(), "hit-stop inactivo")
+	_check(is_equal_approx(Engine.time_scale, 1.0), "time_scale restored to 1 after ~60 ms")
+	_check(not HitStop.is_active(), "hit-stop inactive")
 
-	# 2. Pausa del juego a mitad del impacto.
+	# 2. Game pause in the middle of the impact.
 	HitStop.request(tree)
 	tree.paused = true
 	await _wait(0.1)
-	_check(is_equal_approx(Engine.time_scale, 1.0), "pausar a mitad del impacto restaura el tiempo")
+	_check(is_equal_approx(Engine.time_scale, 1.0), "pausing mid-impact restores the time")
 	tree.paused = false
 
-	# 3. Cambio de escena a mitad del impacto (GameState._swap_scene deja 1.0; el driver sobrevive y no lo pisa).
+	# 3. Scene change in the middle of the impact (GameState._swap_scene leaves 1.0; the driver survives and does not overwrite it).
 	HitStop.request(tree)
 	Engine.time_scale = 1.0
 	await _wait(0.2)
-	_check(is_equal_approx(Engine.time_scale, 1.0), "reset externo + fin del impacto: sigue en 1")
+	_check(is_equal_approx(Engine.time_scale, 1.0), "external reset + end of impact: stays at 1")
 
-	# 4. Muerte (la pantalla de muerte pausa el árbol) a mitad del impacto.
+	# 4. Death (the death screen pauses the tree) in the middle of the impact.
 	HitStop.request(tree)
 	tree.paused = true
 	await _wait(0.15)
 	tree.paused = false
-	_check(is_equal_approx(Engine.time_scale, 1.0), "pausa por muerte a mitad del impacto restaura el tiempo")
+	_check(is_equal_approx(Engine.time_scale, 1.0), "pause from death mid-impact restores the time")
 
-	# 5. Muchas peticiones seguidas nunca dejan el tiempo lento.
+	# 5. Many consecutive requests never leave time slow.
 	for i in 20:
 		HitStop.request(tree)
 		await _wait(0.016)
 	await _wait(0.2)
-	_check(is_equal_approx(Engine.time_scale, 1.0), "20 golpes seguidos: el tiempo vuelve a 1")
+	_check(is_equal_approx(Engine.time_scale, 1.0), "20 consecutive hits: time returns to 1")
 
-	# 6. Parpadeo con Tween real.
+	# 6. Flash with a real Tween.
 	var model := _flash_model()
 	add_child(model)
 	HitFlash.flash(model, Color.RED)
-	_check(HitFlash.amount(model) > 0.9, "parpadeo al máximo al recibir el golpe")
+	_check(HitFlash.amount(model) > 0.9, "flash at maximum when receiving the hit")
 	await _wait(0.04)
 	var mid := HitFlash.amount(model)
-	_check(mid < 1.0 and mid > 0.0, "baja gradualmente (%.2f)" % mid)
+	_check(mid < 1.0 and mid > 0.0, "drops gradually (%.2f)" % mid)
 	await _wait(0.3)
-	_check(HitFlash.amount(model) == 0.0, "el parpadeo se apaga solo (~0,1 s)")
+	_check(HitFlash.amount(model) == 0.0, "the flash turns off by itself (~0.1 s)")
 	HitFlash.flash(model)
 	model.queue_free()
 	await _wait(0.05)
-	_check(not HitStop.is_active(), "sin pausa colgada")
+	_check(not HitStop.is_active(), "no stuck pause")
 
-	# 7. Parpadeo con el jefe real y su Hurtbox.
+	# 7. Flash with the real boss and its Hurtbox.
 	var boss_scene := load("res://scenes/bosses/boss_bonedragon.tscn") as PackedScene
 	var boss := boss_scene.instantiate() as Boss
 	add_child(boss)
@@ -114,9 +114,9 @@ func _run() -> void:
 	psx.apply_psx(m)
 	var hb: Hurtbox = boss.find_children("*", "Hurtbox", true, false)[0]
 	hb.receive_hit(5, null)
-	_check(HitFlash.amount(m) > 0.9, "el golpe a un Hurtbox del jefe lo hace parpadear")
+	_check(HitFlash.amount(m) > 0.9, "a hit on a boss Hurtbox makes it flash")
 	await _wait(0.3)
-	_check(HitFlash.amount(m) == 0.0, "el jefe vuelve a su color")
+	_check(HitFlash.amount(m) == 0.0, "the boss returns to its color")
 	boss.queue_free()
 
 	_reset()
@@ -126,14 +126,14 @@ func _run() -> void:
 	get_tree().quit(1 if _fails > 0 else 0)
 
 
-## Capturas: cada arena con su iluminación, y un parpadeo sobre un esbirro/jefe.
+## Screenshots: each arena with its lighting, and a flash on a minion/boss.
 func _shots() -> void:
 	for n in [1, 2, 3]:
 		var scene := (load("res://scenes/levels/arena_%d_gameplay.tscn" % n) as PackedScene).instantiate()
 		get_tree().current_scene.add_child(scene)
 		await _wait(2.0)
 		_save("arena_%d_mood" % n)
-		# Parpadeo del jefe y tinte de jefe derrotado.
+		# Boss flash and defeated boss tint.
 		var boss := scene.get_node_or_null(^"Boss") as Boss
 		if boss:
 			var hb: Hurtbox = boss.find_children("*", "Hurtbox", true, false)[0]

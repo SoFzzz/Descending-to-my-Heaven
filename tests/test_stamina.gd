@@ -1,5 +1,5 @@
 extends TestCase
-# Pruebas de Stamina (gasto permitido con current > 0 y regeneración con espera).
+# Tests for Stamina (spending allowed with current > 0 and regeneration with a delay).
 
 
 func test_spend_requires_positive_stamina() -> void:

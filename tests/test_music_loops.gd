@@ -1,6 +1,6 @@
 extends TestCase
-# Todas las pistas de música (y la de la pantalla de muerte) están en bucle: el reproductor pasa de
-# la última muestra a la primera sin parar, sin silencio ni salto, y nada reinicia la pista a mano.
+# All music tracks (and the death screen one) loop: the player goes from
+# the last sample to the first without stopping, with no silence or jump, and nothing restarts the track by hand.
 
 const TRACKS := [
 	"res://assets/audio/bgm/boss1_ancient_creature_battle_loop.ogg",
@@ -20,8 +20,8 @@ func test_every_track_has_loop_enabled() -> void:
 		assert_true(stream != null, path)
 		if stream == null:
 			continue
-		assert_true(stream.loop, "loop activado: %s" % path)
-		assert_true(stream.get_length() > 10.0, "duración razonable: %s" % path)
+		assert_true(stream.loop, "loop enabled: %s" % path)
+		assert_true(stream.get_length() > 10.0, "reasonable duration: %s" % path)
 
 
 func test_tracks_wrap_past_their_end_and_keep_playing() -> void:
@@ -29,26 +29,26 @@ func test_tracks_wrap_past_their_end_and_keep_playing() -> void:
 		var stream := load(path) as AudioStreamOggVorbis
 		var pb := stream.instantiate_playback()
 		pb.start(0.0)
-		# Se salta a 0,25 s del final y se "avanza el tiempo" 0,5 s: pasa el final de la pista.
+		# It seeks to 0.25 s before the end and "advances time" 0.5 s: it passes the end of the track.
 		pb.seek(stream.get_length() - 0.25)
 		var frames := pb.mix_audio(1.0, int(MIX_RATE * 0.5))
-		assert_true(pb.is_playing(), "sigue sonando tras su final: %s" % path)
-		assert_true(pb.get_loop_count() >= 1, "dio la vuelta: %s" % path)
-		assert_true(pb.get_playback_position() < 1.0, "posición vuelve al principio: %s" % path)
+		assert_true(pb.is_playing(), "still playing after its end: %s" % path)
+		assert_true(pb.get_loop_count() >= 1, "it wrapped around: %s" % path)
+		assert_true(pb.get_playback_position() < 1.0, "position returns to the start: %s" % path)
 		var peak := 0.0
 		var max_step := 0.0
 		var prev := Vector2.ZERO
 		for i in frames.size():
 			peak = maxf(peak, absf(frames[i].x))
-			if i > 256:   # el arranque tras seek() no cuenta, la costura sí
+			if i > 256:   # the start after seek() does not count, the seam does
 				max_step = maxf(max_step, absf(frames[i].x - prev.x))
 			prev = frames[i]
-		assert_true(peak > 0.02, "sin silencio en la costura: %s" % path)
-		assert_true(max_step < 0.5, "sin salto brusco en la costura: %s" % path)
+		assert_true(peak > 0.02, "no silence at the seam: %s" % path)
+		assert_true(max_step < 0.5, "no abrupt jump at the seam: %s" % path)
 
 
 func test_nothing_restarts_music_when_a_track_finishes() -> void:
-	# El bucle lo hace el propio stream: ni el gestor de audio ni las escenas escuchan `finished`.
+	# The loop is done by the stream itself: neither the audio manager nor the scenes listen to `finished`.
 	for path in ["res://scripts/audio/audio_manager.gd", "res://scripts/ui/death_screen.gd",
 			"res://scripts/game/arena_gameplay.gd", "res://scripts/game/level_gameplay.gd"]:
 		var text := FileAccess.get_file_as_string(path)

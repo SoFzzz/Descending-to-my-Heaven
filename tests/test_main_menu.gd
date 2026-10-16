@@ -1,6 +1,6 @@
 extends TestCase
-# Menú principal: botones, silueta de la isla y animación de flotar/girar. (Las pruebas corren antes de
-# que exista el árbol de escenas, así que solo se usan instancias sueltas y funciones estáticas.)
+# Main menu: buttons, island silhouette and float/spin animation. (Tests run before
+# the scene tree exists, so only loose instances and static functions are used.)
 
 
 func test_menu_scene_has_the_three_buttons_in_the_left_half() -> void:

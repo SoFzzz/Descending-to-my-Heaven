@@ -1,7 +1,7 @@
 extends TestCase
-# Ajustes del jugador (GameSettings): guardar / cargar, reasignar controles, volumen en el bus,
-# idioma y utilidades de la cámara. Las pruebas corren antes de que exista el árbol, así que se usan
-# instancias sueltas con un archivo temporal; se restauran el InputMap, el idioma y los buses al terminar.
+# Player settings (GameSettings): save / load, rebind controls, bus volume,
+# language and camera utilities. Tests run before the tree exists, so loose
+# instances with a temporary file are used; the InputMap, language and buses are restored at the end.
 
 const TMP := "user://test_settings.cfg"
 const ED := preload("res://scripts/game/ending_director.gd")
