@@ -322,3 +322,11 @@ func test_reset_returns_to_build_up() -> void:
 	assert_eq(m.phase, Phase.BUILD_UP)
 	assert_almost(m.intensity, 0.0)
 	assert_true(_until_wave(m, _ctx()).budget > 0, "tras reset vuelve a generar la primera oleada")
+
+
+func test_damage_scale_by_max_hp() -> void:
+	assert_almost(OrchestratorModel.hp_damage_scale(100), 1.0, 0.0001)
+	assert_almost(OrchestratorModel.hp_damage_scale(70), 1.214, 0.001)
+	assert_almost(OrchestratorModel.hp_damage_scale(40), 1.75, 0.0001)
+	assert_almost(OrchestratorModel.hp_damage_scale(0), 1.0, 0.0001, "sin vida máxima no escala")
+	assert_almost(OrchestratorModel.hp_damage_scale(10), 2.0, 0.0001, "tope x2")

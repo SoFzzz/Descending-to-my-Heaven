@@ -68,6 +68,8 @@ func _on_area_entered(area: Area3D) -> void:
 		source = get_parent()
 	hurtbox.receive_hit(damage, source)
 	_play_impact(hurtbox)
+	if source != null and source.is_in_group(&"player") and is_inside_tree():
+		HitStop.request(get_tree())   # pausa de impacto solo en los golpes de Kaelen
 	# Events puede no existir (pruebas con -s), por eso se busca por ruta.
 	var events := get_node_or_null(^"/root/Events")
 	if events:

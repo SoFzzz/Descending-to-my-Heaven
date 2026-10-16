@@ -18,6 +18,11 @@ const ARM_LENGTH := 4.0
 const ARM_LENGTH_BOSS := 6.5
 const FOV := 70.0
 const FOV_BOSS := 75.0
+## Con un jefe fijado lejos (jefes enormes) el brazo se alarga para que quepa entero en pantalla:
+## +ARM_PER_METER m por cada metro de distancia horizontal por encima de ARM_FAR_FROM, hasta ARM_EXTRA_MAX.
+const ARM_FAR_FROM := 8.0
+const ARM_PER_METER := 0.4
+const ARM_EXTRA_MAX := 3.0
 const LOCK_TURN_SPEED := 8.0        # how fast the rotation reaches the locked target
 const LOCK_PITCH_OFFSET := deg_to_rad(-12.0)  # looks slightly above the shoulder, downward
 const ZOOM_SPEED := 4.0             # interpolation speed for pivot, arm and FOV
@@ -109,13 +114,26 @@ func _process(delta: float) -> void:
 	var boss := lock_target != null and lock_target.is_in_group(&"boss")
 	var t := minf(1.0, ZOOM_SPEED * delta)
 	pivot_height = lerpf(pivot_height, PIVOT_HEIGHT_BOSS if boss else PIVOT_HEIGHT, t)
-	_arm.spring_length = lerpf(_arm.spring_length, ARM_LENGTH_BOSS if boss else ARM_LENGTH, t)
+	var arm_goal := ARM_LENGTH_BOSS + boss_arm_extra(_flat_distance(lock_target)) if boss else ARM_LENGTH
+	_arm.spring_length = lerpf(_arm.spring_length, arm_goal, t)
 	if _camera:
 		_camera.fov = lerpf(_camera.fov, FOV_BOSS if boss else FOV, t)
 	var goal := _target.global_position + Vector3.UP * pivot_height
 	global_position = global_position.lerp(goal, minf(1.0, FOLLOW_SPEED * delta))
 	if lock_target:
 		_face_point(LockOn.aim_point(lock_target), delta)
+
+
+## Metros extra de brazo para un jefe fijado a `distance` m (en planta) de la cámara.
+static func boss_arm_extra(distance: float) -> float:
+	return clampf((distance - ARM_FAR_FROM) * ARM_PER_METER, 0.0, ARM_EXTRA_MAX)
+
+
+func _flat_distance(node: Node3D) -> float:
+	if node == null:
+		return 0.0
+	var d := node.global_position - _target.global_position
+	return Vector2(d.x, d.z).length()
 
 
 func _lock_target() -> Node3D:

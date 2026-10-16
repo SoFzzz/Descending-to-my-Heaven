@@ -64,6 +64,8 @@ const HURT_DURATION := 0.4
 ## After any hit that does not kill her (also in ATTACK) she is invulnerable for this long, counted
 ## from the hit; HURT ends earlier (HURT_DURATION) and she can act while still invulnerable.
 const HURT_IFRAMES := 1.0
+## Damage (as a fraction of max HP) from which a hit also shakes the camera.
+const HEAVY_HIT_RATIO := 0.15
 ## Meanwhile the model blinks: it toggles its visibility every HURT_BLINK_INTERVAL s.
 const HURT_BLINK_INTERVAL := 0.08
 ## Hyper armor: in ATTACK a hit does not interrupt the slash (no HURT) and only this fraction of its
@@ -558,9 +560,21 @@ func _on_health_changed(current: int, max_value: int) -> void:
 	if current <= 0 or state == State.DEAD:
 		return
 	_play_sfx(sfx_hurt)
+	_hurt_feedback(previous - current, max_value)
 	_start_hurt_iframes()
 	if state != State.ATTACK:   # hyper armor: the slash goes on, without the hurt animation
 		_enter_hurt()
+
+
+## Hit feedback: a short hit-stop and, for a strong hit (>= HEAVY_HIT_RATIO of max HP), a small camera shake.
+func _hurt_feedback(amount: int, max_value: int) -> void:
+	if not is_inside_tree():
+		return
+	HitStop.request(get_tree(), HitStop.HURT_DURATION)
+	if float(amount) / maxf(1.0, float(max_value)) >= HEAVY_HIT_RATIO:
+		var rig := get_node_or_null(^"CameraRig") as CameraRig
+		if rig:
+			rig.shake(0.07, 0.22)
 
 
 ## True when the stamina has just run out (it was above 0 and is now 0).

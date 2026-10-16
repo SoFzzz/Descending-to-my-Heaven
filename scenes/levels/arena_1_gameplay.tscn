@@ -10,6 +10,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/ambient/torch_loop.ogg" id="9_torch"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/ambient/arena_1_ambience.mp3" id="10_ambience"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/ambient/stone_door.mp3" id="11_gate"]
+[ext_resource type="Script" path="res://scripts/game/arena_mood.gd" id="90_mood"]
 
 [node name="Arena1Gameplay" type="Node3D"]
 script = ExtResource("1_gp")
@@ -21,6 +22,20 @@ ambience = ExtResource("10_ambience")
 gate_sound = ExtResource("11_gate")
 
 [node name="Level" parent="." instance=ExtResource("2_level")]
+
+[node name="Mood" type="Node" parent="."]
+script = ExtResource("90_mood")
+ambient_color = Color(0.32, 0.22, 0.17, 1)
+ambient_energy = 0.6
+fog_color = Color(0.22, 0.13, 0.09, 1)
+fog_begin = 4.0
+fog_end = 46.0
+sun_color = Color(1, 0.6, 0.3, 1)
+sun_energy = 0.3
+brightness = 0.95
+contrast = 1.12
+saturation = 1.1
+defeat_tint = Color(1, 0.84, 0.7, 1)
 
 [node name="Kaelen" parent="." instance=ExtResource("3_kaelen")]
 
