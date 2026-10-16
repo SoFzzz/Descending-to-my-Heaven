@@ -1,23 +1,23 @@
 class_name ImpactFx
 extends Node
-## Efectos de impacto baratos con los recursos de "Storm & Wind 3D Free" y "Magic Circles 3D Free"
-## (heyheythere, CC BY 4.0; addons/storm_wind y addons/magic_circles, sin activar los plugins):
+## Cheap impact effects using the resources of "Storm & Wind 3D Free" and "Magic Circles 3D Free"
+## (heyheythere, CC BY 4.0; addons/storm_wind and addons/magic_circles, plugins not enabled):
 ##
-## - Chispas en el punto de golpe (`sparks`), a partir de Events.hit_landed.
-## - Polvo y escombro al rodar, en golpes al suelo de los jefes y al morir los esbirros (`dust`, `puff`).
-## - Sello mágico en el suelo (`seal`): aviso de la repulsión y rugido de la fase 2.
+## - Sparks at the hit point (`sparks`), driven by Events.hit_landed.
+## - Dust and debris when rolling, on boss ground hits and when minions die (`dust`, `puff`).
+## - Magic seal on the ground (`seal`): telegraph of the repel and the phase 2 roar.
 ##
-## Es un único nodo colgado de la raíz (`ImpactFx.instance(tree)`) con reservas fijas de CPUParticles3D
-## de un disparo que se reutilizan: golpear no crea nodos ni mallas, solo recoloca y reinicia un
-## emisor. Todos usan `spark.gdshader` de Storm & Wind (un solo shader por compilar; ver
-## `ShaderWarmup`, que lo dibuja una vez durante la carga). Con un transparente tramado (dither) para
-## que encaje con el aspecto PSX.
+## It is a single node hanging from the root (`ImpactFx.instance(tree)`) with fixed pools of one-shot
+## CPUParticles3D that are reused: hitting creates no nodes or meshes, it only repositions and
+## restarts an emitter. All use Storm & Wind's `spark.gdshader` (a single shader to compile; see
+## `ShaderWarmup`, which draws it once during loading). With dithered transparency to match the
+## PSX look.
 
 const SPARK_SHADER := "res://addons/storm_wind/shaders/spark.gdshader"
 const NODE_NAME := "ImpactFx"
 const SPARK_POOL := 6
 const DUST_POOL := 4
-## Ataques de jefe que golpean el suelo: levantan polvo donde cae la hitbox.
+## Boss attacks that hit the ground: they kick up dust where the hitbox lands.
 const GROUND_ATTACKS: Array[StringName] = [&"slam", &"stomp", &"pounce"]
 
 const SPARK_COLOR := Color(1.0, 0.78, 0.38)
@@ -36,7 +36,7 @@ var _next_spark := 0
 var _next_dust := 0
 
 
-## El nodo compartido, creado (y conectado a Events.hit_landed) la primera vez. null sin árbol.
+## The shared node, created (and connected to Events.hit_landed) the first time. null without a tree.
 static func instance(tree: SceneTree) -> ImpactFx:
 	if tree == null:
 		return null
@@ -54,21 +54,21 @@ static func instance(tree: SceneTree) -> ImpactFx:
 	return fx
 
 
-## Chispas en `pos`; `power` 1 = golpe normal, más = más chispas.
+## Sparks at `pos`; `power` 1 = normal hit, more = more sparks.
 static func sparks(tree: SceneTree, pos: Vector3, power := 1.0, hot := true) -> void:
 	var fx := instance(tree)
 	if fx:
 		fx._emit_sparks(pos, power, hot)
 
 
-## Nube de polvo/escombro en `pos` (suelo); `size` en metros de radio aproximado.
+## Dust/debris cloud at `pos` (ground); `size` is the approximate radius in meters.
 static func dust(tree: SceneTree, pos: Vector3, size := 1.0) -> void:
 	var fx := instance(tree)
 	if fx:
 		fx._emit_dust(pos, size, DUST_COLOR, DUST_EDGE, 0.9)
 
 
-## Curación: bocanada verde que sube y chispas doradas alrededor de `pos` (pies de Kaelen).
+## Healing: a green puff that rises and golden sparks around `pos` (Kaelen's feet).
 static func heal(tree: SceneTree, pos: Vector3) -> void:
 	var fx := instance(tree)
 	if fx:
@@ -76,7 +76,7 @@ static func heal(tree: SceneTree, pos: Vector3) -> void:
 		fx._emit_sparks(pos + Vector3.UP * 0.9, 0.7, true, HEAL_SPARK, HEAL_EDGE)
 
 
-## Humo oscuro con brasas (muerte de un esbirro).
+## Dark smoke with embers (a minion's death).
 static func puff(tree: SceneTree, pos: Vector3, size := 0.8) -> void:
 	var fx := instance(tree)
 	if fx:
@@ -84,8 +84,8 @@ static func puff(tree: SceneTree, pos: Vector3, size := 0.8) -> void:
 		fx._emit_sparks(pos + Vector3.UP * 0.3, 0.5, true)
 
 
-## Sello mágico (MagicArea "circle") que se forma durante `form` s sobre el suelo bajo `source`, se
-## mantiene un instante y se desvanece. Pensado para avisar de la repulsión y el rugido de fase 2.
+## Magic seal (MagicArea "circle") that forms over `form` s on the ground under `source`, holds
+## for a moment and fades out. Meant to warn of the repel and the phase 2 roar.
 static func seal(source: Node3D, radius: float, form: float, element := "fire") -> Node3D:
 	if source == null or not source.is_inside_tree() or source.get_parent() == null:
 		return null
@@ -105,14 +105,14 @@ static func seal(source: Node3D, radius: float, form: float, element := "fire") 
 	return area
 
 
-## Muestras de cada efecto para que ShaderWarmup las dibuje una vez durante la carga.
+## Samples of each effect so ShaderWarmup draws them once during loading.
 static func warmup_samples() -> Array[Node3D]:
 	var out: Array[Node3D] = []
 	var holder := ImpactFx.new()
 	holder._build()
 	for p: CPUParticles3D in [holder._sparks[0], holder._dust[0]]:
 		holder.remove_child(p)
-		p.one_shot = false   # el que lo dibuja pone emitting = true ya dentro del árbol
+		p.one_shot = false   # whoever draws it sets emitting = true once inside the tree
 		out.append(p)
 	holder.free()
 	MagicArea.default_transparency = 1
@@ -124,7 +124,7 @@ static func warmup_samples() -> Array[Node3D]:
 	ring.light = false
 	ring.particles = false
 	out.append(ring)
-	var ripple := MagicArea.new()   # onda de impacto del rayo (BeamVfx)
+	var ripple := MagicArea.new()   # beam impact ripple (BeamVfx)
 	ripple.kind = "ripple"
 	ripple.element = "fire"
 	ripple.radius = 1.0

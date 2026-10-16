@@ -1,12 +1,11 @@
 class_name ShaderWarmup
 extends SubViewport
-## Precalentamiento de los efectos de un jefe. En gl_compatibility cada shader se compila la PRIMERA
-## vez que se dibuja: el rayo de Ghidorah (5 shaders y 2 sistemas de particulas) congelaba el juego
-## ~120 ms en su primer disparo y los avisos rojos del suelo unos 20-50 ms en el primer ataque.
-## Aqui se dibujan una vez, durante la carga y fuera de pantalla (un SubViewport de 64x64 con su
-## propio mundo 3D), copias de cada efecto visual y de cada aviso de los ataques; despues se libera.
-## Tambien se reproduce una vez cada animacion de ataque para que el AnimationPlayer resuelva sus
-## pistas (el modelo de Ghidorah tiene cientos). Se omite sin ventana (pruebas, --headless).
+## Warm-up of a boss's effects. In gl_compatibility each shader is compiled the FIRST time it is
+## drawn: Ghidorah's beam (5 shaders and 2 particle systems) froze the game ~120 ms on its first
+## shot and the red floor telegraphs about 20-50 ms on the first attack.
+## Here copies of each visual effect and of each attack telegraph are drawn once, during loading and
+## off screen (a 64x64 SubViewport with its own 3D world); afterwards it frees itself.
+## It is skipped without a window (tests, --headless).
 
 const FRAMES := 3
 const DISTANCE := 3.0
@@ -14,7 +13,7 @@ const DISTANCE := 3.0
 var _frames_left := FRAMES
 
 
-## Prepara el precalentamiento de `boss` (llamar desde su _ready, ya dentro del arbol).
+## Prepares the warm-up of `boss` (call from its _ready, already inside the tree).
 static func start(boss: Boss) -> ShaderWarmup:
 	if DisplayServer.get_name() == "headless" or not boss.is_inside_tree():
 		return null
@@ -33,8 +32,8 @@ static func start(boss: Boss) -> ShaderWarmup:
 			var source := boss.get_node_or_null(path) as Node3D
 			if source == null:
 				continue
-			# Un efecto instanciado de una escena (el rayo) se vuelve a instanciar: duplicate() llama a los
-			# setters de su script antes de que existan sus nodos hijos.
+			# An effect instanced from a scene (the beam) is instanced again: duplicate() calls its
+			# script's setters before its child nodes exist.
 			var copy: Node3D
 			if source.scene_file_path != "":
 				copy = (load(source.scene_file_path) as PackedScene).instantiate() as Node3D
@@ -46,7 +45,7 @@ static func start(boss: Boss) -> ShaderWarmup:
 			for child in copy.find_children("*", "Node3D", true, false):
 				(child as Node3D).visible = true
 			count += 1
-	# Efectos de impacto, sellos y viento (ImpactFx, MagicArea, StormFX): sus shaders se compilan aqui.
+	# Impact effects, seals and wind (ImpactFx, MagicArea, StormFX): their shaders are compiled here.
 	for sample in ImpactFx.warmup_samples():
 		warm.add_child(sample)
 		sample.position = Vector3(0.0, -0.4, -DISTANCE)
@@ -59,11 +58,11 @@ static func start(boss: Boss) -> ShaderWarmup:
 
 
 func _ready() -> void:
-	# Los efectos con apertura animada (el rayo) se muestran abiertos del todo; sus nodos hijos
-	# solo existen aqui, ya dentro del arbol.
+	# Effects with an animated opening (the beam) are shown fully open; their child nodes
+	# only exist here, once inside the tree.
 	for child in get_children():
 		if child is CPUParticles3D:
-			(child as CPUParticles3D).emitting = true   # chispas y polvo de ImpactFx
+			(child as CPUParticles3D).emitting = true   # ImpactFx sparks and dust
 		if "open_amount" in child:
 			child.set(&"open_amount", 1.0)
 			child.set_process(false)
