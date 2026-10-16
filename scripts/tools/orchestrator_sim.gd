@@ -1,14 +1,14 @@
 extends SceneTree
-## Simulación sin ventana de la intensidad del Orquestador (OrchestratorModel real, a 10 Hz) en las
-## tres arenas con la regla actual de oleadas: grupos de 2-3 esbirros con 1 élite, nunca más de 3 vivos,
-## ventana del jefe entre oleadas. Uso:
+## Windowless simulation of the Orchestrator intensity (real OrchestratorModel, at 10 Hz) in the
+## three arenas with the current wave rule: groups of 2-3 minions with 1 elite, never more than 3
+## alive, boss window between waves. Usage:
 ##   godot --headless --path . -s res://scripts/tools/orchestrator_sim.gd
-## Kaelen simulada: mata a los esbirros de uno en uno (3 s de llegada + tiempo de muerte aleatorio),
-## los esbirros cercanos atacan (como mucho 2 a la vez) cada ~3,6 s, el jefe cada 4 s; la probabilidad de
-## acierto depende del perfil de Kaelen (diestra / media / floja);
-## el jefe pasa a fase 2 a los 70 s. Al morir se reinicia la arena (vida completa, modelo a cero).
-## Salida por arena: min/max/media, % de tiempo saturada (>= 80) o en el suelo (< 5), entradas al PICO
-## por minuto, periodo medio entre picos, duración de respiros y oleadas por minuto.
+## Simulated Kaelen: kills the minions one at a time (3 s arrival + random kill time), nearby
+## minions attack (at most 2 at once) every ~3.6 s, the boss every 4 s; the hit probability depends
+## on the Kaelen profile (skilled / average / weak);
+## the boss enters phase 2 at 70 s. On death the arena restarts (full health, model reset).
+## Output per arena: min/max/mean, % of time saturated (>= 80) or at the floor (< 5), PEAK entries
+## per minute, mean period between peaks, relax duration and waves per minute.
 
 const CONFIGS := [
 	"res://resources/arenas/arena_1_config.tres",
@@ -20,14 +20,14 @@ const DT := 0.1
 const RUN_TIME := 180.0
 const RUNS := 30
 const ARRIVE := 3.0
-const NEAR_ATTACK_EVERY := 3.6   # ventana 0,5 + activo 0,3 + recuperación 0,8 + espera de ficha 2 s
-const MAX_ATTACKERS := 2         # fichas de ataque simultáneas
+const NEAR_ATTACK_EVERY := 3.6   # 0.5 telegraph + 0.3 active + 0.8 recovery + 2 s token wait
+const MAX_ATTACKERS := 2         # simultaneous attack tokens
 const BOSS_EVERY := 4.0
-## Perfiles de Kaelen: probabilidad de que un ataque de esbirro / de jefe la alcance.
+## Kaelen profiles: probability that a minion / boss attack reaches her.
 const PROFILES := {
-	"diestra": [0.12, 0.08],
-	"media": [0.22, 0.14],
-	"floja": [0.38, 0.25],
+	"skilled": [0.12, 0.08],
+	"average": [0.22, 0.14],
+	"weak": [0.38, 0.25],
 }
 const BOSS_DAMAGE := 25
 const PHASE2_AT := 70.0
@@ -38,7 +38,6 @@ var _rng := RandomNumberGenerator.new()
 var _hit := 0.2
 var _boss_hit := 0.12
 var _max_hp := 100
-var _scaled := true   # false = regla anterior (sin escalar el daño por vida máxima)
 
 
 func _initialize() -> void:
@@ -47,11 +46,11 @@ func _initialize() -> void:
 
 func _main() -> void:
 	_rng.seed = 18
-	print("Intensidad del Orquestador: %d ejecuciones de %d s por arena (muestreo a %.0f Hz)" % [RUNS, int(RUN_TIME), 1.0 / DT])
+	print("Orchestrator intensity: %d runs of %d s per arena (sampled at %.0f Hz)" % [RUNS, int(RUN_TIME), 1.0 / DT])
 	for profile in PROFILES:
 		_hit = PROFILES[profile][0]
 		_boss_hit = PROFILES[profile][1]
-		print("--- Kaelen %s (acierto esbirro %.0f %%, jefe %.0f %%)" % [profile, _hit * 100.0, _boss_hit * 100.0])
+		print("--- Kaelen %s (minion hit %.0f %%, boss %.0f %%)" % [profile, _hit * 100.0, _boss_hit * 100.0])
 		for i in CONFIGS.size():
 			_report(i)
 	quit()
@@ -65,7 +64,7 @@ func _report(index: int) -> void:
 	var relax_lengths: Array[float] = []
 	var waves := 0
 	var deaths := 0
-	var swing: Array[float] = []   # amplitud de cada oscilación (máximo - mínimo anterior)
+	var swing: Array[float] = []   # amplitude of each oscillation (maximum - previous minimum)
 	var total_time := 0.0
 	var trace := ""
 	for run in RUNS:
@@ -100,10 +99,10 @@ func _report(index: int) -> void:
 	for v in samples:
 		variance += (v - mean) * (v - mean)
 	var minutes := total_time / 60.0
-	print("Arena %d (base %.0f, HP %d): intensidad min %.1f / max %.1f / media %.1f / desv. %.1f" % [index + 1, cfg.base_budget, HP[index], mn, mx, mean, sqrt(variance / n)])
-	print("   saturada (>=80): %.1f %% del tiempo | en el suelo (<5): %.1f %%" % [100.0 * sat / n, 100.0 * low / n])
-	print("   curva (1.ª ejecución, 1 cifra cada 3 s = intensidad/10): %s" % trace)
-	print("   entradas al PICO: %.2f/min | periodo entre picos: %.1f s | respiro medio: %.1f s | oleadas: %.1f/min | muertes: %.2f/ejec. | oscilación media: %.1f" % [peaks / minutes, _mean(peak_gaps), _mean(relax_lengths), waves / minutes, float(deaths) / RUNS, _mean(swing)])
+	print("Arena %d (base %.0f, HP %d): intensity min %.1f / max %.1f / mean %.1f / dev. %.1f" % [index + 1, cfg.base_budget, HP[index], mn, mx, mean, sqrt(variance / n)])
+	print("   saturated (>=80): %.1f %% of the time | at the floor (<5): %.1f %%" % [100.0 * sat / n, 100.0 * low / n])
+	print("   curve (1st run, 1 digit every 3 s = intensity/10): %s" % trace)
+	print("   PEAK entries: %.2f/min | period between peaks: %.1f s | mean relax: %.1f s | waves: %.1f/min | deaths: %.2f/run | mean swing: %.1f" % [peaks / minutes, _mean(peak_gaps), _mean(relax_lengths), waves / minutes, float(deaths) / RUNS, _mean(swing)])
 
 
 static func _mean(a: Array[float]) -> float:
@@ -126,7 +125,7 @@ func _run(cfg: ArenaConfig, max_hp: int) -> Dictionary:
 	m.reset()
 	var hp := max_hp
 	_max_hp = max_hp
-	var minions: Array[Dictionary] = []   # {age, kill_at (acumulado), elite, next_attack}
+	var minions: Array[Dictionary] = []   # {age, work, elite, next_attack}
 	var since_hit := 0.0
 	var boss_next := BOSS_EVERY
 	var t := 0.0
@@ -137,11 +136,10 @@ func _run(cfg: ArenaConfig, max_hp: int) -> Dictionary:
 	var trough := 0.0
 	var crest := 0.0
 	var rising := true
-	var prev := 0.0
 	while t < RUN_TIME:
 		t += DT
 		since_hit += DT
-		# Kaelen mata al primero de la cola cuando le toca (solo si ya llegó).
+		# Kaelen kills the first one in the queue when it is its turn (only once it has arrived).
 		if not minions.is_empty():
 			var first: Dictionary = minions[0]
 			if first.age >= ARRIVE:
@@ -190,7 +188,7 @@ func _run(cfg: ArenaConfig, max_hp: int) -> Dictionary:
 				var elite := k == 0
 				minions.append({age = 0.0, elite = elite, work = _rng.randf_range(10.0, 16.0) if elite else _rng.randf_range(4.0, 8.0), next_attack = _rng.randf_range(0.5, NEAR_ATTACK_EVERY)})
 		out.samples.append(m.intensity)
-		# Fases y oscilación.
+		# Phases and oscillation.
 		if m.phase != last_phase:
 			if m.phase == OrchestratorModel.Phase.PEAK:
 				out.peaks += 1
@@ -215,11 +213,10 @@ func _run(cfg: ArenaConfig, max_hp: int) -> Dictionary:
 			elif m.intensity - trough > 10.0:
 				rising = true
 				crest = m.intensity
-		prev = m.intensity
 	out.time = t
 	return out
 
 
 func _hurt(m: OrchestratorModel, hp: int, amount: int) -> int:
-	m.on_player_damaged(roundi(amount * (OrchestratorModel.hp_damage_scale(_max_hp) if _scaled else 1.0)))
+	m.on_player_damaged(roundi(amount * OrchestratorModel.hp_damage_scale(_max_hp)))
 	return hp - amount

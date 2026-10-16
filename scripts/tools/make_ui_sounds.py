@@ -1,7 +1,7 @@
-"""Recorta y normaliza (pico -6 dBFS) los sonidos de interfaz de assets/audio/sfx/ui/ a partir de la
-biblioteca Be Not Afraid UI (Atelier Magicae). Los originales duran varios segundos y son graves
-(centroide < 300 Hz en los anteriores): se eligen los mas claros y se recorta la parte util.
-Uso: python scripts/tools/make_ui_sounds.py "D:/SFX/Be Not Afraid UI/--Unholy/Be Not Afraid UI"   (necesita numpy y scipy)."""
+"""Trims and normalizes (peak -6 dBFS) the interface sounds in assets/audio/sfx/ui/ from the
+Be Not Afraid UI library (Atelier Magicae). The originals last several seconds and are bassy
+(centroid < 300 Hz in the previous ones): the brightest are picked and the useful part is trimmed.
+Usage: python scripts/tools/make_ui_sounds.py "D:/SFX/Be Not Afraid UI/--Unholy/Be Not Afraid UI"   (needs numpy and scipy)."""
 import sys
 import numpy as np
 from scipy.io import wavfile
@@ -9,7 +9,7 @@ from scipy.io import wavfile
 SRC = sys.argv[1] if len(sys.argv) > 1 else "D:/SFX/Be Not Afraid UI/--Unholy/Be Not Afraid UI"
 OUT = "assets/audio/sfx/ui/"
 PEAK_DB = -6.0
-# nombre final: (original, inicio s, fin s, fundido de entrada s, fundido de salida s)
+# final name: (original, start s, end s, fade-in s, fade-out s)
 CUTS = {
     "ui_move": ("BNA_UI1", 0.05, 0.28, 0.004, 0.08),
     "ui_confirm": ("BNA_UI21", 0.0, 0.60, 0.003, 0.15),

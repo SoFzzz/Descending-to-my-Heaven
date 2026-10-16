@@ -1,8 +1,8 @@
-"""Genera el fondo del menú principal (640x360, pixel art): assets/ui/menu/menu_sky.png
-Paleta monocroma de Skin04 (Free PSX UI): negro, grises y un gris-lavanda muy apagado, con
-pinceladas diagonales claras como las de las pantallas de Skin04, un resplandor tenue tras la isla
-(mitad derecha) y dither Bayer 4x4. La isla se dibuja aparte, en 3D.
-Uso: python scripts/tools/gen_menu_bg.py   (desde la raíz del proyecto; necesita Pillow)."""
+"""Generates the main menu background (640x360, pixel art): assets/ui/menu/menu_sky.png
+Monochrome Skin04 (Free PSX UI) palette: black, grays and a very muted lavender gray, with light
+diagonal brush strokes like the Skin04 screens, a faint glow behind the island (right half) and
+4x4 Bayer dither. The island is drawn separately, in 3D.
+Usage: python scripts/tools/gen_menu_bg.py   (from the project root; needs Pillow)."""
 import math
 import random
 from PIL import Image, ImageDraw
@@ -12,7 +12,7 @@ BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
 OUT = "assets/ui/menu/"
 TOP, BOTTOM = (0x10, 0x0e, 0x16), (0x2c, 0x2a, 0x34)
 GLOW_CENTER, GLOW_RADIUS, GLOW_COLOR = (480, 170), 240.0, (104, 100, 114)
-STROKE_ANGLE = math.radians(-24)   # pinceladas que suben hacia la derecha, como en Skin04
+STROKE_ANGLE = math.radians(-24)   # strokes rising toward the right, as in Skin04
 
 
 def lerp(a, b, t):
@@ -40,13 +40,13 @@ def sky() -> Image.Image:
         y = random.randint(-40, H + 40)
         length = random.randint(80, 360)
         width = random.choice((1, 1, 2, 2, 3, 5))
-        # Más claras arriba a la derecha (de donde viene la luz en Skin04) y casi negras abajo.
+        # Lighter at the top right (where the light comes from in Skin04) and almost black at the bottom.
         lum = random.randint(90, 190) * (1.0 - 0.55 * y / H)
         alpha = random.randint(24, 64)
         d.line([x, y, x + dx * length, y + dy * length], fill=(int(lum), int(lum * 0.97), int(lum * 1.08), alpha), width=width)
     out = img.convert("RGBA")
     out.alpha_composite(strokes)
-    # Franja oscura inferior (como el negro de la parte baja de las pantallas de Skin04).
+    # Dark lower band (like the black at the bottom of the Skin04 screens).
     shade = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     sp = shade.load()
     for y in range(H):

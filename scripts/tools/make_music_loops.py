@@ -1,5 +1,5 @@
-"""Genera versiones en bucle de las pistas: recorta el silencio final y solapa la cola (fundido de salida)
-sobre el inicio (fundido de entrada) en un punto de compas, de modo que el final enlaza con el principio."""
+"""Generates looping versions of the tracks: trims the trailing silence and overlaps the tail (fade-out)
+onto the start (fade-in) at a bar boundary, so the end connects with the beginning."""
 import subprocess,sys,numpy as np,imageio_ffmpeg
 ff=imageio_ffmpeg.get_ffmpeg_exe(); SR=44100
 BEAT={"boss1":0.4488,"boss2":0.6633,"ending":0.6264,"menu":0.7159,"boss3":0.5012,"death":0.4564}
@@ -13,7 +13,6 @@ n=len(a)//w; d=np.array([rmsdb(a[i*w:(i+1)*w]) for i in range(n)])
 T=(np.where(d>-60)[0][-1]+1)*w
 body=np.median(d[: T//w])
 bar=4*BEAT[key]*SR
-best=None
 m=int((T/SR)/(bar/SR))
 cands=[]
 for k in range(m,0,-1):
@@ -31,7 +30,6 @@ tail=a[L:T]
 out[:len(tail)]+=tail
 pk=np.abs(out).max()
 if pk>0.98: out*=0.98/pk
-import wave,io
 raw=(out.astype(np.float32)).tobytes()
 subprocess.run([ff,"-y","-v","error","-f","f32le","-ar",str(SR),"-ac","2","-i","-","-c:a","libvorbis","-q:a","6",dst],input=raw,check=True)
 # seam check: jump between last and first sample vs typical

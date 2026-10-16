@@ -1,15 +1,15 @@
 extends SceneTree
-## Simulación sin ventana de las tácticas del jefe (CombatMemory + BossTactics + pinza). Usa el
-## `Boss` real y el código real del Orquestador para la pinza (`_update_squad`), avanzados a mano a
-## 60 Hz, con una Kaelen simulada y esbirros simples. Compara "antes" (tactics_enabled = false, el
-## jefe persigue y ataca como antes) con "después". Uso:
+## Windowless simulation of the boss tactics (CombatMemory + BossTactics + pincer). Uses the real
+## `Boss` and the real Orchestrator code for the pincer (`_update_squad`), stepped by hand at
+## 60 Hz, with a simulated Kaelen and simple minions. Compares "before" (tactics_enabled = false, the
+## boss chases and attacks as it used to) with "after". Usage:
 ##   godot --headless --path . -s res://scripts/tools/boss_tactics_sim.gd [-- boss=Ghidorah runs=4 secs=120]
-## Perfiles de Kaelen:
-##   agresiva  pegada al jefe, encadena el mandoble y rueda ~50 % de los avisos.
-##   huidiza   kitea: se mantiene a 9-13 m rodeando la arena, va a matar al esbirro más cercano y
-##             solo entra a golpear cuando el jefe se recupera (2 golpes por ventana).
-## Daño recibido: modelo geométrico simple (volumen del ataque en ACTIVE; rodar da invulnerabilidad),
-## suficiente para comparar antes/después, no para cifras absolutas.
+## Kaelen profiles:
+##   aggressive  stays glued to the boss, chains the swing and rolls ~50 % of the telegraphs.
+##   evasive     kites: keeps 9-13 m away circling the arena, goes to kill the nearest minion and
+##               only steps in to hit when the boss recovers (2 hits per window).
+## Damage taken: simple geometric model (attack volume in ACTIVE; rolling grants invulnerability),
+## enough to compare before/after, not for absolute figures.
 
 const BOSSES := {
 	"Bone Dragon": "res://scenes/bosses/boss_bonedragon.tscn",
@@ -79,13 +79,13 @@ func _main() -> void:
 			_args[parts[0]] = parts[1]
 	var runs := int(_args.get("runs", 6))
 	var secs := float(_args.get("secs", 120.0))
-	print("Tácticas del jefe: %d ejecuciones por celda de %d s (Kaelen simulada; 'antes' = tactics_enabled=false)" % [runs, int(secs)])
+	print("Boss tactics: %d runs per cell of %d s (simulated Kaelen; 'before' = tactics_enabled=false)" % [runs, int(secs)])
 	print("%-12s %-9s %-7s %9s | %5s %5s %5s %6s | %7s %7s %6s %6s | %s" % [
-		"jefe", "perfil", "modo", "daño/min", "%ATK", "%CUT", "%WAIT", "%PINZA", "cortes/m", "pinzas/m", "espe/m", "embos/m", "TTK jefe"])
+		"boss", "profile", "mode", "dmg/min", "%ATK", "%CUT", "%WAIT", "%PINCER", "cuts/m", "pincers/m", "waits/m", "ambush/m", "boss TTK"])
 	for boss_name in BOSSES:
 		if _args.has("boss") and _args["boss"] != boss_name:
 			continue
-		for profile in ["agresiva", "huidiza"]:
+		for profile in ["aggressive", "evasive"]:
 			for tactics in [false, true]:
 				var acc := {dmg = 0.0, atk = 0.0, cut = 0.0, wait = 0.0, pin = 0.0, cuts = 0.0, pins = 0.0, waits = 0.0, amb = 0.0,
 						ttk = 0.0, ttk_n = 0, secs = 0.0}
@@ -99,7 +99,7 @@ func _main() -> void:
 				var minutes: float = acc.secs / 60.0
 				var frames: float = maxf(1.0, acc.atk + acc.cut + acc.wait + acc.pin)
 				print("%-12s %-9s %-7s %9.0f | %5.1f %5.1f %5.1f %6.1f | %7.2f %7.2f %6.2f %6.2f | %s" % [
-					boss_name, profile, "después" if tactics else "antes", acc.dmg / minutes,
+					boss_name, profile, "after" if tactics else "before", acc.dmg / minutes,
 					100.0 * acc.atk / frames, 100.0 * acc.cut / frames, 100.0 * acc.wait / frames, 100.0 * acc.pin / frames,
 					acc.cuts / minutes, acc.pins / minutes, acc.waits / minutes, acc.amb / minutes,
 					("%.0f s (%d/%d)" % [acc.ttk / acc.ttk_n, acc.ttk_n, runs]) if acc.ttk_n > 0 else "- (0/%d)" % runs])
@@ -149,17 +149,17 @@ func _run(path: String, profile: String, tactics: bool, duration: float, seed_va
 		t += DT
 		player.step_shove(DT)
 		boss._physics_process(DT)
-		# El jefe no sale de la arena (en el juego lo limita el navmesh).
+		# The boss does not leave the arena (in the game the navmesh limits it).
 		var bp := boss.global_position
 		if Vector2(bp.x, bp.z).length() > ARENA + 2.0:
 			var cl := Vector2(bp.x, bp.z).normalized() * (ARENA + 2.0)
 			boss.global_position = Vector3(cl.x, bp.y, cl.y)
 		goal_frames[int(boss.tactics.goal) if tactics else 0] += 1
 		if _args.has("debug") and int(t * 60.0) % 300 == 0:
-			print("  t=%.0f estado=%d meta=%s kaelen=%s dist=%.1f vel=%.1f rate=%.2f minions=%d" % [t, boss.state, boss.tactics.goal_name(),
+			print("  t=%.0f state=%d goal=%s kaelen=%s dist=%.1f vel=%.1f rate=%.2f minions=%d" % [t, boss.state, boss.tactics.goal_name(),
 					boss.memory.behavior_name(), boss.memory.distance, boss.memory.speed, boss.memory.distance_rate, boss.memory.minions_alive])
 
-		# --- inicio de un ataque del jefe: ¿ruedo? ---
+		# --- start of a boss attack: do I roll? ---
 		if boss.state != prev_state:
 			decided = false
 			punish = 0
@@ -172,13 +172,13 @@ func _run(path: String, profile: String, tactics: bool, duration: float, seed_va
 		var pdist := _flat(player.global_position - boss.global_position).length()
 		if boss.state == Boss.State.TELEGRAPH and not decided:
 			decided = true
-			if boss.current_attack and pdist < boss.current_attack.max_range + 4.0 and _rng.randf() < (0.5 if profile == "agresiva" else 0.4):
+			if boss.current_attack and pdist < boss.current_attack.max_range + 4.0 and _rng.randf() < (0.5 if profile == "aggressive" else 0.4):
 				var end := boss.current_attack.telegraph_time * boss.telegraph_scale / boss._speed()
 				invuln_until = t + end - 0.05 + 0.25
 				stamina -= 25.0
 				since_spend = 0.0
 		var rolling := t < invuln_until
-		# --- daño del jefe a Kaelen (una vez por ataque) ---
+		# --- boss damage to Kaelen (once per attack) ---
 		if boss.state == Boss.State.ACTIVE and not attack_hit_done and boss.current_attack:
 			if _boss_hits(boss, player, beam_line):
 				attack_hit_done = true
@@ -193,7 +193,7 @@ func _run(path: String, profile: String, tactics: bool, duration: float, seed_va
 			var progress := clampf(boss._state_time / (boss.current_attack.active_time / boss._speed()), 0.0, 1.0)
 			beam_line["progress"] = progress
 
-		# --- esbirros ---
+		# --- minions ---
 		wave_timer -= DT
 		if minions.is_empty() and wave_timer <= 0.0:
 			for i in 3:
@@ -213,8 +213,6 @@ func _run(path: String, profile: String, tactics: bool, duration: float, seed_va
 			var dealt := _step_minion(m, player, DT, slots - minion_attacking)
 			if dealt > 0 and not rolling:
 				damage_taken += dealt
-			if m.state == 3 and m.attack_t < 0.0:
-				pass
 		squad_timer += DT
 		if squad_timer >= 0.35:
 			orch.call(&"_update_squad", 0.35)
@@ -224,8 +222,8 @@ func _run(path: String, profile: String, tactics: bool, duration: float, seed_va
 		var swing := _step_player(profile, player, boss, minions, t, DT)
 		if swing and t >= busy_until and not rolling and stamina >= 20.0:
 			var near_boss := pdist <= REACH + 0.4
-			if profile == "agresiva" or boss.state == Boss.State.RECOVER or boss.state == Boss.State.ROAR:
-				if near_boss and (profile == "agresiva" or punish < 2):
+			if profile == "aggressive" or boss.state == Boss.State.RECOVER or boss.state == Boss.State.ROAR:
+				if near_boss and (profile == "aggressive" or punish < 2):
 					var k := combo % 3
 					busy_until = t + Player.HIT_END[k]
 					stamina -= 20.0
@@ -237,8 +235,8 @@ func _run(path: String, profile: String, tactics: bool, duration: float, seed_va
 			var h: Array = hits.pop_front()
 			if _flat(player.global_position - boss.global_position).length() <= REACH + 0.6 and player.shove_left <= 0.0:
 				boss._on_hurt(h[1], sword)
-		# Cada mandoble también corta esbirros cercanos (1 de vida por golpe).
-		if swing and t >= busy_until - 0.01 and not minions.is_empty() and profile == "huidiza":
+		# Each swing also cuts nearby minions (1 health per hit).
+		if swing and t >= busy_until - 0.01 and not minions.is_empty() and profile == "evasive":
 			for m: SimMinion in minions.duplicate():
 				if _flat(m.global_position - player.global_position).length() < 2.2 and _rng.randf() < DT * 3.0:
 					m.hp -= 1
@@ -265,7 +263,7 @@ static func _flat(v: Vector3) -> Vector3:
 	return Vector3(v.x, 0.0, v.z)
 
 
-## ¿El ataque en curso alcanza a Kaelen ahora? Volúmenes simples según el tipo de ataque.
+## Does the current attack reach Kaelen now? Simple volumes according to the attack type.
 func _boss_hits(boss: Boss, player: Node3D, beam_line: Dictionary) -> bool:
 	var a := boss.current_attack
 	var to := _flat(player.global_position - boss.global_position)
@@ -280,7 +278,7 @@ func _boss_hits(boss: Boss, player: Node3D, beam_line: Dictionary) -> bool:
 	var forward := _flat(-boss.global_basis.z).normalized()
 	var reach := a.max_range
 	if a.id == &"charge":
-		reach = 3.4   # embiste: el jefe avanza, la caja de daño va pegada a él
+		reach = 3.4   # charge: the boss advances, the damage box stays attached to it
 	elif a.id == &"pounce":
 		reach = 4.5
 	if dist > reach + 0.4:
@@ -288,7 +286,7 @@ func _boss_hits(boss: Boss, player: Node3D, beam_line: Dictionary) -> bool:
 	return dist < 1.2 or forward.dot(to.normalized()) >= 0.5
 
 
-## Mueve a Kaelen; devuelve true si puede intentar un mandoble.
+## Moves Kaelen; returns true if she can attempt a swing.
 func _step_player(profile: String, player: Dummy, boss: Boss, minions: Array, t: float, dt: float) -> bool:
 	var pos := player.global_position
 	if player.shove_left > 0.0:
@@ -298,7 +296,7 @@ func _step_player(profile: String, player: Dummy, boss: Boss, minions: Array, t:
 	var move := Vector3.ZERO
 	var speed := RUN
 	var swing := false
-	if profile == "agresiva":
+	if profile == "aggressive":
 		var home := boss.global_position - to_boss.normalized() * REACH if dist > 0.01 else pos
 		move = _flat(home - pos)
 		speed = 5.0
@@ -312,23 +310,23 @@ func _step_player(profile: String, player: Dummy, boss: Boss, minions: Array, t:
 				best = d
 				minion = m
 		if boss.state == Boss.State.RECOVER and dist < 5.0:
-			move = to_boss - to_boss.normalized() * REACH   # entra a castigar
+			move = to_boss - to_boss.normalized() * REACH   # steps in to punish
 			swing = true
 		elif minion != null and dist > 4.0:
 			var to_m := _flat(minion.global_position - pos)
 			move = to_m if to_m.length() > 1.6 else Vector3.ZERO
 			swing = true
 		elif dist < 9.0:
-			move = -to_boss.normalized() + Vector3.UP.cross(to_boss.normalized()) * 0.5   # se aleja rodeando
+			move = -to_boss.normalized() + Vector3.UP.cross(to_boss.normalized()) * 0.5   # moves away circling
 		elif dist <= 13.0:
 			move = Vector3.UP.cross(to_boss.normalized()) * 0.8
 			speed = 3.5
 		else:
 			move = Vector3.ZERO
 	if move.length() > 0.05:
-		var step := minf(speed * dt, move.length()) if profile == "agresiva" else speed * dt
+		var step := minf(speed * dt, move.length()) if profile == "aggressive" else speed * dt
 		pos += move.normalized() * step
-	# Dentro de la arena.
+	# Stay inside the arena.
 	if Vector2(pos.x, pos.z).length() > ARENA:
 		var c := Vector2(pos.x, pos.z).normalized() * ARENA
 		pos = Vector3(c.x, pos.y, c.y)
@@ -336,7 +334,7 @@ func _step_player(profile: String, player: Dummy, boss: Boss, minions: Array, t:
 	return swing
 
 
-## Esbirro simple: persigue/ocupa su punto de cerco y ataca si hay "ficha" libre (amenazas compartidas).
+## Simple minion: chases/occupies its surround point and attacks if a "token" is free (shared threats).
 func _step_minion(m: SimMinion, player: Node3D, dt: float, free_slots: int) -> int:
 	m.order_left = maxf(0.0, m.order_left - dt)
 	m.cooldown = maxf(0.0, m.cooldown - dt)

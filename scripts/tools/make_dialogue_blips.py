@@ -1,9 +1,9 @@
-"""Prepara los blips de dialogo del final (Tarea 15) a partir del pack de dmochas.
+"""Prepares the ending dialogue blips from the dmochas pack.
 
-Los originales del pack llegan con pico de -17 a -25 dBFS y RMS de -30 a -36 dBFS; con el
-volumen de -12/-15 dB que se les daba en el juego quedaban en -35/-38 dBFS de pico (inaudibles).
-Aqui se eligen tres por voz, se normalizan a -3 dBFS de pico y se les aplica un fundido de 2 ms.
-Uso: python scripts/tools/make_dialogue_blips.py <carpeta ogg del pack>
+The pack originals peak at -17 to -25 dBFS with RMS of -30 to -36 dBFS; with the -12/-15 dB volume
+they had in the game they ended at -35/-38 dBFS peak (inaudible).
+Here three per voice are picked, normalized to a -3 dBFS peak and given a 2 ms fade.
+Usage: python scripts/tools/make_dialogue_blips.py <ogg folder of the pack>
 """
 import sys
 import numpy as np
@@ -11,7 +11,7 @@ import soundfile as sf
 
 PACK = sys.argv[1] if len(sys.argv) > 1 else "D:/ASSETS-PRUEBA/dmochas-dialogue_bleeps_pack/dmochas-dialogue_bleeps_pack/ogg"
 OUT = "assets/audio/sfx/dialogue/"
-VOICES = {"kaelen": [3, 10, 5], "elysia": [6, 16, 17]}   # grave-medio / agudo
+VOICES = {"kaelen": [3, 10, 5], "elysia": [6, 16, 17]}   # low-mid / high
 PEAK_DB = -3.0
 
 for voice, picks in VOICES.items():
