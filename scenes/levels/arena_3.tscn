@@ -329,49 +329,49 @@ agent_max_climb = 0.5
 agent_max_slope = 25.0
 filter_baking_aabb = AABB(-40, -0.5, -90, 80, 2, 150)
 
-[node name="Arena3" type="Node3D" unique_id=1435367797]
+[node name="Arena3" type="Node3D" unique_id=2037586160]
 metadata/title = "Ruinas (Ghidorah)"
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=964462598]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1093277683]
 environment = SubResource("Environment_22078")
 
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=276057543]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=704807225]
 transform = Transform3D(0.8660254, -0.40957603, 0.28678823, 0, 0.57357645, 0.81915206, -0.5, -0.7094065, 0.49673176, 0, 0, 0)
 light_color = Color(0.85, 0.85, 0.9, 1)
 light_energy = 0.8
 
-[node name="Geometry" type="Node3D" parent="." unique_id=1353982401 groups=["nav_source"]]
+[node name="Geometry" type="Node3D" parent="." unique_id=37059408 groups=["nav_source"]]
 
-[node name="Shell" type="CSGCombiner3D" parent="Geometry" unique_id=881886294]
+[node name="Shell" type="CSGCombiner3D" parent="Geometry" unique_id=560615778]
 use_collision = true
 collision_mask = 0
 
-[node name="Floor" type="CSGBox3D" parent="Geometry/Shell" unique_id=1747001922]
+[node name="Floor" type="CSGBox3D" parent="Geometry/Shell" unique_id=860953091]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.55, 0)
 size = Vector3(50, 1, 50)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="Corner11" type="CSGBox3D" parent="Geometry/Shell" unique_id=352911941]
+[node name="Corner11" type="CSGBox3D" parent="Geometry/Shell" unique_id=225375641]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.5, 6, 24.5)
 size = Vector3(1, 12, 1)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="Corner1-1" type="CSGBox3D" parent="Geometry/Shell" unique_id=569064842]
+[node name="Corner1-1" type="CSGBox3D" parent="Geometry/Shell" unique_id=781365725]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.5, 6, -24.5)
 size = Vector3(1, 12, 1)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="Corner-11" type="CSGBox3D" parent="Geometry/Shell" unique_id=1440456418]
+[node name="Corner-11" type="CSGBox3D" parent="Geometry/Shell" unique_id=128860090]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 6, 24.5)
 size = Vector3(1, 12, 1)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="Corner-1-1" type="CSGBox3D" parent="Geometry/Shell" unique_id=774666757]
+[node name="Corner-1-1" type="CSGBox3D" parent="Geometry/Shell" unique_id=1174007980]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 6, -24.5)
 size = Vector3(1, 12, 1)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="GridMap" type="GridMap" parent="Geometry" unique_id=1622610155]
+[node name="GridMap" type="GridMap" parent="Geometry" unique_id=1548868367]
 mesh_library = ExtResource("2_dihgu")
 cell_size = Vector3(4, 4, 4)
 cell_center_y = false
@@ -380,464 +380,463 @@ data = {
 "cells": PackedInt32Array(65530, 65530, 0, 65530, 65531, 0, 65530, 65532, 0, 65530, 65533, 0, 65530, 65534, 0, 65530, 65535, 0, 65530, 0, 0, 65530, 1, 0, 65530, 2, 0, 65530, 3, 0, 65530, 4, 0, 65530, 5, 0, 65531, 65530, 0, 65531, 65531, 0, 65531, 65532, 0, 65531, 65533, 0, 65531, 65534, 0, 65531, 65535, 0, 65531, 0, 0, 65531, 1, 0, 65531, 2, 0, 65531, 3, 0, 65531, 4, 0, 65531, 5, 0, 65532, 65530, 0, 65532, 65531, 0, 65532, 65532, 0, 65532, 65533, 0, 65532, 65534, 0, 65532, 65535, 0, 65532, 0, 0, 65532, 1, 0, 65532, 2, 0, 65532, 3, 0, 65532, 4, 0, 65532, 5, 0, 65533, 65530, 0, 65533, 65531, 0, 65533, 65532, 0, 65533, 65533, 0, 65533, 65534, 0, 65533, 65535, 0, 65533, 0, 0, 65533, 1, 0, 65533, 2, 0, 65533, 3, 0, 65533, 4, 0, 65533, 5, 0, 65534, 65530, 0, 65534, 65531, 0, 65534, 65532, 0, 65534, 65533, 0, 65534, 65534, 0, 65534, 65535, 0, 65534, 0, 0, 65534, 1, 0, 65534, 2, 0, 65534, 3, 0, 65534, 4, 0, 65534, 5, 0, 65535, 65530, 0, 65535, 65531, 0, 65535, 65532, 0, 65535, 65533, 0, 65535, 65534, 0, 65535, 65535, 0, 65535, 0, 0, 65535, 1, 0, 65535, 2, 0, 65535, 3, 0, 65535, 4, 0, 65535, 5, 0, 65535, 65529, 0, 65535, 6, 0, 0, 65530, 0, 0, 65531, 0, 0, 65532, 0, 0, 65533, 0, 0, 65534, 0, 0, 65535, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0, 5, 0, 0, 65529, 0, 0, 6, 0, 1, 65530, 0, 1, 65531, 0, 1, 65532, 0, 1, 65533, 0, 1, 65534, 0, 1, 65535, 0, 1, 0, 0, 1, 1, 0, 1, 2, 0, 1, 3, 0, 1, 4, 0, 1, 5, 0, 2, 65530, 0, 2, 65531, 0, 2, 65532, 0, 2, 65533, 0, 2, 65534, 0, 2, 65535, 0, 2, 0, 0, 2, 1, 0, 2, 2, 0, 2, 3, 0, 2, 4, 0, 2, 5, 0, 3, 65530, 0, 3, 65531, 0, 3, 65532, 0, 3, 65533, 0, 3, 65534, 0, 3, 65535, 0, 3, 0, 0, 3, 1, 0, 3, 2, 0, 3, 3, 0, 3, 4, 0, 3, 5, 0, 4, 65530, 0, 4, 65531, 0, 4, 65532, 0, 4, 65533, 0, 4, 65534, 0, 4, 65535, 0, 4, 0, 0, 4, 1, 0, 4, 2, 0, 4, 3, 0, 4, 4, 0, 4, 5, 0, 5, 65530, 0, 5, 65531, 0, 5, 65532, 0, 5, 65533, 0, 5, 65534, 0, 5, 65535, 0, 5, 0, 0, 5, 1, 0, 5, 2, 0, 5, 3, 0, 5, 4, 0, 5, 5, 0, 65530, 6, 2, 65530, 65529, 655362, 65531, 6, 2, 65531, 65529, 655362, 65532, 6, 2, 65532, 65529, 655362, 65533, 6, 2, 65533, 65529, 655362, 65534, 6, 2, 65534, 65529, 655362, 1, 6, 2, 1, 65529, 655362, 2, 6, 2, 2, 65529, 655362, 3, 6, 2, 3, 65529, 655362, 4, 6, 2, 4, 65529, 655362, 5, 6, 2, 5, 65529, 655362, 6, 65530, 1048578, 65529, 65530, 1441794, 6, 65531, 1048578, 65529, 65531, 1441794, 6, 65532, 1048578, 65529, 65532, 1441794, 6, 65533, 1048578, 65529, 65533, 1441794, 6, 65534, 1048578, 65529, 65534, 1441794, 6, 65535, 1048578, 65529, 65535, 1441794, 6, 0, 1048578, 65529, 0, 1441794, 6, 1, 1048578, 65529, 1, 1441794, 6, 2, 1048578, 65529, 2, 1441794, 6, 3, 1048578, 65529, 3, 1441794, 6, 4, 1048578, 65529, 4, 1441794, 6, 5, 1048578, 65529, 5, 1441794, 131066, 6, 2, 131066, 65529, 655362, 131067, 6, 4, 131067, 65529, 655364, 131068, 6, 2, 131068, 65529, 655362, 131069, 6, 4, 131069, 65529, 655364, 131070, 6, 2, 131070, 65529, 655362, 65537, 6, 4, 65537, 65529, 655364, 65538, 6, 2, 65538, 65529, 655362, 65539, 6, 4, 65539, 65529, 655364, 65540, 6, 2, 65540, 65529, 655362, 65541, 6, 4, 65541, 65529, 655364, 65542, 65530, 1048578, 131065, 65530, 1441794, 65542, 65531, 1048580, 131065, 65531, 1441796, 65542, 65532, 1048578, 131065, 65532, 1441794, 65542, 65533, 1048580, 131065, 65533, 1441796, 65542, 65534, 1048578, 131065, 65534, 1441794, 65542, 65535, 1048580, 131065, 65535, 1441796, 65542, 0, 1048578, 131065, 0, 1441794, 65542, 1, 1048580, 131065, 1, 1441796, 65542, 2, 1048578, 131065, 2, 1441794, 65542, 3, 1048580, 131065, 3, 1441796, 65542, 4, 1048578, 131065, 4, 1441794, 65542, 5, 1048580, 131065, 5, 1441796, 196602, 6, 5, 196602, 65529, 655365, 196603, 6, 5, 196603, 65529, 655365, 196604, 6, 5, 196604, 65529, 655365, 196605, 6, 5, 196605, 65529, 655365, 196606, 6, 5, 196606, 65529, 655365, 196607, 6, 5, 196607, 65529, 655365, 131072, 6, 5, 131072, 65529, 655365, 131073, 6, 5, 131073, 65529, 655365, 131074, 6, 5, 131074, 65529, 655365, 131075, 6, 5, 131075, 65529, 655365, 131076, 6, 5, 131076, 65529, 655365, 131077, 6, 5, 131077, 65529, 655365, 131078, 65530, 1048581, 196601, 65530, 1441797, 131078, 65531, 1048581, 196601, 65531, 1441797, 131078, 65532, 1048581, 196601, 65532, 1441797, 131078, 65533, 1048581, 196601, 65533, 1441797, 131078, 65534, 1048581, 196601, 65534, 1441797, 131078, 65535, 1048581, 196601, 65535, 1441797, 131078, 0, 1048581, 196601, 0, 1441797, 131078, 1, 1048581, 196601, 1, 1441797, 131078, 2, 1048581, 196601, 2, 1441797, 131078, 3, 1048581, 196601, 3, 1441797, 131078, 4, 1048581, 196601, 4, 1441797, 131078, 5, 1048581, 196601, 5, 1441797)
 }
 
-[node name="GateFrame" type="StaticBody3D" parent="Geometry" unique_id=730300426]
+[node name="GateFrame" type="StaticBody3D" parent="Geometry" unique_id=190375971]
 collision_mask = 0
 
-[node name="Jamb11" type="CollisionShape3D" parent="Geometry/GateFrame" unique_id=1096756903]
+[node name="Jamb11" type="CollisionShape3D" parent="Geometry/GateFrame" unique_id=1264944354]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 4, 24.5)
 shape = SubResource("BoxShape3D_y62bu")
 
-[node name="Jamb-11" type="CollisionShape3D" parent="Geometry/GateFrame" unique_id=617015157]
+[node name="Jamb-11" type="CollisionShape3D" parent="Geometry/GateFrame" unique_id=281019148]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 4, 24.5)
 shape = SubResource("BoxShape3D_aahn8")
 
-[node name="Lintel1" type="CollisionShape3D" parent="Geometry/GateFrame" unique_id=400361815]
+[node name="Lintel1" type="CollisionShape3D" parent="Geometry/GateFrame" unique_id=172511582]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 24.5)
 shape = SubResource("BoxShape3D_map6g")
 
-[node name="Jamb1-1" type="CollisionShape3D" parent="Geometry/GateFrame" unique_id=1591252452]
+[node name="Jamb1-1" type="CollisionShape3D" parent="Geometry/GateFrame" unique_id=1333285604]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 4, -24.5)
 shape = SubResource("BoxShape3D_4p703")
 
-[node name="Jamb-1-1" type="CollisionShape3D" parent="Geometry/GateFrame" unique_id=1507950596]
+[node name="Jamb-1-1" type="CollisionShape3D" parent="Geometry/GateFrame" unique_id=1409531453]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 4, -24.5)
 shape = SubResource("BoxShape3D_o2aex")
 
-[node name="Lintel-1" type="CollisionShape3D" parent="Geometry/GateFrame" unique_id=1940448295]
+[node name="Lintel-1" type="CollisionShape3D" parent="Geometry/GateFrame" unique_id=353287627]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, -24.5)
 shape = SubResource("BoxShape3D_xmqjf")
 
-[node name="GatePieces" type="Node3D" parent="Geometry" unique_id=2076028035]
+[node name="GatePieces" type="Node3D" parent="Geometry" unique_id=592185680]
 
-[node name="Jamb11_0" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=743535511]
+[node name="Jamb11_0" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=2011305420]
 transform = Transform3D(0.25, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 0, 26)
 mesh = SubResource("ArrayMesh_hdrr6")
 
-[node name="Jamb11_1" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=1531124615]
+[node name="Jamb11_1" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=747315711]
 transform = Transform3D(0.25, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 4, 26)
 mesh = SubResource("ArrayMesh_hdrr6")
 
-[node name="Jamb-11_0" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=1782161999]
+[node name="Jamb-11_0" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=1784854643]
 transform = Transform3D(0.25, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0, 26)
 mesh = SubResource("ArrayMesh_hdrr6")
 
-[node name="Jamb-11_1" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=655881196]
+[node name="Jamb-11_1" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=1928460288]
 transform = Transform3D(0.25, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 4, 26)
 mesh = SubResource("ArrayMesh_hdrr6")
 
-[node name="Lintel1" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=334521582]
+[node name="Lintel1" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=876777013]
 transform = Transform3D(1.5, 0, 0, 0, 0.5, 0, 0, 0, 1, 0, 6, 26)
 mesh = SubResource("ArrayMesh_hdrr6")
 
-[node name="Jamb1-1_0" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=140493540]
+[node name="Jamb1-1_0" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=910036308]
 transform = Transform3D(-0.25, 0, -8.742278e-08, 0, 1, 0, 2.1855694e-08, 0, -1, 3.5, 0, -26)
 mesh = SubResource("ArrayMesh_hdrr6")
 
-[node name="Jamb1-1_1" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=1471130]
+[node name="Jamb1-1_1" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=195829108]
 transform = Transform3D(-0.25, 0, -8.742278e-08, 0, 1, 0, 2.1855694e-08, 0, -1, 3.5, 4, -26)
 mesh = SubResource("ArrayMesh_hdrr6")
 
-[node name="Jamb-1-1_0" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=469374619]
+[node name="Jamb-1-1_0" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=1475438901]
 transform = Transform3D(-0.25, 0, -8.742278e-08, 0, 1, 0, 2.1855694e-08, 0, -1, -3.5, 0, -26)
 mesh = SubResource("ArrayMesh_hdrr6")
 
-[node name="Jamb-1-1_1" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=929923107]
+[node name="Jamb-1-1_1" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=1177702112]
 transform = Transform3D(-0.25, 0, -8.742278e-08, 0, 1, 0, 2.1855694e-08, 0, -1, -3.5, 4, -26)
 mesh = SubResource("ArrayMesh_hdrr6")
 
-[node name="Lintel-1" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=1868489837]
+[node name="Lintel-1" type="MeshInstance3D" parent="Geometry/GatePieces" unique_id=1444681487]
 transform = Transform3D(-1.5, 0, -8.742278e-08, 0, 0.5, 0, 1.3113416e-07, 0, -1, 0, 6, -26)
 mesh = SubResource("ArrayMesh_hdrr6")
 
-[node name="Pillars" type="Node3D" parent="Geometry" unique_id=1028038519]
+[node name="Pillars" type="Node3D" parent="Geometry" unique_id=690335955]
 
-[node name="Pillar1" type="StaticBody3D" parent="Geometry/Pillars" unique_id=223519386]
+[node name="Pillar1" type="StaticBody3D" parent="Geometry/Pillars" unique_id=1104086999]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -14)
 collision_mask = 0
 
-[node name="Mesh" type="MeshInstance3D" parent="Geometry/Pillars/Pillar1" unique_id=755332410]
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Pillars/Pillar1" unique_id=325005900]
 transform = Transform3D(1, 0, 0, 0, 0.625, 0, 0, 0, 1, 0, 0, 0)
 mesh = SubResource("ArrayMesh_3nu3v")
 
-[node name="Shape" type="CollisionShape3D" parent="Geometry/Pillars/Pillar1" unique_id=933152537]
+[node name="Shape" type="CollisionShape3D" parent="Geometry/Pillars/Pillar1" unique_id=2099846802]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
 shape = SubResource("CylinderShape3D_exiqk")
 
-[node name="Pillar2" type="StaticBody3D" parent="Geometry/Pillars" unique_id=226772874]
+[node name="Pillar2" type="StaticBody3D" parent="Geometry/Pillars" unique_id=417023747]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, -14)
 collision_mask = 0
 
-[node name="Mesh" type="MeshInstance3D" parent="Geometry/Pillars/Pillar2" unique_id=196760988]
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Pillars/Pillar2" unique_id=688979183]
 transform = Transform3D(1, 0, 0, 0, 1.4563106, 0, 0, 0, 1, 0, 0, 0)
 mesh = SubResource("ArrayMesh_jorip")
 
-[node name="Shape" type="CollisionShape3D" parent="Geometry/Pillars/Pillar2" unique_id=1869192904]
+[node name="Shape" type="CollisionShape3D" parent="Geometry/Pillars/Pillar2" unique_id=2143225994]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 shape = SubResource("CylinderShape3D_ydyko")
 
-[node name="Pillar3" type="StaticBody3D" parent="Geometry/Pillars" unique_id=1239845600]
+[node name="Pillar3" type="StaticBody3D" parent="Geometry/Pillars" unique_id=432558112]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 14)
 collision_mask = 0
 
-[node name="Mesh" type="MeshInstance3D" parent="Geometry/Pillars/Pillar3" unique_id=1396543786]
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Pillars/Pillar3" unique_id=443762590]
 transform = Transform3D(1, 0, 0, 0, 1.6990291, 0, 0, 0, 1, 0, 0, 0)
 mesh = SubResource("ArrayMesh_otdoa")
 
-[node name="Shape" type="CollisionShape3D" parent="Geometry/Pillars/Pillar3" unique_id=65302439]
+[node name="Shape" type="CollisionShape3D" parent="Geometry/Pillars/Pillar3" unique_id=106723036]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
 shape = SubResource("CylinderShape3D_dw6n0")
 
-[node name="Pillar4" type="StaticBody3D" parent="Geometry/Pillars" unique_id=272143952]
+[node name="Pillar4" type="StaticBody3D" parent="Geometry/Pillars" unique_id=157890021]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 14)
 collision_mask = 0
 
-[node name="Mesh" type="MeshInstance3D" parent="Geometry/Pillars/Pillar4" unique_id=1849488452]
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Pillars/Pillar4" unique_id=330972094]
 transform = Transform3D(1, 0, 0, 0, 0.75, 0, 0, 0, 1, 0, 0, 0)
 mesh = SubResource("ArrayMesh_diiwt")
 
-[node name="Shape" type="CollisionShape3D" parent="Geometry/Pillars/Pillar4" unique_id=899157977]
+[node name="Shape" type="CollisionShape3D" parent="Geometry/Pillars/Pillar4" unique_id=967128223]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
 shape = SubResource("CylinderShape3D_g7pnv")
 
-[node name="Pillar5" type="StaticBody3D" parent="Geometry/Pillars" unique_id=891394230]
+[node name="Pillar5" type="StaticBody3D" parent="Geometry/Pillars" unique_id=1963698246]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, 0, 0)
 collision_mask = 0
 
-[node name="Mesh" type="MeshInstance3D" parent="Geometry/Pillars/Pillar5" unique_id=6799106]
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Pillars/Pillar5" unique_id=1135888059]
 transform = Transform3D(1, 0, 0, 0, 0.9708738, 0, 0, 0, 1, 0, 0, 0)
 mesh = SubResource("ArrayMesh_yidoj")
 
-[node name="Shape" type="CollisionShape3D" parent="Geometry/Pillars/Pillar5" unique_id=1665616569]
+[node name="Shape" type="CollisionShape3D" parent="Geometry/Pillars/Pillar5" unique_id=843590289]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CylinderShape3D_3cyea")
 
-[node name="Pillar6" type="StaticBody3D" parent="Geometry/Pillars" unique_id=1263092257]
+[node name="Pillar6" type="StaticBody3D" parent="Geometry/Pillars" unique_id=720408387]
 transform = Transform3D(0.25881907, -0.9659258, 0, 0.9659258, 0.25881907, 0, 0, 0, 1, 19, 0.6, 2)
 collision_mask = 0
 
-[node name="Mesh" type="MeshInstance3D" parent="Geometry/Pillars/Pillar6" unique_id=1524867197]
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Pillars/Pillar6" unique_id=1548525931]
 transform = Transform3D(1, 0, 0, 0, 0.875, 0, 0, 0, 1, 0, 0, 0)
 mesh = SubResource("ArrayMesh_xha2d")
 
-[node name="Shape" type="CollisionShape3D" parent="Geometry/Pillars/Pillar6" unique_id=1370560579]
+[node name="Shape" type="CollisionShape3D" parent="Geometry/Pillars/Pillar6" unique_id=597278999]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
 shape = SubResource("CylinderShape3D_twfee")
 
-[node name="EntryHall" type="CSGCombiner3D" parent="Geometry" unique_id=940611857]
+[node name="EntryHall" type="CSGCombiner3D" parent="Geometry" unique_id=1144027222]
 use_collision = true
 collision_mask = 0
 
-[node name="FloorS" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=365269493]
+[node name="FloorS" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1727833370]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 30.1)
 size = Vector3(8, 1, 10.2)
 material = SubResource("StandardMaterial3D_71mec")
 
-[node name="RoofS" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=441465561]
+[node name="RoofS" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=719802362]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, 30.1)
 size = Vector3(8, 1, 10.2)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="SideES" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1742956070]
+[node name="SideES" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=332471343]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 3.5, 30.1)
 size = Vector3(1, 7, 10.2)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="SideWS" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1893447562]
+[node name="SideWS" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1226796971]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 3.5, 30.1)
 size = Vector3(1, 7, 10.2)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="EndS" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1527626476]
+[node name="EndS" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=357893704]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 35.7)
 size = Vector3(8, 7, 1)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="StairBase" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1764851692]
+[node name="StairBase" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1993581337]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.5, 33.1)
 size = Vector3(6, 3, 4.2)
 material = SubResource("StandardMaterial3D_71mec")
 
-[node name="Step0" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=497731780]
+[node name="Step0" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=744454220]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.125, 31.2)
 operation = 2
 size = Vector3(6, 0.26, 0.4)
 material = SubResource("StandardMaterial3D_71mec")
 
-[node name="Step1" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=225967624]
+[node name="Step1" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=523238720]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 31.6)
 operation = 2
 size = Vector3(6, 0.51, 0.4)
 material = SubResource("StandardMaterial3D_71mec")
 
-[node name="Step2" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1005339329]
+[node name="Step2" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=286203944]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.375, 32)
 operation = 2
 size = Vector3(6, 0.76, 0.4)
 material = SubResource("StandardMaterial3D_71mec")
 
-[node name="Step3" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=472633503]
+[node name="Step3" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1043209778]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 32.4)
 operation = 2
 size = Vector3(6, 1.01, 0.4)
 material = SubResource("StandardMaterial3D_71mec")
 
-[node name="Step4" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1129460668]
+[node name="Step4" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1768108558]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.625, 32.8)
 operation = 2
 size = Vector3(6, 1.26, 0.4)
 material = SubResource("StandardMaterial3D_71mec")
 
-[node name="Step5" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1731267362]
+[node name="Step5" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=528844187]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.75, 33.2)
 operation = 2
 size = Vector3(6, 1.51, 0.4)
 material = SubResource("StandardMaterial3D_71mec")
 
-[node name="Step6" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1469117071]
+[node name="Step6" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1466916218]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.875, 33.6)
 operation = 2
 size = Vector3(6, 1.76, 0.4)
 material = SubResource("StandardMaterial3D_71mec")
 
-[node name="Step7" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=439025428]
+[node name="Step7" type="CSGBox3D" parent="Geometry/EntryHall" unique_id=1529023730]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 34)
 operation = 2
 size = Vector3(6, 2.01, 0.4)
 material = SubResource("StandardMaterial3D_71mec")
 
-[node name="EndingHall" type="CSGCombiner3D" parent="Geometry" unique_id=1284426601]
+[node name="EndingHall" type="CSGCombiner3D" parent="Geometry" unique_id=679622234]
 use_collision = true
 collision_mask = 0
 
-[node name="FloorN" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=16572776]
+[node name="FloorN" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1815126594]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -35)
 size = Vector3(8, 1, 20)
 material = SubResource("StandardMaterial3D_71mec")
 
-[node name="RoofN" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1151592054]
+[node name="RoofN" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1797306500]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -35)
 size = Vector3(8, 1, 20)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="SideEN" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=745535265]
+[node name="SideEN" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=47174451]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 3.5, -35)
 size = Vector3(1, 7, 20)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="SideWN" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=2094475846]
+[node name="SideWN" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1294395924]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 3.5, -35)
 size = Vector3(1, 7, 20)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="EndN" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1853008151]
+[node name="EndN" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1862799083]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -45.5)
 size = Vector3(8, 7, 1)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="RoomFloor" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=90233446]
+[node name="RoomFloor" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=422456665]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -51)
 size = Vector3(14, 1, 14)
 material = SubResource("StandardMaterial3D_71mec")
 
-[node name="RoomCeiling" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=944005879]
+[node name="RoomCeiling" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=89235695]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.5, -51)
 size = Vector3(14, 1, 14)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="RoomWallN" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1368188605]
+[node name="RoomWallN" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=273131750]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -57.5)
 size = Vector3(14, 6, 1)
 material = SubResource("StandardMaterial3D_n08nj")
 
-[node name="RoomWallS" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=282533804]
+[node name="RoomWallS" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=662475975]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -44.5)
 size = Vector3(14, 6, 1)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="RoomWallE" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1354659752]
+[node name="RoomWallE" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=800917551]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 3, -51)
 size = Vector3(1, 6, 12)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="RoomWallW" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1469409710]
+[node name="RoomWallW" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1317995640]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.5, 3, -51)
 size = Vector3(1, 6, 12)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="RoomDoor" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=584390732]
+[node name="RoomDoor" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=938109397]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -44.5)
 operation = 2
 size = Vector3(6, 6, 3)
 material = SubResource("StandardMaterial3D_tdmrn")
 
-[node name="BreakWallA" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1997900226]
+[node name="BreakWallA" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1979465231]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 3.2, -57.5)
 operation = 2
 size = Vector3(6, 3.6, 3)
 material = SubResource("StandardMaterial3D_n08nj")
 
-[node name="BreakWallB" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=787374061]
+[node name="BreakWallB" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=232474008]
 transform = Transform3D(0.9702957, -0.2419219, 0, 0.2419219, 0.9702957, 0, 0, 0, 1, -1.6, 5, -57.5)
 operation = 2
 size = Vector3(3.2, 2.6, 3)
 material = SubResource("StandardMaterial3D_n08nj")
 
-[node name="BreakWallC" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=400071313]
+[node name="BreakWallC" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1834319654]
 transform = Transform3D(0.88294756, -0.46947157, 0, 0.46947157, 0.88294756, 0, 0, 0, 1, -3.4, 2, -57.5)
 operation = 2
 size = Vector3(2.6, 2.6, 3)
 material = SubResource("StandardMaterial3D_n08nj")
 
-[node name="BreakWallD" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=363494984]
+[node name="BreakWallD" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1767614566]
 transform = Transform3D(0.92718387, 0.37460658, 0, -0.37460658, 0.92718387, 0, 0, 0, 1, 3.8, 4.6, -57.5)
 operation = 2
 size = Vector3(2, 3, 3)
 material = SubResource("StandardMaterial3D_n08nj")
 
-[node name="BreakCeilA" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=838708529]
+[node name="BreakCeilA" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1953333250]
 transform = Transform3D(0.9702957, 0, 0.2419219, 0, 1, 0, -0.2419219, 0, 0.9702957, 0.8, 6.5, -55.1)
 operation = 2
 size = Vector3(5, 3, 4.5)
 material = SubResource("StandardMaterial3D_n08nj")
 
-[node name="BreakCeilB" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1313283378]
+[node name="BreakCeilB" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1716002934]
 transform = Transform3D(0.89879405, 0, -0.43837115, 0, 1, 0, 0.43837115, 0, 0.89879405, -2.4, 6.5, -54.3)
 operation = 2
 size = Vector3(2.4, 3, 2.6)
 material = SubResource("StandardMaterial3D_n08nj")
 
-[node name="AltarStep" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=2020083568]
+[node name="AltarStep" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=303348664]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, -55)
 size = Vector3(6, 0.5, 4)
 material = SubResource("StandardMaterial3D_n08nj")
 
-[node name="Altar" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=1181929585]
+[node name="Altar" type="CSGBox3D" parent="Geometry/EndingHall" unique_id=335124792]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -55.6)
 size = Vector3(2.4, 1, 1.2)
 material = SubResource("StandardMaterial3D_n08nj")
 
-[node name="Ending" type="Node3D" parent="." unique_id=604946657]
+[node name="Ending" type="Node3D" parent="." unique_id=1733307696]
 
-[node name="Elysia" type="Node3D" parent="Ending" unique_id=615104541 instance=ExtResource("6_yybtl")]
+[node name="Elysia" type="Node3D" parent="Ending" unique_id=1017334570 instance=ExtResource("6_yybtl")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -54)
 
-[node name="EndingTrigger" type="Area3D" parent="Ending" unique_id=343017221]
+[node name="EndingTrigger" type="Area3D" parent="Ending" unique_id=893233685]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -50)
 collision_layer = 0
 collision_mask = 2
 monitorable = false
 metadata/doc = "Kaelen frente a Elysia → ending_director.gd (A)"
 
-[node name="Shape" type="CollisionShape3D" parent="Ending/EndingTrigger" unique_id=1794051063]
+[node name="Shape" type="CollisionShape3D" parent="Ending/EndingTrigger" unique_id=1121765233]
 shape = SubResource("BoxShape3D_l1kpi")
 
-[node name="AltarLight" type="OmniLight3D" parent="Ending" unique_id=804903564]
+[node name="AltarLight" type="OmniLight3D" parent="Ending" unique_id=1129217580]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -53)
 light_color = Color(1, 0.85, 0.6, 1)
 light_energy = 1.6
 omni_range = 10.0
 
-[node name="EndingCam1" type="Camera3D" parent="Ending" unique_id=173941677]
+[node name="EndingCam1" type="Camera3D" parent="Ending" unique_id=1730718511]
 transform = Transform3D(0.8436615, -0.07342131, 0.53183144, 0, 0.9906047, 0.13675666, -0.53687555, -0.11537632, 0.835735, 3.5, 2.2, -48.5)
-current = true
 fov = 60.0
 
-[node name="EndingCam2" type="Camera3D" parent="Ending" unique_id=2065146701]
+[node name="EndingCam2" type="Camera3D" parent="Ending" unique_id=1967092784]
 transform = Transform3D(1, 0, 0, 0, 0.9996283, 0.027262596, 0, -0.027262596, 0.9996283, 0, 1.6, -43)
 fov = 60.0
 
-[node name="KaelenEndPoint" type="Marker3D" parent="Ending" unique_id=2004109339]
+[node name="KaelenEndPoint" type="Marker3D" parent="Ending" unique_id=925601877]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -52)
 
-[node name="GateEntry" type="AnimatableBody3D" parent="." unique_id=1539999145]
+[node name="GateEntry" type="AnimatableBody3D" parent="." unique_id=162800258]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 24.5)
 collision_mask = 0
 metadata/open_offset = Vector3(0, -6.1, 0)
 
-[node name="Mesh" type="MeshInstance3D" parent="GateEntry" unique_id=1566772]
+[node name="Mesh" type="MeshInstance3D" parent="GateEntry" unique_id=1520010229]
 mesh = SubResource("BoxMesh_elrn6")
 
-[node name="Shape" type="CollisionShape3D" parent="GateEntry" unique_id=334226279]
+[node name="Shape" type="CollisionShape3D" parent="GateEntry" unique_id=23720516]
 shape = SubResource("BoxShape3D_cmjai")
 
-[node name="GateExit" type="AnimatableBody3D" parent="." unique_id=667716964]
+[node name="GateExit" type="AnimatableBody3D" parent="." unique_id=856663599]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -24.5)
 collision_mask = 0
 metadata/open_offset = Vector3(0, -6.1, 0)
 
-[node name="Mesh" type="MeshInstance3D" parent="GateExit" unique_id=1923349560]
+[node name="Mesh" type="MeshInstance3D" parent="GateExit" unique_id=1299873081]
 mesh = SubResource("BoxMesh_1ri77")
 
-[node name="Shape" type="CollisionShape3D" parent="GateExit" unique_id=1361741590]
+[node name="Shape" type="CollisionShape3D" parent="GateExit" unique_id=543505703]
 shape = SubResource("BoxShape3D_4uat0")
 
-[node name="PlayerStart" type="Marker3D" parent="." unique_id=27260551]
+[node name="PlayerStart" type="Marker3D" parent="." unique_id=22593192]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 20)
 
-[node name="BossStart" type="Marker3D" parent="." unique_id=1431365928]
+[node name="BossStart" type="Marker3D" parent="." unique_id=327891022]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -12)
 
-[node name="Spawns" type="Node3D" parent="." unique_id=1439489971]
+[node name="Spawns" type="Node3D" parent="." unique_id=393273692]
 
-[node name="Spawn1" type="Marker3D" parent="Spawns" unique_id=764561452 groups=["spawn_point"]]
+[node name="Spawn1" type="Marker3D" parent="Spawns" unique_id=1107949233 groups=["spawn_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, -16)
 
-[node name="Spawn2" type="Marker3D" parent="Spawns" unique_id=1738084327 groups=["spawn_point"]]
+[node name="Spawn2" type="Marker3D" parent="Spawns" unique_id=352439962 groups=["spawn_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -16)
 
-[node name="Spawn3" type="Marker3D" parent="Spawns" unique_id=736755569 groups=["spawn_point"]]
+[node name="Spawn3" type="Marker3D" parent="Spawns" unique_id=242673910 groups=["spawn_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, 16)
 
-[node name="Spawn4" type="Marker3D" parent="Spawns" unique_id=332535130 groups=["spawn_point"]]
+[node name="Spawn4" type="Marker3D" parent="Spawns" unique_id=352776043 groups=["spawn_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 16)
 
-[node name="Spawn5" type="Marker3D" parent="Spawns" unique_id=432422154 groups=["spawn_point"]]
+[node name="Spawn5" type="Marker3D" parent="Spawns" unique_id=235630167 groups=["spawn_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 0, 9)
 
-[node name="Spawn6" type="Marker3D" parent="Spawns" unique_id=871215262 groups=["spawn_point"]]
+[node name="Spawn6" type="Marker3D" parent="Spawns" unique_id=1985301028 groups=["spawn_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 0, 9)
 
-[node name="ExitTrigger" type="Area3D" parent="." unique_id=600581130]
+[node name="ExitTrigger" type="Area3D" parent="." unique_id=667921805]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -28)
 collision_layer = 0
 collision_mask = 2
 monitorable = false
 metadata/doc = "Kaelen la cruza → GameState.advance_level() (A)"
 
-[node name="Shape" type="CollisionShape3D" parent="ExitTrigger" unique_id=942027891]
+[node name="Shape" type="CollisionShape3D" parent="ExitTrigger" unique_id=669176993]
 shape = SubResource("BoxShape3D_b21jl")
 
-[node name="Torches" type="Node3D" parent="." unique_id=1900889089]
+[node name="Torches" type="Node3D" parent="." unique_id=490053288]
 
-[node name="Torch1" type="OmniLight3D" parent="Torches" unique_id=894518357]
+[node name="Torch1" type="OmniLight3D" parent="Torches" unique_id=1203291866]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 4.5, -22)
 light_color = Color(0.85, 0.85, 0.9, 1)
 light_energy = 1.4
 omni_range = 14.0
 
-[node name="Torch2" type="OmniLight3D" parent="Torches" unique_id=819117667]
+[node name="Torch2" type="OmniLight3D" parent="Torches" unique_id=1835878811]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 4.5, -22)
 light_color = Color(0.85, 0.85, 0.9, 1)
 light_energy = 1.4
 omni_range = 14.0
 
-[node name="Torch3" type="OmniLight3D" parent="Torches" unique_id=373132222]
+[node name="Torch3" type="OmniLight3D" parent="Torches" unique_id=836088000]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 4.5, 22)
 light_color = Color(0.85, 0.85, 0.9, 1)
 light_energy = 1.4
 omni_range = 14.0
 
-[node name="Torch4" type="OmniLight3D" parent="Torches" unique_id=195688292]
+[node name="Torch4" type="OmniLight3D" parent="Torches" unique_id=859313392]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 4.5, 22)
 light_color = Color(0.85, 0.85, 0.9, 1)
 light_energy = 1.4
 omni_range = 14.0
 
-[node name="Gameplay" type="Node3D" parent="." unique_id=1735685733]
+[node name="Gameplay" type="Node3D" parent="." unique_id=1119640779]
 
-[node name="NavigationSmall" type="NavigationRegion3D" parent="." unique_id=780192351]
+[node name="NavigationSmall" type="NavigationRegion3D" parent="." unique_id=1769155049]
 navigation_mesh = SubResource("NavigationMesh_inyeb")
 
-[node name="NavigationLarge" type="NavigationRegion3D" parent="." unique_id=807483441]
+[node name="NavigationLarge" type="NavigationRegion3D" parent="." unique_id=613181409]
 navigation_mesh = SubResource("NavigationMesh_878rn")
 navigation_layers = 2
