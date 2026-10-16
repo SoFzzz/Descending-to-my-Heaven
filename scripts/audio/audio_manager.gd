@@ -4,7 +4,8 @@ extends Node
 ##
 ## Buses (default_bus_layout.tres): Master → Music / SFX / UI. Sigue procesando en pausa
 ## (PROCESS_MODE_ALWAYS): la música baja PAUSE_MUSIC_DROP_DB y los efectos 3D en curso se congelan.
-## Los botones (BaseButton) que entran al árbol reciben solos los sonidos de mover/confirmar/volver;
+## Cualquier cambio de foco de la interfaz (flechas, D-pad, stick, Tab) suena como "mover" y los
+## botones (BaseButton) que entran al árbol reciben solos los sonidos de confirmar/volver;
 ## `set_meta(&"ui_sound", &"back")` o `&"none"` en un botón cambia o anula el de pulsar.
 
 const BUS_MUSIC := &"Music"
@@ -90,6 +91,9 @@ func _ready() -> void:
 	_ui_player.bus = BUS_UI
 	add_child(_ui_player)
 	get_tree().node_added.connect(_on_node_added)
+	get_viewport().gui_focus_changed.connect(_on_gui_focus_changed)
+	# Los botones que ya estaban en el árbol (si este nodo se crea tarde) también se enganchan.
+	_hook_existing(get_tree().root)
 
 
 func _process(delta: float) -> void:
@@ -97,12 +101,20 @@ func _process(delta: float) -> void:
 	var target := pause_target_db(paused)
 	if not is_equal_approx(_pause_drop_db, target):
 		_pause_drop_db = move_toward(_pause_drop_db, target, PAUSE_FADE_SPEED * delta)
-		var idx := bus_index(BUS_MUSIC)
-		if idx >= 0:
-			AudioServer.set_bus_volume_db(idx, _pause_drop_db)
+		_apply_music_bus()
 	for player in _sfx_pool:
 		if player.stream_paused != paused:
 			player.stream_paused = paused
+
+
+## El volumen de la música es el elegido en opciones (UserSettings) más el descuento de la pausa.
+func _apply_music_bus() -> void:
+	var idx := bus_index(BUS_MUSIC)
+	if idx < 0:
+		return
+	var settings := get_node_or_null(^"/root/UserSettings")
+	var base_db: float = settings.call(&"volume_db", BUS_MUSIC) if settings else 0.0
+	AudioServer.set_bus_volume_db(idx, base_db + _pause_drop_db)
 
 
 # --- Música -------------------------------------------------------------------------------------
@@ -186,7 +198,7 @@ func play_sfx_3d(stream: AudioStream, position: Vector3, pitch_variation: float 
 
 
 ## Da foco a un botón sin que suene el "mover selección" (foco inicial de un menú).
-func grab_focus_silent(button: BaseButton) -> void:
+func grab_focus_silent(button: Control) -> void:
 	button.set_meta(&"ui_added_ms", Time.get_ticks_msec())
 	button.grab_focus()
 
@@ -202,13 +214,33 @@ func play_ui(stream: AudioStream) -> void:
 # --- Botones ------------------------------------------------------------------------------------
 
 func _on_node_added(node: Node) -> void:
-	var button := node as BaseButton
-	if button == null:
+	var control := node as Control
+	if control == null:
 		return
-	button.set_meta(&"ui_added_ms", Time.get_ticks_msec())
+	control.set_meta(&"ui_added_ms", Time.get_ticks_msec())
+	if control is BaseButton:
+		_hook_button(control as BaseButton)
+
+
+func _hook_existing(node: Node) -> void:
+	for child in node.get_children():
+		if child is BaseButton:
+			_hook_button(child as BaseButton)
+		_hook_existing(child)
+
+
+func _hook_button(button: BaseButton) -> void:
+	if button.has_meta(&"ui_hooked"):
+		return
+	button.set_meta(&"ui_hooked", true)
 	button.pressed.connect(_on_button_pressed.bind(button))
-	button.focus_entered.connect(_on_button_focus.bind(button))
 	button.mouse_entered.connect(_on_button_focus.bind(button))
+
+
+## Un solo punto para el sonido de foco: el viewport avisa de todo cambio de foco (teclado, mando o
+## código) sea cual sea el control, sin depender de cuándo se enganchó cada botón.
+func _on_gui_focus_changed(control: Control) -> void:
+	_on_button_focus(control)
 
 
 func _on_button_pressed(button: BaseButton) -> void:
@@ -221,7 +253,11 @@ func _on_button_pressed(button: BaseButton) -> void:
 			play_ui(UI_CONFIRM)
 
 
-func _on_button_focus(button: BaseButton) -> void:
-	if button.disabled or Time.get_ticks_msec() - int(button.get_meta(&"ui_added_ms", 0)) < UI_FOCUS_GRACE_MS:
+func _on_button_focus(control: Control) -> void:
+	if control is BaseButton and (control as BaseButton).disabled:
+		return
+	if control.get_meta(&"ui_sound", &"") == &"silent_focus":
+		return
+	if Time.get_ticks_msec() - int(control.get_meta(&"ui_added_ms", 0)) < UI_FOCUS_GRACE_MS:
 		return
 	play_ui(UI_MOVE)
