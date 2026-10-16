@@ -1,23 +1,23 @@
 extends "res://scripts/game/level_gameplay.gd"
-## Raíz de `arena_N_gameplay.tscn` (Tarea 9). Además de lo de level_gameplay.gd (Kaelen en
-## PlayerStart + material PSX): coloca al jefe (hijo `Boss`) en BossStart mirando a Kaelen,
-## cierra las rejas, emite Events.arena_entered y arranca al Orquestador
-## (Orchestrator.begin_arena), que genera los esbirros en los `spawn_point`; muestra la barra
-## del jefe en el HUD de Kaelen. Con Events.boss_defeated oculta la barra y, GATE_OPEN_DELAY s
-## después, baja GateExit (meta `open_offset`) y emite Events.arena_cleared. El ExitTrigger lo gestiona
-## level_gameplay.gd; aquí solo se exige que la arena esté despejada (`_can_exit`).
+## Root of `arena_N_gameplay.tscn`. On top of level_gameplay.gd (Kaelen at PlayerStart + PSX
+## material) it places the boss (child `Boss`) at BossStart facing Kaelen, closes the gates, emits
+## Events.arena_entered and starts the Orchestrator (Orchestrator.begin_arena), which spawns the
+## minions at the `spawn_point`s; it shows the boss bar in Kaelen's HUD. On Events.boss_defeated it
+## hides the bar and, GATE_OPEN_DELAY s later, lowers GateExit (meta `open_offset`) and emits
+## Events.arena_cleared. The ExitTrigger is handled by level_gameplay.gd; here we only require the
+## arena to be cleared (`_can_exit`).
 
 const GATE_OPEN_DELAY := 3.0
 const GATE_OPEN_TIME := 2.0
 const GATE_CLOSE_TIME := 1.0
-## El sonido de la reja dura más que el movimiento: se corta con un fundido pasado este tiempo.
+## The gate sound outlasts the movement: it is cut with a fade after this time.
 const GATE_SOUND_MAX_TIME := 6.0
 const GATE_SOUND_FADE := 1.5
 
 @export var config: ArenaConfig
-## Música del combate con el jefe: arranca (con fundido) cuando el jefe detecta a Kaelen.
+## Boss fight music: starts (with a fade) when the boss notices Kaelen.
 @export var boss_music: AudioStream
-## Sonido de las rejas de piedra al abrirse o cerrarse (3D, en la reja).
+## Sound of the stone gates opening or closing (3D, at the gate).
 @export var gate_sound: AudioStream
 
 var arena_cleared := false
@@ -37,7 +37,7 @@ func _ready() -> void:
 		if boss_start:
 			boss.spawn_at(boss_start, player.global_position)
 		else:
-			push_warning("%s no tiene BossStart" % level.name)
+			push_warning("%s has no BossStart" % level.name)
 		boss.health.died.connect(_on_boss_died)
 		boss.state_changed.connect(_on_boss_state_changed)
 	_gate_entry = level.get_node_or_null("GateEntry") as Node3D
@@ -55,9 +55,9 @@ func _ready() -> void:
 		orchestrator.begin_arena(config, self, boss)
 
 
-# --- Rejas ------------------------------------------------------------------------------------
+# --- Gates ------------------------------------------------------------------------------------
 
-## La reja de entrada arranca abierta (bajada) y sube detrás de Kaelen.
+## The entry gate starts open (lowered) and rises behind Kaelen.
 func _close_entry_gate() -> void:
 	if _gate_entry == null:
 		return
@@ -97,9 +97,9 @@ static func _open_offset(gate: Node3D) -> Vector3:
 	return gate.get_meta(&"open_offset", Vector3(0, -6.1, 0))
 
 
-# --- Jefe -------------------------------------------------------------------------------------
+# --- Boss -------------------------------------------------------------------------------------
 
-## La música del jefe empieza cuando deja de estar en reposo (detecta a Kaelen).
+## The boss music starts when the boss leaves idle (notices Kaelen).
 func _on_boss_state_changed(state: Boss.State) -> void:
 	if state == Boss.State.IDLE or boss_music == null or boss.health.is_dead() or _player_dead:
 		return
@@ -131,6 +131,6 @@ func _on_gate_delay_finished() -> void:
 		events.arena_cleared.emit(config.arena_id if config else 1)
 
 
-## Se puede salir por el ExitTrigger solo con el jefe derrotado (la reja ya se abrió o se abre).
+## The ExitTrigger can be used only with the boss defeated (the gate has opened or is opening).
 func _can_exit() -> bool:
 	return arena_cleared

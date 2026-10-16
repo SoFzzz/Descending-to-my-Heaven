@@ -44,7 +44,7 @@ func test_new_game_resets_level() -> void:
 	var gs := FakeGameState.new()
 	gs.current_level = 2
 	gs.scene_index = 3
-	gs.start_new_game()
+	assert_true(gs.start_new_game(), "reports that the change started")
 	assert_eq(gs.current_level, 0, "nivel")
 	assert_eq(gs.scene_index, 0, "escena: exterior")
 	assert_eq(gs.last_requested_scene, GameStateScript.LEVEL_SCENES[0], "pide el exterior")

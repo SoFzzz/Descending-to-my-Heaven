@@ -1,42 +1,42 @@
 extends Node
-## Director del final (Tarea 15). Hijo de `Arena3Gameplay` (arena_3_gameplay.tscn). Usa los nodos
-## `Level/Ending/*` de arena_3.tscn: Elysia, EndingTrigger, EndingCam1, EndingCam2 y KaelenEndPoint.
+## Ending director. Child of `Arena3Gameplay` (arena_3_gameplay.tscn). Uses the `Level/Ending/*`
+## nodes of arena_3.tscn: Elysia, EndingTrigger, EndingCam1, EndingCam2 and KaelenEndPoint.
 ##
-## - Al iniciar hace respirar a Elysia (sube y baja unos 2 cm en bucle) y escucha el EndingTrigger.
-## - Cuando Kaelen entra al EndingTrigger con la arena despejada ejecuta `play()` una sola vez:
-##   bloquea a Kaelen, oculta su HUD, la coloca frente a Elysia, gira a Elysia hacia ella, muestra
-##   dos cámaras que se alternan según el guion (ENDING_LINES), muestra los diálogos en una caja
-##   (DialogueBox) que avanza SOLO cuando el jugador pulsa, resuelve el abrazo con un fundido a negro y
-##   pide GameState.advance_level() (que desde la arena 3 lleva a los créditos).
-## Si falta algún nodo avisa con push_warning y sigue; nunca se queda esperando.
+## - On start it makes Elysia breathe (about 2 cm up and down in a loop) and listens to the EndingTrigger.
+## - When Kaelen enters the EndingTrigger with the arena cleared it runs `play()` only once: it locks
+##   Kaelen, hides her HUD, places her in front of Elysia, turns Elysia towards her, alternates two
+##   cameras following the script (ENDING_LINES), shows the dialogue in a box (DialogueBox) that
+##   advances ONLY when the player presses, resolves the embrace with a fade to black and calls
+##   GameState.advance_level() (which from arena 3 leads to the credits).
+## If a node is missing it warns with push_warning and carries on; it never waits forever.
 
-## Respiración de Elysia: amplitud (m) y duración de cada medio ciclo (s).
+## Elysia's breathing: amplitude (m) and duration of each half cycle (s).
 const BREATH_AMPLITUDE := 0.02
 const BREATH_HALF_CYCLE := 1.6
-## Giro de Elysia hacia Kaelen (s) y corrección de yaw si su modelo no mira hacia +Z (rad).
+## Elysia's turn towards Kaelen (s) and yaw correction if her model does not face +Z (rad).
 const ELYSIA_TURN_TIME := 0.8
 const ELYSIA_FRONT_YAW_OFFSET := 0.0
 
-## Pausa inicial antes de la primera línea y fundido de la caja de diálogo.
+## Initial pause before the first line and fades of the dialogue box.
 const LEAD_IN_TIME := 0.5
 const BOX_FADE_IN := 0.8
 const BOX_FADE_OUT := 0.8
-## Fundido a negro que resuelve el abrazo y pausa en negro antes de pasar a los créditos.
+## Fade to black that resolves the embrace, and the hold on black before the credits.
 const EMBRACE_FADE_TIME := 1.8
 const EMBRACE_BLACK_HOLD := 0.6
 
-## Fundido de salida del viento de la caída al pasar a créditos (s).
+## Fade-out of the falling wind when moving on to the credits (s).
 const WIND_FADE_OUT := 1.2
 
-## Durante el diálogo la música baja este nivel (dB) para que se oigan los blips.
+## During the dialogue the music drops by this level (dB) so the blips can be heard.
 const MUSIC_DUCK_DB := -7.0
 const MUSIC_DUCK_TIME := 1.0
 
 const TEXT_LAYER := 20
 
-## Guion del final: clave de traducción (localization/translations.csv; el prefijo "Kaelen:" / "Elysia:"
-## se mantiene en ambos idiomas y solo sirve para saber quién habla) y plano de cámara de cada línea:
-## 1 = EndingCam1 (lejana, con la isla cayendo), 2 = EndingCam2 (cercana, las dos juntas).
+## Ending script: translation key (localization/translations.csv; the "Kaelen:" / "Elysia:" prefix is
+## kept in both languages and only tells who is speaking) and camera shot of each line:
+## 1 = EndingCam1 (far, with the island falling), 2 = EndingCam2 (close, the two together).
 const ENDING_LINES: Array[Array] = [
 	["ENDING_01", 1], ["ENDING_02", 1], ["ENDING_03", 1], ["ENDING_04", 1],
 	["ENDING_05", 2], ["ENDING_06", 2], ["ENDING_07", 2], ["ENDING_08", 2], ["ENDING_09", 2],
@@ -45,7 +45,7 @@ const ENDING_LINES: Array[Array] = [
 	["ENDING_17", 2], ["ENDING_18", 2], ["ENDING_19", 1],
 ]
 
-## Música del encuentro con Elysia (también suena en los créditos).
+## Music of the meeting with Elysia (it also plays in the credits).
 @export var music: AudioStream
 @export var music_fade := 2.0
 
@@ -62,13 +62,13 @@ var _overlay: ColorRect
 var _box: DialogueBox
 
 
-## Texto de un plano en el idioma actual.
+## Text of a line in the current language.
 static func localized(key: String) -> String:
 	return TranslationServer.translate(StringName(key))
 
 
-## Duración mínima de la secuencia (s): revelado de todas las líneas, la entrada y el abrazo. No incluye
-## lo que tarde el jugador en pulsar entre líneas (el diálogo ya no avanza solo).
+## Minimum duration of the sequence (s): reveal of every line, the lead-in and the embrace. It does not
+## include the time the player takes to press between lines (the dialogue no longer advances by itself).
 static func total_duration() -> float:
 	var total := LEAD_IN_TIME + BOX_FADE_OUT + EMBRACE_FADE_TIME + EMBRACE_BLACK_HOLD
 	for entry in ENDING_LINES:
@@ -76,18 +76,18 @@ static func total_duration() -> float:
 	return total
 
 
-## Número de líneas del guion.
+## Number of script lines.
 static func line_count() -> int:
 	return ENDING_LINES.size()
 
 
-## true si la secuencia debe arrancar: no se ha reproducido, entró Kaelen y la arena está despejada.
+## true if the sequence must start: not played yet, Kaelen entered and the arena is cleared.
 static func can_start(already_played: bool, is_player: bool, arena_cleared: bool) -> bool:
 	return not already_played and is_player and arena_cleared
 
 
-## Yaw (rad) para que un nodo cuyo frente es +Z mire de `from` hacia `to` (solo plano horizontal).
-## Si ambos puntos coinciden en el plano devuelve `fallback`.
+## Yaw (rad) for a node whose front is +Z to look from `from` towards `to` (horizontal plane only).
+## If both points coincide on the plane it returns `fallback`.
 static func yaw_toward(from: Vector3, to: Vector3, fallback := 0.0) -> float:
 	var dir := to - from
 	dir.y = 0.0
@@ -99,7 +99,7 @@ static func yaw_toward(from: Vector3, to: Vector3, fallback := 0.0) -> float:
 func _ready() -> void:
 	_ending = get_node_or_null(^"../Level/Ending") as Node3D
 	if _ending == null:
-		push_warning("EndingDirector: no se encontró Level/Ending")
+		push_warning("EndingDirector: Level/Ending not found")
 		return
 	_elysia = _ending.get_node_or_null(^"Elysia") as Node3D
 	_trigger = _ending.get_node_or_null(^"EndingTrigger") as Area3D
@@ -110,12 +110,12 @@ func _ready() -> void:
 	if _trigger:
 		_trigger.body_entered.connect(_on_trigger_body_entered)
 	else:
-		push_warning("EndingDirector: falta Ending/EndingTrigger; el final no arrancará solo")
+		push_warning("EndingDirector: missing Ending/EndingTrigger; the ending will not start by itself")
 
 
 func _start_breathing() -> void:
 	if _elysia == null:
-		push_warning("EndingDirector: falta Ending/Elysia")
+		push_warning("EndingDirector: missing Ending/Elysia")
 		return
 	var base_y := _elysia.position.y
 	_breath_tween = create_tween().set_loops()
@@ -147,7 +147,7 @@ func _player() -> Player:
 	return null
 
 
-## Ejecuta el final. Solo actúa la primera vez que se llama.
+## Runs the ending. It only acts the first time it is called.
 func play() -> void:
 	if _played:
 		return
@@ -159,7 +159,7 @@ func play() -> void:
 	_start_fall()
 	var player := _player()
 	if player == null:
-		push_warning("EndingDirector: no hay Kaelen; se salta el final")
+		push_warning("EndingDirector: no Kaelen; skipping the ending")
 		_finish()
 		return
 	_prepare_actors(player)
@@ -167,8 +167,8 @@ func play() -> void:
 	if not await _wait(LEAD_IN_TIME):
 		return
 
-	# Diálogo: cada línea se revela con el typewriter y espera a que el jugador pulse; el plano de
-	# cámara cambia cuando la línea que toca pertenece a otro plano.
+	# Dialogue: each line is revealed by the typewriter and waits for the player to press; the camera
+	# shot changes when the next line belongs to another shot.
 	_duck_music(MUSIC_DUCK_DB)
 	_box.fade(1.0, BOX_FADE_IN)
 	var shot := 0
@@ -180,7 +180,7 @@ func play() -> void:
 			return
 	_box.fade(0.0, BOX_FADE_OUT)
 	_duck_music(0.0)
-	# Abrazo: se resuelve con un fundido a negro.
+	# Embrace: resolved with a fade to black.
 	_tween_alpha(_overlay, 1.0, EMBRACE_FADE_TIME)
 	if not await _wait(EMBRACE_FADE_TIME + EMBRACE_BLACK_HOLD):
 		return
@@ -193,7 +193,7 @@ func _start_music() -> void:
 		audio.play_music(music, music_fade)
 
 
-## Bloquea a Kaelen, oculta su HUD y coloca a ambas frente a frente.
+## Locks Kaelen, hides her HUD and places both face to face.
 func _prepare_actors(player: Player) -> void:
 	player.set_cutscene(true)
 	var hud := player.get_node_or_null(^"HUD") as CanvasLayer
@@ -204,12 +204,12 @@ func _prepare_actors(player: Player) -> void:
 		player.global_position = _end_point.global_position
 		player.velocity = Vector3.ZERO
 	else:
-		push_warning("EndingDirector: falta Ending/KaelenEndPoint; Kaelen se queda donde está")
+		push_warning("EndingDirector: missing Ending/KaelenEndPoint; Kaelen stays where she is")
 	if _elysia:
 		player.face_point(elysia_pos)
 		_turn_elysia_toward(player.global_position)
 	else:
-		push_warning("EndingDirector: falta Ending/Elysia")
+		push_warning("EndingDirector: missing Ending/Elysia")
 
 
 func _turn_elysia_toward(target: Vector3) -> void:
@@ -221,20 +221,20 @@ func _turn_elysia_toward(target: Vector3) -> void:
 
 func _activate_camera(cam: Camera3D) -> void:
 	if cam == null:
-		push_warning("EndingDirector: falta una cámara del final; se mantiene la actual")
+		push_warning("EndingDirector: missing an ending camera; keeping the current one")
 		return
 	cam.make_current()
 
 
-## Muestra una línea y espera a que el jugador la complete y pulse otra vez para pasar.
-## Devuelve false si el árbol cambió.
+## Shows a line and waits for the player to complete it and press again to move on.
+## Returns false if the tree changed.
 func _say(line: String) -> bool:
 	_box.show_line(line)
 	await _box.advanced
 	return is_inside_tree()
 
 
-## Baja (o devuelve a 0) la música mientras suenan los blips.
+## Lowers the music (or returns it to 0) while the blips play.
 func _duck_music(db: float) -> void:
 	var audio := get_node_or_null(^"/root/AudioManager") if is_inside_tree() else null
 	if audio and audio.has_method(&"duck_music"):
@@ -247,7 +247,7 @@ func _tween_alpha(item: CanvasItem, alpha: float, time: float) -> void:
 	item.create_tween().tween_property(item, "modulate:a", alpha, time)
 
 
-## Espera `seconds` s. Devuelve false (y la secuencia se corta) si el nodo salió del árbol.
+## Waits `seconds` s. Returns false (and the sequence is cut short) if the node left the tree.
 func _wait(seconds: float) -> bool:
 	if not is_inside_tree():
 		return false
@@ -255,7 +255,7 @@ func _wait(seconds: float) -> bool:
 	return is_inside_tree()
 
 
-## Capa con el fundido a negro y la caja de diálogo, creada por código (sobre el HUD y la pausa).
+## Layer with the fade to black and the dialogue box, built in code (above the HUD and the pause).
 func _build_text_layer() -> void:
 	_text_layer = CanvasLayer.new()
 	_text_layer.layer = TEXT_LAYER
@@ -274,7 +274,7 @@ func _game_state() -> Node:
 	return get_node_or_null(^"/root/GameState") if is_inside_tree() else null
 
 
-## Cierra la secuencia: pide el siguiente paso (créditos) con el fundido propio de GameState.
+## Closes the sequence: requests the next step (credits) with GameState's own fade.
 func _finish() -> void:
 	if is_inside_tree():
 		get_tree().call_group(EndingRoom.GROUP, &"stop_wind", WIND_FADE_OUT)
@@ -282,10 +282,10 @@ func _finish() -> void:
 	if game_state and game_state.has_method(&"advance_level"):
 		game_state.advance_level()
 	else:
-		push_warning("EndingDirector: no hay GameState; no se puede avanzar al final")
+		push_warning("EndingDirector: no GameState; cannot move on from the ending")
 
 
-## Avisa a la sala de Elysia rota (grupo `ending_room`) de que empieza el final: la isla cae.
+## Tells the broken Elysia room (group `ending_room`) that the ending begins: the island falls.
 func _start_fall() -> void:
 	if is_inside_tree():
 		get_tree().call_group(EndingRoom.GROUP, &"start_fall")

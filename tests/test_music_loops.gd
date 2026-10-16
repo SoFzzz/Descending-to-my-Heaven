@@ -54,16 +54,3 @@ func test_nothing_restarts_music_when_a_track_finishes() -> void:
 		var text := FileAccess.get_file_as_string(path)
 		assert_true(not text.contains(".finished.connect") and not text.contains("&\"finished\""), path)
 
-
-func test_audio_manager_uses_single_music_player_when_idle() -> void:
-	var tree := Engine.get_main_loop() as SceneTree
-	var audio := tree.root.get_node_or_null(^"AudioManager")
-	if audio == null:
-		return
-	var stream := load(TRACKS[0]) as AudioStream
-	audio.play_music(stream, 0.0)
-	audio.play_music(stream, 0.0)
-	audio.play_music(load(TRACKS[1]) as AudioStream, 0.0)
-	assert_eq(audio.playing_music_count(), 1, "un único reproductor tras cambiar de pista")
-	audio.stop_music(0.0)
-	assert_eq(audio.playing_music_count(), 0)

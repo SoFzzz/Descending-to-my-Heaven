@@ -123,6 +123,38 @@ func test_missing_file_keeps_project_defaults() -> void:
 	_cleanup(settings)
 
 
+func test_corrupt_file_values_fall_back_to_defaults() -> void:
+	var settings := _fresh()
+	var file := FileAccess.open(TMP, FileAccess.WRITE)
+	file.store_string("[general]
+locale=42
+look_sensitivity=\"fast\"
+[audio]
+Music=[1, 2]
+SFX=99.0
+"
+			+ "[input]
+attack.kb=7
+roll.kb=[{\"t\": \"key\", \"c\": \"x\"}, 5, {\"t\": \"axis\", \"a\": [1]}]
+")
+	file.close()
+	assert_true(settings.load_settings(), "the file parses")
+	assert_eq(settings.locale, "es", "a non-text locale falls back to the default")
+	assert_almost(settings.look_sensitivity, 1.0, 0.0001, "a text sensitivity falls back to 1")
+	assert_almost(settings.get_volume(&"Music"), 1.0, 0.0001, "an array volume falls back to 1")
+	assert_almost(settings.get_volume(&"SFX"), 1.0, 0.0001, "an out-of-range volume is clamped")
+	assert_true(InputMap.event_is_action(_key(KEY_SPACE), &"roll"), "unusable bindings keep the defaults")
+	assert_true(InputMap.event_is_action(_key(KEY_F), &"attack") == false)
+	_cleanup(settings)
+
+
+func test_non_finite_numbers_are_rejected() -> void:
+	assert_almost(GameSettings._number(NAN, 0.5), 0.5)
+	assert_almost(GameSettings._number(INF, 0.5), 0.5)
+	assert_almost(GameSettings._number("3", 0.5), 0.5)
+	assert_almost(GameSettings._number(3, 0.5), 3.0)
+
+
 func test_restore_default_bindings() -> void:
 	var settings := _fresh()
 	settings.rebind(&"roll", GameSettings.SLOT_KB, _key(KEY_Z))

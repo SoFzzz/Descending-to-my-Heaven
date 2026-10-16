@@ -1,14 +1,15 @@
 class_name GameSettings
 extends Node
-## Autoload "UserSettings": ajustes del jugador guardados en user://settings.cfg (ConfigFile).
+## Autoload "UserSettings": player settings stored in user://settings.cfg (ConfigFile).
 ##
-## - Volumen por bus (Master / Music / SFX / UI) en lineal 0..1, aplicado en vivo a AudioServer.
-## - Idioma ("es" / "en") con TranslationServer (traducciones en res://localization/translations.csv).
-## - Sensibilidad de la cámara (ratón y stick derecho).
-## - Controles: cada acción reasignable tiene dos "ranuras": teclado/ratón (SLOT_KB) y mando
-##   (SLOT_PAD, botones y gatillos). Los ejes de los sticks (mover y cámara) son fijos.
-## Se carga y aplica en _ready; cada cambio llama a save_settings().
-## La lógica de eventos es estática o de instancia sin depender del árbol, para probarla sin escena.
+## - Volume per bus (Master / Music / SFX / UI) as linear 0..1, applied live to AudioServer.
+## - Language ("es" / "en") through TranslationServer (translations in res://localization/translations.csv).
+## - Camera sensitivity (mouse and right stick).
+## - Controls: each remappable action has two "slots": keyboard/mouse (SLOT_KB) and gamepad
+##   (SLOT_PAD, buttons and triggers). The stick axes (move and camera) are fixed.
+## Loaded and applied in _ready; every change calls save_settings().
+## The event logic is static, or instance-level without depending on the tree, so it can be tested
+## without a scene.
 
 signal locale_changed(locale: String)
 signal volume_changed(bus: StringName, linear: float)
@@ -25,14 +26,14 @@ const SENSITIVITY_MAX := 2.0
 const SLOT_KB := &"kb"
 const SLOT_PAD := &"pad"
 
-## Acciones que el jugador puede reasignar, en el orden en que salen en la pantalla de controles.
+## Actions the player can remap, in the order they appear on the controls screen.
 const REMAP_ACTIONS: Array[StringName] = [
 	&"move_forward", &"move_back", &"move_left", &"move_right",
 	&"attack", &"roll", &"heal", &"lock_on", &"pause",
 ]
-## Acciones cuyo mando va en los ejes de los sticks (no se reasignan, solo se muestran).
+## Actions whose gamepad input is on the stick axes (not remappable, only displayed).
 const PAD_FIXED: Array[StringName] = [&"move_forward", &"move_back", &"move_left", &"move_right"]
-## Ejes de los gatillos (LT = 4, RT = 5): se aceptan como "botón" de mando.
+## Trigger axes (LT = 4, RT = 5): accepted as a gamepad "button".
 const TRIGGER_AXES: Array[int] = [JOY_AXIS_TRIGGER_LEFT, JOY_AXIS_TRIGGER_RIGHT]
 const TRIGGER_THRESHOLD := 0.6
 
@@ -48,7 +49,7 @@ const PAD_BUTTON_NAMES := {
 var save_path := SAVE_PATH
 var locale := DEFAULT_LOCALE
 var look_sensitivity := 1.0
-var volumes: Dictionary = {}   # StringName -> float lineal 0..1
+var volumes: Dictionary = {}   # StringName -> linear float 0..1
 
 
 func _init() -> void:
@@ -61,7 +62,7 @@ func _ready() -> void:
 	load_settings()
 
 
-# --- Lógica pura de eventos ---------------------------------------------------------------------
+# --- Pure event logic ---------------------------------------------------------------------------
 
 static func slot_of(event: InputEvent) -> StringName:
 	if event is InputEventKey or event is InputEventMouseButton:
@@ -73,7 +74,7 @@ static func slot_of(event: InputEvent) -> StringName:
 	return &""
 
 
-## true si el evento es una entrada de mando (cualquier botón o eje).
+## true if the event is a gamepad input (any button or axis).
 static func is_pad_event(event: InputEvent) -> bool:
 	return event is InputEventJoypadButton or event is InputEventJoypadMotion
 
@@ -84,7 +85,7 @@ static func is_remappable(action: StringName, slot: StringName) -> bool:
 	return not (slot == SLOT_PAD and PAD_FIXED.has(action))
 
 
-## Los dos eventos hacen lo mismo (misma tecla física, botón de ratón, botón de mando o gatillo).
+## Both events are the same input (same physical key, mouse button, gamepad button or trigger).
 static func same_binding(a: InputEvent, b: InputEvent) -> bool:
 	if a is InputEventKey and b is InputEventKey:
 		return _key_code(a) == _key_code(b)
@@ -104,8 +105,8 @@ static func _key_code(event: InputEvent) -> int:
 	return key.physical_keycode if key.physical_keycode != KEY_NONE else key.keycode
 
 
-## Convierte una pulsación real en un evento "limpio" para guardarlo en el InputMap; null si no sirve
-## (soltar, eco, movimiento del ratón, un stick, un gatillo a medias...).
+## Turns a real press into a "clean" event to store in the InputMap; null if unusable
+## (release, echo, mouse motion, a stick, a half-pressed trigger...).
 static func capture(event: InputEvent) -> InputEvent:
 	if event is InputEventKey:
 		var key := event as InputEventKey
@@ -159,26 +160,26 @@ static func deserialize_event(data: Variant) -> InputEvent:
 	match str(d.get("t", "")):
 		"key":
 			var key := InputEventKey.new()
-			key.physical_keycode = int(d.get("c", 0)) as Key
+			key.physical_keycode = int(_number(d.get("c"), 0.0)) as Key
 			return key if key.physical_keycode != KEY_NONE else null
 		"mouse":
 			var mouse := InputEventMouseButton.new()
-			mouse.button_index = int(d.get("b", 0)) as MouseButton
+			mouse.button_index = int(_number(d.get("b"), 0.0)) as MouseButton
 			return mouse if mouse.button_index != 0 else null
 		"pad":
 			var pad := InputEventJoypadButton.new()
-			pad.button_index = int(d.get("b", -1)) as JoyButton
+			pad.button_index = int(_number(d.get("b"), -1.0)) as JoyButton
 			return pad if int(pad.button_index) >= 0 else null
 		"axis":
 			var motion := InputEventJoypadMotion.new()
-			motion.axis = int(d.get("a", 0)) as JoyAxis
-			motion.axis_value = float(d.get("v", 1.0))
+			motion.axis = int(_number(d.get("a"), 0.0)) as JoyAxis
+			motion.axis_value = _number(d.get("v"), 1.0)
 			return motion if motion.axis in TRIGGER_AXES else null
 	return null
 
 
-## Nombre corto de un evento para mostrar al jugador ("W", "Clic izq.", "RB"...). El idioma sale de
-## TranslationServer; los botones del mando siempre usan los nombres de Xbox.
+## Short name of an event to show the player ("W", "Left click", "RB"...). The language comes from
+## TranslationServer; gamepad buttons always use the Xbox names.
 static func event_name(event: InputEvent) -> String:
 	if event is InputEventKey:
 		var code := _key_code(event)
@@ -208,16 +209,16 @@ static func event_name(event: InputEvent) -> String:
 	return "?"
 
 
-## dB de un volumen lineal 0..1 (0 = silencio).
+## dB of a linear volume 0..1 (0 = silence).
 static func linear_to_bus_db(linear: float) -> float:
 	if linear <= 0.001:
 		return -80.0
 	return maxf(linear_to_db(clampf(linear, 0.0, 1.0)), -80.0)
 
 
-# --- Controles ----------------------------------------------------------------------------------
+# --- Controls -----------------------------------------------------------------------------------
 
-## Eventos de `action` que pertenecen a la ranura (teclado/ratón o mando). Los ejes de los sticks no cuentan.
+## Events of `action` that belong to the slot (keyboard/mouse or gamepad). Stick axes do not count.
 func slot_events(action: StringName, slot: StringName) -> Array[InputEvent]:
 	var out: Array[InputEvent] = []
 	if not InputMap.has_action(action):
@@ -228,7 +229,7 @@ func slot_events(action: StringName, slot: StringName) -> Array[InputEvent]:
 	return out
 
 
-## Texto con todo lo asignado a la ranura ("X / RB"); para los sticks fijos, el nombre del stick.
+## Text with everything assigned to the slot ("X / RB"); for the fixed sticks, the stick name.
 func slot_text(action: StringName, slot: StringName) -> String:
 	if slot == SLOT_PAD and PAD_FIXED.has(action):
 		return "LS"
@@ -238,9 +239,9 @@ func slot_text(action: StringName, slot: StringName) -> String:
 	return " / ".join(names) if not names.is_empty() else "—"
 
 
-## Reasigna: la ranura de `action` pasa a tener solo `event`. Si otra acción reasignable ya usaba esa
-## entrada en la misma ranura, intercambian (esa recibe lo que tenía `action`). Devuelve la acción
-## intercambiada (o &"" si no hubo) o &"!" si no se pudo reasignar.
+## Rebinds: the slot of `action` ends up with only `event`. If another remappable action already used
+## that input in the same slot, they swap (that one receives what `action` had). Returns the swapped
+## action (or &"" if none) or &"!" if the rebind was not possible.
 func rebind(action: StringName, slot: StringName, event: InputEvent) -> StringName:
 	if event == null or not is_remappable(action, slot) or slot_of(event) != slot:
 		return &"!"
@@ -267,7 +268,7 @@ func _replace_slot(action: StringName, slot: StringName, events: Array) -> void:
 		InputMap.action_add_event(action, event.duplicate())
 
 
-## W/A/S/D también mueven el foco de los menús (además de flechas y D-Pad), como en el juego.
+## W/A/S/D also move the menu focus (besides arrows and D-Pad), as in the game.
 func add_menu_nav_keys() -> void:
 	var pairs := {&"ui_up": KEY_W, &"ui_down": KEY_S, &"ui_left": KEY_A, &"ui_right": KEY_D}
 	for action: StringName in pairs:
@@ -283,7 +284,7 @@ func add_menu_nav_keys() -> void:
 			InputMap.action_add_event(action, event)
 
 
-## Vuelve a los controles del proyecto (project.godot) y lo guarda.
+## Restores the project controls (project.godot) and saves them.
 func restore_default_bindings() -> void:
 	InputMap.load_from_project_settings()
 	add_menu_nav_keys()
@@ -291,7 +292,7 @@ func restore_default_bindings() -> void:
 	save_settings()
 
 
-# --- Volumen ------------------------------------------------------------------------------------
+# --- Volume -------------------------------------------------------------------------------------
 
 func reset_audio_defaults() -> void:
 	for bus in BUSES:
@@ -306,17 +307,23 @@ func volume_db(bus: StringName) -> float:
 	return linear_to_bus_db(get_volume(bus))
 
 
-## Fija y aplica el volumen de un bus (lineal 0..1). Con `persist` también guarda.
+## Sets and applies a bus volume (linear 0..1). With `persist` it also saves.
 func set_volume(bus: StringName, linear: float, persist := true) -> void:
-	volumes[bus] = clampf(linear, 0.0, 1.0)
+	volumes[bus] = clampf(_number(linear, 1.0), 0.0, 1.0)
 	_apply_bus(bus)
 	volume_changed.emit(bus, get_volume(bus))
 	if persist:
 		save_settings()
 
 
-## La música la ajusta también el AudioManager (baja durante la pausa): él suma su descuento a este valor.
+## The music bus is also driven by AudioManager (it drops while paused and ducks during the ending), so
+## it adds its offsets on top of this value; its refresh is used when it exists.
 func _apply_bus(bus: StringName) -> void:
+	if bus == &"Music":
+		var audio := get_node_or_null(^"/root/AudioManager") if is_inside_tree() else null
+		if audio:
+			audio.call(&"refresh_music_bus")
+			return
 	var idx := AudioServer.get_bus_index(bus)
 	if idx >= 0:
 		AudioServer.set_bus_volume_db(idx, volume_db(bus))
@@ -327,7 +334,7 @@ func apply_volumes() -> void:
 		_apply_bus(bus)
 
 
-# --- Idioma y cámara ----------------------------------------------------------------------------
+# --- Language and camera ------------------------------------------------------------------------
 
 func set_locale(new_locale: String, persist := true) -> void:
 	if not LOCALES.has(new_locale):
@@ -340,12 +347,12 @@ func set_locale(new_locale: String, persist := true) -> void:
 
 
 func set_look_sensitivity(value: float, persist := true) -> void:
-	look_sensitivity = clampf(value, SENSITIVITY_MIN, SENSITIVITY_MAX)
+	look_sensitivity = clampf(_number(value, 1.0), SENSITIVITY_MIN, SENSITIVITY_MAX)
 	if persist:
 		save_settings()
 
 
-# --- Guardar / cargar ---------------------------------------------------------------------------
+# --- Save / load --------------------------------------------------------------------------------
 
 func save_settings() -> bool:
 	var cfg := ConfigFile.new()
@@ -364,28 +371,44 @@ func save_settings() -> bool:
 	return cfg.save(save_path) == OK
 
 
-## Lee el archivo (si existe), aplica idioma, volúmenes y controles. Sin archivo deja los valores del proyecto.
+## Reads the file (if it exists) and applies language, volumes and controls. Without a file the
+## project defaults stay. Values of the wrong type or out of range (a hand-edited or corrupt file)
+## fall back to their defaults instead of raising errors.
 func load_settings() -> bool:
 	var cfg := ConfigFile.new()
 	var loaded := cfg.load(save_path) == OK
 	if loaded:
-		look_sensitivity = clampf(float(cfg.get_value("general", "look_sensitivity", 1.0)), SENSITIVITY_MIN, SENSITIVITY_MAX)
+		look_sensitivity = clampf(_number(cfg.get_value("general", "look_sensitivity", 1.0), 1.0),
+				SENSITIVITY_MIN, SENSITIVITY_MAX)
 		for bus in BUSES:
-			volumes[bus] = clampf(float(cfg.get_value("audio", String(bus), 1.0)), 0.0, 1.0)
-		for action in REMAP_ACTIONS:
-			for slot in [SLOT_KB, SLOT_PAD]:
-				var key := "%s.%s" % [action, slot]
-				if not is_remappable(action, slot) or not cfg.has_section_key("input", key):
-					continue
-				var events: Array = []
-				for data in cfg.get_value("input", key, []):
-					var event := deserialize_event(data)
-					if event != null and slot_of(event) == slot:
-						events.append(event)
-				if not events.is_empty():
-					_replace_slot(action, slot, events)
-		locale = str(cfg.get_value("general", "locale", DEFAULT_LOCALE))
+			volumes[bus] = clampf(_number(cfg.get_value("audio", String(bus), 1.0), 1.0), 0.0, 1.0)
+		_load_bindings(cfg)
+		var stored_locale: Variant = cfg.get_value("general", "locale", DEFAULT_LOCALE)
+		locale = stored_locale if stored_locale is String else DEFAULT_LOCALE
 	set_locale(locale if LOCALES.has(locale) else DEFAULT_LOCALE, false)
 	apply_volumes()
 	bindings_changed.emit()
 	return loaded
+
+
+func _load_bindings(cfg: ConfigFile) -> void:
+	for action in REMAP_ACTIONS:
+		for slot in [SLOT_KB, SLOT_PAD]:
+			var key := "%s.%s" % [action, slot]
+			if not is_remappable(action, slot) or not cfg.has_section_key("input", key):
+				continue
+			var stored: Variant = cfg.get_value("input", key, [])
+			var events: Array = []
+			for data in stored if stored is Array else []:
+				var event := deserialize_event(data)
+				if event != null and slot_of(event) == slot:
+					events.append(event)
+			if not events.is_empty():
+				_replace_slot(action, slot, events)
+
+
+## `value` as a finite float; `fallback` for anything else (wrong type, NaN, infinity).
+static func _number(value: Variant, fallback: float) -> float:
+	if (value is int or value is float) and is_finite(float(value)):
+		return float(value)
+	return fallback

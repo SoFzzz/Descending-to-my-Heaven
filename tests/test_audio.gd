@@ -17,6 +17,20 @@ func test_music_drops_10_db_when_paused() -> void:
 	assert_almost(AM.pause_target_db(false), 0.0)
 
 
+func test_clear_duck_restores_the_music_bus() -> void:
+	var audio := AM.new()
+	var idx := AudioServer.get_bus_index(&"Music")
+	var before := AudioServer.get_bus_volume_db(idx)
+	audio._set_duck(-7.0)
+	assert_almost(audio.get_duck_db(), -7.0)
+	assert_almost(AudioServer.get_bus_volume_db(idx), -7.0, 0.01, "the duck lowers the music bus")
+	audio.clear_duck()
+	assert_almost(audio.get_duck_db(), 0.0)
+	assert_almost(AudioServer.get_bus_volume_db(idx), 0.0, 0.01, "clear_duck gives the level back")
+	AudioServer.set_bus_volume_db(idx, before)
+	audio.free()
+
+
 func test_pool_slot_prefers_free_player() -> void:
 	var busy: Array[bool] = [true, true, false, true]
 	assert_eq(AM.pick_pool_slot(busy, 0), 2)

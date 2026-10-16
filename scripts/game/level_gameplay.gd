@@ -1,47 +1,47 @@
 extends Node3D
-## Raíz de una escena `<nivel>_gameplay.tscn`: instancia el nivel generado (hijo `Level`, NUNCA se
-## edita: lo sobrescribe level_builder.gd) y a Kaelen. Al iniciar coloca a Kaelen en el
-## `PlayerStart` del nivel y le aplica el material PSX.
+## Root of a `<level>_gameplay.tscn` scene: instances the generated level (child `Level`, NEVER
+## edited by hand: level_builder.gd overwrites it) and Kaelen. On start it places Kaelen at the
+## level's `PlayerStart` and applies the PSX material to her.
 ##
-## Salida del nivel: si el nivel tiene un `ExitTrigger` (Area3D) y `exit_advances_level` está activo,
-## cuando Kaelen lo cruza y `_can_exit()` lo permite emite `exit_reached` (una sola vez) y pide
-## GameState.advance_level(). Las escenas derivadas ajustan `_can_exit()` (p. ej. reja abierta).
+## Level exit: if the level has an `ExitTrigger` (Area3D) and `exit_advances_level` is on, when
+## Kaelen crosses it and `_can_exit()` allows it, it emits `exit_reached` (only once) and calls
+## GameState.advance_level(). Derived scenes override `_can_exit()` (e.g. open gate).
 
-## Kaelen cruzó el ExitTrigger y se pidió el paso de nivel.
+## Kaelen crossed the ExitTrigger and the level change was requested.
 signal exit_reached
 
 const PSX := preload("res://scenes/levels/psx_test.gd")
 
-## Antorchas con sonido: máximo de reproductores por nivel y alcance (m) de su crepitar.
+## Torches with sound: maximum players per level and hearing range (m) of their crackle.
 const TORCH_MAX_PLAYERS := 8
 const TORCH_HEARING_DISTANCE := 9.0
 const TORCH_UNIT_SIZE := 2.5
 const TORCH_VOLUME_DB := -8.0
 const MUSIC_FADE := 2.0
-## Ambiente de la sala: bucle suave por debajo de la música.
+## Room ambience: a soft loop below the music.
 const AMBIENCE_VOLUME_DB := -14.0
-## Al morir Kaelen la música y el ambiente bajan en este tiempo y se paran (solo suena el tema de muerte).
+## When Kaelen dies the music and ambience fade out over this time and stop (only the death theme plays).
 const DEATH_AUDIO_FADE := 0.5
 
-## Si es false no se conecta el ExitTrigger (p. ej. la arena 3, donde el final lo dirige otro nodo).
+## If false the ExitTrigger is not connected (e.g. arena 3, where another node directs the ending).
 @export var exit_advances_level := true
 
 @export_group("Audio")
-## Música (o ambiente) del nivel; null = silencio (la música anterior se apaga con un fundido).
+## Level music (or ambience); null = silence (the previous music fades out).
 @export var level_music: AudioStream
-## Pasos de Kaelen en este suelo (piedra en arenas y templo, tierra en el exterior).
+## Kaelen's footsteps on this floor (stone in arenas and temple, dirt outside).
 @export var footstep_stream: AudioStream
-## Bucle de las antorchas (luces dentro del nodo `Level/Torches`).
+## Torch loop (lights inside the `Level/Torches` node).
 @export var torch_loop: AudioStream
-## Ambiente del nivel en bucle (sin posición), a poco volumen para que quede debajo de la música.
+## Looping level ambience (non-positional), quiet so it stays below the music.
 @export var ambience: AudioStream
 
 @onready var level: Node3D = $Level
 @onready var player: Player = $Kaelen
 
 var _exit_used := false
-## true desde que Kaelen muere: ningún arranque de música tardío (p. ej. el jefe que detecta a
-## Kaelen caída) puede volver a sonar.
+## true once Kaelen has died: no late music start (e.g. the boss noticing the fallen Kaelen) may
+## play again.
 var _player_dead := false
 
 
@@ -52,7 +52,7 @@ func _ready() -> void:
 	if events:
 		events.player_died.connect(_on_player_died)
 	player.footstep_stream = footstep_stream
-	ImpactFx.instance(get_tree())   # chispas de impacto, polvo y sellos (reserva de emisores)
+	ImpactFx.instance(get_tree())   # impact sparks, dust and decals (emitter pool)
 	_start_level_music()
 	_add_torch_sounds()
 	_start_ambience()
@@ -60,15 +60,15 @@ func _ready() -> void:
 	if start:
 		player.spawn_at(start)
 	else:
-		push_warning("%s no tiene PlayerStart" % level.name)
+		push_warning("%s has no PlayerStart" % level.name)
 	if exit_advances_level:
 		var exit_trigger := level.get_node_or_null("ExitTrigger") as Area3D
 		if exit_trigger:
 			exit_trigger.body_entered.connect(_on_exit_trigger_body_entered)
 
 
-## Kaelen entra a cada zona (y reaparece) con vida máxima del nivel y estamina llena; el HUD (que ya
-## escucha estas señales) lo refleja desde el primer fotograma.
+## Kaelen enters each zone (and respawns) with the level's max health and full stamina; the HUD
+## (which already listens to these signals) shows it from the first frame.
 func _refill_player() -> void:
 	var game_state := get_node_or_null(^"/root/GameState")
 	if player.health:
@@ -78,7 +78,7 @@ func _refill_player() -> void:
 	player.refill_heals()
 
 
-## Muerte de Kaelen: la música (del jefe o del nivel) y el ambiente hacen fundido rápido y se paran.
+## Kaelen's death: the music (boss or level) and the ambience fade out quickly and stop.
 func _on_player_died() -> void:
 	_player_dead = true
 	var audio := _audio()
@@ -113,8 +113,8 @@ func _start_ambience() -> void:
 	add_child(sound)
 
 
-## Luces de `Level/Torches`: las escenas del nivel son generadas (no se editan), así que el sonido se
-## cuelga aquí, en ejecución, como un AudioStreamPlayer3D por antorcha con alcance limitado.
+## Lights of `Level/Torches`: the level scenes are generated (not hand-edited), so the sound is
+## attached here at runtime as one AudioStreamPlayer3D per torch with a limited range.
 func _add_torch_sounds() -> void:
 	if torch_loop == null:
 		return
@@ -139,7 +139,7 @@ func _add_torch_sounds() -> void:
 		added += 1
 
 
-## Virtual: true si Kaelen puede salir del nivel por el ExitTrigger.
+## Virtual: true if Kaelen may leave the level through the ExitTrigger.
 func _can_exit() -> bool:
 	return true
 
