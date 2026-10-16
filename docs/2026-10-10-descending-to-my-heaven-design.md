@@ -591,13 +591,14 @@ Complejidad baja (≈ medio día). Se abre con `Esc` / `Start`:
 - Libera el cursor del ratón al abrir y lo vuelve a capturar al cerrar.
 
 ### 10.3 Menú de opciones (implementado)
-Se abre desde el menú principal y desde la pausa (overlay `scenes/ui/options_menu.tscn`). Tres pestañas
+Se abre desde el menú principal y desde la pausa (overlay `scenes/ui/options_menu.tscn`). Cuatro pestañas
 (LB / RB con el mando):
 - **Controles:** lista de acciones con su tecla/ratón y su botón de mando; se elige una fila, se pulsa
   Enter / A / clic y luego la nueva tecla o botón (Esc o Back cancelan). Si la entrada ya la usaba otra
   acción, intercambian. Los sticks (mover y cámara) son fijos. Sensibilidad de cámara (ratón y stick
   derecho) y "Restaurar por defecto".
 - **Volumen:** General (Master), Música, Efectos y Interfaz, en vivo sobre los buses de audio.
+- **Pantalla:** modo de ventana (Ventana / Pantalla completa sin bordes, una ventana sin marco del tamaño del monitor, con cambio de ventana rápido / Pantalla completa exclusiva, que toma el control de la pantalla), resolución de ventana (solo en modo ventana: 1280x720, 1920x1080 y 2560x1440, múltiplos enteros de 640x360 que quepan en el monitor; la ventana se centra), sincronización vertical y límite de FPS (sin límite / 30 / 60 / 120). Se aplican en vivo, al iniciar el juego, y los valores no válidos del archivo vuelven a los de por defecto (ventana, 1280x720, VSync activado, sin límite). Alt+Enter alterna entre ventana y pantalla completa en cualquier momento.
 - **Idioma:** español / inglés (`localization/translations.csv`, claves `tr()`).
 Todo se guarda en `user://settings.cfg` (`ConfigFile`, autoload `UserSettings`) y se carga al iniciar.
 
@@ -614,6 +615,7 @@ Todo se guarda en `user://settings.cfg` (`ConfigFile`, autoload `UserSettings`) 
 | Pausa | Esc | Start |
 | Menús: moverse / aceptar / volver | Flechas / Enter / Esc | D-pad o stick izquierdo / A / B |
 | Opciones: cambiar de pestaña | — | LB / RB |
+| Alternar pantalla completa | Alt + Enter | — |
 | Depuración | F3 / F5 / F6 | — |
 
 Atacar (o Enter / Espacio / A del mando / clic) avanza los diálogos del final: no pasan solos. Distribución tipo Dark Souls: RB ataque, B rodar,
