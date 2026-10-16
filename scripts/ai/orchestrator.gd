@@ -13,6 +13,8 @@ extends Node
 
 const NEAR_RANGE := 5.0           # enemigo "cerca" de Kaelen para la intensidad
 const SPAWN_SEPARATION := 1.3     # distancia mínima entre esbirros recién generados
+const SQUAD_INTERVAL := 0.35      # cada cuánto se reparten las órdenes de la pinza
+const ORDER_DURATION := 0.9       # s que dura cada orden de posición (se renueva mientras siga la pinza)
 const CHEST_OFFSET := Vector3(0.0, 1.0, 0.0)   # el punto se comprueba a media altura de esbirro
 
 var model := OrchestratorModel.new()
@@ -31,6 +33,10 @@ var last_spawn_tier := OrchestratorModel.SpawnTier.NONE   # tier de la última s
 var _total_spawned := 0           # para nombrar a los esbirros sin repetir
 var _player: Node3D
 var _player_health: Health
+var _squad_timer := 0.0
+var _pincer_active := false
+## Órdenes de pinza repartidas en esta arena (depuración y simulación).
+var pincer_orders := 0
 
 
 func _physics_process(delta: float) -> void:
@@ -40,6 +46,7 @@ func _physics_process(delta: float) -> void:
 	_time_since_hit += delta
 	if not _find_player():
 		return
+	_update_squad(delta)
 	var ctx := build_context()
 	var budget := model.update(delta, ctx)
 	if budget > 0:
@@ -66,6 +73,9 @@ func begin_arena(config: ArenaConfig, arena_root: Node3D = null, boss: Boss = nu
 	_failed_waves = 0
 	last_spawn_tier = OrchestratorModel.SpawnTier.NONE
 	_total_spawned = 0
+	_squad_timer = 0.0
+	_pincer_active = false
+	pincer_orders = 0
 	if config:
 		model.base_budget = config.base_budget
 		model.max_alive = config.max_alive
@@ -103,7 +113,7 @@ func end_arena() -> void:
 func get_debug_info() -> Dictionary:
 	_prune_minions()
 	var tokens := get_node_or_null(^"/root/AttackTokens")
-	return {
+	var info := {
 		"intensity": model.intensity,
 		"phase": model.phase,
 		"budget": _last_budget,
@@ -112,6 +122,11 @@ func get_debug_info() -> Dictionary:
 		"cycle_time": model.wave_timer,
 		"tokens": tokens.call(&"holders_count") if tokens else 0,
 	}
+	if _boss and is_instance_valid(_boss) and _boss.tactics_enabled:
+		info["boss_goal"] = _boss.tactics.goal_name()
+		info["kaelen"] = _boss.memory.behavior_name()
+		info["distracted"] = _boss.memory.distracted
+	return info
 
 
 ## Contexto del modelo a partir del estado real del árbol.
@@ -145,6 +160,39 @@ static func is_boss_special(boss: Boss) -> bool:
 		var attack := boss.current_attack
 		return attack != null and (attack.phase_min >= 2 or attack.spin_degrees > 0.0)
 	return false
+
+
+# --- Escuadra (pinza) -------------------------------------------------------------------------
+
+## Mientras la meta del jefe es PINCER, reparte a los esbirros vivos puntos de cerco en el lado de
+## Kaelen OPUESTO al jefe (SquadTactics.pincer_points). Al terminar la pinza retira las órdenes.
+func _update_squad(delta: float) -> void:
+	_squad_timer += delta
+	if _squad_timer < SQUAD_INTERVAL:
+		return
+	_squad_timer = 0.0
+	var on := _boss != null and is_instance_valid(_boss) and _boss.tactics_enabled 			and _boss.state != Boss.State.DEAD and _boss.tactics.goal == BossTactics.Goal.PINCER 			and _player != null
+	if not on:
+		if _pincer_active:
+			_pincer_active = false
+			for minion in _minions:
+				if is_instance_valid(minion) and minion.has_method(&"clear_order"):
+					minion.call(&"clear_order")
+		return
+	_pincer_active = true
+	var squad: Array = []
+	for minion in _minions:
+		if is_instance_valid(minion) and minion.has_method(&"order_to") and not minion.call(&"is_retreating") 				and minion.get(&"state") != MinionBrain.State.ATTACK:
+			squad.append(minion)
+	var from: Array[Vector3] = []
+	for minion: Node3D in squad:
+		from.append(minion.global_position)
+	var points := SquadTactics.pincer_points(_player.global_position, _boss.global_position, squad.size())
+	var assignment := SquadTactics.assign_points(from, points)
+	for i in squad.size():
+		if assignment[i] >= 0:
+			squad[i].call(&"order_to", points[assignment[i]], ORDER_DURATION)
+			pincer_orders += 1
 
 
 # --- Generación -------------------------------------------------------------------------------

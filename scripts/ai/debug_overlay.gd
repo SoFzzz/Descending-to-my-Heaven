@@ -59,7 +59,7 @@ Fase: %s
 Ciclo: %s
 Presupuesto: %d
 Esbirros vivos: %d
-Fichas: %d / %d" % [
+Fichas: %d / %d%s" % [
 		roundi(float(info.get("intensity", 0.0))),
 		PHASE_NAMES[clampi(phase, 0, PHASE_NAMES.size() - 1)],
 		cycle_text,
@@ -67,6 +67,20 @@ Fichas: %d / %d" % [
 		int(info.get("alive", 0)),
 		int(info.get("tokens", 0)),
 		TokensScript.MAX_TOKENS,
+		_boss_lines(info),
+	]
+
+
+## Meta táctica del jefe y comportamiento detectado de Kaelen (si el jefe tiene tácticas).
+static func _boss_lines(info: Dictionary) -> String:
+	if not info.has("boss_goal"):
+		return ""
+	return "
+Meta del jefe: %s
+Kaelen: %s%s" % [
+		str(info.get("boss_goal", "")),
+		str(info.get("kaelen", "")),
+		" (distraída)" if info.get("distracted", false) else "",
 	]
 
 

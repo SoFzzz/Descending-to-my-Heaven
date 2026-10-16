@@ -19,6 +19,8 @@ extends CharacterBody3D
 
 signal state_changed(state: State)
 signal attack_started(attack: BossAttack)
+## La meta táctica cambió (BossTactics.Goal): la usan el overlay F3 y las simulaciones.
+signal goal_changed(goal: BossTactics.Goal)
 
 enum State { IDLE, CHASE, TELEGRAPH, ACTIVE, RECOVER, ROAR, DEAD }
 
@@ -31,6 +33,17 @@ const DODGE_RECORD_RANGE := 12.0   # only rolls this close count for the anticip
 const ANIM_BLEND := 0.25
 ## Kaelen's sword is active ~0.2 s per slash and slashes are ≥ 0.4 s apart.
 const SAME_SWING_WINDOW := 0.3
+## Tácticas (BossTactics): horizonte de la posición prevista al cortar el paso / interceptar (s),
+## velocidad mínima de Kaelen para que cuente como "en movimiento", factores de velocidad al esperar
+## o hacer pinza, y duración máxima del gesto (rugido/burla) con el que anuncia una orden.
+const CUT_OFF_HORIZON := 1.5
+const INTERCEPT_HORIZON := 1.0
+const INTERCEPT_MIN_SPEED := 1.8
+const WAIT_SPEED := 0.6
+const PINCER_SPEED := 0.85
+const GESTURE_MAX := 1.1
+const GESTURE_VOLUME_DB := -3.0
+const DAMAGE_WINDOW := 4.0
 
 @export var display_name: String = "Boss"
 @export var attacks: Array[BossAttack] = []
@@ -58,6 +71,17 @@ const SAME_SWING_WINDOW := 0.3
 ## Height of the lowest bone above the sole when settled.
 @export var death_clearance := 0.07
 @export var model_path := NodePath("Model")
+@export_group("Tactics")
+## Activa las metas tácticas (cortar el paso, esperar, pinza, emboscada). Apagado = el jefe persigue
+## y ataca como antes (útil para comparar en las simulaciones).
+@export var tactics_enabled := true
+## Ataques que se apuntan al punto previsto de Kaelen si ella se mueve (embestida, salto, rayo).
+@export var intercept_attacks: Array[StringName] = []
+## Ataque que se prefiere (×circling_bonus) cuando Kaelen intenta rodear al jefe (Bone Dragon: coletazo).
+@export var circling_attack: StringName = &""
+@export var circling_bonus := 2.2
+## Animación de burla para el gesto de ESPERAR (si el modelo la tiene; Blackhorn: "taunt").
+@export var taunt_animation: StringName = &"taunt"
 @export_group("Repel")
 ## Repel reaction (BossRepel): when the boss takes `repel_threshold` of its max health within
 ## `repel_window` s, or `repel_burst_hits` hits within `repel_burst_window` s, or Kaelen stays within
@@ -102,6 +126,15 @@ var current_attack: BossAttack
 ## Attack ids in the order they were used (debug and verification).
 var attack_log: Array[StringName] = []
 var gated_open := false
+## Memoria de combate compartida y metas tácticas.
+var memory := CombatMemory.new()
+var tactics := BossTactics.new()
+## Multiplica el aviso del ataque en curso (emboscada: más largo y por tanto más justo).
+var telegraph_scale := 1.0
+## True mientras el gesto de ROAR es un anuncio (pinza / burla) y no el rugido de fase ni la repulsión.
+var gesturing := false
+## Estadística de las tácticas (simulaciones y depuración).
+var ambush_count := 0
 var settled_offset := 0.0
 
 @onready var health: Health = $Health
@@ -133,6 +166,12 @@ var _extra_hitboxes: Array[Hitbox] = []
 var _visual: Node3D
 var _model: Node3D
 var _skeleton: Skeleton3D
+var _gesture_len := 1.0
+var _wait_side := 1.0
+var _damage_log: Array = []        # [tiempo, daño] de los últimos DAMAGE_WINDOW s
+var _last_repel_clock := -99.0
+var _threat_on := false
+var _threat_near := false
 
 
 func _ready() -> void:
@@ -203,6 +242,11 @@ func _physics_process(delta: float) -> void:
 	var target_ok := _player_alive()
 	if target_ok:
 		_track_dodge()
+		var sample_dt := memory.tick(delta)
+		if sample_dt > 0.0:
+			memory.observe(sample_dt, _memory_context())
+		if tactics_enabled:
+			tactics.advance(delta)
 		if repel_enabled and state != State.IDLE and state != State.DEAD 				and repel.register_proximity(delta, _flat_distance() <= repel.glue_radius, not can_repel()):
 			_pending_repel = true
 	if _pending_roar and state != State.ROAR:
@@ -220,6 +264,7 @@ func _physics_process(delta: float) -> void:
 		_play(idle_animation)
 	_run_state(delta, target_ok)
 	_update_gate(delta)
+	_update_threat()
 	move_and_slide()
 
 
@@ -232,27 +277,18 @@ func _run_state(delta: float, target_ok: bool) -> void:
 				_aggro = true
 				_set_state(State.CHASE)
 		State.CHASE:
-			var distance := _flat_distance()
-			var approaching := distance > engage_range
-			if _cooldown <= 0.0 and _try_start_attack(distance, approaching):
-				_stop()
-				return
-			if approaching:
-				_navigate_to(_player.global_position, move_speed * speed)
-				_face(global_position + Vector3(velocity.x, 0.0, velocity.z), delta)
-			else:
-				_stop()
-				_face(_player.global_position, delta)
-			_play_locomotion(approaching and Vector2(velocity.x, velocity.z).length() > 0.3)
+			_run_chase(delta, speed)
 		State.TELEGRAPH:
 			_stop()
-			var telegraph := current_attack.telegraph_time / speed
+			var telegraph := current_attack.telegraph_time * telegraph_scale / speed
 			if _state_time < telegraph * TRACK_FRACTION:
-				_face(_player.global_position, delta)
+				_face(_aim_target(), delta)
 			if _state_time >= telegraph:
 				_set_state(State.ACTIVE)
 				_spin_done = 0.0
 				_advance_done = 0.0
+				if _anim:
+					_anim.speed_scale = speed   # el aviso alargado de la emboscada frena la animación solo hasta aquí
 				_advance_blocked = false
 				_begin_active()
 		State.ACTIVE:
@@ -268,6 +304,8 @@ func _run_state(delta: float, target_ok: bool) -> void:
 			_stop()
 			if _state_time >= current_attack.recovery_time / speed:
 				current_attack = null
+				telegraph_scale = 1.0
+				tactics.request_eval()   # fin de la recuperación: momento de decidir qué hacer
 				if _pending_repel or repel.is_due(health.max_value):
 					_pending_repel = true   # deferred from the punish window: fires next frame
 				_cooldown = attack_cooldown / speed
@@ -282,10 +320,196 @@ func _run_state(delta: float, target_ok: bool) -> void:
 			var roar_time := _anim_length(roar_animation, 2.0)
 			if repelling:
 				roar_time = minf(roar_time, repel_roar_max)   # the repel roar is cut short: it must not become a rest
+			if gesturing:
+				roar_time = _gesture_len
 			if _state_time >= roar_time / speed:
 				repelling = false
+				gesturing = false
+				tactics.request_eval()
 				_play(idle_animation)
 				_set_state(State.CHASE if target_ok else State.IDLE)
+
+
+# --- Tácticas ---------------------------------------------------------------------------------
+
+## CHASE con metas tácticas (BossTactics): la meta decide a dónde va el jefe y si puede atacar.
+## ATTACK es el comportamiento clásico (sigue a Kaelen hasta engage_range y ataca); CUT_OFF va al
+## punto previsto y solo lanza aperturas; WAIT retrocede/rodea sin atacar; PINCER se planta en su
+## lado de Kaelen mientras el Orquestador cierra con los esbirros por el contrario.
+func _run_chase(delta: float, speed: float) -> void:
+	var distance := _flat_distance()
+	var goal := _tactics_step(delta, distance)
+	var approaching := distance > engage_range
+	var target := _player.global_position
+	var factor := 1.0
+	var may_attack := true
+	var strafing := false
+	match goal:
+		BossTactics.Goal.CUT_OFF:
+			target = _clamp_nav(BossTactics.cut_off_point(memory.predict(CUT_OFF_HORIZON), global_position))
+		BossTactics.Goal.WAIT:
+			may_attack = false
+			strafing = true
+			factor = WAIT_SPEED
+			target = _clamp_nav(BossTactics.wait_point(global_position, _player.global_position, _wait_side))
+		BossTactics.Goal.PINCER:
+			may_attack = not approaching   # no abre ataques de lejos: su papel es cerrar un lado
+			strafing = true
+			factor = PINCER_SPEED
+			target = _clamp_nav(SquadTactics.boss_pincer_point(_player.global_position, global_position))
+		_:
+			if tactics_enabled and BossTactics.is_ambush(memory.distracted, memory.fleeing, distance, engage_range):
+				factor = BossTactics.AMBUSH_SPEED   # acecha: se acerca más despacio mientras ella está distraída
+	if may_attack and _cooldown <= 0.0 and _try_start_attack(distance, approaching):
+		_stop()
+		return
+	var moving := approaching
+	var to_target := target - global_position
+	to_target.y = 0.0
+	if goal == BossTactics.Goal.WAIT:
+		moving = true
+	elif goal == BossTactics.Goal.PINCER:
+		moving = to_target.length() > 1.0
+	elif goal == BossTactics.Goal.CUT_OFF:
+		moving = approaching and to_target.length() > 1.0
+	if moving:
+		_navigate_to(target, move_speed * speed * factor)
+		_face(_player.global_position if strafing else global_position + Vector3(velocity.x, 0.0, velocity.z), delta)
+	else:
+		_stop()
+		_face(_player.global_position, delta)
+	_play_locomotion(moving and Vector2(velocity.x, velocity.z).length() > 0.3)
+
+
+## Reevalúa la meta (cada 0.5 s, solo mientras no ataca) y devuelve la vigente.
+func _tactics_step(delta: float, distance: float) -> BossTactics.Goal:
+	if not tactics_enabled:
+		return BossTactics.Goal.ATTACK
+	if tactics.step(_tactics_context(distance)):
+		_on_goal_changed()
+	return tactics.goal
+
+
+func _tactics_context(distance: float) -> Dictionary:
+	return {
+		distance = distance,
+		fleeing = memory.fleeing,
+		with_minions = memory.with_minions,
+		glued = memory.glued,
+		passive = memory.passive,
+		distracted = memory.distracted,
+		health_ratio = float(health.current) / maxf(1.0, float(health.max_value)),
+		phase = phase,
+		minions_alive = memory.minions_alive,
+		recent_damage = _recent_damage(),
+		since_repel = _clock - _last_repel_clock,
+		engage_range = engage_range,
+	}
+
+
+func _on_goal_changed() -> void:
+	_wait_side = 1.0 if _rng.randf() < 0.5 else -1.0
+	match tactics.goal:
+		BossTactics.Goal.PINCER:
+			_start_gesture(roar_animation, true)   # "anuncia" la orden a los esbirros: legible
+		BossTactics.Goal.WAIT:
+			if _anim and _anim.has_animation(taunt_animation):
+				_start_gesture(taunt_animation, false)
+	goal_changed.emit(tactics.goal)
+
+
+## Gesto corto (rugido o burla) que reutiliza el estado ROAR: no hace daño y el jefe NO es invulnerable.
+func _start_gesture(anim_name: StringName, with_sound: bool) -> void:
+	if state != State.CHASE:
+		return
+	_stop()
+	gesturing = true
+	_gesture_len = minf(_anim_length(anim_name, 1.0), GESTURE_MAX)
+	_play(anim_name)
+	if with_sound:
+		_play_sfx(sfx_phase2, Vector3.INF, GESTURE_VOLUME_DB)
+	_set_state(State.ROAR)
+
+
+## Datos para la memoria de combate: Kaelen, el jefe y los esbirros vivos.
+func _memory_context() -> Dictionary:
+	var minion_positions: Array[Vector3] = []
+	if is_inside_tree():
+		for node in get_tree().get_nodes_in_group(&"enemy"):
+			var minion := node as Node3D
+			if minion and minion != self and minion.is_inside_tree():
+				minion_positions.append(minion.global_position)
+	var ctx := {
+		player_pos = _player.global_position,
+		boss_pos = global_position,
+		boss_forward = -global_basis.z,
+		minions = minion_positions,
+		dodge_bias = brain.dodge_bias,
+	}
+	var player := _player as Player
+	if player:
+		ctx.player_attacking = player.state == Player.State.ATTACK
+		ctx.player_facing = player.get_facing()
+		var locked := player.get_lock_target()
+		ctx.locked_minion = locked != null and locked.is_in_group(&"enemy")
+	return ctx
+
+
+## Punto al que apunta el ataque en curso: la posición prevista de Kaelen si es un ataque de
+## intercepción (embestida, salto, rayo) y ella se mueve; si no, ella.
+func _aim_target() -> Vector3:
+	return aim_point_for(current_attack.id if current_attack else &"", _player.global_position)
+
+
+## Lo usa también GhidorahBeamAim para fijar la franja del rayo.
+func aim_point_for(attack_id: StringName, fallback: Vector3) -> Vector3:
+	if tactics_enabled and attack_id in intercept_attacks and memory.samples > 2 and memory.speed > INTERCEPT_MIN_SPEED:
+		return _clamp_nav(memory.predict(INTERCEPT_HORIZON))
+	return fallback
+
+
+## Limita un punto a la malla de navegación (la arena). Sin malla sincronizada (pruebas, simulación) no cambia nada.
+func _clamp_nav(p: Vector3) -> Vector3:
+	if agent == null or not is_inside_tree():
+		return p
+	var map := agent.get_navigation_map()
+	if not map.is_valid() or NavigationServer3D.map_get_iteration_id(map) == 0:
+		return p
+	var q := NavigationServer3D.map_get_closest_point(map, p)
+	return Vector3(q.x, p.y, q.z)
+
+
+func _attack_multipliers() -> Dictionary:
+	if tactics_enabled and memory.circling and circling_attack != &"":
+		return {circling_attack: circling_bonus}
+	return {}
+
+
+## Fracción de la vida máxima perdida en los últimos DAMAGE_WINDOW s.
+func _recent_damage() -> float:
+	var total := 0
+	var kept: Array = []
+	for entry: Array in _damage_log:
+		if _clock - float(entry[0]) <= DAMAGE_WINDOW:
+			kept.append(entry)
+			total += int(entry[1])
+	_damage_log = kept
+	return float(total) / maxf(1.0, float(max_health))
+
+
+## Amenaza compartida: mientras el jefe avisa o ataca, AttackTokens no reparte fichas nuevas a los
+## esbirros si Kaelen está cerca (SquadTactics.token_slots).
+func _update_threat() -> void:
+	var threatening := state == State.TELEGRAPH or state == State.ACTIVE
+	var near := threatening and _player != null and is_instance_valid(_player) \
+			and _flat_distance() <= SquadTactics.THREAT_RADIUS
+	if threatening == _threat_on and near == _threat_near:
+		return
+	_threat_on = threatening
+	_threat_near = near
+	var tokens := get_node_or_null(^"/root/AttackTokens") if is_inside_tree() else null
+	if tokens:
+		tokens.call(&"set_boss_threat", threatening, near)
 
 
 ## Removes the first-use hitches (shaders of the attack effects and warnings, animation tracks): see
@@ -307,9 +531,14 @@ func _warm_up() -> void:
 # --- Attacks ----------------------------------------------------------------------------------
 
 func _try_start_attack(distance: float, approaching := false) -> bool:
-	var attack := brain.choose(attacks, distance, phase, _rng, approaching)
+	var attack := brain.choose(attacks, distance, phase, _rng, approaching, _attack_multipliers())
 	if attack == null:
 		return false
+	# Emboscada: Kaelen distraída (con esbirros o de espaldas) → el aviso dura un poco más.
+	telegraph_scale = 1.0
+	if tactics_enabled and tactics.goal == BossTactics.Goal.ATTACK and memory.distracted and not memory.fleeing:
+		telegraph_scale = BossTactics.AMBUSH_TELEGRAPH
+		ambush_count += 1
 	current_attack = attack
 	brain.last_attack_id = attack.id
 	attack_log.append(attack.id)
@@ -318,6 +547,8 @@ func _try_start_attack(distance: float, approaching := false) -> bool:
 	if _telegraph:
 		_telegraph.visible = true
 	_play(attack.animation)
+	if _anim and telegraph_scale != 1.0:
+		_anim.speed_scale = _speed() / telegraph_scale
 	_set_state(State.TELEGRAPH)
 	attack_started.emit(attack)
 	return true
@@ -363,6 +594,9 @@ func _cancel_attack() -> void:
 	current_attack = null
 	_hitbox = null
 	_telegraph = null
+	telegraph_scale = 1.0
+	if _anim:
+		_anim.speed_scale = _speed()
 
 
 func _apply_spin(progress: float) -> void:
@@ -551,10 +785,12 @@ func _on_hurt(amount: int, source: Node) -> void:
 		var applied: int = last.amount
 		if amount > applied:
 			last.amount = amount
+			_damage_log.append([_clock, amount - applied])
 			health.take_damage(amount - applied)
 			_register_repel_damage(amount - applied)
 		return
 	_swing_hits[key] = {time = _clock, amount = amount}
+	_damage_log.append([_clock, amount])
 	health.take_damage(amount)
 	_register_repel_damage(amount)
 	if not health.is_dead():
@@ -585,6 +821,7 @@ func start_repel() -> void:
 		return
 	repel.trigger()
 	repel_count += 1
+	_last_repel_clock = _clock
 	_cancel_attack()
 	_stop()
 	repelling = true
@@ -631,10 +868,12 @@ func _on_died() -> void:
 	_pending_repel = false
 	_repel_push_left = 0.0
 	repelling = false
+	gesturing = false
 	_play(death_animation)
 	_play_sfx(sfx_death)
 	_set_state(State.DEAD)
 	_stop()
+	_update_threat()
 	remove_from_group("lockable")
 	# Deferred: death arrives inside a physics signal (the sword's area_entered).
 	_body_shape.set_deferred(&"disabled", true)
@@ -651,12 +890,12 @@ func _on_died() -> void:
 
 
 ## Plays `stream` (if any) in 3D at the boss. By path: in tests run with -s there is no AudioManager.
-func _play_sfx(stream: AudioStream, at := Vector3.INF) -> void:
+func _play_sfx(stream: AudioStream, at := Vector3.INF, volume_db := 0.0) -> void:
 	if stream == null or not is_inside_tree():
 		return
 	var audio := get_node_or_null(^"/root/AudioManager")
 	if audio:
-		audio.play_sfx_3d(stream, global_position if at == Vector3.INF else at, 0.1, 0.0, 16.0)
+		audio.play_sfx_3d(stream, global_position if at == Vector3.INF else at, 0.1, volume_db, 16.0)
 
 
 func _events() -> Node:

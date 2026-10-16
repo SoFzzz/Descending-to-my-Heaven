@@ -132,7 +132,8 @@ func _physics_process(delta: float) -> void:
 		progress = clampf(_sweep_time / maxf(_attack.active_time / speed, 0.01), 0.0, 1.0)
 	elif not locked:
 		_telegraph_time += delta
-		var commit: float = _attack.telegraph_time / speed * Boss.TRACK_FRACTION
+		var scale: float = _boss.get("telegraph_scale") if _boss.get("telegraph_scale") != null else 1.0
+		var commit: float = _attack.telegraph_time * scale / speed * Boss.TRACK_FRACTION
 		_update_target()
 		if _telegraph_time >= commit:
 			locked = true
@@ -144,7 +145,12 @@ func _update_target() -> void:
 		_player = get_tree().get_first_node_in_group("player") as Node3D
 	if _player == null:
 		return
-	target_ground = clamp_target(_boss.global_position, _player.global_position, _attack.min_range, _attack.max_range)
+	# Si Kaelen corre, el jefe da el punto PREVISTO (delante de su huida): la franja corta el paso.
+	# Se fija igualmente al 70 % del aviso y el rayo tarda ACTIVE en recorrerla: sigue siendo esquivable.
+	var aim := _player.global_position
+	if _boss.has_method(&"aim_point_for"):
+		aim = _boss.call(&"aim_point_for", attack_id, aim)
+	target_ground = clamp_target(_boss.global_position, aim, _attack.min_range, _attack.max_range)
 
 
 ## Coloca aviso, zona de dano y efecto: el aviso cubre toda la recta; la zona de dano y el extremo

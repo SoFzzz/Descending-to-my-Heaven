@@ -69,6 +69,7 @@ rings = 1
 display_name = "Bone Dragon"
 attacks = Array[ExtResource("5_attack")]([ExtResource("6_bite"), ExtResource("7_tail"), ExtResource("8_stomp")])
 max_health = 500
+circling_attack = &"tail_sweep"
 sfx_phase2 = ExtResource("a_roar")
 sfx_death = ExtResource("a_death")
 

@@ -92,3 +92,18 @@ func test_can_see_cone() -> void:
 	var at_60 := Vector3(sin(deg_to_rad(60.0)), 0.0, -cos(deg_to_rad(60.0))) * 5.0
 	assert_true(MinionBrain.can_see(from, fwd, at_50), "5 m a 50°")
 	assert_true(not MinionBrain.can_see(from, fwd, at_60), "5 m a 60°")
+
+
+func test_should_retreat_only_normals_once_below_threshold() -> void:
+	assert_true(MinionBrain.should_retreat(0.25, false, false))
+	assert_true(not MinionBrain.should_retreat(0.5, false, false), "vida suficiente")
+	assert_true(not MinionBrain.should_retreat(0.25, true, false), "los élites no se retiran")
+	assert_true(not MinionBrain.should_retreat(0.25, false, true), "solo una vez")
+	assert_true(not MinionBrain.should_retreat(0.0, false, false), "muerto")
+
+
+func test_retreat_point_is_away_from_kaelen() -> void:
+	var p := MinionBrain.retreat_point(Vector3(3, 0, 0), Vector3.ZERO, 6.0)
+	assert_almost(p.x, 9.0, 0.001)
+	var same := MinionBrain.retreat_point(Vector3.ZERO, Vector3.ZERO)
+	assert_true(same.length() > 1.0, "sin dirección elige una")

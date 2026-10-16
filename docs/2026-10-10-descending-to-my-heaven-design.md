@@ -393,6 +393,7 @@ Tres capas, cada una con una técnica reconocida de IA para videojuegos.
 - **Estados:** `Idle/Patrulla → Persecución → Rodear → Ataque → Recuperación → Muerte`; `Aturdido` al recibir golpe.
 - **Navegación:** `NavigationRegion3D` + `NavigationAgent3D` (búsqueda de rutas A* sobre la malla de navegación) con evitación entre agentes.
 - **Coordinación por fichas de ataque:** un gestor central reparte como máximo 2 fichas. Solo un esbirro con ficha puede pasar a `Ataque`; los demás pasan a `Rodear` (orbitan a Kaelen a 3-4 m). Esto evita que todos ataquen a la vez y produce el ritmo de un soulslike.
+- **Retirada y órdenes de posición:** un esbirro normal con la vida por debajo del 30 % se aleja unos segundos antes de volver; durante la pinza del jefe (§8.4) recibe del Orquestador un punto de cerco al que ir y en el que quedarse en `Rodear`.
 
 ### 8.2 Jefes — Selección de ataques por utilidad
 Cada ataque es un recurso (`BossAttack`) con: rango mínimo/máximo, tiempo de aviso (telegraph), recuperación y peso base. Cada vez que el jefe decide qué hacer, calcula un puntaje para cada ataque:
@@ -489,7 +490,56 @@ Límite de esbirros vivos: 3. Cada grupo lleva exactamente 1 élite (más vida/d
 
 **Balance (2026-10-15, `scripts/tools/orchestrator_sim.gd`):** simulación del modelo real a 10 Hz (30 ejecuciones de 180 s por arena y por perfil de Kaelen). Con la regla de grupos de 2-3 esbirros con 1 élite la intensidad oscila en las tres arenas (mínimo 0, máximo 100, oscilaciones medias de 45-69 puntos, 0,2-2 entradas al PICO por minuto, respiros de ~20 s). Como la vida máxima baja a 70 y 40, el mismo golpe pesaba más en la arena 3 y la intensidad no pasaba de 85; ahora el daño que recibe el modelo se escala a medias hacia una vida de 100 (`OrchestratorModel.hp_damage_scale`: x1,0 / x1,2 / x1,8).
 
-**Vista de depuración (F3):** muestra en pantalla intensidad, fase, tamaño del último grupo, esbirros vivos y fichas de ataque asignadas. Sirve para la presentación y para ajustar valores.
+**Vista de depuración (F3):** muestra en pantalla intensidad, fase, tamaño del último grupo, esbirros vivos, fichas de ataque asignadas, la **meta táctica actual del jefe** y el **comportamiento detectado de Kaelen** (huyendo, con esbirros, pegada, pasiva, y si está distraída). Sirve para la presentación y para ajustar valores.
+
+### 8.4 Tácticas del jefe y coordinación de escuadra
+Hasta aquí el jefe decidía **qué ataque** usar, pero entre ataques siempre hacía lo mismo: perseguir a Kaelen por detrás hasta `engage_range`. Siguiendo la idea de *Three States and a Plan: The A.I. of F.E.A.R.* (Orkin, GDC 2006) —comportamiento complejo que sale de **órdenes simples**, una **memoria compartida** y una coordinación **legible** para el jugador— se añade una capa de decisión por encima de la selección de ataques. No es un planificador (ni GOAP ni A* sobre acciones): son **metas puntuadas por utilidad**, una memoria de combate y un coordinador de escuadra.
+
+**Memoria de combate** (`scripts/ai/combat_memory.gd`, lógica pura). El jefe la actualiza a **10 Hz**. Guarda la posición y velocidad **suavizadas** de Kaelen, la variación de su distancia al jefe y una **posición prevista a ~1 s** (velocidad limitada a 7 m/s para que una rodada no dispare la predicción; el jefe la limita además al navmesh). Con eso detecta:
+
+| Comportamiento | Cuándo |
+|---|---|
+| HUYENDO | la distancia al jefe crece > 1 m/s con Kaelen a > 2,2 m/s durante 0,8 s (a > 4,5 m; se olvida tras 1,2 s de calma) |
+| CON ESBIRROS | su objetivo fijado es un esbirro, golpea a uno a < 3 m, el esbirro más cercano está a menos de la mitad de distancia que el jefe, o va decidida hacia uno |
+| PEGADA | permanece a ≤ 3,8 m durante 2 s |
+| PASIVA | lejos (≥ 7 m) durante 3 s sin atacar, huir ni ir a por esbirros |
+
+Marcas independientes: *distraída* (con esbirros, o de espaldas al jefe) y *rodeando* (> 2,2 m/s tangenciales a < 7 m). El lado preferido de rodada sigue siendo `BossBrain.dodge_bias`.
+
+**Metas del jefe** (`scripts/ai/boss_tactics.gd`, lógica pura). Cuando no está en mitad de un ataque se reevalúa cada **0,5 s** (y al acabar una recuperación o un rugido, que es cuando de verdad decide). Cada meta tiene una puntuación; la meta actual puntúa ×1,3 (histéresis) y debe durar ≥ 1 s. Las que no son ATACAR caducan y quedan en enfriamiento.
+
+| Meta | Se activa cuando | Qué hace | Tope / enfriamiento |
+|---|---|---|---|
+| ATACAR | por defecto (1,0; ×1,25 en fase 2) | acercarse y atacar, como siempre | — |
+| CORTAR PASO | Kaelen huye a > 6 m (1,5-2,1), o está pasiva a > 10 m (0,9) | va al **punto previsto** a 1,5 s en vez de seguirla por detrás; solo puede lanzar ataques de apertura (embestida, salto, rayo) | 4 s / 2,5 s |
+| ESPERAR | combo largo (≥ 16 % de su vida en 4 s: 1,4), recién repelida (< 3 s: 1,5), vida < 30 % (0,5), Kaelen pasiva (1,1) | **no ataca**: se retira y la rodea a ~8 m a velocidad ×0,6; Blackhorn hace además su burla (`taunt`). Un respiro legible. En fase 2 vale ×0,6 | 2,4 s / 7 s |
+| PINZA | hay esbirros y Kaelen va con ellos, entre 4 y 18 m (1,5; 1,8 con 2 o más; ×1,2 en fase 2) | el jefe se planta en su lado a 6 m (sin lanzar ataques de apertura) y **ruge brevemente (≤ 1,1 s)** para anunciarlo; el Orquestador manda a los esbirros a los puntos de cerco | 4 s / 9 s |
+
+**Emboscada.** Si Kaelen está distraída (con esbirros o de espaldas) y el jefe aún no la alcanza, se acerca a velocidad ×0,6 y el ataque que lance tiene un **aviso ×1,3 más largo** (la animación se frena en proporción para seguir sincronizada): más peligroso por pillarla distraída, pero más legible.
+
+**Especialización.**
+- **Blackhorn**: la embestida y el salto (`intercept_attacks`) se apuntan al **punto previsto** de Kaelen a 1 s si ella se mueve a > 1,8 m/s (intercepción); burla en ESPERAR.
+- **Bone Dragon**: si Kaelen intenta rodearlo, el **coletazo** puntúa ×2,2 (`circling_attack`).
+- **Ghidorah** (demasiado grande para moverse en pinza): usa el **rayo para cortar la huida**. `GhidorahBeamAim` pide al jefe el punto previsto (delante de la dirección de huida) para la franja, que sigue fijándose al 70 % del aviso; como el impacto tarda `active_time` en recorrerla desde Ghidorah, sigue siendo esquivable moviéndose en ángulo o rodando.
+
+**Pinza y escuadra** (`scripts/ai/squad_tactics.gd`). Cuando la meta es PINZA, el Orquestador (cada 0,35 s) calcula `pincer_points`: tantos puntos como esbirros libres, a **3,6 m de Kaelen y en el lado opuesto al jefe** (abanico de 55° entre vecinos centrado a 180° del jefe), los reparte con `assign_points` (asignación voraz por cercanía) y envía `order_to` a cada esbirro: va al punto y se queda en `Rodear` allí hasta que la orden caduca (0,9 s, se renueva mientras dure la pinza). La orden es la única interfaz nueva de los esbirros (los papeles completos de escuadra quedan para otra fase).
+
+**Amenazas compartidas.** Mientras el jefe está en AVISO o ACTIVO, `AttackTokens` no reparte fichas nuevas si Kaelen está a ≤ 10 m (`SquadTactics.token_slots`: 0 fichas con el jefe cerca; 1 con una amenaza lejana como el rayo; 2 sin amenaza). Un esbirro que ya tenía ficha pero aún no atacaba la devuelve. Así nunca se acumulan el ataque del jefe y los de los esbirros de cerca.
+
+**Retirada de esbirros.** Un esbirro **normal** (no élite) con vida < 30 % deja de atacar: se aleja durante 3,5 s hasta ~9 m de Kaelen (sin pedir ficha) y vuelve. Una vez por vida.
+
+**Medición** (`scripts/tools/boss_tactics_sim.gd`: `Boss` real avanzado a 60 Hz y el código real del Orquestador para la pinza; esbirros simples en oleadas de 3; 8 ejecuciones de 120 s por celda; "antes" = `tactics_enabled = false`, es decir, el comportamiento anterior). "Agresiva" va pegada al jefe y rueda ~50 % de los avisos; "huidiza" kitea a 9-13 m, mata esbirros y solo entra a castigar cuando el jefe se recupera. El daño usa un modelo geométrico simple de los volúmenes de ataque (sirve para comparar, no como cifra absoluta):
+
+| Jefe / perfil | Daño recibido por Kaelen por min (antes → después) | % del tiempo: ATACAR / CORTAR / ESPERAR / PINZA | Cortes · pinzas · esperas por min | Tiempo para matar al jefe (antes → después) |
+|---|---|---|---|---|
+| Bone Dragon / agresiva | 370 → 312 | 77,5 / 8,8 / 6,4 / 7,2 | 3,7 · 1,8 · 3,7 | 29 s → 30 s |
+| Bone Dragon / huidiza | 222 → 212 | 62,4 / 27,0 / 2,1 / 8,5 | 5,1 · 2,3 · 1,0 | 85 s → 107 s |
+| Blackhorn / agresiva | 333 → 303 | 78,3 / 5,8 / 6,3 / 9,5 | 1,6 · 2,4 · 1,8 | 39 s → 38 s |
+| Blackhorn / huidiza | 295 → 249 | 66,3 / 22,5 / 1,5 / 9,7 | 4,3 · 2,4 · 0,7 | 75 s → 90 s |
+| Ghidorah / agresiva | 327 → 285 | 80,7 / 7,5 / 5,0 / 6,7 | 2,9 · 1,8 · 2,9 | 47 s → 46 s |
+| Ghidorah / huidiza | 179 → 176 | 63,8 / 28,5 / 0,2 / 7,6 | 4,7 · 1,9 · 0,1 | no muere en 120 s (ni antes ni después) |
+
+Lectura: contra una Kaelen pegada al jefe, los respiros (ESPERAR, el rugido de la pinza y el aviso largo de la emboscada) **reducen** el daño un 8-16 % sin cambiar el tiempo para matarlo. Contra una Kaelen que huye, el daño se mantiene o baja (el jefe la persigue con intención, pero también pierde tiempo reposicionándose) y el tiempo para matarlo sube un 20-25 %, porque el jefe ya no se queda parado a su alcance al recuperarse. Como el daño por minuto no sube, **no se tocó el daño de los ataques** (`resources/attacks/*.tres`); la compensación de equilibrio son las ventanas de respiro y los avisos legibles descritos arriba.
 
 ## 9. HUD
 - Barras de vida y estamina (esquina superior izquierda).

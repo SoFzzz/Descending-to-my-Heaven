@@ -22,6 +22,12 @@ enum State { IDLE, CHASE, CIRCLE, ATTACK, RECOVER, STUNNED, DEAD }
 const DETECT_RADIUS := 12.0
 const FOV_DEG := 110.0
 
+## Retirada táctica (dejar de atacar): un esbirro NORMAL con la vida por debajo de RETREAT_HEALTH
+## se aleja RETREAT_TIME s hasta ~RETREAT_DISTANCE m de Kaelen y vuelve (una vez por vida).
+const RETREAT_HEALTH := 0.3
+const RETREAT_TIME := 3.5
+const RETREAT_DISTANCE := 9.0
+
 var attack_range := 1.5
 var circle_range := 4.0
 var circle_exit_range := 5.0   # hysteresis so CHASE/CIRCLE does not flicker at the border
@@ -58,6 +64,19 @@ func next_state(state: State, ctx: Dictionary) -> State:
 				return State.CIRCLE
 			return State.CHASE
 	return state
+
+
+## ¿Debe retirarse ahora? Solo los normales (no élites), una vez, con la vida por debajo del umbral.
+static func should_retreat(hp_ratio: float, is_elite: bool, already_retreated: bool) -> bool:
+	return not is_elite and not already_retreated and hp_ratio > 0.0 and hp_ratio < RETREAT_HEALTH
+
+
+## Punto al que huye: lejos de Kaelen, en la línea que los une, a `lookahead` m de su posición.
+static func retreat_point(from: Vector3, player_pos: Vector3, lookahead := 6.0) -> Vector3:
+	var away := Vector3(from.x - player_pos.x, 0.0, from.z - player_pos.z)
+	if away.length_squared() < 0.0001:
+		away = Vector3.BACK
+	return from + away.normalized() * lookahead
 
 
 ## Radius + horizontal cone (no raycast: minion.gd checks the line of sight).
