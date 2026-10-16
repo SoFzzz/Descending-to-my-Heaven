@@ -6,6 +6,8 @@ extends CanvasLayer
 
 @onready var _root: Control = $Root
 @onready var _continue: Button = %Continue
+@onready var _options: Button = %Options
+@onready var _options_menu: OptionsMenu = $Root/OptionsMenu
 @onready var _menu: Button = %MainMenu
 @onready var _quit: Button = %Quit
 
@@ -15,8 +17,18 @@ func _ready() -> void:
 	_root.visible = false
 	_continue.set_meta(&"ui_sound", &"none")   # closing already plays its own sound
 	_continue.pressed.connect(close)
+	_options.pressed.connect(_options_menu.open)
+	_options_menu.closed.connect(_on_options_closed)
 	_menu.pressed.connect(_on_main_menu)
 	_quit.pressed.connect(_on_quit)
+
+
+func _on_options_closed() -> void:
+	var audio := get_node_or_null(^"/root/AudioManager")
+	if audio:
+		audio.grab_focus_silent(_options)
+	else:
+		_options.grab_focus()
 
 
 func is_open() -> bool:
@@ -24,7 +36,7 @@ func is_open() -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not event.is_action_pressed(&"pause"):
+	if not event.is_action_pressed(&"pause") or _options_menu.is_open():
 		return
 	if is_open():
 		close()
@@ -58,6 +70,7 @@ func open() -> void:
 
 
 func close() -> void:
+	_options_menu.visible = false
 	if _root.visible:
 		var audio := get_node_or_null(^"/root/AudioManager")
 		if audio:
@@ -70,6 +83,7 @@ func close() -> void:
 
 ## Oculta sin tocar pausa ni cursor (GameState lo llama al cambiar de escena).
 func close_silently() -> void:
+	_options_menu.visible = false
 	_root.visible = false
 
 
