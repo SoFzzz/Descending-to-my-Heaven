@@ -22,21 +22,21 @@ func _ctx(overrides: Dictionary = {}) -> Dictionary:
 
 func test_idle_to_chase_when_seen() -> void:
 	var b := MinionBrain.new()
-	assert_eq(b.next_state(S.IDLE, _ctx({distance = 10.0})), S.IDLE, "sin verla sigue quieto")
+	assert_eq(b.next_state(S.IDLE, _ctx({distance = 10.0})), S.IDLE, "without seeing her it stays still")
 	assert_eq(b.next_state(S.IDLE, _ctx({distance = 10.0, sees_player = true})), S.CHASE)
 
 
 func test_chase_to_circle_without_token() -> void:
 	var b := MinionBrain.new()
 	assert_eq(b.next_state(S.CHASE, _ctx({distance = 4.0, sees_player = true})), S.CIRCLE)
-	assert_eq(b.next_state(S.CHASE, _ctx({distance = 1.0, sees_player = true})), S.CIRCLE, "sin ficha no ataca aunque esté pegado")
+	assert_eq(b.next_state(S.CHASE, _ctx({distance = 1.0, sees_player = true})), S.CIRCLE, "without a token it does not attack even when flush")
 	assert_eq(b.next_state(S.CHASE, _ctx({distance = 6.0, sees_player = true})), S.CHASE)
 
 
 func test_chase_to_attack_with_token() -> void:
 	var b := MinionBrain.new()
 	assert_eq(b.next_state(S.CHASE, _ctx({distance = 1.5, sees_player = true, has_token = true})), S.ATTACK)
-	assert_eq(b.next_state(S.CHASE, _ctx({distance = 3.0, sees_player = true, has_token = true})), S.CHASE, "con ficha se acerca hasta el rango")
+	assert_eq(b.next_state(S.CHASE, _ctx({distance = 3.0, sees_player = true, has_token = true})), S.CHASE, "with a token it approaches to range")
 
 
 func test_attack_to_recover() -> void:
@@ -50,7 +50,7 @@ func test_attack_to_recover() -> void:
 func test_hit_interrupts_to_stunned() -> void:
 	var b := MinionBrain.new()
 	for s in [S.IDLE, S.CHASE, S.CIRCLE, S.ATTACK, S.RECOVER, S.STUNNED]:
-		assert_eq(b.next_state(s, _ctx({distance = 1.0, has_token = true, was_hit = true})), S.STUNNED, "desde %d" % s)
+		assert_eq(b.next_state(s, _ctx({distance = 1.0, has_token = true, was_hit = true})), S.STUNNED, "from %d" % s)
 	assert_eq(b.next_state(S.STUNNED, _ctx({distance = 1.0})), S.STUNNED)
 	assert_eq(b.next_state(S.STUNNED, _ctx({distance = 1.0, stun_finished = true})), S.CHASE)
 
@@ -58,7 +58,7 @@ func test_hit_interrupts_to_stunned() -> void:
 func test_dead_is_terminal() -> void:
 	var b := MinionBrain.new()
 	for s in [S.IDLE, S.CHASE, S.CIRCLE, S.ATTACK, S.RECOVER, S.STUNNED, S.DEAD]:
-		assert_eq(b.next_state(s, _ctx({is_dead = true, was_hit = true})), S.DEAD, "desde %d" % s)
+		assert_eq(b.next_state(s, _ctx({is_dead = true, was_hit = true})), S.DEAD, "from %d" % s)
 	# It never leaves DEAD, even if the context says it is alive and sees the player.
 	var alive := _ctx({distance = 1.0, sees_player = true, has_token = true, recover_finished = true, stun_finished = true})
 	assert_eq(b.next_state(S.DEAD, alive), S.DEAD)
@@ -85,9 +85,9 @@ func test_lose_sight_returns_to_idle() -> void:
 func test_can_see_cone() -> void:
 	var from := Vector3.ZERO
 	var fwd := Vector3.FORWARD  # -Z
-	assert_true(MinionBrain.can_see(from, fwd, Vector3(0, 0, -5)), "5 m al frente")
-	assert_true(not MinionBrain.can_see(from, fwd, Vector3(0, 0, 5)), "5 m detrás")
-	assert_true(not MinionBrain.can_see(from, fwd, Vector3(0, 0, -13)), "13 m al frente")
+	assert_true(MinionBrain.can_see(from, fwd, Vector3(0, 0, -5)), "5 m ahead")
+	assert_true(not MinionBrain.can_see(from, fwd, Vector3(0, 0, 5)), "5 m behind")
+	assert_true(not MinionBrain.can_see(from, fwd, Vector3(0, 0, -13)), "13 m ahead")
 	var at_50 := Vector3(sin(deg_to_rad(50.0)), 0.0, -cos(deg_to_rad(50.0))) * 5.0
 	var at_60 := Vector3(sin(deg_to_rad(60.0)), 0.0, -cos(deg_to_rad(60.0))) * 5.0
 	assert_true(MinionBrain.can_see(from, fwd, at_50), "5 m a 50°")
@@ -96,14 +96,14 @@ func test_can_see_cone() -> void:
 
 func test_should_retreat_only_normals_once_below_threshold() -> void:
 	assert_true(MinionBrain.should_retreat(0.25, false, false))
-	assert_true(not MinionBrain.should_retreat(0.5, false, false), "vida suficiente")
-	assert_true(not MinionBrain.should_retreat(0.25, true, false), "los élites no se retiran")
-	assert_true(not MinionBrain.should_retreat(0.25, false, true), "solo una vez")
-	assert_true(not MinionBrain.should_retreat(0.0, false, false), "muerto")
+	assert_true(not MinionBrain.should_retreat(0.5, false, false), "enough health")
+	assert_true(not MinionBrain.should_retreat(0.25, true, false), "elites do not retreat")
+	assert_true(not MinionBrain.should_retreat(0.25, false, true), "only once")
+	assert_true(not MinionBrain.should_retreat(0.0, false, false), "dead")
 
 
 func test_retreat_point_is_away_from_kaelen() -> void:
 	var p := MinionBrain.retreat_point(Vector3(3, 0, 0), Vector3.ZERO, 6.0)
 	assert_almost(p.x, 9.0, 0.001)
 	var same := MinionBrain.retreat_point(Vector3.ZERO, Vector3.ZERO)
-	assert_true(same.length() > 1.0, "sin dirección elige una")
+	assert_true(same.length() > 1.0, "without direction it picks one")

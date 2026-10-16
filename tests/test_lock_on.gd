@@ -29,25 +29,25 @@ func test_lock_on_drops_invalid_target() -> void:
 func test_lock_on_range() -> void:
 	var n := _make(16.0, false)
 	(n[0] as LockOn).validate()
-	assert_eq((n[0] as LockOn).target, null, "16 m sin grupo boss se suelta")
+	assert_eq((n[0] as LockOn).target, null, "16 m without boss group it is released")
 	for x in n:
 		(x as Node).free()
 
 	n = _make(16.0, true)
 	(n[0] as LockOn).validate()
-	assert_eq((n[0] as LockOn).target, n[2], "16 m con grupo boss se mantiene")
+	assert_eq((n[0] as LockOn).target, n[2], "16 m with boss group it is kept")
 	for x in n:
 		(x as Node).free()
 
 	n = _make(26.0, true)
 	(n[0] as LockOn).validate()
-	assert_eq((n[0] as LockOn).target, null, "26 m con grupo boss se suelta")
+	assert_eq((n[0] as LockOn).target, null, "26 m with boss group it is released")
 	for x in n:
 		(x as Node).free()
 
 	n = _make(14.0, false)
 	(n[0] as LockOn).validate()
-	assert_eq((n[0] as LockOn).target, n[2], "14 m sin grupo boss se mantiene")
+	assert_eq((n[0] as LockOn).target, n[2], "14 m without boss group it is kept")
 	for x in n:
 		(x as Node).free()
 

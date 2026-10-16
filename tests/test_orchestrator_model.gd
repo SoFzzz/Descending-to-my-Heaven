@@ -76,9 +76,9 @@ func test_peak_lasts_5s() -> void:
 	m.update(0.5, near)
 	assert_eq(m.phase, Phase.PEAK)
 	_run(m, 4.5, near)
-	assert_eq(m.phase, Phase.PEAK, "a los 4.5 s sigue en pico")
+	assert_eq(m.phase, Phase.PEAK, "at 4.5 s it is still at peak")
 	_run(m, 0.5, near)
-	assert_eq(m.phase, Phase.RELAX, "a los 5 s pasa a respiro")
+	assert_eq(m.phase, Phase.RELAX, "at 5 s it goes to relax")
 
 
 func test_relax_waits_for_low_intensity() -> void:
@@ -89,7 +89,7 @@ func test_relax_waits_for_low_intensity() -> void:
 	# 10 s with many enemies near: the time is up but the intensity stays >= 30.
 	var busy := _ctx({enemies_near = 10, enemies_alive = 5})
 	_run(m, 12.0, busy)
-	assert_eq(m.phase, Phase.RELAX, "intensidad alta: se queda en respiro")
+	assert_eq(m.phase, Phase.RELAX, "high intensity: it stays in relax")
 	# With no enemies left it drops below 30 and returns.
 	_run(m, 5.0, _ctx())
 	assert_eq(m.phase, Phase.BUILD_UP)
@@ -113,7 +113,7 @@ func test_relax_duration_is_between_10_and_20() -> void:
 	_run(m, 0.5, _ctx({enemies_near = 10, enemies_alive = 5}))   # -> peak
 	_run(m, 5.0, _ctx({enemies_near = 10, enemies_alive = 5}))   # -> relax
 	assert_eq(m.phase, Phase.RELAX)
-	assert_true(m.relax_duration >= 10.0 and m.relax_duration <= 20.0, "duración %s" % m.relax_duration)
+	assert_true(m.relax_duration >= 10.0 and m.relax_duration <= 20.0, "duration %s" % m.relax_duration)
 
 
 func test_low_hp_forces_relax() -> void:
@@ -158,8 +158,8 @@ func _until_wave(m: OrchestratorModel, ctx: Dictionary, limit := 60.0) -> Dictio
 func test_first_wave_waits_first_wave_delay() -> void:
 	var m := OrchestratorModel.new()
 	assert_almost(m.first_wave_delay, 3.0)
-	assert_eq(_run(m, 2.5, _ctx()), 0, "antes de 3 s no sale la primera oleada")
-	assert_true(m.update(0.5, _ctx()) > 0, "a los 3 s sale")
+	assert_eq(_run(m, 2.5, _ctx()), 0, "before 3 s the first wave does not come out")
+	assert_true(m.update(0.5, _ctx()) > 0, "at 3 s it comes out")
 
 
 func test_first_wave_delay_is_configurable() -> void:
@@ -172,7 +172,7 @@ func test_first_wave_delay_is_configurable() -> void:
 
 func test_wave_size_is_two_or_three() -> void:
 	var m := OrchestratorModel.new()
-	assert_eq(m.max_alive, 3, "como mucho 3 esbirros vivos")
+	assert_eq(m.max_alive, 3, "at most 3 minions alive")
 	# Doing well (1.4 x 4 = 5.6 >= 4) -> 3; doing badly (0.72 x 4 = 2.9 < 4) -> 2.
 	var good := _until_wave(m, _ctx({time_since_hit = 99.0}))
 	assert_eq(good.budget, 3)
@@ -191,7 +191,7 @@ func test_phase2_pushes_to_three() -> void:
 func test_wave_size_never_exceeds_three() -> void:
 	var m := OrchestratorModel.new()
 	m.base_budget = 1.0
-	assert_eq(_until_wave(m, _ctx({time_since_hit = 99.0, boss_phase = 2})).budget, 3, "ni con presion maxima pasa de 3")
+	assert_eq(_until_wave(m, _ctx({time_since_hit = 99.0, boss_phase = 2})).budget, 3, "not even at maximum pressure does it exceed 3")
 	var m2 := OrchestratorModel.new()
 	m2.base_budget = 1000.0   # impossible pressure: minimum group
 	assert_eq(_until_wave(m2, _ctx({hp_ratio = 0.5, time_since_hit = 0.0})).budget, 2)
@@ -200,10 +200,10 @@ func test_wave_size_never_exceeds_three() -> void:
 func test_wave_size_respects_free_slots() -> void:
 	var m := OrchestratorModel.new()
 	m.max_alive = 2
-	assert_eq(_until_wave(m, _ctx({time_since_hit = 99.0})).budget, 2, "sin huecos para 3 se limita a max_alive")
+	assert_eq(_until_wave(m, _ctx({time_since_hit = 99.0})).budget, 2, "without room for 3 it is limited to max_alive")
 	var m2 := OrchestratorModel.new()
-	assert_eq(m2.wave_size_for(_ctx({enemies_alive = 3}), 4.0), 0, "con 3 vivos no sale nadie")
-	assert_eq(m2.wave_size_for(_ctx({enemies_alive = 2, time_since_hit = 99.0}), 4.0), 1, "con 2 vivos solo cabe 1")
+	assert_eq(m2.wave_size_for(_ctx({enemies_alive = 3}), 4.0), 0, "with 3 alive nobody comes out")
+	assert_eq(m2.wave_size_for(_ctx({enemies_alive = 2, time_since_hit = 99.0}), 4.0), 1, "with 2 alive only 1 fits")
 
 
 func test_no_wave_while_minions_alive() -> void:
@@ -223,7 +223,7 @@ func test_window_starts_when_last_minion_dies() -> void:
 	assert_almost(window, 12.0 * 0.9, 0.001)
 	# With 0 alive the next wave takes exactly the window (0.5 s steps).
 	var r := _until_wave(m, _ctx())
-	assert_true(absf(r.t - window) <= 1.0, "tardó %s, ventana %s" % [r.t, window])
+	assert_true(absf(r.t - window) <= 1.0, "took %s, window %s" % [r.t, window])
 
 
 func test_window_scales_with_intensity() -> void:
@@ -233,7 +233,7 @@ func test_window_scales_with_intensity() -> void:
 	m.intensity = 100.0
 	var high := m.window_duration()
 	assert_true(low < 12.0 and high > 12.0, "low %s high %s" % [low, high])
-	assert_true(low >= 12.0 * 0.7 and high <= 12.0 * 1.3 + 0.001, "dentro de +-30 %")
+	assert_true(low >= 12.0 * 0.7 and high <= 12.0 * 1.3 + 0.001, "within +-30 %")
 
 
 func test_window_is_configurable() -> void:
@@ -248,7 +248,7 @@ func test_window_is_configurable() -> void:
 func test_cycle_repeats_waves() -> void:
 	var m := OrchestratorModel.new()
 	for i in 3:
-		assert_true(_until_wave(m, _ctx()).budget > 0, "oleada %d" % i)
+		assert_true(_until_wave(m, _ctx()).budget > 0, "wave %d" % i)
 		_run(m, 10.0, _ctx({enemies_alive = 3}))
 
 
@@ -281,7 +281,7 @@ func test_no_spawn_during_boss_special() -> void:
 	var m := OrchestratorModel.new()
 	_run(m, 5.0, _ctx({boss_special = true}))   # the initial delay passes
 	assert_eq(m.update(0.5, _ctx({boss_special = true})), 0)
-	assert_true(m.update(0.5, _ctx()) > 0, "al terminar el ataque especial genera")
+	assert_true(m.update(0.5, _ctx()) > 0, "when the special attack ends it spawns")
 
 
 func test_reset_restarts_cycle() -> void:
@@ -289,7 +289,7 @@ func test_reset_restarts_cycle() -> void:
 	_until_wave(m, _ctx())
 	_run(m, 3.0, _ctx({enemies_alive = 2}))
 	m.reset()
-	assert_eq(m.update(0.5, _ctx()), 0, "tras reset vuelve a esperar first_wave_delay")
+	assert_eq(m.update(0.5, _ctx()), 0, "after reset it waits for first_wave_delay again")
 	var r := _until_wave(m, _ctx())
 	assert_true(r.t > 0.0 and r.t <= 3.0)
 
@@ -321,12 +321,12 @@ func test_reset_returns_to_build_up() -> void:
 	m.reset()
 	assert_eq(m.phase, Phase.BUILD_UP)
 	assert_almost(m.intensity, 0.0)
-	assert_true(_until_wave(m, _ctx()).budget > 0, "tras reset vuelve a generar la primera oleada")
+	assert_true(_until_wave(m, _ctx()).budget > 0, "after reset it generates the first wave again")
 
 
 func test_damage_scale_by_max_hp() -> void:
 	assert_almost(OrchestratorModel.hp_damage_scale(100), 1.0, 0.0001)
 	assert_almost(OrchestratorModel.hp_damage_scale(70), 1.214, 0.001)
 	assert_almost(OrchestratorModel.hp_damage_scale(40), 1.75, 0.0001)
-	assert_almost(OrchestratorModel.hp_damage_scale(0), 1.0, 0.0001, "sin vida máxima no escala")
-	assert_almost(OrchestratorModel.hp_damage_scale(10), 2.0, 0.0001, "tope x2")
+	assert_almost(OrchestratorModel.hp_damage_scale(0), 1.0, 0.0001, "without max health it does not scale")
+	assert_almost(OrchestratorModel.hp_damage_scale(10), 2.0, 0.0001, "cap x2")

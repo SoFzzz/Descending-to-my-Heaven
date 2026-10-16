@@ -305,7 +305,7 @@ func _build_streaks() -> void:
 	_streaks.seed = 3.0
 	_streaks.set_param(&"thickness", 1.6)
 	_streaks.position = Vector3(0, 2, GUST_Z)
-	_streaks.rotation_degrees = Vector3(90, 0, 0)   # sopla hacia -Z local = hacia arriba
+	_streaks.rotation_degrees = Vector3(90, 0, 0)   # blows toward local -Z = upward
 	_streaks.visible = false
 	_streaks.set_process(false)   # nothing to draw or update until the fall begins
 	_outside.add_child(_streaks)

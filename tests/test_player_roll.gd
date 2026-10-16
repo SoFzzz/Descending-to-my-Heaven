@@ -1,5 +1,5 @@
 extends TestCase
-# Pruebas de la rodada de Kaelen (ventana de invulnerabilidad, costo de estamina y banderas).
+# Tests for Kaelen's roll (invulnerability window, stamina cost and flags).
 
 
 func test_iframes_window() -> void:
@@ -14,28 +14,28 @@ func test_roll_needs_stamina() -> void:
 	var s := Stamina.new()
 	p.stamina = s
 	s.current = 0.0
-	assert_true(not p.try_roll(), "try_roll con estamina 0")
+	assert_true(not p.try_roll(), "try_roll with 0 stamina")
 	assert_eq(p.state, Player.State.MOVE)
 	p.free()
 	s.free()
 
 
-# Foco de revisión 4: tras boss_defeated, terminar una rodada no debe quitar la invulnerabilidad.
+# Review focus 4: after boss_defeated, finishing a roll must not remove invulnerability.
 func test_invulnerable_combines_flags() -> void:
 	var p := Player.new()
 	var s := Stamina.new()
 	var h := Health.new()
 	p.stamina = s
 	p.health = h
-	assert_true(p.try_roll(), "try_roll con estamina llena")
+	assert_true(p.try_roll(), "try_roll with full stamina")
 	assert_eq(p.state, Player.State.ROLL)
-	p._advance_roll(0.1)                 # dentro de la ventana de i-frames
-	assert_true(p.is_invulnerable(), "i-frames activos")
-	p._on_boss_defeated(null)            # victoria a mitad de la rodada
-	p._advance_roll(Player.ROLL_DURATION) # la rodada termina
+	p._advance_roll(0.1)                 # within the i-frames window
+	assert_true(p.is_invulnerable(), "i-frames active")
+	p._on_boss_defeated(null)            # victory in the middle of the roll
+	p._advance_roll(Player.ROLL_DURATION) # the roll ends
 	assert_eq(p.state, Player.State.MOVE)
-	assert_true(p.is_invulnerable(), "la victoria mantiene la invulnerabilidad")
-	assert_true(h.invulnerable, "Health también queda invulnerable")
+	assert_true(p.is_invulnerable(), "victory keeps invulnerability")
+	assert_true(h.invulnerable, "Health also becomes invulnerable")
 	p.free()
 	s.free()
 	h.free()

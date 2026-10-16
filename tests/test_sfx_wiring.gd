@@ -1,5 +1,5 @@
 extends TestCase
-# Pruebas de la lógica y del cableado de los sonidos de esbirros, Kaelen, jefes y escenarios.
+# Tests for the logic and wiring of the sounds of minions, Kaelen, bosses and scenery.
 
 const BOSS_ATTACK_SOUNDS := {
 	"blackhorn_charge": "attack_charge",
@@ -14,22 +14,22 @@ const BOSS_ATTACK_SOUNDS := {
 
 
 func test_step_voices_are_limited() -> void:
-	assert_true(Minion.step_voice_allowed(true, 5.0, 0, false), "cerca y con voces libres")
-	assert_true(not Minion.step_voice_allowed(true, 5.0, Minion.STEP_MAX_VOICES, false), "sin voces libres")
-	assert_true(Minion.step_voice_allowed(true, 5.0, Minion.STEP_MAX_VOICES, true), "el que ya suena sigue sonando")
+	assert_true(Minion.step_voice_allowed(true, 5.0, 0, false), "near and with free voices")
+	assert_true(not Minion.step_voice_allowed(true, 5.0, Minion.STEP_MAX_VOICES, false), "no free voices")
+	assert_true(Minion.step_voice_allowed(true, 5.0, Minion.STEP_MAX_VOICES, true), "the one already sounding keeps sounding")
 
 
 func test_step_voices_need_walking_and_hearing_distance() -> void:
-	assert_true(not Minion.step_voice_allowed(false, 2.0, 0, true), "parado no suena")
-	assert_true(not Minion.step_voice_allowed(true, Minion.STEP_HEARING_DISTANCE + 0.1, 0, true), "demasiado lejos")
-	assert_true(Minion.step_voice_allowed(true, Minion.STEP_HEARING_DISTANCE, 0, false), "justo en el límite")
+	assert_true(not Minion.step_voice_allowed(false, 2.0, 0, true), "stopped does not sound")
+	assert_true(not Minion.step_voice_allowed(true, Minion.STEP_HEARING_DISTANCE + 0.1, 0, true), "too far")
+	assert_true(Minion.step_voice_allowed(true, Minion.STEP_HEARING_DISTANCE, 0, false), "right at the limit")
 
 
 func test_stamina_ran_out_only_on_the_transition() -> void:
 	assert_true(Player.stamina_ran_out(10.0, 0.0))
-	assert_true(not Player.stamina_ran_out(0.0, 0.0), "ya estaba a 0")
-	assert_true(not Player.stamina_ran_out(50.0, 20.0), "todavía queda")
-	assert_true(not Player.stamina_ran_out(0.0, 5.0), "regenerando")
+	assert_true(not Player.stamina_ran_out(0.0, 0.0), "it was already at 0")
+	assert_true(not Player.stamina_ran_out(50.0, 20.0), "there is still some left")
+	assert_true(not Player.stamina_ran_out(0.0, 5.0), "regenerating")
 
 
 func test_every_boss_attack_has_its_sound() -> void:

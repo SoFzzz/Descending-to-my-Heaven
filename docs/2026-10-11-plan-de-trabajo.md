@@ -25,7 +25,7 @@
   - **Ciclo por oleadas con ventana del jefe:** primera oleada a los 3 s; oleada de 3–4 esbirros; cuando muere el último, `clear_delay` (12 s ×0.9–1.3 según intensidad) sin apariciones para que el jugador ataque al jefe; después, otra oleada. Nunca aparecen esbirros con alguno vivo. Parámetros en `ArenaConfig` (`wave_size_min/max`, `clear_delay`, `first_wave_delay`, `base_budget`, `max_alive`).
   - **Puntos de aparición por niveles:** 1) fuera del cono de cámara y a > 8 m; 2) a > 14 m aunque se vean; 3) el más lejano a > 8 m tras un intento fallido; si no hay, reintenta.
   - `end_arena()` libera esbirros y fichas al morir Kaelen o al ganar.
-  - Overlay F3 (intensidad, fase, presupuesto, ciclo, vivos, fichas); F5 salta de nivel.
+  - Overlay F3 (`Intensity`, `Phase`, `Budget`, `Cycle`, `Live minions`, `Tokens`; textos en inglés); F5 salta de nivel.
 - **Jefes:** `Boss`, `BossAttack` (Resource), `BossBrain` (puntaje por utilidad). El antiguo `attack_driver.gd` se integró en `boss.gd`/`boss_attack.gd` y se borró. Campos nuevos de `BossAttack`: `advance_distance`, `opener`, `extra_hitbox_paths`, `visual_path`, `exposes_hurtboxes`. Regla: dentro de `engage_range` compiten todos los ataques válidos; fuera solo los `opener`, nunca repitiendo el último; si ninguno vale, el jefe camina. El cuerpo del jefe ya no atraviesa a Kaelen (máscara 3).
   - **Bone Dragon** (400 PV), **Blackhorn** (500 PV; ataques `slam` 0–4 m, `pounce` 2–7 m, `charge` 8–16 m solo fase 2; `slam`, `pounce` y `charge` son `opener`; solo usa el clip `run` para desplazarse), **Ghidorah** (600 PV; `bite` 0–6 m, `tail_sweep` 0–8 m, `beam` 8–20 m; escala ×1.95 → 8.1 m de alto y 13.7 m de largo; las cabezas solo reciben golpes en la ventana de `bite`).
 - **Niveles** (generados por `scripts/tools/level_builder.gd`, nunca a mano): `exterior`, `arena_1`, `arena_2` (octógono), `arena_3` (40×40 m con pasillo y sala de Elysia) con arte de kit (`GridMap` + `dungeon_kit.meshlib`, material `kit_std.tres`). Navegación horneada solo a la altura del suelo. Escenas de gameplay: `arena_1/2/3_gameplay.tscn` y `exterior_gameplay.tscn`.
@@ -493,7 +493,7 @@ Meta: se puede matar a un esbirro y morir ante él.
 - [x] **Paso 2: Ejecutar** — FAIL.
 - [x] **Paso 3: Implementar** el modelo y el autoload (genera esbirros/élites en los `spawn_point` válidos; `begin_arena` lo llama `arena_N_gameplay` con `Events.arena_entered`; `end_arena` con `boss_defeated` o `player_died` → `reset()` + liberar esbirros + `AttackTokens.reset()`).
 - [x] **Paso 4: Ejecutar pruebas** — pasan.
-- [x] **Paso 5: Overlay F3** — muestra intensidad, fase, presupuesto, vivos y fichas (`get_debug_info()` + `AttackTokens.holders_count()`); F5 salta al siguiente nivel; F6 alterna invulnerabilidad de Kaelen.
+- [x] **Paso 5: Overlay F3** — muestra `Intensity`, `Phase`, `Budget`, `Live minions` y `Tokens` (`get_debug_info()` + `AttackTokens.holders_count()`); F5 salta al siguiente nivel; F6 alterna invulnerabilidad de Kaelen.
 - [x] **Paso 6: Verificación manual** — en `arena_1` la intensidad oscila (no se queda en 0 ni en 100), aparecen oleadas fuera de cámara, y al bajar de 25 % de vida dejan de aparecer.
 - [x] **Paso 7: Commit** — `feat: add orchestrator and debug overlay`
 

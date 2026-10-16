@@ -70,7 +70,7 @@ func test_is_holder_false_after_reset() -> void:
 	t.request(a)
 	assert_true(t.is_holder(a))
 	t.reset()
-	assert_true(not t.is_holder(a), "tras reset() el esbirro ya no es titular")
+	assert_true(not t.is_holder(a), "after reset() the minion is no longer the holder")
 	for n in [t, a]:
 		n.free()
 

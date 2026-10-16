@@ -1,8 +1,8 @@
 extends Node
-## Final con dialogo en la arena 3 real: avance solo por pulsacion, sin doble salto, blips sonando.
-##   godot --path . res://tests/flow/dialogue_flow.tscn -- shots <carpeta>   (ventana: mide el bus UI y guarda capturas)
-##   godot --headless --path . res://tests/flow/dialogue_flow.tscn            (sin audio: solo la logica)
-## Sale con codigo 1 si algo falla.
+## Ending with dialogue in the real arena 3: advance only by key press, no double skip, blips sounding.
+##  godot --path . res://tests/flow/dialogue_flow.tscn -- shots <folder>   (window: measures the UI bus and saves screenshots)
+##  godot --headless --path . res://tests/flow/dialogue_flow.tscn            (no audio: only the logic)
+## Exits with code 1 if anything fails.
 
 var _fails := 0
 var _shots_dir := ""
@@ -62,7 +62,7 @@ func _save(shot_name: String) -> void:
 	get_viewport().get_texture().get_image().save_png("%s/%s.png" % [_shots_dir, shot_name])
 
 
-## Completa la linea actual (esperando el bloqueo) y comprueba que sigue en la misma.
+## Completes the current line (waiting for the lock) and checks that it stays on the same one.
 func _complete_line() -> void:
 	await _wait(0.2)
 	await _press()
@@ -103,28 +103,28 @@ func _run() -> void:
 	_director.play()
 	await _wait(1.8)
 	var box := _box()
-	_check(box != null and box.modulate.a > 0.9, "la caja de dialogo aparece")
+	_check(box != null and box.modulate.a > 0.9, "the dialogue box appears")
 	box.advanced.connect(func() -> void: _advances += 1)
 
-	# Linea 1: narrador, sin nombre, no avanza sola.
-	_check(not box.name_label.visible and box.current_speaker == &"", "narrador sin nombre")
+	# Line 1: narrator, no name, does not advance by itself.
+	_check(not box.name_label.visible and box.current_speaker == &"", "narrator without name")
 	await _wait(6.0)
-	_check(box.typewriter.is_waiting() and _advances == 0, "la linea completa espera al jugador (6 s sin pulsar)")
-	_check(box.marker.visible, "indicador de continuar visible")
-	await _save("narrador")
+	_check(box.typewriter.is_waiting() and _advances == 0, "the complete line waits for the player (6 s without pressing)")
+	_check(box.marker.visible, "continue indicator visible")
+	await _save("narrator")
 
-	# Pulsar durante el revelado completa; pulsar de nuevo avanza; doble pulsacion no salta dos.
+	# Pressing during the reveal completes it; pressing again advances; a double press does not skip two.
 	await _next_line()
-	_check(_advances == 1, "una pulsacion = una linea")
-	_check(box.current_speaker == &"kaelen" and box.name_label.text == "Kaelen", "habla Kaelen")
-	_check(not box.text_label.text.begins_with("Kaelen"), "texto sin prefijo")
+	_check(_advances == 1, "one press = one line")
+	_check(box.current_speaker == &"kaelen" and box.name_label.text == "Kaelen", "Kaelen speaks")
+	_check(not box.text_label.text.begins_with("Kaelen"), "text without prefix")
 	var m := await _measure_blips(1.2)
 	var windowed := DisplayServer.get_name() != "headless"
 	print("KAELEN blips=%d playing=%s bus UI peak=%.1f dB" % [m["blips"], str(m["playing"]), m["peak"]])
-	_check(m["blips"] >= 2, "Kaelen emite blips")
+	_check(m["blips"] >= 2, "Kaelen emits blips")
 	if windowed:
-		_check(m["playing"], "el reproductor de blips esta sonando")
-		_check(m["peak"] > -30.0, "pico en el bus UI audible (%.1f dB)" % m["peak"])
+		_check(m["playing"], "the blip player is sounding")
+		_check(m["peak"] > -30.0, "peak on the UI bus audible (%.1f dB)" % m["peak"])
 	await _wait(1.0)
 	await _save("kaelen")
 	await _wait(0.3)
@@ -132,26 +132,26 @@ func _run() -> void:
 	await _press()
 	await _press()
 	await _wait(0.05)
-	_check(_advances - before <= 1, "dos pulsaciones seguidas no saltan dos lineas")
+	_check(_advances - before <= 1, "two consecutive presses do not skip two lines")
 
 	# Elysia.
-	_check(box.current_speaker == &"elysia" and box.name_label.text == "Elysia", "habla Elysia")
+	_check(box.current_speaker == &"elysia" and box.name_label.text == "Elysia", "Elysia speaks")
 	m = await _measure_blips(1.2)
 	print("ELYSIA blips=%d playing=%s bus UI peak=%.1f dB" % [m["blips"], str(m["playing"]), m["peak"]])
-	_check(m["blips"] >= 2, "Elysia emite blips")
+	_check(m["blips"] >= 2, "Elysia emits blips")
 	if windowed:
-		_check(m["peak"] > -30.0, "pico de Elysia audible (%.1f dB)" % m["peak"])
+		_check(m["peak"] > -30.0, "Elysia's peak audible (%.1f dB)" % m["peak"])
 	await _wait(1.5)
 	await _save("elysia")
 
-	# Ingles: avanzar hasta la linea 8 (Elysia, la mas larga).
+	# English: advance to line 8 (Elysia, the longest).
 	TranslationServer.set_locale("en")
 	while _advances < 7:
 		await _complete_line()
 		await _next_line()
 	await _wait(3.5)
 	print("EN: ", box.name_label.text, " | ", box.text_label.text)
-	_check(box.current_speaker != &"" and not box.text_label.text.contains(":"), "ingles: nombre y texto sin prefijo")
+	_check(box.current_speaker != &"" and not box.text_label.text.contains(":"), "english: name and text without prefix")
 	await _save("english")
 	TranslationServer.set_locale("es")
 	print("FLOW: OK" if _fails == 0 else "FLOW: FAIL (%d)" % _fails)

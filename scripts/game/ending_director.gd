@@ -280,9 +280,25 @@ func _finish() -> void:
 		get_tree().call_group(EndingRoom.GROUP, &"stop_wind", WIND_FADE_OUT)
 	var game_state := _game_state()
 	if game_state and game_state.has_method(&"advance_level"):
-		game_state.advance_level()
+		_advance_when_free(game_state)
 	else:
 		push_warning("EndingDirector: no GameState; cannot move on from the ending")
+
+
+## GameState ignores advance_level() while a fade is running, which would leave the ending hanging
+## on a black screen: wait until the transition is free, then advance. Gives up if the director
+## leaves the tree (a scene change already took over).
+func _advance_when_free(game_state: Node) -> void:
+	while _transition_busy(game_state):
+		if not is_inside_tree():
+			return
+		await get_tree().process_frame
+	game_state.call(&"advance_level")
+
+
+static func _transition_busy(game_state: Node) -> bool:
+	var transition := game_state.get(&"transition") as Node
+	return transition != null and transition.has_method(&"is_busy") and transition.call(&"is_busy")
 
 
 ## Tells the broken Elysia room (group `ending_room`) that the ending begins: the island falls.

@@ -1,5 +1,5 @@
 extends TestCase
-# Pruebas de Hitbox/Hurtbox (un golpe por objetivo y activación, multiplicador de daño).
+# Tests for Hitbox/Hurtbox (one hit per target and activation, damage multiplier).
 
 
 func test_hitbox_hits_each_target_once_per_activation() -> void:
@@ -45,10 +45,10 @@ func test_invulnerable_hurtbox_cannot_be_hit() -> void:
 	assert_true(not hurt.can_be_hit())
 	health.invulnerable = false
 	assert_true(hurt.can_be_hit())
-	health.take_damage(100)  # muerto
+	health.take_damage(100)  # dead
 	assert_true(not hurt.can_be_hit())
-	var sin_health := Hurtbox.new()  # sin Health: el golpe siempre cuenta
-	assert_true(sin_health.can_be_hit())
-	sin_health.free()
+	var no_health := Hurtbox.new()  # no Health: the hit always counts
+	assert_true(no_health.can_be_hit())
+	no_health.free()
 	hurt.free()
 	health.free()
