@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1_ctrl"]
 [ext_resource type="PackedScene" path="res://assets/characters/kaelen/kaelen.glb" id="2_model"]
@@ -17,6 +17,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/player/kaelen_hurt.mp3" id="a_hurt"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/player/kaelen_death.wav" id="a_death"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/player/kaelen_tired.mp3" id="a_tired"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/player/kaelen_heal.ogg" id="a_heal"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -40,6 +41,7 @@ sfx_roll = ExtResource("a_roll")
 sfx_hurt = ExtResource("a_hurt")
 sfx_death = ExtResource("a_death")
 sfx_tired = ExtResource("a_tired")
+sfx_heal = ExtResource("a_heal")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)

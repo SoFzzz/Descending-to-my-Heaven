@@ -75,6 +75,7 @@ func _refill_player() -> void:
 		player.health.reset(game_state.get_player_max_hp() if game_state else -1)
 	if player.stamina:
 		player.stamina.refill()
+	player.refill_heals()
 
 
 ## Muerte de Kaelen: la música (del jefe o del nivel) y el ambiente hacen fundido rápido y se paran.

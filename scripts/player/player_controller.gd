@@ -4,8 +4,12 @@ extends CharacterBody3D
 ## i-frames and stamina cost), ATTACK (3-hit combo with the greatsword; hyper armor: a hit does not
 ## interrupt it and does less damage), HURT (stunned when taking damage) and DEAD (no control;
 ## respawn is handled by GameState, Task 10). Every hit taken grants HURT_IFRAMES of invulnerability.
+## Healing is a sub-state of MOVE (see try_heal): a flask with HEAL_CHARGES uses per level.
 
 enum State { MOVE, ROLL, ATTACK, HURT, DEAD }
+
+## Emitted when the number of flask uses changes (the HUD shows it).
+signal heal_charges_changed(current: int, max_value: int)
 
 const WALK_SPEED := 5.0          # m/s (Task 3)
 const ACCELERATION := 30.0       # m/s² when starting to move
@@ -18,6 +22,19 @@ const ROLL_IFRAME_START := 0.05
 const ROLL_IFRAME_END := 0.40
 const ROLL_COST := 25.0
 const ROLL_SPEED := 7.0          # constant m/s during the whole roll
+
+# --- Healing flask ---
+## Uses per level (refilled on entering an arena and on retrying: the player scene is rebuilt).
+const HEAL_CHARGES := 10
+## Fraction of the level's max HP restored by one use (38 / 27 / 15 HP at 100 / 70 / 40 max HP).
+const HEAL_RATIO := 0.38
+## Seconds from pressing the button until the HP is restored (the use is spent only then).
+const HEAL_DURATION := 0.9
+## Walk speed multiplier while drinking.
+const HEAL_MOVE_MULT := 0.35
+const HEAL_GLOW_COLOR := Color(0.55, 1.0, 0.55)
+const HEAL_GLOW_PEAK := 0.4
+const HEAL_SFX_VOLUME_DB := -3.0
 
 # --- Combo (spec §4) ---
 const COMBO_DAMAGE: Array[int] = [20, 20, 36]
@@ -100,6 +117,8 @@ const SCALED_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"a
 @export var sfx_hurt: AudioStream
 @export var sfx_death: AudioStream
 @export var sfx_tired: AudioStream
+## Sound of drinking the flask (starts with the use; the HP arrives HEAL_DURATION later).
+@export var sfx_heal: AudioStream
 
 var state: State = State.MOVE
 ## If nobody assigned them before, they are looked up in _ready (children "Health", "Stamina" and "Hurtbox"). Tests
@@ -111,6 +130,8 @@ var hurtbox: Hurtbox
 var combo_index := 0
 ## How many times she died (Events.player_died is emitted only the first time).
 var death_count := 0
+## Flask uses left in this level.
+var heal_charges := HEAL_CHARGES
 
 @onready var _model: Node3D = $Model
 @onready var _camera_rig: CameraRig = $CameraRig
@@ -145,6 +166,7 @@ var _shove_velocity := Vector3.ZERO
 var _shove_total := 0.0
 var _shove_left := 0.0
 var _buffer_left := 0.0
+var _heal_time := -1.0   # < 0: not drinking; otherwise seconds since the use started
 
 
 func _ready() -> void:
@@ -210,11 +232,13 @@ func _physics_process(delta: float) -> void:
 
 	var want_roll := false
 	var want_attack := false
+	var want_heal := false
 	if state != State.DEAD:
 		if Input.is_action_just_pressed("lock_on") and _lock_on:
 			_lock_on.toggle()
 		want_roll = Input.is_action_just_pressed("roll")
 		want_attack = _attack_pressed
+		want_heal = Input.is_action_just_pressed("heal")
 	_attack_pressed = false
 
 	match state:
@@ -225,7 +249,10 @@ func _physics_process(delta: float) -> void:
 			elif want_attack and try_attack():
 				_stand_still()
 			else:
+				if want_heal:
+					try_heal()
 				_move_step(delta)
+				_advance_heal(delta)
 		State.ROLL:
 			_tick_buffer(delta)
 			_buffer_input(want_roll, want_attack)
@@ -321,7 +348,7 @@ func _input_direction() -> Vector3:
 func _move_step(delta: float) -> void:
 	var dir := _input_direction()
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
-	var goal := dir * WALK_SPEED
+	var goal := dir * WALK_SPEED * (HEAL_MOVE_MULT if is_healing() else 1.0)
 	var rate := ACCELERATION if goal.length() > horizontal.length() else DECELERATION
 	horizontal = horizontal.move_toward(goal, rate * delta)
 	velocity.x = horizontal.x
@@ -375,6 +402,7 @@ func try_roll() -> bool:
 		dir = get_facing()
 	dir.y = 0.0
 	_roll_dir = dir.normalized() if dir.length_squared() > 0.0001 else Vector3.BACK
+	cancel_heal()
 	_roll_time = 0.0
 	state = State.ROLL
 	if _model:
@@ -414,6 +442,86 @@ func _advance_roll(delta: float) -> void:
 	_update_invulnerability()
 
 
+# --- Healing flask ----------------------------------------------------------------------------
+# Sub-state of MOVE: she keeps walking at HEAL_MOVE_MULT of her speed for HEAL_DURATION s and the HP
+# arrives at the end, when the use is spent. A hit (HURT), a roll, an attack, death or a cutscene
+# cancels it and the use is NOT spent (the cost of being hit is the lost time, not the flask).
+
+## HP restored by one use at `max_hp` max HP.
+static func heal_amount(max_hp: int) -> int:
+	return maxi(1, roundi(float(max_hp) * HEAL_RATIO))
+
+
+func is_healing() -> bool:
+	return _heal_time >= 0.0
+
+
+## Why a use cannot start now ("" if it can): state, scene, pause, empty flask or full health.
+func heal_blocked_reason() -> String:
+	if state != State.MOVE:
+		return "state"
+	if _cutscene or _victory:
+		return "cutscene"
+	if is_inside_tree():
+		if get_tree().paused:
+			return "paused"
+		var game_state := get_node_or_null(^"/root/GameState")
+		if game_state and game_state.cutscene_active:
+			return "cutscene"
+	if _heal_time >= 0.0:
+		return "busy"
+	if heal_charges <= 0:
+		return "empty"
+	if health == null or health.is_dead() or health.current >= health.max_value:
+		return "full"
+	return ""
+
+
+## Starts drinking. Returns false (and spends nothing) in a blocked state or with full health.
+func try_heal() -> bool:
+	if heal_blocked_reason() != "":
+		return false
+	_heal_time = 0.0
+	_play_sfx(sfx_heal, HEAL_SFX_VOLUME_DB)
+	if _model:
+		HitFlash.glow(_model, HEAL_GLOW_COLOR, HEAL_GLOW_PEAK, HEAL_DURATION)
+	return true
+
+
+## Advances the drinking clock; at HEAL_DURATION spends the use and heals.
+func _advance_heal(delta: float) -> void:
+	if _heal_time < 0.0:
+		return
+	_heal_time += delta
+	if _heal_time < HEAL_DURATION - 0.0001:
+		return
+	_heal_time = -1.0
+	if health == null or health.is_dead():
+		return
+	if health.heal(heal_amount(health.max_value)) > 0:
+		heal_charges -= 1
+		heal_charges_changed.emit(heal_charges, HEAL_CHARGES)
+		if is_inside_tree():
+			ImpactFx.heal(get_tree(), global_position)
+		if _model:
+			HitFlash.flash(_model, HEAL_GLOW_COLOR, 0.25)
+
+
+## Aborts the drinking (without spending the use) and clears its glow.
+func cancel_heal(clear_glow := true) -> void:
+	if _heal_time < 0.0:
+		return
+	_heal_time = -1.0
+	if clear_glow and _model:
+		HitFlash.clear(_model)
+
+
+## Gives the flask its full uses back (entering a level, retrying).
+func refill_heals() -> void:
+	heal_charges = HEAL_CHARGES
+	heal_charges_changed.emit(heal_charges, HEAL_CHARGES)
+
+
 # --- Combo attack -----------------------------------------------------------------------------
 
 static func combo_damage(i: int) -> int:
@@ -433,6 +541,7 @@ func try_attack() -> bool:
 	if stamina == null or not stamina.try_spend(ATTACK_COST):
 		return false
 	combo_index = combo_index + 1 if chaining else 0
+	cancel_heal()
 	_set_hitbox_active(false)
 	_attack_time = 0.0
 	state = State.ATTACK
@@ -593,6 +702,7 @@ func _on_stamina_changed(current: float, _max_value: float) -> void:
 
 ## HURT interrupts the roll (an attack is not interrupted by damage: hyper armor).
 func _enter_hurt() -> void:
+	cancel_heal(false)   # the hit's own flash replaces the glow
 	_end_attack()
 	_shove_left = 0.0
 	_roll_time = 0.0
@@ -682,6 +792,7 @@ func _update_blink() -> void:
 func _on_died() -> void:
 	if state == State.DEAD:
 		return
+	cancel_heal(false)
 	_end_attack()
 	_clear_buffer()
 	_iframes = false
@@ -717,6 +828,7 @@ func set_cutscene(on: bool) -> void:
 		return
 	_cutscene = on
 	if on:
+		cancel_heal()
 		if state != State.DEAD:
 			_end_attack()
 			_roll_time = 0.0
