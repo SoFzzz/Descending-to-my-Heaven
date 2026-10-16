@@ -84,6 +84,11 @@ Estado real de cada modelo (rig y animaciones verificados): ver [`asset-status.m
 
 Impactos: hitbox `Area3D` activada en ventanas de la animación; hurtbox en cada personaje. Feedback: pausa de impacto (~60 ms), parpadeo de material, partículas simples, sonido.
 
+**Feedback de combate (implementado 2026-10-15):**
+- *Pausa de impacto* (`scripts/combat/hit_stop.gd`): al acertar Kaelen baja `Engine.time_scale` a 0,05 durante 60 ms de reloj real (40 ms cuando ella recibe daño). Las peticiones no se apilan (mientras hay una activa se ignoran) y el tiempo se restaura siempre: al terminar, al pausar el juego, al morir (la pantalla de muerte pausa el árbol), al cambiar de escena y al salir el nodo del árbol; si otro sistema cambió la escala durante el impacto no se pisa. Los `Tween` de la interfaz que ignoran la escala de tiempo no se ven afectados.
+- *Parpadeo de material* (`scripts/combat/hit_flash.gd`): al recibir un golpe (cualquier `Hurtbox` con daño) el modelo de jefes, esbirros, élites y Kaelen se tiñe 0,1 s: blanco en enemigos, rojo en Kaelen. Es un uniform `hit_flash` / `hit_flash_color` del shader `psx_lit` (sin pases extra ni overlays), animado con un `Tween` atado al modelo.
+- *Cámara*: Kaelen sacude la cámara (0,07 m, 0,22 s, `CameraRig.shake`) cuando un golpe le quita el 15 % o más de su vida máxima. Con un jefe fijado a más de 8 m el brazo se alarga 0,4 m por metro de más (máximo +3 m) para encuadrar a los jefes enormes.
+
 ## 5. Flujo del juego
 
 ```
@@ -161,6 +166,18 @@ Se descartó `floating_island` (61 MB, texturas fotográficas). El exterior usa:
 | Piezas clave | `Skull_Wall`, `Chain`, `Candle_*`, `Debris` | `Hexagon`, `Chandelier`, `Arch`, `Candle_*` | `Pillar_Collapsed_*`, `Wall_Ruin`; `Altar` en la sala de Elysia |
 | Texturas | `concrete_512_indexed_dark`, `Floor512_indexed` | `concrete_512_indexed`, `512_fabric`, `gold512` | `metal_512`, `gold512`, `TerraCotta_512` |
 | Ambiente sonoro | `Cave` | `Interior Night` | Viento |
+
+**Iluminación por arena (implementado 2026-10-15):** cada `arena_N_gameplay.tscn` lleva un nodo `Mood` (`scripts/game/arena_mood.gd`) que copia el `Environment` del nivel generado y le pone luz ambiente, niebla, ajustes de color y el color y la energía del `Sun`; `arena_N.tscn` no se toca.
+
+| | Arena 1 — Catacumba | Arena 2 — Claustro | Arena 3 — Ruinas |
+|---|---|---|---|
+| Ambiente (color / energía) | marrón cálido, 0,6 | azul pálido, 0,6 | gris neutro, 0,65 |
+| Niebla (color, inicio–fin) | pardo oscuro, 4–46 m | blanco azulado, 8–34 m | gris, 12–80 m |
+| Sol (color / energía) | ámbar, 0,3 | blanco frío, 0,5 | arena pálida, 0,95 |
+| Tono (brillo / contraste / saturación) | 0,95 / 1,12 / 1,10 | 1,06 / 1,00 / 0,75 | 1,00 / 1,05 / 0,80 |
+| Tinte al derrotar al jefe | ámbar (1, 0,84, 0,7) | azul (0,8, 0,88, 1) | oro pálido (1, 0,94, 0,72) |
+
+Al derrotar al jefe aparece, con un fundido de 2,5 s, un tinte multiplicativo sutil sobre el mundo (por debajo del HUD) que dura hasta cambiar de escena.
 
 **Rejas y triggers (nombres fijos en todas las arenas):** `GateEntry` (sur, se cierra al entrar), `GateExit` (norte, se abre con `Events.boss_defeated`), `ExitTrigger` (`Area3D` tras `GateExit`, lleva al piso siguiente), `PlayerStart`, `BossStart`, 6 `Marker3D` en el grupo `spawn_point`.
 
@@ -460,6 +477,8 @@ Límite de esbirros vivos: 3. Cada grupo lleva exactamente 1 élite (más vida/d
 **Reglas de seguridad:** si la vida de Kaelen es < 25%, se fuerza Respiro. Si el jefe está en un ataque especial, no se genera nada.
 
 **Comunicación:** señales globales (`player_damaged`, `enemy_died`, `boss_phase_changed`, `arena_entered`, `arena_cleared`).
+
+**Balance (2026-10-15, `scripts/tools/orchestrator_sim.gd`):** simulación del modelo real a 10 Hz (30 ejecuciones de 180 s por arena y por perfil de Kaelen). Con la regla de grupos de 2-3 esbirros con 1 élite la intensidad oscila en las tres arenas (mínimo 0, máximo 100, oscilaciones medias de 45-69 puntos, 0,2-2 entradas al PICO por minuto, respiros de ~20 s). Como la vida máxima baja a 70 y 40, el mismo golpe pesaba más en la arena 3 y la intensidad no pasaba de 85; ahora el daño que recibe el modelo se escala a medias hacia una vida de 100 (`OrchestratorModel.hp_damage_scale`: x1,0 / x1,2 / x1,8).
 
 **Vista de depuración (F3):** muestra en pantalla intensidad, fase, tamaño del último grupo, esbirros vivos y fichas de ataque asignadas. Sirve para la presentación y para ajustar valores.
 

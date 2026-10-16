@@ -592,9 +592,19 @@ Meta: se puede matar a un esbirro y morir ante él.
 # DÍA 6 — Pulido y prueba externa
 
 ### Tarea 18 (los 3): Pulido por área
-- **A:** pausa de impacto 60 ms (`Engine.time_scale` restaurado siempre, incluso si se pausa durante el impacto), parpadeo de material al recibir golpe, ajuste de cámara; menú de opciones (volumen por bus, sensibilidad, pantalla completa, `user://settings.cfg`) **solo si todo lo anterior funciona**.
-- **B:** balance con el overlay F3 (la intensidad debe oscilar en las 3 arenas); prueba con 2 personas externas y registro de dónde mueren.
-- **C:** decoración de arenas, iluminación por arena (§6.3), filtro de color por jefe derrotado (opcional), sonidos faltantes (§11.4).
+- **A:**
+  - [x] Pausa de impacto 60 ms al acertar (40 ms al recibir daño), `Engine.time_scale` restaurado siempre (fin, pausa, muerte, cambio de escena, salida del árbol), sin apilarse: `scripts/combat/hit_stop.gd`; prueba `tests/flow/hit_feedback_flow.tscn`.
+  - [x] Parpadeo de material 0,1 s al recibir golpe (blanco en enemigos, rojo en Kaelen) con un uniform del shader `psx_lit`: `scripts/combat/hit_flash.gd`.
+  - [x] Ajuste de cámara: sacudida con golpes de >= 15 % de vida y brazo más largo con jefes enormes lejanos.
+  - [x] Menú de opciones (volumen por bus, sensibilidad, pantalla completa, `user://settings.cfg`).
+- **B:**
+  - [x] Balance con el overlay F3: `scripts/tools/orchestrator_sim.gd` muestra que la intensidad oscila en las 3 arenas; daño escalado por vida máxima para que la arena 3 llegue al pico (ver diseño §8.3).
+  - [ ] Prueba con 2 personas externas y registro de dónde mueren (manual).
+- **C:**
+  - [x] Iluminación por arena (§6.3): nodo `Mood` en cada `arena_N_gameplay.tscn`.
+  - [x] Filtro de color por jefe derrotado (tinte con fundido).
+  - [x] Sonidos faltantes (§11.4).
+  - [ ] Decoración de arenas (pendiente; la generación de niveles la lleva otro cambio).
 - [ ] **Verificación:** 2 personas externas juegan la partida completa; se anotan los problemas en `docs/playtest.md`.
 - [ ] **Commit** por persona.
 
