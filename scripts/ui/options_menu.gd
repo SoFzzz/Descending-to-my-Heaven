@@ -279,6 +279,7 @@ func _display_row(page: Control, label_key: String, handler: Callable) -> Button
 	var button := Button.new()
 	button.theme_type_variation = &"CellButton"
 	button.custom_minimum_size = Vector2(230.0, 22.0)
+	button.add_theme_font_size_override(&"font_size", 14)
 	button.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	button.pressed.connect(handler)
 	row.add_child(button)
