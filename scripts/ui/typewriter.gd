@@ -6,35 +6,45 @@ extends Node
 ## - Suena un blip cada BLIP_EVERY letras "habladas" (se saltan espacios, puntuación y comillas).
 ## - El hablante sale del prefijo de cada línea ("Kaelen:" / "Elysia:"); sin prefijo es narrador y no suena.
 ## - El prefijo ("Kaelen:") se muestra de golpe y sin blips.
-## - Un solo AudioStreamPlayer: cada blip nuevo corta el anterior.
-## - Entrada: la acción `attack`. Mientras se revela completa la línea al instante; con la línea completa
-##   emite `advanced` (el que espera, por ejemplo el EndingDirector, pasa al siguiente texto).
+## - Dos AudioStreamPlayer que se alternan: cada blip nuevo corta el anterior sin chasquido.
+## - Entrada: `attack` (clic / botón de ataque), `ui_accept` (Enter, Espacio, A del mando). Mientras se
+##   revela completa la línea al instante; con la línea completa emite `advanced` (el que espera, por
+##   ejemplo el EndingDirector, pasa al siguiente texto). Nada avanza solo por tiempo.
+## - Anti doble salto: tras empezar o completar una línea se ignoran (y se consumen) las pulsaciones
+##   durante ADVANCE_LOCK_MS, y una pulsación solo emite `advanced` una vez.
 ## Toda la planificación (qué letras suenan, pausas, hablante) son funciones estáticas puras.
 
 signal finished   ## el texto quedó completo (por tiempo o por skip)
 signal advanced   ## con el texto ya completo, el jugador pulsó avanzar
+signal blip_played(speaker: StringName)
 
 const CHARS_PER_SECOND := 30.0
 const BLIP_EVERY := 2
 const PAUSE_SHORT := 0.12   ## , ; :
 const PAUSE_LONG := 0.28    ## . ! ? …
-const ADVANCE_ACTION := &"attack"
+const ADVANCE_ACTIONS: Array[StringName] = [&"attack", &"ui_accept"]
+const ADVANCE_LOCK_MS := 150
 const BLIP_BUS := &"UI"
+## Valor de `speaker` que significa "detectar el hablante por el prefijo del texto".
+const AUTO := &"auto"
 
 const SPEAKERS: Array[String] = ["Kaelen", "Elysia"]
 const SHORT_PAUSE_CHARS := ",;:"
 const LONG_PAUSE_CHARS := ".!?…"
 const QUOTE_CHARS := "\"'“”«»¿¡"
 
-## Voces: Kaelen grave, Elysia aguda y suave. Los blips son del pack de dmochas (ver assets/credits.txt).
+## Voces: Kaelen grave (~300-400 Hz), Elysia aguda (~700-800 Hz). Los blips son del pack de dmochas,
+## normalizados a -3 dBFS de pico con scripts/tools/make_dialogue_blips.py (ver assets/credits.txt).
+## Los originales llegaban a -23 dBFS y con -12/-15 dB de volumen quedaban 22 dB por debajo de los
+## sonidos de interfaz (pico medido en el bus UI: -33 dB frente a -10 dB), es decir, inaudibles.
 const VOICE_DEFS := {
 	&"kaelen": {
-		"files": ["bleep001", "bleep011", "bleep021"],
-		"pitch": 0.85, "random_pitch": 1.08, "volume_db": -12.0,
+		"files": ["kaelen_1", "kaelen_2", "kaelen_3"],
+		"pitch": 0.9, "random_pitch": 1.06, "volume_db": -4.0,
 	},
 	&"elysia": {
-		"files": ["bleep022", "bleep024", "bleep026"],
-		"pitch": 1.1, "random_pitch": 1.08, "volume_db": -15.0,
+		"files": ["elysia_1", "elysia_2", "elysia_3"],
+		"pitch": 1.12, "random_pitch": 1.06, "volume_db": -7.0,
 	},
 }
 const VOICE_DIR := "res://assets/audio/sfx/dialogue/"
@@ -43,7 +53,10 @@ const VOICE_DIR := "res://assets/audio/sfx/dialogue/"
 var voices: Dictionary = {}
 
 var _label: Label
-var _player: AudioStreamPlayer
+var _players: Array[AudioStreamPlayer] = []
+var _next_player := 0
+var _unlock_at_ms := 0
+var _speaker: StringName = AUTO
 var _schedule: Dictionary = {}
 var _elapsed := 0.0
 var _blip_cursor := 0
@@ -108,7 +121,8 @@ static func pause_after(text: String, i: int) -> float:
 
 ## Planifica la revelación: {times: PackedFloat32Array (instante en que cada carácter pasa a ser
 ## visible), blips: Array[{time, index, speaker}], duration: float}.
-static func build_schedule(text: String) -> Dictionary:
+## Con `forced_speaker` distinto de AUTO todo el texto es cuerpo de ese hablante (&"" = narrador).
+static func build_schedule(text: String, forced_speaker: StringName = AUTO) -> Dictionary:
 	var times := PackedFloat32Array()
 	var blips: Array[Dictionary] = []
 	var t := 0.0
@@ -119,8 +133,12 @@ static func build_schedule(text: String) -> Dictionary:
 		if i == 0 or text[i - 1] == "\n":
 			var end := text.find("\n", i)
 			var line := text.substr(i) if end < 0 else text.substr(i, end - i)
-			speaker = speaker_of(line)
-			body_start = i + prefix_length(line)
+			if forced_speaker == AUTO:
+				speaker = speaker_of(line)
+				body_start = i + prefix_length(line)
+			else:
+				speaker = forced_speaker
+				body_start = i
 			voiced = 0
 		var c := text[i]
 		var in_body := i >= body_start and c != "\n"
@@ -172,19 +190,24 @@ static func default_voices() -> Dictionary:
 
 func _ready() -> void:
 	set_process(false)
-	_player = AudioStreamPlayer.new()
-	_player.bus = BLIP_BUS
-	add_child(_player)
+	for i in 2:
+		var player := AudioStreamPlayer.new()
+		player.bus = BLIP_BUS
+		add_child(player)
+		_players.append(player)
 	if voices.is_empty():
 		voices = default_voices()
 
 
-## Empieza a revelar `text` en `label` (visible_characters = 0).
-func start(label: Label, text: String) -> void:
+## Empieza a revelar `text` en `label` (visible_characters = 0). `speaker` fija la voz (&"" = narrador);
+## con AUTO se detecta por el prefijo "Kaelen:" / "Elysia:".
+func start(label: Label, text: String, speaker: StringName = AUTO) -> void:
 	_label = label
 	_label.text = text
 	_label.visible_characters = 0
-	_schedule = build_schedule(text)
+	_speaker = speaker
+	_schedule = build_schedule(text, speaker)
+	_lock_input()
 	_elapsed = 0.0
 	_blip_cursor = 0
 	_complete = false
@@ -195,6 +218,46 @@ func start(label: Label, text: String) -> void:
 
 func is_revealing() -> bool:
 	return _revealing
+
+
+## true con la línea completa esperando a que el jugador avance.
+func is_waiting() -> bool:
+	return _complete
+
+
+## true si el evento es una pulsación de avanzar (ataque, aceptar o clic izquierdo; sin eco).
+static func is_advance_event(event: InputEvent) -> bool:
+	if event.is_echo() or not event.is_pressed():
+		return false
+	if event is InputEventMouseButton:
+		return (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT
+	for action in ADVANCE_ACTIONS:
+		if event.is_action_pressed(action):
+			return true
+	return false
+
+
+## true si ya pasó el bloqueo de entrada (`now_ms` >= `unlock_at_ms`).
+static func input_open(now_ms: int, unlock_at_ms: int) -> bool:
+	return now_ms >= unlock_at_ms
+
+
+func _lock_input() -> void:
+	_unlock_at_ms = Time.get_ticks_msec() + ADVANCE_LOCK_MS
+
+
+## Procesa una pulsación de avanzar (también la usan las pruebas): completa, pasa o ignora.
+## Devuelve true si hizo algo.
+func press_advance() -> bool:
+	if not (_revealing or _complete) or not input_open(Time.get_ticks_msec(), _unlock_at_ms):
+		return false
+	if _revealing:
+		_complete_text()
+	else:
+		_complete = false
+		_lock_input()
+		advanced.emit()
+	return true
 
 
 ## Completa el texto al instante, sin blips.
@@ -229,6 +292,7 @@ func _apply_progress() -> void:
 func _complete_text() -> void:
 	_revealing = false
 	_complete = true
+	_lock_input()
 	set_process(false)
 	if _label:
 		_label.visible_characters = -1
@@ -237,22 +301,19 @@ func _complete_text() -> void:
 
 func _play_blip(speaker: StringName) -> void:
 	var voice: Dictionary = voices.get(speaker, {})
-	if voice.is_empty() or _player == null:
+	if voice.is_empty() or _players.is_empty():
 		return
-	_player.stop()   # corta el blip anterior
-	_player.stream = voice["stream"]
-	_player.pitch_scale = voice["pitch"]
-	_player.volume_db = voice["volume_db"]
-	_player.play()
+	var player := _players[_next_player]
+	_next_player = (_next_player + 1) % _players.size()
+	player.stream = voice["stream"]
+	player.pitch_scale = voice["pitch"]
+	player.volume_db = voice["volume_db"]
+	player.play()   # el otro reproductor termina su cola sin cortarse en seco
+	blip_played.emit(speaker)
 
 
 func _input(event: InputEvent) -> void:
-	if not (_revealing or _complete):
+	if not (_revealing or _complete) or not is_advance_event(event):
 		return
-	if not event.is_action_pressed(ADVANCE_ACTION) or event.is_echo():
-		return
-	get_viewport().set_input_as_handled()
-	if _revealing:
-		_complete_text()
-	else:
-		advanced.emit()
+	get_viewport().set_input_as_handled()   # una pulsación nunca llega a nadie más ni salta dos líneas
+	press_advance()
