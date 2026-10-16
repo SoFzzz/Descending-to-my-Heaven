@@ -101,7 +101,7 @@ static func _open_offset(gate: Node3D) -> Vector3:
 
 ## La música del jefe empieza cuando deja de estar en reposo (detecta a Kaelen).
 func _on_boss_state_changed(state: Boss.State) -> void:
-	if state == Boss.State.IDLE or boss_music == null or boss.health.is_dead():
+	if state == Boss.State.IDLE or boss_music == null or boss.health.is_dead() or _player_dead:
 		return
 	var audio := _audio()
 	if audio:

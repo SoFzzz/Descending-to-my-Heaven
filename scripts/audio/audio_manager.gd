@@ -151,6 +151,15 @@ func stop_music(fade_time: float = 1.0) -> void:
 	_music_tween.tween_callback(_music_current.stop)
 
 
+## Cuántos reproductores de música suenan ahora (1 en reposo, 2 solo durante un fundido cruzado).
+func playing_music_count() -> int:
+	var count := 0
+	for player in _music_players:
+		if player.playing:
+			count += 1
+	return count
+
+
 func get_current_music() -> AudioStream:
 	return _music_current.stream if _music_current.playing and not _music_stopping else null
 

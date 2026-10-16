@@ -20,6 +20,8 @@ const TORCH_VOLUME_DB := -8.0
 const MUSIC_FADE := 2.0
 ## Ambiente de la sala: bucle suave por debajo de la música.
 const AMBIENCE_VOLUME_DB := -14.0
+## Al morir Kaelen la música y el ambiente bajan en este tiempo y se paran (solo suena el tema de muerte).
+const DEATH_AUDIO_FADE := 0.5
 
 ## Si es false no se conecta el ExitTrigger (p. ej. la arena 3, donde el final lo dirige otro nodo).
 @export var exit_advances_level := true
@@ -38,10 +40,17 @@ const AMBIENCE_VOLUME_DB := -14.0
 @onready var player: Player = $Kaelen
 
 var _exit_used := false
+## true desde que Kaelen muere: ningún arranque de música tardío (p. ej. el jefe que detecta a
+## Kaelen caída) puede volver a sonar.
+var _player_dead := false
 
 
 func _ready() -> void:
 	PSX.apply_psx(player.get_node("Model"))
+	_refill_player()
+	var events := get_node_or_null(^"/root/Events")
+	if events:
+		events.player_died.connect(_on_player_died)
 	player.footstep_stream = footstep_stream
 	_start_level_music()
 	_add_torch_sounds()
@@ -55,6 +64,29 @@ func _ready() -> void:
 		var exit_trigger := level.get_node_or_null("ExitTrigger") as Area3D
 		if exit_trigger:
 			exit_trigger.body_entered.connect(_on_exit_trigger_body_entered)
+
+
+## Kaelen entra a cada zona (y reaparece) con vida máxima del nivel y estamina llena; el HUD (que ya
+## escucha estas señales) lo refleja desde el primer fotograma.
+func _refill_player() -> void:
+	var game_state := get_node_or_null(^"/root/GameState")
+	if player.health:
+		player.health.reset(game_state.get_player_max_hp() if game_state else -1)
+	if player.stamina:
+		player.stamina.refill()
+
+
+## Muerte de Kaelen: la música (del jefe o del nivel) y el ambiente hacen fundido rápido y se paran.
+func _on_player_died() -> void:
+	_player_dead = true
+	var audio := _audio()
+	if audio:
+		audio.stop_music(DEATH_AUDIO_FADE)
+	var ambience_player := get_node_or_null(^"Ambience") as AudioStreamPlayer
+	if ambience_player:
+		var tween := create_tween().set_ignore_time_scale(true)
+		tween.tween_property(ambience_player, "volume_db", -60.0, DEATH_AUDIO_FADE)
+		tween.tween_callback(ambience_player.stop)
 
 
 func _audio() -> Node:
