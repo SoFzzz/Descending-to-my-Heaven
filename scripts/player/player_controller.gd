@@ -92,9 +92,9 @@ const ATTACK_DAMAGE_TAKEN_MULT := 0.5
 const BUFFER_TIME := 0.2
 
 # --- Audio ---
-## Metros recorridos entre dos pasos (la muestra de carrera dura 0,5 s: a 5 m/s suena cada ~0,4 s).
+## Meters traveled between two footsteps (the run sample lasts 0.5 s: at 5 m/s it plays every ~0.4 s).
 const FOOTSTEP_STRIDE := 2.0
-## Por debajo de esta velocidad horizontal (m/s) no hay pasos.
+## Below this horizontal speed (m/s) there are no footsteps.
 const FOOTSTEP_MIN_SPEED := 0.5
 const FOOTSTEP_VOLUME_DB := -4.0
 
@@ -108,11 +108,11 @@ const ACTION_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"a
 # States whose clip is adjusted with a TimeScale (parameters/<state>/speed/scale).
 const SCALED_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"attack_3", &"hurt"]
 
-## Sonido del golpe de espada al empezar cada ataque (assign a randomizer to vary it).
+## Sword swing sound when each attack starts (assign a randomizer to vary it).
 @export var sfx_swing: AudioStream
-## Sonido de los pasos al correr; lo asigna el nivel (level_gameplay.gd: piedra en arenas, tierra fuera).
+## Footstep sound while running; assigned by the level (level_gameplay.gd: stone in arenas, dirt outside).
 @export var footstep_stream: AudioStream
-## Sonidos de Kaelen: rodar, recibir un golpe, morir (cae al suelo) y quedarse sin estamina.
+## Kaelen's sounds: rolling, taking a hit, dying (falling to the ground) and running out of stamina.
 @export var sfx_roll: AudioStream
 @export var sfx_hurt: AudioStream
 @export var sfx_death: AudioStream
@@ -185,7 +185,8 @@ func _ready() -> void:
 	# Events may not exist (tests run with -s), so it is looked up by path.
 	var events := _events()
 	if events:
-		events.boss_defeated.connect(_on_boss_defeated)
+		if not events.boss_defeated.is_connected(_on_boss_defeated):
+			events.boss_defeated.connect(_on_boss_defeated)
 	_build_animation_tree()
 
 
@@ -283,20 +284,20 @@ func _physics_process(delta: float) -> void:
 
 # --- Audio ---
 
-## Distancia acumulada tras avanzar `delta` s a `speed` m/s. Por debajo de FOOTSTEP_MIN_SPEED o si
-## no `walking` (rodando, atacando, en el aire, cinemática) se reinicia.
+## Accumulated distance after advancing `delta` s at `speed` m/s. Below FOOTSTEP_MIN_SPEED or if
+## not `walking` (rolling, attacking, airborne, cutscene) it resets.
 static func footstep_progress(accumulated: float, speed: float, delta: float, walking: bool) -> float:
 	if not walking or speed < FOOTSTEP_MIN_SPEED:
 		return 0.0
 	return accumulated + speed * delta
 
 
-## true si la distancia acumulada completa una zancada.
+## true if the accumulated distance completes a stride.
 static func footstep_due(accumulated: float) -> bool:
 	return accumulated >= FOOTSTEP_STRIDE
 
 
-## Pasos sincronizados con la velocidad real; solo en MOVE y con los pies en el suelo.
+## Footsteps synchronized with the real speed; only in MOVE and with the feet on the ground.
 func _tick_footsteps(delta: float, ground_speed: float) -> void:
 	var walking := state == State.MOVE and is_on_floor() and not _cutscene
 	_footstep_distance = footstep_progress(_footstep_distance, ground_speed, delta, walking)
@@ -962,7 +963,7 @@ func _build_animation_tree() -> void:
 func _clip_length(player: AnimationPlayer, clip: StringName, fallback: float) -> float:
 	if player.has_animation(clip):
 		return player.get_animation(clip).length
-	push_warning("Kaelen: falta el clip '%s'" % clip)
+	push_warning("Kaelen: missing clip '%s'" % clip)
 	return fallback
 
 

@@ -18,8 +18,8 @@ const ARM_LENGTH := 4.0
 const ARM_LENGTH_BOSS := 6.5
 const FOV := 70.0
 const FOV_BOSS := 75.0
-## Con un jefe fijado lejos (jefes enormes) el brazo se alarga para que quepa entero en pantalla:
-## +ARM_PER_METER m por cada metro de distancia horizontal por encima de ARM_FAR_FROM, hasta ARM_EXTRA_MAX.
+## With a boss locked far away (huge bosses) the arm lengthens so it fits entirely on screen:
+## +ARM_PER_METER m for every meter of horizontal distance above ARM_FAR_FROM, up to ARM_EXTRA_MAX.
 const ARM_FAR_FROM := 8.0
 const ARM_PER_METER := 0.4
 const ARM_EXTRA_MAX := 3.0
@@ -66,13 +66,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-## Respuesta del stick derecho: la zona muerta ya la aplica Input.get_vector (0.2 en el InputMap);
-## aquí se suaviza con una curva cuadrática para apuntar fino con poco recorrido y girar rápido a fondo.
+## Right stick response: the dead zone is already applied by Input.get_vector (0.2 in the InputMap);
+## here it is smoothed with a quadratic curve for fine aiming with little travel and fast turning at full tilt.
 static func stick_look(raw: Vector2) -> Vector2:
 	return raw * raw.length()
 
 
-## Multiplicador de sensibilidad elegido en opciones (ratón y stick); 1.0 si no hay ajustes.
+## Sensitivity multiplier chosen in the options (mouse and stick); 1.0 if there are no settings.
 func look_sensitivity() -> float:
 	var settings := get_node_or_null(^"/root/UserSettings") if is_inside_tree() else null
 	return float(settings.get("look_sensitivity")) if settings else 1.0
@@ -84,7 +84,7 @@ func rotate_view(d_yaw: float, d_pitch: float) -> void:
 	_apply_rotation()
 
 
-## Sacudida de camara de `amplitude` m que se apaga linealmente en `duration` s (empuje de los jefes).
+## Camera shake of `amplitude` m that fades out linearly over `duration` s (boss repel).
 func shake(amplitude: float, duration: float) -> void:
 	_shake_amplitude = maxf(_shake_amplitude * _shake_left / maxf(_shake_total, 0.001), amplitude)
 	_shake_total = duration
@@ -124,7 +124,7 @@ func _process(delta: float) -> void:
 		_face_point(LockOn.aim_point(lock_target), delta)
 
 
-## Metros extra de brazo para un jefe fijado a `distance` m (en planta) de la cámara.
+## Extra arm meters for a boss locked at `distance` m (horizontally) from the camera.
 static func boss_arm_extra(distance: float) -> float:
 	return clampf((distance - ARM_FAR_FROM) * ARM_PER_METER, 0.0, ARM_EXTRA_MAX)
 
