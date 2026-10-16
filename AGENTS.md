@@ -5,7 +5,7 @@ Guía única del proyecto para quien se incorpora al equipo: qué es el juego, e
 - **Fecha de esta versión:** 2026-10-16
 - **Juego:** boss rush 3D en tercera persona, estilo soulslike y PSX. Kaelen sube un templo de tres pisos sobre una isla flotante y derrota a tres jefes para llegar a Elysia.
 - **Motor:** Godot 4.7.2 estable, GDScript con tipos estáticos, renderizador `gl_compatibility` (Compatibility). Resolución interna 640×360, ventana 1280×720.
-- **Rama de trabajo:** `feat/aza`. Tiene 289 commits por delante de `main` y todavía no hay merge ni PR a `main`.
+- **Rama de trabajo:** `feat/aza`. `main` (ec0e4fa) ya incluye un merge de esta rama; la exportación a Windows se prepara en `wt/export`.
 - **Equipo:** Paula Sofia Gonzalez Zambrano, David Alejandro Aza Jojoa y Stehven Alexander Obando Cordoba.
 - **Repositorio privado.** Varios assets no pueden redistribuirse (ver sección 12).
 
@@ -22,7 +22,7 @@ Guía única del proyecto para quien se incorpora al equipo: qué es el juego, e
 | T16: esbirros por nivel y élites | Hecha | Revisar en juego animaciones de ataque y muerte, espada del Knight, hoz del Straw Reaper y caída de TheWrapper |
 | T17: audio completo | Hecha | Licencias "por confirmar" (sección 12) |
 | T18: pulido y playtest | Casi hecha | **Playtest con 2 personas externas** (plantilla en la sección 14); decoración de arenas (pendiente); commit por persona |
-| T19: congelación, exportación Windows, tag `v1.0` | Pendiente | Congelación, exportar (y Web si funciona), probar en otra PC, revisar créditos, `v1.0` |
+| T19: congelación, exportación Windows, tag `v1.0` | En curso | Exportación Windows lista (sección 2.6). Falta: congelación, probar el `.exe` en otra PC, revisar créditos, `v1.0` (Web, si funciona) |
 
 ### 1.2 Lo último que se hizo (2026-10-14 a 2026-10-16)
 
@@ -106,6 +106,25 @@ Scripts de Python (necesitan Python con las librerías de cada uno):
 | `make_dialogue_blips.py` | Prepara los blips de voz del final. Recibe la carpeta del pack |
 
 Los scripts de Blender y de exportación de modelos están en `_source/tools/` (sección 9.5).
+
+---
+
+### 2.6 Exportar a Windows (.exe)
+
+Solo escritorio Windows por ahora. El preset `Windows Desktop` está en `export_presets.cfg` (x86_64, release).
+
+- **Plantillas de exportación:** hacen falta las oficiales de Godot 4.7.2 estable en `%APPDATA%\Godot\export_templates\4.7.2.stable\` (con `version.txt`). Se descargan de la release `4.7.2-stable` de godotengine (`Godot_v4.7.2-stable_export_templates.tpz`), verificando el SHA-512 con `SHA512-SUMS.txt`. Para Windows basta con `windows_release_x86_64.exe`, `windows_debug_x86_64.exe` (y sus `_console`) más `version.txt`; el `.tpz` completo pesa 1,2 GB. También se puede instalar desde el editor: Proyecto > Exportar > Gestionar plantillas.
+- **Exportar (release):**
+  ```
+  Godot_v4.7.2-stable_win64_console.exe --headless --path <repo> --import
+  Godot_v4.7.2-stable_win64_console.exe --headless --path <repo> --export-release "Windows Desktop" <repo>/export/windows/DescendingToMyHeaven.exe
+  ```
+  Para una build de depuración (genera además `DescendingToMyHeaven.console.exe` con la consola de errores): `--export-debug "Windows Desktop" <repo>/export/windows-debug/DescendingToMyHeaven.exe`.
+- **Resultado:** un solo `.exe` con el `.pck` incrustado (`embed_pck=true`), de unos 174 MB (166 MiB). No necesita instalación. La carpeta `export/` está en `.gitignore`: no se versiona.
+- **Filtros:** se exportan todos los recursos (`export_filter="all_resources"`), salvo `tests/*`, `scripts/tools/*`, `_source/*`, `assets/audio/bgm/source/*`, `*.py` y `AGENTS.md`. `assets/credits.txt` (lo lee la pantalla de créditos) va en `include_filter`. Los scripts se empaquetan como binarios tokenizados.
+- **Sin firma de código** (`codesign` desactivado): Windows SmartScreen puede avisar al ejecutarlo en otra PC ("Más información" > "Ejecutar de todas formas").
+- **Icono:** el proyecto aún no define un icono propio (`config/icon` vacío), así que el `.exe` usa el de Godot. Si se añade uno, ponerlo también en `application/icon` del preset.
+- **Prueba hecha:** el `.exe` arranca en el menú, las traducciones (es/en), los créditos, las 7 músicas y todas las escenas de `scenes/` cargan sin errores. Quedan avisos inofensivos de UID inválido en los `.import` de `islet_small.glb` y `straw_reaper.glb` (Godot usa la ruta de texto). Falta probarlo en una PC distinta a la de desarrollo.
 
 ---
 
@@ -517,7 +536,7 @@ La isla cae porque los tres guardianes (Bone Dragon, Blackhorn y Ghidorah) la ma
    - La sala de Elysia se ve completa durante el abrazo.
 2. **Partida completa a mano** (T15 paso 3 y T16): menú → exterior → 3 jefes → final → créditos → menú, muriendo al menos una vez por jefe y usando la pausa.
 3. **Congelación de funciones** y arreglos priorizados desde el playtest.
-4. **Exportar Windows** (y Web si funciona; el renderizador Compatibility lo permite). Probar en una PC que no sea de desarrollo. Añadir `assets/credits.txt` al filtro de exportación de recursos.
+4. **Exportar Windows** (hecho, ver sección 2.6; `assets/credits.txt` ya está en el filtro) y Web si funciona. Probar el `.exe` en una PC que no sea de desarrollo.
 5. **Tag `v1.0`** tras pasar el checklist y las pruebas.
 
 ### 14.2 Riesgos técnicos y de contenido
