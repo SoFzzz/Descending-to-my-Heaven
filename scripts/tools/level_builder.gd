@@ -115,9 +115,13 @@ const EXTERIOR := {
 	# Bosque lejano: anillos de siluetas (radio, base y, alto) y capas de niebla [y, densidad].
 	"forest_center": Vector3(5, 0, 0),
 	"forest_rings": [
-		{"count": 90, "radius": [95.0, 130.0], "base": [-12.0, -2.0], "height": [30.0, 50.0], "fade": [10.0, 230.0]},
-		{"count": 110, "radius": [140.0, 190.0], "base": [-24.0, -10.0], "height": [45.0, 75.0], "fade": [10.0, 230.0]},
-		{"count": 120, "radius": [200.0, 235.0], "base": [-34.0, -18.0], "height": [60.0, 100.0], "fade": [10.0, 230.0]}],
+		{"count": 60, "radius": [95.0, 130.0], "base": [-12.0, -2.0], "height": [30.0, 50.0], "fade": [10.0, 230.0]},
+		{"count": 70, "radius": [140.0, 190.0], "base": [-24.0, -10.0], "height": [45.0, 75.0], "fade": [10.0, 230.0]},
+		{"count": 80, "radius": [200.0, 235.0], "base": [-34.0, -18.0], "height": [60.0, 100.0], "fade": [10.0, 230.0]}],
+	"forest_trees": ["res://assets/environment/trees/tree01.fbx", "res://assets/environment/trees/tree02.fbx",
+		"res://assets/environment/trees/tree03.fbx", "res://assets/environment/trees/tree05.fbx",
+		"res://assets/environment/trees/tree06.fbx", "res://assets/environment/trees/tree07.fbx",
+		"res://assets/environment/trees/tree08.fbx"],
 	"mist_layers": [[-9.0, 0.45], [-22.0, 0.6], [-40.0, 0.85]],
 	"islets": [["islet_round", Vector3(-75, -18, -35), 30.0], ["islet_long", Vector3(65, -28, 15), 70.0],
 		["islet_l", Vector3(-60, -6, 55), 120.0], ["islet_small", Vector3(35, 6, -70), 0.0],
@@ -339,6 +343,7 @@ func _ponds(root: Node3D, cfg: Dictionary) -> void:
 		var pd: Array = cfg.ponds[i]
 		var mat := ShaderMaterial.new()
 		mat.shader = shader
+		mat.set_shader_parameter("water_tex", load("res://assets/environment/textures/water_sbs_elements12.png"))
 		var mesh := PlaneMesh.new()
 		mesh.size = Vector2(pd[1].x * 2.0, pd[1].y * 2.0)
 		mesh.subdivide_width = 10
@@ -352,54 +357,30 @@ func _ponds(root: Node3D, cfg: Dictionary) -> void:
 		_node(ponds, mi, "Pond%d" % (i + 1))
 
 
-# Anillos de siluetas de árboles (tarjetas con shader, un MultiMesh por anillo = 1 llamada de dibujo cada
-# uno) alrededor de la isla y por debajo de su nivel, asomando del mar de niebla: el borde parece seguir
-# en un bosque enorme. La cámara de Kaelen ve hasta 300 m, así que los anillos quedan dentro de ese rango.
+# Anillos de árboles lejanos alrededor de la isla y por debajo de su nivel, asomando del mar de niebla: el
+# borde parece seguir en un bosque enorme. Usan los modelos del pack "ps1-style tree pack"
+# (assets/environment/trees/). Cada anillo es un nodo con `ForestRing`, que arma sus MultiMesh al entrar al
+# árbol (con semilla fija) y los oscurece y funde con la bruma por distancia (shaders/forest_tree.gdshader).
+# Un MultiMesh no se guarda si este generador corre con --headless; por eso solo se guardan los parámetros.
+# La cámara de Kaelen ve hasta 300 m, así que los anillos quedan dentro de ese rango.
 func _forest(root: Node3D, cfg: Dictionary) -> void:
 	var forest := _node(root, Node3D.new(), "Forest") as Node3D
-	var shader := load("res://shaders/forest_silhouette.gdshader") as Shader
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 7021
+	var script := load("res://scripts/environment/forest_ring.gd")
 	var center: Vector3 = cfg.forest_center
 	for i in cfg.forest_rings.size():
 		var rg: Dictionary = cfg.forest_rings[i]
-		var mat := ShaderMaterial.new()
-		mat.shader = shader
-		mat.set_shader_parameter("fade_near", rg.fade[0])
-		mat.set_shader_parameter("fade_far", rg.fade[1])
-		# Una sola malla por anillo: cada árbol son 4 vértices en su pie (VERTEX), la esquina en UV y el
-		# tamaño (ancho, alto) en UV2; el shader los gira hacia la cámara. (Un MultiMesh no se guarda si el
-		# generador corre con --headless, por eso no se usa.)
-		var verts := PackedVector3Array()
-		var uvs := PackedVector2Array()
-		var sizes := PackedVector2Array()
-		var idx := PackedInt32Array()
-		for k in rg.count:
-			var ang: float = (k + rng.randf_range(-0.4, 0.4)) * TAU / rg.count
-			var rad: float = rng.randf_range(rg.radius[0], rg.radius[1])
-			var h: float = rng.randf_range(rg.height[0], rg.height[1])
-			var w: float = h * rng.randf_range(0.3, 0.5)
-			var pos: Vector3 = center + Vector3(cos(ang) * rad, rng.randf_range(rg.base[0], rg.base[1]), sin(ang) * rad)
-			var v0 := verts.size()
-			for c in [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]:
-				verts.append(pos)
-				uvs.append(c)
-				sizes.append(Vector2(w, h))
-			idx.append_array(PackedInt32Array([v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3]))
-		var arrays := []
-		arrays.resize(Mesh.ARRAY_MAX)
-		arrays[Mesh.ARRAY_VERTEX] = verts
-		arrays[Mesh.ARRAY_TEX_UV] = uvs
-		arrays[Mesh.ARRAY_TEX_UV2] = sizes
-		arrays[Mesh.ARRAY_INDEX] = idx
-		var mesh := ArrayMesh.new()
-		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-		mesh.surface_set_material(0, mat)
-		mesh.custom_aabb = AABB(center - Vector3(320, 90, 320), Vector3(640, 220, 640))
-		var mmi := MeshInstance3D.new()
-		mmi.mesh = mesh
-		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		_node(forest, mmi, "Ring%d" % (i + 1))
+		var ring := Node3D.new()
+		ring.set_script(script)
+		ring.set("tree_paths", PackedStringArray(cfg.forest_trees))
+		ring.set("count", rg.count)
+		ring.set("seed_value", 7021 + i * 101)
+		ring.set("center", center)
+		ring.set("radius_range", Vector2(rg.radius[0], rg.radius[1]))
+		ring.set("base_range", Vector2(rg.base[0], rg.base[1]))
+		ring.set("height_range", Vector2(rg.height[0], rg.height[1]))
+		ring.set("fade_near", rg.fade[0])
+		ring.set("fade_far", rg.fade[1])
+		_node(forest, ring, "Ring%d" % (i + 1))
 
 
 # Capas horizontales de niebla (mar de niebla) a distintas alturas bajo la isla.
@@ -563,18 +544,21 @@ func _temple(root: Node3D, cfg: Dictionary, ground: Callable) -> Node3D:
 
 	# Árbol grande con raíces contra el ala oeste (como la referencia), arbustos y escombros.
 	var tree := Vector3(-11.0, b, f - 3.0)
-	_mcyl(dec, "Trunk", 0.9, 1.5, 15.0, tree + Vector3(0, 7.2, 0), wood, 8)
-	for k in 6:
-		var a := k * TAU / 6 + 0.3
-		var root_len := 3.0 + rng.randf() * 2.0
-		var rt := _mcyl(dec, "TreeRoot%d" % k, 0.12, 0.5, root_len, Vector3.ZERO, wood, 5)
-		rt.basis = Basis(Vector3(-sin(a), 0, cos(a)), deg_to_rad(62.0))
-		rt.position = tree + Vector3(cos(a), 0.0, sin(a)) * (1.2 + root_len * 0.38) + Vector3(0, 0.3, 0)
-	for k in 4:
-		var a2 := k * TAU / 4 + 0.6
-		_msphere(dec, "Canopy%d" % k, 5.5, tree + Vector3(cos(a2) * 4.0, 14.5 + (k % 2) * 1.6, sin(a2) * 4.0),
-			moss, Vector3(1, 0.55, 1))
-	_msphere(dec, "CanopyTop", 6.0, tree + Vector3(0, 16.5, 0), moss, Vector3(1, 0.5, 1))
+	# El árbol es un modelo del pack de árboles PS1 (tree02) con el mismo script del bosque, con poca bruma.
+	var ft := Node3D.new()
+	ft.set_script(load("res://scripts/environment/forest_ring.gd"))
+	ft.set("tree_paths", PackedStringArray(["res://assets/environment/trees/tree02.fbx"]))
+	ft.set("fixed_positions", PackedVector3Array([tree]))
+	ft.set("seed_value", 31)
+	ft.set("center", tree)
+	ft.set("height_range", Vector2(17.0, 17.0))
+	ft.set("fade_near", 400.0)
+	ft.set("fade_far", 500.0)
+	ft.set("base_haze", 0.0)
+	ft.set("dark_mul", 0.62)
+	_node(dec, ft, "Tree")
+	for k in 6:   # mantiene la secuencia aleatoria de los arbustos de abajo
+		rng.randf()
 	for k in 12:
 		var bx := rng.randf_range(-19.0, 19.0)
 		if absf(bx) < 5.0:
@@ -1418,6 +1402,8 @@ func _save(root: Node, path: String) -> void:
 
 func _set_owner(node: Node, owner: Node) -> void:
 	for c in node.get_children():
+		if c is MultiMeshInstance3D:   # los arma ForestRing al entrar al árbol; no se guardan en la escena
+			continue
 		c.owner = owner
 		if c.scene_file_path.is_empty():   # no entrar en escenas instanciadas (Elysia)
 			_set_owner(c, owner)
