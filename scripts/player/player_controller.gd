@@ -600,8 +600,8 @@ func _advance_hurt(delta: float) -> void:
 ## Pushes Kaelen with horizontal `push` (m/s) fading to 0 over `duration` s, without damage. She
 ## stays in HURT (no control) until the push ends (at least HURT_DURATION). Interrupts attacks too
 ## (hyper armor stops damage, not a shove). The roll's i-frames dodge it, as do death, cutscenes and
-## victory. Returns true if it was applied.
-func apply_shove(push: Vector3, duration: float) -> bool:
+## victory. `lift` (m/s) adds an upward hop. Returns true if it was applied.
+func apply_shove(push: Vector3, duration: float, lift := 0.0) -> bool:
 	if state == State.DEAD or _iframes or _cutscene or _victory or duration <= 0.0:
 		return false
 	push.y = 0.0
@@ -614,6 +614,8 @@ func apply_shove(push: Vector3, duration: float) -> bool:
 	_shove_left = duration
 	velocity.x = push.x
 	velocity.z = push.z
+	if lift > 0.0:
+		velocity.y = lift   # small hop: the shove reads as an impact
 	return true
 
 

@@ -39,7 +39,7 @@ const SAME_SWING_WINDOW := 0.3
 ## flagged `opener` may start earlier, from their own range.
 @export var engage_range := 3.2
 ## Pause between the end of one recovery and the next decision.
-@export var attack_cooldown := 0.4
+@export var attack_cooldown := 0.25
 @export var idle_animation: StringName = &"idle"
 ## The single locomotion clip of the scene (Blackhorn: "run"). Empty = glides with idle (Bone Dragon).
 @export var walk_animation: StringName = &""
@@ -57,18 +57,30 @@ const SAME_SWING_WINDOW := 0.3
 @export var death_clearance := 0.07
 @export var model_path := NodePath("Model")
 @export_group("Repel")
-## Repel reaction (BossRepel): when the boss takes this fraction of its max health within
-## `repel_window` s it roars (roar_animation + sfx_phase2, no phase change), is invulnerable while
-## roaring and pushes Kaelen away if she is within `repel_radius` m. If it happens during RECOVER it
-## waits until the recovery ends (the punish window is never cut short).
+## Repel reaction (BossRepel): when the boss takes `repel_threshold` of its max health within
+## `repel_window` s, or `repel_burst_hits` hits within `repel_burst_window` s, or Kaelen stays within
+## `repel_glue_radius` m for `repel_glue_time` s, it roars (roar_animation + sfx_phase2, no phase
+## change) and is invulnerable while roaring. `repel_push_delay` s after the roar starts a shockwave
+## pushes Kaelen away if she is within `repel_radius` m; a roll started so that its i-frames cover that
+## instant dodges it. It can interrupt any state except the phase roar and death (also RECOVER).
 @export var repel_enabled := true
-@export_range(0.01, 1.0) var repel_threshold := 0.15
+@export_range(0.01, 1.0) var repel_threshold := 0.10
 @export var repel_window := 4.0
-@export var repel_cooldown := 9.0
-@export var repel_radius := 6.0
-## Initial outward speed (m/s) given to Kaelen; it fades to 0 over `repel_push_time` s.
-@export var repel_force := 11.0
-@export var repel_push_time := 0.4
+@export var repel_cooldown := 7.0
+@export var repel_burst_hits := 3
+@export var repel_burst_window := 3.0
+@export var repel_glue_time := 7.0
+@export var repel_glue_radius := 3.2
+@export var repel_radius := 7.0
+## Initial outward speed (m/s) given to Kaelen; it fades to 0 over `repel_push_time` s, so she travels
+## force * time / 2 = 4.5 m. `repel_lift` is a small upward hop (m/s) to make the shove readable.
+@export var repel_force := 18.0
+@export var repel_push_time := 0.5
+@export var repel_lift := 3.0
+## Seconds between the start of the roar (the warning) and the shockwave.
+@export var repel_push_delay := 0.35
+## The repel roar lasts at most this many seconds (the phase-2 roar plays its whole clip).
+@export var repel_roar_max := 1.6
 @export_group("Audio")
 ## Al recibir daño (suma de golpes de un mismo mandoble = un solo sonido).
 @export var sfx_hurt: AudioStream
@@ -104,6 +116,7 @@ var _state_time := 0.0
 var _cooldown := 0.0
 var _pending_roar := false
 var _pending_repel := false
+var _repel_push_left := 0.0
 var _hitbox: Hitbox
 var _telegraph: Node3D
 var _spin_done := 0.0
@@ -130,6 +143,10 @@ func _ready() -> void:
 	repel.threshold_fraction = repel_threshold
 	repel.window = repel_window
 	repel.cooldown = repel_cooldown
+	repel.burst_hits = repel_burst_hits
+	repel.burst_window = repel_burst_window
+	repel.glue_time = repel_glue_time
+	repel.glue_radius = repel_glue_radius
 	if max_health > 0:
 		health.reset(max_health)
 	health.changed.connect(_on_health_changed)
@@ -183,6 +200,8 @@ func _physics_process(delta: float) -> void:
 	var target_ok := _player_alive()
 	if target_ok:
 		_track_dodge()
+		if repel_enabled and state != State.IDLE and state != State.DEAD 				and repel.register_proximity(delta, _flat_distance() <= repel.glue_radius, not can_repel()):
+			_pending_repel = true
 	if _pending_roar and state != State.ROAR:
 		_pending_roar = false
 		_cancel_attack()
@@ -252,7 +271,14 @@ func _run_state(delta: float, target_ok: bool) -> void:
 				_set_state(State.CHASE)
 		State.ROAR:
 			_stop()
-			if _state_time >= _anim_length(roar_animation, 2.0) / speed:
+			if repelling and _repel_push_left > 0.0:
+				_repel_push_left -= delta
+				if _repel_push_left <= 0.0:
+					_push_player()
+			var roar_time := _anim_length(roar_animation, 2.0)
+			if repelling:
+				roar_time = minf(roar_time, repel_roar_max)   # the repel roar is cut short: it must not become a rest
+			if _state_time >= roar_time / speed:
 				repelling = false
 				_play(idle_animation)
 				_set_state(State.CHASE if target_ok else State.IDLE)
@@ -522,9 +548,10 @@ func _register_repel_damage(amount: int) -> void:
 
 
 ## The repel can start now: not dead, not roaring (phase roar or another repel), no phase roar
-## pending and not in the punish window (RECOVER waits for its end).
+## pending (it may interrupt a recovery: the point is to stop Kaelen from chaining hits).
 func can_repel() -> bool:
-	return repel_enabled and state != State.DEAD and state != State.ROAR and state != State.RECOVER 		and not _pending_roar and not repelling and not health.is_dead()
+	return repel_enabled and state != State.DEAD and state != State.ROAR \
+		and not _pending_roar and not repelling and not health.is_dead()
 
 
 ## Interrupts the current action, roars (phase-2 clip and sound, without phase effects), starts the
@@ -541,7 +568,7 @@ func start_repel() -> void:
 	_play(roar_animation)
 	_play_sfx(sfx_phase2)
 	_set_state(State.ROAR)
-	_push_player()
+	_repel_push_left = repel_push_delay
 
 
 func _push_player() -> void:
@@ -550,10 +577,14 @@ func _push_player() -> void:
 	_find_player()
 	if not _player_alive():
 		return
+	RepelWave.spawn(self, repel_radius)
+	var rig := _player.get_node_or_null(^"CameraRig")
+	if rig and rig.has_method(&"shake"):
+		rig.call(&"shake", 0.18, 0.45)
 	var push := BossRepel.push_velocity(global_position, _player.global_position, repel_radius,
 			repel_force, -global_basis.z)
 	if push != Vector3.ZERO and _player.has_method(&"apply_shove"):
-		_player.call(&"apply_shove", push, repel_push_time)
+		_player.call(&"apply_shove", push, repel_push_time, repel_lift)
 
 
 func _on_health_changed(current: int, max_value: int) -> void:
@@ -574,6 +605,7 @@ func _on_died() -> void:
 	_set_gated(false)
 	_pending_roar = false
 	_pending_repel = false
+	_repel_push_left = 0.0
 	repelling = false
 	_play(death_animation)
 	_play_sfx(sfx_death)

@@ -27,6 +27,10 @@ var pitch: float = deg_to_rad(-15.0)
 
 var pivot_height := PIVOT_HEIGHT
 
+var _shake_amplitude := 0.0
+var _shake_total := 0.0
+var _shake_left := 0.0
+
 @onready var _target: Node3D = get_parent()
 @onready var _arm: SpringArm3D = $SpringArm3D
 @onready var _camera: Camera3D = get_node_or_null(^"SpringArm3D/Camera3D") as Camera3D
@@ -62,7 +66,28 @@ func rotate_view(d_yaw: float, d_pitch: float) -> void:
 	_apply_rotation()
 
 
+## Sacudida de camara de `amplitude` m que se apaga linealmente en `duration` s (empuje de los jefes).
+func shake(amplitude: float, duration: float) -> void:
+	_shake_amplitude = maxf(_shake_amplitude * _shake_left / maxf(_shake_total, 0.001), amplitude)
+	_shake_total = duration
+	_shake_left = duration
+
+
+func _apply_shake(delta: float) -> void:
+	if _camera == null:
+		return
+	if _shake_left <= 0.0:
+		_camera.h_offset = 0.0
+		_camera.v_offset = 0.0
+		return
+	_shake_left = maxf(0.0, _shake_left - delta)
+	var k := _shake_amplitude * _shake_left / maxf(_shake_total, 0.001)
+	_camera.h_offset = randf_range(-k, k)
+	_camera.v_offset = randf_range(-k, k)
+
+
 func _process(delta: float) -> void:
+	_apply_shake(delta)
 	var stick := Input.get_vector("camera_left", "camera_right", "camera_up", "camera_down")
 	if stick != Vector2.ZERO:
 		rotate_view(-stick.x * STICK_SPEED * delta, -stick.y * STICK_SPEED * delta)
