@@ -16,7 +16,7 @@ func test_fallback_text_uses_spanish_when_key_is_untranslated() -> void:
 
 func test_death_screen_scene_has_three_buttons_with_shared_theme() -> void:
 	var screen: Node = (load("res://scenes/ui/death_screen.tscn") as PackedScene).instantiate()
-	var box := screen.get_node(^"Root/Column/Center/Panel/Box")
+	var box := screen.get_node(^"Root/Center/Panel/Box")
 	assert_eq(box.get_child_count(), 3, "3 botones")
 	for child in box.get_children():
 		assert_true(child is Button, child.name)
