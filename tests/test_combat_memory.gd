@@ -1,5 +1,5 @@
 extends TestCase
-# CombatMemory: predicción y detección de comportamiento (lógica pura, 10 Hz simulados).
+# CombatMemory: prediction and behaviour detection (pure logic, simulated at 10 Hz).
 
 const DT := 0.1
 
@@ -10,7 +10,7 @@ func _ctx(player: Vector3, boss := Vector3.ZERO, extra := {}) -> Dictionary:
 	return ctx
 
 
-## Kaelen se mueve a `velocity` m/s durante `seconds` desde `start`; devuelve la memoria.
+## Kaelen moves at `velocity` m/s for `seconds` from `start`; returns the memory.
 func _run(start: Vector3, velocity: Vector3, seconds: float, extra := {}, mem: CombatMemory = null) -> CombatMemory:
 	var m := mem if mem else CombatMemory.new()
 	var pos := start
@@ -116,7 +116,7 @@ func test_passive_far_and_not_attacking() -> void:
 
 
 func test_turned_away_is_distracted() -> void:
-	# Kaelen en -Z mirando hacia -Z (de espaldas al jefe, que está en el origen).
+	# Kaelen at -Z facing -Z (back to the boss, who is at the origin).
 	var m := _run(Vector3(0, 0, -8), Vector3.ZERO, 0.5, {player_facing = Vector3(0, 0, -1)})
 	assert_true(m.distracted)
 	var facing_boss := _run(Vector3(0, 0, -8), Vector3.ZERO, 0.5, {player_facing = Vector3(0, 0, 1)})
@@ -127,7 +127,7 @@ func test_circling_the_boss() -> void:
 	var m := CombatMemory.new()
 	var angle := 0.0
 	for i in 20:
-		angle += 0.1 * 0.9   # ~0.9 rad/s a 4 m: 3.6 m/s tangenciales
+		angle += 0.1 * 0.9   # ~0.9 rad/s a 4 m: 3.6 m/s tangential
 		m.observe(DT, _ctx(Vector3(cos(angle), 0, sin(angle)) * 4.0))
 	assert_true(m.circling)
 	var straight := _run(Vector3(0, 0, -4), Vector3(0, 0, -3), 1.5)

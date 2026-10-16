@@ -1,21 +1,21 @@
 class_name SquadTactics
 extends RefCounted
-## Coordinación jefe + esbirros (lógica pura): puntos de cerco para la pinza y reparto de amenazas
-## simultáneas. El Orquestador aplica las órdenes y AttackTokens aplica el límite de amenazas.
+## Boss + minion coordination (pure logic): encirclement points for the pincer and sharing of
+## simultaneous threats. The Orchestrator applies the orders and AttackTokens applies the threat limit.
 
-## Distancia al jefe (m) a partir de la cual su ataque cuenta como amenaza "cercana" para Kaelen.
+## Distance to the boss (m) within which its attack counts as a "near" threat to Kaelen.
 const THREAT_RADIUS := 10.0
-## Radio (m) alrededor de Kaelen en el que se colocan los esbirros de la pinza (< TOKEN_RANGE de
-## los esbirros: al llegar quedan en CIRCLE y pueden pedir ficha).
+## Radius (m) around Kaelen at which the pincer minions are placed (< the minions' TOKEN_RANGE:
+## on arrival they are in CIRCLE and can ask for a token).
 const PINCER_RADIUS := 3.6
-## Separación angular (grados) entre esbirros vecinos del cerco.
+## Angular separation (degrees) between neighbouring minions of the encirclement.
 const PINCER_SPREAD_DEG := 55.0
-## Distancia a Kaelen a la que el jefe se planta en su lado de la pinza.
+## Distance to Kaelen at which the boss plants itself on its side of the pincer.
 const BOSS_PINCER_DISTANCE := 6.0
 
 
-## Puntos de cerco de `count` esbirros alrededor de Kaelen, en el lado OPUESTO al jefe: el centro
-## del abanico queda exactamente a 180° del jefe visto desde Kaelen. Todos a `radius` de ella.
+## Encirclement points of `count` minions around Kaelen, on the side OPPOSITE the boss: the centre
+## of the fan is exactly 180° from the boss as seen from Kaelen. All at `radius` from her.
 static func pincer_points(player_pos: Vector3, boss_pos: Vector3, count: int, radius := PINCER_RADIUS, spread_deg := PINCER_SPREAD_DEG) -> Array[Vector3]:
 	var points: Array[Vector3] = []
 	if count <= 0:
@@ -29,8 +29,8 @@ static func pincer_points(player_pos: Vector3, boss_pos: Vector3, count: int, ra
 	return points
 
 
-## Dónde se planta el jefe: en su lado actual de Kaelen, a `distance` de ella (la pinza es jefe de
-## un lado, esbirros del otro).
+## Where the boss plants itself: on its current side of Kaelen, `distance` away from her (the pincer is
+## boss on one side, minions on the other).
 static func boss_pincer_point(player_pos: Vector3, boss_pos: Vector3, distance := BOSS_PINCER_DISTANCE) -> Vector3:
 	var away := Vector3(boss_pos.x - player_pos.x, 0.0, boss_pos.z - player_pos.z)
 	if away.length_squared() < 0.0001:
@@ -40,8 +40,8 @@ static func boss_pincer_point(player_pos: Vector3, boss_pos: Vector3, distance :
 	return p
 
 
-## Reparto voraz de puntos a esbirros (el más cercano primero): devuelve, por esbirro, el índice
-## del punto asignado. Con más esbirros que puntos, el sobrante recibe -1.
+## Greedy assignment of points to minions (closest pair first): returns, per minion, the index
+## of its assigned point. With more minions than points, the surplus gets -1.
 static func assign_points(from: Array[Vector3], to: Array[Vector3]) -> Array[int]:
 	var result: Array[int] = []
 	result.resize(from.size())
@@ -63,9 +63,9 @@ static func assign_points(from: Array[Vector3], to: Array[Vector3]) -> Array[int
 	return result
 
 
-## Fichas de ataque disponibles para esbirros mientras el jefe amenaza. Si no amenaza: `max_tokens`.
-## Si amenaza cerca de Kaelen: 0 (ningún esbirro inicia ataque). Si amenaza lejos (el rayo): una
-## ficha menos (como máximo max_tokens - 1 amenazas de esbirros más la del jefe).
+## Attack tokens available to minions while the boss threatens. If it does not: `max_tokens`.
+## If it threatens near Kaelen: 0 (no minion starts an attack). If it threatens from afar (the beam): one
+## token fewer (at most max_tokens - 1 minion threats plus the boss's).
 static func token_slots(boss_threat: bool, boss_near: bool, max_tokens: int) -> int:
 	if not boss_threat:
 		return max_tokens
@@ -74,6 +74,6 @@ static func token_slots(boss_threat: bool, boss_near: bool, max_tokens: int) -> 
 	return maxi(0, max_tokens - 1)
 
 
-## ¿El esbirro puede empezar un ataque ahora? (ficha + límite de amenazas simultáneas).
+## Can the minion start an attack now? (token + limit of simultaneous threats).
 static func may_start_attack(holds_token: bool, boss_threat: bool, boss_near: bool) -> bool:
 	return holds_token and not (boss_threat and boss_near)

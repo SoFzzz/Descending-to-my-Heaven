@@ -7,7 +7,7 @@ extends RefCounted
 ##         × (0.3 if id == last_attack_id, otherwise 1)
 ##         × (1 + 0.5 × |dodge_bias| if the attack is lateral)
 ##         × (1.25 if phase == 2)
-##         × multipliers[id] (opcional: preferencias tácticas, p. ej. coletazo si Kaelen lo rodea)
+##         × multipliers[id] (optional: tactical preferences, e.g. tail swipe when Kaelen circles the boss)
 ## Attacks with phase_min > phase score 0. choose() draws weighted between the 2 best scores.
 
 const REPEAT_PENALTY := 0.3
@@ -35,7 +35,7 @@ static func score(attack: BossAttack, distance: float, last_attack_id: StringNam
 		s *= 1.0 + LATERAL_BONUS * absf(dodge_bias)
 	if phase == 2:
 		s *= PHASE2_MULTIPLIER
-	# Preferencias tácticas (BossTactics / especialización del jefe): id → factor.
+	# Tactical preferences (BossTactics / boss specialisation): id → factor.
 	s *= float(multipliers.get(attack.id, 1.0))
 	return s
 

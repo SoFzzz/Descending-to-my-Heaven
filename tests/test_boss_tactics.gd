@@ -1,5 +1,5 @@
 extends TestCase
-# BossTactics: elección de meta por utilidad, histéresis, caducidad y enfriamiento.
+# BossTactics: utility-based goal choice, hysteresis, expiry and cooldown.
 
 const G := BossTactics.Goal
 
@@ -83,10 +83,10 @@ func test_min_hold_prevents_immediate_switch() -> void:
 func test_hysteresis_keeps_current_goal_on_a_near_tie() -> void:
 	var t := BossTactics.new()
 	t.goal_time = 2.0
-	# ATTACK 1.0 × 1.3 = 1.3 contra WAIT 1.1 (pasiva a 9 m): se queda.
+	# ATTACK 1.0 × 1.3 = 1.3 against WAIT 1.1 (passive at 9 m): it stays.
 	t.reevaluate(_ctx({distance = 9.0, passive = true}))
 	assert_eq(t.goal, G.ATTACK)
-	# Con una diferencia clara (WAIT 1.4 + 1.1) cambia.
+	# With a clear difference (WAIT 1.4 + 1.1) it switches.
 	t.reevaluate(_ctx({distance = 9.0, passive = true, recent_damage = 0.2}))
 	assert_eq(t.goal, G.WAIT)
 
@@ -98,7 +98,7 @@ func test_no_flicker_with_stable_context() -> void:
 	for i in 12:   # 6 s
 		if t.update(0.5, ctx):
 			changes += 1
-	# ATTACK → CUT_OFF, caduca a los 4 s → ATTACK (enfriamiento) y se queda: pocos cambios en 6 s.
+	# ATTACK → CUT_OFF, expires at 4 s → ATTACK (cooldown) and stays: few changes in 6 s.
 	assert_true(changes <= 3, "cambios: %d" % changes)
 
 
@@ -122,7 +122,7 @@ func test_goal_without_reason_is_dropped() -> void:
 	t.reevaluate(_ctx({recent_damage = 0.2}))
 	assert_eq(t.goal, G.WAIT)
 	t.goal_time = 1.0
-	t.reevaluate(_ctx())   # ya no hay motivo para esperar
+	t.reevaluate(_ctx())   # no reason to wait any more
 	assert_eq(t.goal, G.ATTACK)
 
 
@@ -143,7 +143,7 @@ func test_ambush_conditions() -> void:
 
 func test_wait_point_backs_off_when_too_close_and_circles() -> void:
 	var player := Vector3.ZERO
-	var close := Vector3(0, 0, 4)   # el jefe a 4 m
+	var close := Vector3(0, 0, 4)   # the boss at 4 m
 	var p := BossTactics.wait_point(close, player, 1.0)
 	assert_true(Vector2(p.x, p.z).length() > 4.0, "se aleja hasta el anillo de espera")
 	assert_true(absf(p.x) > 0.5, "y rodea (componente tangencial)")
@@ -163,3 +163,14 @@ func test_brain_multipliers_scale_the_score() -> void:
 	a.base_weight = 1.0
 	assert_almost(BossBrain.score(a, 2.0, &"", 0.0, 1, {&"tail_sweep": 2.0}), 2.0)
 	assert_almost(BossBrain.score(a, 2.0, &"", 0.0, 1, {&"bite": 5.0}), 1.0, 0.0001, "otro id no cuenta")
+
+
+func test_eval_due_follows_the_interval_and_resets_on_step() -> void:
+	var t := BossTactics.new()
+	assert_true(not t.eval_due())
+	t.advance(BossTactics.EVAL_INTERVAL)
+	assert_true(t.eval_due())
+	t.step(_ctx({}))
+	assert_true(not t.eval_due())
+	t.request_eval()
+	assert_true(t.eval_due())

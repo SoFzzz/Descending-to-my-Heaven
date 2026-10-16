@@ -1,5 +1,5 @@
 extends TestCase
-# Reacción de repulsión de los jefes (BossRepel + Boss + Player.apply_shove).
+# Boss repel reaction (BossRepel + Boss + Player.apply_shove).
 
 
 func _repel() -> BossRepel:
@@ -18,7 +18,7 @@ func test_fires_when_threshold_reached() -> void:
 	assert_true(not r.register_damage(20, 600), "20 no llega")
 	r.tick(1.5)
 	assert_true(not r.register_damage(20, 600), "40 no llega")
-	r.tick(1.4)   # el primer golpe sale de la ventana de 3 s de golpes seguidos
+	r.tick(1.4)   # the first hit leaves the 3 s window of consecutive hits
 	assert_true(r.register_damage(36, 600), "76 dentro de la ventana de daño dispara")
 
 
@@ -189,15 +189,15 @@ func test_repel_shockwave_comes_after_a_warning() -> void:
 
 
 func test_roll_must_be_timed_for_the_shockwave() -> void:
-	# La onda sale repel_push_delay s después del rugido: la rodada solo la esquiva si sus i-frames
-	# (0.05-0.40 s) cubren ese instante.
+	# The wave leaves repel_push_delay s after the roar: the roll only dodges it if its i-frames
+	# (0.05-0.40 s) cover that instant.
 	var p := Player.new()
 	var s := Stamina.new()
 	p.stamina = s
 	assert_true(p.try_roll())
 	p._advance_roll(0.3)
 	assert_true(not p.apply_shove(Vector3(10.0, 0.0, 0.0), 0.5), "a 0.3 s de rodada: esquiva")
-	p._advance_roll(0.2)   # 0.5 s: fuera de los i-frames
+	p._advance_roll(0.2)   # 0.5 s: outside the i-frames
 	assert_true(p.apply_shove(Vector3(10.0, 0.0, 0.0), 0.5), "rodada tardía: la onda la empuja")
 	p.free()
 	s.free()

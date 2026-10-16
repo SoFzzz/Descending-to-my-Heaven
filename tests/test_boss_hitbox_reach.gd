@@ -1,6 +1,6 @@
 extends TestCase
-# Zonas de daño de los jefes: cubren lo que muestra el ataque y no dejan huecos pegado al cuerpo
-# (comprobado con la geometria de las escenas; el mapa con animacion esta en scripts/tools/boss_hitbox_map.gd).
+# Boss damage zones: they cover what the attack shows and leave no gaps next to the body
+# (checked against the scene geometry; the animated map is in scripts/tools/boss_hitbox_map.gd).
 
 const KAELEN_RADIUS := 0.3
 
@@ -9,7 +9,7 @@ func _boss(path: String) -> Node3D:
 	return (load(path) as PackedScene).instantiate() as Node3D
 
 
-## True si la capsula de Kaelen en `feet` (suelo, marco del jefe) toca la forma del hitbox `name`.
+## True if the capsule of Kaelen at `feet` (floor, boss frame) touches the shape of hitbox `name`.
 func _reaches(boss: Node3D, hitbox: String, feet: Vector3) -> bool:
 	var hb := boss.get_node(hitbox) as Node3D
 	var cs := hb.get_node(^"CollisionShape3D") as CollisionShape3D
@@ -51,7 +51,7 @@ func test_bonedragon_has_no_safe_spot_under_its_attacks() -> void:
 	var tail := load("res://resources/attacks/bonedragon_tail_sweep.tres") as BossAttack
 	assert_true(_reaches(boss, "StompHitbox", Vector3(0.0, 0.0, -stomp.max_range)), "pisoton alcanza su max_range")
 	assert_true(_reaches(boss, "StompHitbox", Vector3(2.7, 0.0, 0.0)), "y el costado")
-	# La cola empieza en el cuerpo (z 0) y llega al borde del aviso; el barrido de 360 grados cubre el resto.
+	# The tail starts at the body (z 0) and reaches the edge of the warning; the 360-degree sweep covers the rest.
 	assert_true(_reaches(boss, "TailSweepHitbox", Vector3(0.0, 0.0, 0.3)), "cola: pegada al cuerpo")
 	assert_true(_reaches(boss, "TailSweepHitbox", Vector3(0.0, 0.0, tail.max_range)), "cola: hasta su max_range")
 	var bite := boss.get_node(^"Model/metarig/Skeleton3D/SkullAttach/BiteHitbox/CollisionShape3D") as CollisionShape3D
@@ -68,7 +68,7 @@ func test_ghidorah_tail_has_no_hole_at_the_body() -> void:
 
 
 func test_bosses_are_tougher_than_before() -> void:
-	# Cifras de dificultad (ver docs/): mas vida, avisos y recuperaciones mas cortos, poco tiempo muerto.
+	# Difficulty figures (see docs/): more health, shorter warnings and recoveries, little dead time.
 	var expected := {
 		"res://scenes/bosses/boss_bonedragon.tscn": 500,
 		"res://scenes/bosses/boss_blackhorn.tscn": 625,

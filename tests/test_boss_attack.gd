@@ -1,5 +1,5 @@
 extends TestCase
-# BossAttack con avance (embestida / salto) y ventana de las hurtboxes expuestas (lógica pura de Boss).
+# BossAttack with advance (charge / pounce) and the exposed-hurtbox window (pure Boss logic).
 
 
 func test_advance_defaults_to_zero() -> void:
