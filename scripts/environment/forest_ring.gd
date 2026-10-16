@@ -1,13 +1,13 @@
 class_name ForestRing
 extends Node3D
-## Anillo de árboles lejanos del exterior (modelos del pack "ps1-style tree pack").
+## Ring of distant trees around the exterior (models from the "ps1-style tree pack").
 ##
-## Se construye al entrar al árbol de escena: un MultiMeshInstance3D por tipo de árbol (1 llamada de dibujo
-## cada uno) con posiciones, giros y escalas sacados de una semilla fija, así que el bosque es idéntico en
-## cada partida. No se guarda como malla en la escena porque un MultiMesh no se serializa bien si el
-## generador de niveles corre con --headless; la escena solo guarda estos parámetros.
-## El material (forest_tree.gdshader) oscurece los árboles y los funde hacia el color de la bruma con la
-## distancia y con la altura (los pies salen del mar de niebla).
+## Built when entering the scene tree: one MultiMeshInstance3D per tree type (1 draw call each) with
+## positions, rotations and scales drawn from a fixed seed, so the forest is identical in every run.
+## It is not stored as a mesh in the scene because a MultiMesh does not serialise well when the level
+## generator runs with --headless; the scene only stores these parameters.
+## The material (forest_tree.gdshader) darkens the trees and blends them into the haze colour with
+## distance and height (the trunks emerge from the fog sea).
 
 const SHADER := preload("res://shaders/forest_tree.gdshader")
 
@@ -16,14 +16,14 @@ const SHADER := preload("res://shaders/forest_tree.gdshader")
 @export var seed_value := 1
 @export var center := Vector3.ZERO
 @export var radius_range := Vector2(95.0, 130.0)
-@export var base_range := Vector2(-12.0, -2.0)      # y del pie del árbol
-@export var height_range := Vector2(30.0, 50.0)     # altura total en metros
+@export var base_range := Vector2(-12.0, -2.0)      # y of the tree base
+@export var height_range := Vector2(30.0, 50.0)     # total height in metres
 @export var fade_near := 10.0
 @export var fade_far := 230.0
 @export var haze_color := Color(0.42, 0.46, 0.55)
 @export var dark_mul := 0.38
-@export var base_haze := 0.6                          # bruma en el pie (0 = ninguna)
-## Si no está vacío, se colocan árboles solo en estas posiciones (con giro aleatorio) en vez del anillo.
+@export var base_haze := 0.6                          # haze at the base (0 = none)
+## If not empty, trees are placed only at these positions (with random yaw) instead of the ring.
 @export var fixed_positions: PackedVector3Array = []
 
 var multimeshes: Array[MultiMeshInstance3D] = []
@@ -34,8 +34,9 @@ func _ready() -> void:
 
 
 func build() -> void:
-	for m in multimeshes:
-		m.queue_free()
+	for old in multimeshes:
+		remove_child(old)   # leave the tree now so the new nodes can reuse the names
+		old.queue_free()
 	multimeshes.clear()
 	if tree_paths.is_empty() or count <= 0:
 		return
@@ -98,20 +99,20 @@ func build() -> void:
 		multimeshes.append(mmi)
 
 
-# Carga el modelo, y calcula la transformación que lo deja con altura 1, pie en y=0 y centrado en x/z
-# (el FBX trae su propia escala y rotación de eje en el nodo de la malla).
+## Loads a model and computes the transform that leaves it with height 1, base at y=0 and centred on
+## x/z (the FBX carries its own scale and axis rotation on the mesh node).
 func _load_kind(path: String) -> Dictionary:
 	var ps := load(path) as PackedScene
 	if ps == null:
 		return {}
 	var root := ps.instantiate()
 	var mi := _find_mesh(root)
-	if mi == null:
+	if mi == null or mi.mesh == null:
 		root.free()
 		return {}
 	var xf := Transform3D.IDENTITY
 	var n: Node = mi
-	while n != null and n != root:
+	while n is Node3D and n != root:
 		xf = (n as Node3D).transform * xf
 		n = n.get_parent()
 	var mesh := mi.mesh
@@ -127,11 +128,11 @@ func _load_kind(path: String) -> Dictionary:
 	return {"mesh": mesh, "norm": norm, "tex": tex}
 
 
-func _find_mesh(n: Node) -> MeshInstance3D:
-	if n is MeshInstance3D:
-		return n
-	for c in n.get_children():
-		var r := _find_mesh(c)
-		if r != null:
-			return r
+func _find_mesh(node: Node) -> MeshInstance3D:
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found := _find_mesh(child)
+		if found != null:
+			return found
 	return null
