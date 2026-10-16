@@ -59,6 +59,11 @@ func get_cover() -> float:
 	return _cover
 
 
+## true once a key press cut the title card's hold (it then fades out quickly).
+func card_skipped() -> bool:
+	return _skip
+
+
 func is_black() -> bool:
 	return _cover >= 0.999
 
