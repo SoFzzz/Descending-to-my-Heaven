@@ -53,8 +53,9 @@
 |---|---|
 | **T15** Verificación manual | Paso 3 de la Tarea 15: partida completa con F6/F5 (el commit ya está en `feat/aza`). Pendiente además: añadir `assets/credits.txt` al filtro de exportación de recursos no-recurso (T19). |
 | **T16** Revisión a mano | Ver en juego animaciones, espada del Knight, hoz del Straw Reaper y caída de TheWrapper. El Aura Battler no se usa: el élite de la arena 3 es el Straw Reaper (2026-10-15). |
-| **T17** Audio | Implementado (2026-10-15): `AudioManager`, música por escena, SFX de espada, pasos, monstruos, jefes, rayo de Ghidorah, antorchas y UI. Falta el Paso 4 (escucharlo con altavoces) y los sonidos faltantes (ver Tarea 17). Licencias "por confirmar": TomMusic y las pistas BGM salvo Blazing Honor. |
-| **T18–T19** Pulido, playtest, exportar Windows | Ver tareas 18 y 19. `docs/playtest.md` aún no existe. |
+| **T17** Audio | Completa (2026-10-15). Incluye música por escena (menú, exterior, jefes, final y créditos), SFX de espada, pasos de Kaelen y esbirros, monstruos, élites (el élite de la Plague usa el set del Knight), ataques de jefes (sin sonido en los avisos), rugidos de fase y muerte, rayo de Ghidorah, antorchas, ambiente de arenas, puerta de piedra, pantalla de muerte, sonidos de Kaelen (golpe, muerte, rodar, cansancio), voces tipo blip en los diálogos del final (pack de dmochas), UI y volumen configurable en Opciones. Licencias "por confirmar": TomMusic y las pistas BGM salvo Blazing Honor. |
+| **T18** Pulido y playtest | En curso (2026-10-15). Hecho: menú de opciones (controles reasignables, volumen por bus, sensibilidad, idioma español/inglés, mando de Xbox) y sonidos faltantes. En curso: pausa de impacto, parpadeo al recibir golpe, iluminación por arena y balance con F3. Pendiente: playtest con 2 personas externas, registrado en [playtest.md](playtest.md). |
+| **T19** Congelación, exportar Windows | Pendiente (ver tarea 19). |
 | **Integración** | `feat/aza` va 55 commits por delante de `main`. No hay merge ni PR a `main` todavía. |
 
 ### Riesgos y mejoras anotadas
@@ -69,7 +70,7 @@
 - **Otros:** `player_died` solo se emite en la primera muerte de cada instancia de Kaelen (funciona porque la recarga crea otra). Blackhorn: `idle`/`charge` y `walk`/`run` duran lo mismo (posibles clips duplicados; solo se usa `run`). El error `Parameter "material" is null` al cerrar corridas headless con Kaelen es del renderizador dummy y es inofensivo.
 - **Peso de Ghidorah:** `assets/bosses/ghidorah/ghidorah.glb` pesa ~26 MB con 9.1k triángulos; probablemente tiene texturas incrustadas sin reducir (la regla del proyecto es 256 px). Revisarlo antes de exportar (T19).
 - **Licencias por carpeta:** solo 4 carpetas de `assets/` tienen `license.txt` (`bosses/blackhorn`, `characters/elysia`, `characters/kaelen`, `minions/knight`). Faltan en `bosses/bonedragon`, `bosses/ghidorah`, `environment/island`, `environment/kit`, `environment/textures`, `minions/plague_arcanist`, `minions/skeleton`, `minions/straw_reaper`, `minions/thewrapper` y `weapons/greatsword`. El diseño (§13.1) pide uno por carpeta.
-- **Playtest:** `docs/playtest.md` aún no existe; lo piden T18 y T19.
+- **Playtest:** `docs/playtest.md` existe como plantilla (2026-10-15); falta rellenarla con las dos sesiones de la T18.
 - **Documentación:** la regla de escenas ("`<nivel>_gameplay.tscn` instancia el nivel como hijo `Level`") ya está corregida en §6.4 del documento de diseño. El texto original de las tareas 8 y 15 conserva la redacción antigua; lo vigente es lo que dice esta sección.
 
 ## Restricciones globales
@@ -580,8 +581,10 @@ Meta: se puede matar a un esbirro y morir ante él.
 - [x] **Paso 1:** copiados a `assets/audio/` (bgm, `sfx/{player,bosses,elites,ui,ambient}`; mp3/ogg nativos, wav para UI; 43 archivos en LFS). Bucle activado en las 6 BGM y la antorcha (solo `boss3_battlefield_loop.ogg` es un bucle limpio de origen).
 - [x] **Paso 2:** `AudioManager` (fundido, pool de reproductores 3D, ±10 % de tono, música −10 dB en pausa, sonidos de UI enganchados a todos los botones) y música por escena. Variantes con `AudioStreamRandomizer` en `resources/audio/`. Pasos cada 2 m (`FOOTSTEP_STRIDE`), piedra en arenas y tierra en el exterior. Antorchas: `AudioStreamPlayer3D` creado en tiempo de ejecución en cada luz de `Level/Torches` (máx. 8, 9 m). Exports nuevos: `Boss.sfx_hurt/phase2/death`, `BossAttack.sfx_active/sfx_hit`, `Minion.sfx_spawn`, `Player.sfx_swing/footstep_stream`, `LevelGameplay.level_music/footstep_stream/torch_loop`, `ArenaGameplay.boss_music`, `EndingDirector.music`. Pruebas: `tests/test_audio.gd`.
 - [x] **Paso 3:** `assets/credits.txt` con los packs de audio usados. Por confirmar: licencia de TomMusic y autor/licencia de las pistas BGM salvo Blazing Honor (que ya no se usa).
-- [ ] **Paso 4: Verificación manual** — cada escena suena con su pista; pasos, swings, impactos, rugidos y menús suenan; la pausa baja la música. *Sin hacer: solo se comprobó con el driver de audio Dummy (qué stream se asigna y cuándo). Revisar a oído: que los pasos no suenen dobles (si la muestra trae dos pasos, bajar `FOOTSTEP_STRIDE`), los cortes de bucle de los mp3 y los 5 sonidos de UI (elegidos por duración).*
+- [x] **Paso 4: Verificación manual** — cada escena suena con su pista; pasos, swings, impactos, rugidos y menús suenan; la pausa baja la música. *Hecho por el equipo jugando con altavoces el 2026-10-15.*
 - [x] **Paso 5: Commit** — commits `977ade5`…`0b5d9da` en `feat/aza`.
+
+**Cierre T17 (2026-10-15):** tarea completa. Los 5 pasos están hechos; la escucha con altavoces la hizo el equipo jugando. La lista de sonidos faltantes de abajo queda como referencia para la T18.
 
 **Asignación de SFX (2026-10-15):** rayo de Ghidorah `Dragon_FireBreath4` (sale de la boca) e impacto `Spell Impact 1`; rugido de fase 2 `Monster_Roar22/14/12` y muerte `Monster_LongGrowl3/1/4` (Bone Dragon / Blackhorn / Ghidorah); daño de jefes y esbirros `Monster_Grunt1/3/4/6/7/8` al azar; Knight élite `Dinosaur_Shriek1` / `Monster_Groan1` / `Leviathan_Growl1` (aparecer / daño / muerte); Straw Reaper `Monster_Growl19` / `Dinosaur_Shriek2` / `Monster_Rumble1`; espada `Sword Attack 1–3` (swing), `Sword Impact Hit 1–3` (impacto), `Sword Blocked 1–3` (metal); pasos `Stone Run 2` y `Dirt Run 3`; antorcha `Torch Loop`; UI del pack Be Not Afraid UI (`--Unholy`).
 
