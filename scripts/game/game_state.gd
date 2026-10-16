@@ -26,6 +26,18 @@ const PAUSE_MENU_SCENE := "res://scenes/ui/pause_menu.tscn"
 const DEATH_SCREEN_SCENE := "res://scenes/ui/death_screen.tscn"
 const DEBUG_OVERLAY_SCENE := "res://scenes/ui/debug_overlay.tscn"
 
+## Title card of each scene entered with a transition: [title key, subtitle key] (translations.csv).
+## Plain scenes (menu, credits) have none.
+const SCENE_CARDS := {
+	"res://scenes/levels/exterior_gameplay.tscn": ["TRANS_ZONE_0", "TRANS_SUB_0"],
+	"res://scenes/levels/arena_1_gameplay.tscn": ["TRANS_FLOOR_1", "TRANS_SUB_1"],
+	"res://scenes/levels/arena_2_gameplay.tscn": ["TRANS_FLOOR_2", "TRANS_SUB_2"],
+	"res://scenes/levels/arena_3_gameplay.tscn": ["TRANS_FLOOR_3", "TRANS_SUB_3"],
+}
+
+## Set by reload_current_arena for the duration of its _change_scene call.
+var _quick_next := false
+
 var current_level: int = 0   # 0, 1, 2
 var scene_index: int = 0     # 0 = exterior, 1..3 = arenas
 ## Last path requested from _change_scene (for tests and debugging).
@@ -95,7 +107,10 @@ func advance_level() -> void:
 func reload_current_arena() -> void:
 	var path := _current_scene_path()
 	var index := LEVEL_SCENES.find(path)
-	if _change_scene(path) and index >= 0:
+	_quick_next = true   # retrying: short fade, no title card
+	var changed := _change_scene(path)
+	_quick_next = false
+	if changed and index >= 0:
 		scene_index = index
 
 
@@ -112,6 +127,14 @@ func can_pause() -> bool:
 	if death_screen and death_screen.call(&"is_active"):
 		return false
 	return true
+
+
+## Translated [title, subtitle] of the card shown when entering `path`; [] if it has none.
+func card_for_scene(path: String) -> Array[String]:
+	var keys: Array = SCENE_CARDS.get(path, [])
+	if keys.is_empty():
+		return []
+	return [tr(keys[0]), tr(keys[1])]
 
 
 func _set_scene_index(index: int) -> void:
@@ -139,7 +162,11 @@ func _change_scene(path: String) -> bool:
 	if transition and transition.call(&"is_busy"):
 		return false
 	if transition:
-		transition.call(&"fade_to", path)
+		var card := card_for_scene(path)
+		if card.is_empty() or _quick_next:
+			transition.call(&"fade_to", path, "", "", _quick_next)
+		else:
+			transition.call(&"fade_to", path, card[0], card[1])
 	else:
 		_swap_scene(path)
 	return true
