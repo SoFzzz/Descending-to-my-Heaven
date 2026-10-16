@@ -113,6 +113,13 @@ static func warmup_samples() -> Array[Node3D]:
 	ring.light = false
 	ring.particles = false
 	out.append(ring)
+	var ripple := MagicArea.new()   # onda de impacto del rayo (BeamVfx)
+	ripple.kind = "ripple"
+	ripple.element = "fire"
+	ripple.radius = 1.0
+	ripple.light = false
+	ripple.particles = false
+	out.append(ripple)
 	var gust := StormFX.new()
 	gust.kind = "gust"
 	gust.style = "ash"
