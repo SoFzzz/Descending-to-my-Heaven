@@ -103,7 +103,7 @@ Se usa el Skin04 (panel y recuadro de selección, retocados de color).
 DungeonFont (tipografía de títulos y botones)
 Autor: 0x72 y vrtxrry (vrtxrry.itch.io/dungeonfont). Licencia: CC0, según los metadatos del archivo de la fuente (por confirmar en la página de origen).
 
-Fondo del menú principal (degradado oscuro; la silueta de la isla es el modelo de la isla del juego en negro)
+Fondo del menú principal (degradado violeta con resplandor; la silueta de la isla es el modelo de la isla del juego en negro) y deslizadores de volumen
 Dibujado por script en el proyecto (scripts/tools/gen_menu_bg.py).
 
 dragonhpbar (barra de vida de Bone Dragon y Ghidorah; se usa una copia reducida a la mitad, dragonhpbar_thin.png)

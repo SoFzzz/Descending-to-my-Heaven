@@ -436,11 +436,33 @@ Complejidad baja (≈ medio día). Se abre con `Esc` / `Start`:
 - Botones: **Continuar**, **Opciones** (si existe), **Volver al menú principal**, **Salir del juego**.
 - Libera el cursor del ratón al abrir y lo vuelve a capturar al cerrar.
 
-### 10.3 Menú de opciones (opcional)
-- Volumen: General, Música, Efectos (sliders conectados a los buses de audio).
-- Sensibilidad de cámara.
-- Pantalla completa / ventana.
-- Persistencia simple en `user://settings.cfg` (`ConfigFile`).
+### 10.3 Menú de opciones (implementado)
+Se abre desde el menú principal y desde la pausa (overlay `scenes/ui/options_menu.tscn`). Tres pestañas
+(LB / RB con el mando):
+- **Controles:** lista de acciones con su tecla/ratón y su botón de mando; se elige una fila, se pulsa
+  Enter / A / clic y luego la nueva tecla o botón (Esc o Back cancelan). Si la entrada ya la usaba otra
+  acción, intercambian. Los sticks (mover y cámara) son fijos. Sensibilidad de cámara (ratón y stick
+  derecho) y "Restaurar por defecto".
+- **Volumen:** General (Master), Música, Efectos y Interfaz, en vivo sobre los buses de audio.
+- **Idioma:** español / inglés (`localization/translations.csv`, claves `tr()`).
+Todo se guarda en `user://settings.cfg` (`ConfigFile`, autoload `UserSettings`) y se carga al iniciar.
+
+**Controles por defecto**
+
+| Acción | Teclado y ratón | Mando Xbox |
+|---|---|---|
+| Mover | W A S D | Stick izquierdo (LS) |
+| Cámara | Ratón | Stick derecho (RS), zona muerta 0,2, curva cuadrática |
+| Atacar | Clic izquierdo | RB y X |
+| Rodar | Espacio | B |
+| Fijar objetivo | Clic central / Q | R3 (clic del stick derecho) |
+| Pausa | Esc | Start |
+| Menús: moverse / aceptar / volver | Flechas / Enter / Esc | D-pad o stick izquierdo / A / B |
+| Opciones: cambiar de pestaña | — | LB / RB |
+| Depuración | F3 / F5 / F6 | — |
+
+Atacar también avanza los diálogos del final. Distribución tipo Dark Souls: RB ataque, B rodar,
+R3 fijar, sin botón de guardia (el juego no la tiene); LB, LT, RT, Y y A quedan libres.
 
 ### 10.4 Pantalla de muerte y créditos
 - Muerte: "HAS MUERTO" + fundido + reaparición automática (sin menú).
