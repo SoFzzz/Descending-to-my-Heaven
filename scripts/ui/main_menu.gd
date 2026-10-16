@@ -8,7 +8,7 @@ extends Node
 ## realce de botones al enfocar / pasar el ratón y salida con fundido a negro.
 
 const CREDITS_SCENE := "res://scenes/ui/credits.tscn"   # igual que GameState.CREDITS_SCENE
-const MENU_MUSIC := preload("res://assets/audio/bgm/menu_sadness_piano.mp3")
+const MENU_MUSIC := preload("res://assets/audio/bgm/menu_sadness_piano_loop.ogg")
 
 const INTRO_FADE := 0.7           # fundido desde negro
 const TITLE_DELAY := 0.25
