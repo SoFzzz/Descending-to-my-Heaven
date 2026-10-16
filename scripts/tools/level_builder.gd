@@ -103,11 +103,22 @@ const EXTERIOR := {
 	"path": [Vector2(0, 40), Vector2(0, 19), Vector2(-5.5, 13.5), Vector2(-5.5, 1), Vector2(0, -4.5),
 		Vector2(0, -22)],
 	"plaza": Rect2(-10, -31, 20, 9),                    # explanada ante la puerta (x, z, ancho, fondo)
-	# Templo: cuerpos apilados [ancho, alto, fondo]; la cara sur del primero está en temple_z.
-	"temple_z": -31.0, "temple": [Vector3(22, 12, 20), Vector3(16, 10, 15), Vector3(10, 8, 10)],
+	# Templo: `temple_z` = cara sur de la puerta; el resto del diseño está en `_temple`.
+	"temple_z": -31.0,
 	# Puerta = hueco con el contorno del arco del kit (arch.glb, estirado ×1.6 en vertical): ancho
 	# interior 3.2 m, alto 3.2 m (la puerta normal de §7.3 mide 3 × 2; esta es la del templo).
 	"door": Vector2(3.2, 3.2),
+	# Estanques que tapan los huecos de la isla [centro (x, z), semiejes (x, z), y del agua]: ojo izquierdo, ojo
+	# derecho y nariz de la calavera (medidos con rayos contra `island_main`; ver docs/problemas-mapa.md).
+	"ponds": [[Vector2(-17.5, -10.0), Vector2(11.0, 14.0), -0.3], [Vector2(27.5, -10.0), Vector2(9.5, 14.0), -0.3],
+		[Vector2(6.0, 6.5), Vector2(9.5, 9.5), 1.4]],
+	# Bosque lejano: anillos de siluetas (radio, base y, alto) y capas de niebla [y, densidad].
+	"forest_center": Vector3(5, 0, 0),
+	"forest_rings": [
+		{"count": 90, "radius": [95.0, 130.0], "base": [-12.0, -2.0], "height": [30.0, 50.0], "fade": [10.0, 230.0]},
+		{"count": 110, "radius": [140.0, 190.0], "base": [-24.0, -10.0], "height": [45.0, 75.0], "fade": [10.0, 230.0]},
+		{"count": 120, "radius": [200.0, 235.0], "base": [-34.0, -18.0], "height": [60.0, 100.0], "fade": [10.0, 230.0]}],
+	"mist_layers": [[-9.0, 0.45], [-22.0, 0.6], [-40.0, 0.85]],
 	"islets": [["islet_round", Vector3(-75, -18, -35), 30.0], ["islet_long", Vector3(65, -28, 15), 70.0],
 		["islet_l", Vector3(-60, -6, 55), 120.0], ["islet_small", Vector3(35, 6, -70), 0.0],
 		["islet_hole", Vector3(110, -35, -70), 200.0]],
@@ -143,6 +154,15 @@ func _build_exterior(cfg: Dictionary) -> void:
 	var env := (load(BASE_ENV) as Environment).duplicate() as Environment
 	env.fog_depth_begin = 25.0
 	env.fog_depth_end = cfg.fog_end
+	# El cielo bajo el horizonte era casi negro (se veía como un vacío): el "suelo" del cielo pasa a la
+	# bruma, que además cubren el mar de niebla (_mist) y las siluetas del bosque (_forest).
+	var sky := env.sky.duplicate() as Sky
+	var sky_mat := sky.sky_material.duplicate() as ProceduralSkyMaterial
+	sky_mat.ground_horizon_color = Color(0.42, 0.46, 0.55)
+	sky_mat.ground_bottom_color = Color(0.3, 0.33, 0.42)
+	sky_mat.ground_curve = 0.25
+	sky.sky_material = sky_mat
+	env.sky = sky
 	we.environment = env
 	_node(root, we, "WorldEnvironment")
 	var sun := DirectionalLight3D.new()
@@ -175,6 +195,9 @@ func _build_exterior(cfg: Dictionary) -> void:
 		isl.position = it[1]
 		isl.rotation_degrees.y = it[2]
 		_node(islets, isl, it[0].to_pascal_case())
+	_ponds(root, cfg)
+	_forest(root, cfg)
+	_mist(root, cfg)
 
 	for i in 3:
 		await physics_frame
@@ -183,64 +206,11 @@ func _build_exterior(cfg: Dictionary) -> void:
 		var r := root.get_world_3d().direct_space_state.intersect_ray(q)
 		return r.position.y if r else 0.0
 
-	# Templo: cuerpos apilados con textura de muro, puerta al sur, arco y pilares del kit.
-	var geo := _node(root, Node3D.new(), "Temple")
-	var wall_mat := _mat("concrete_512_indexed_dark", Color(0.45, 0.46, 0.5))
+	# Templo antiguo escalonado con puerta, columnas, alas con tejado y ruinas (ver _temple).
+	var geo := _temple(root, cfg, ground)
 	var tz: float = cfg.temple_z
-	var base_y: float = ground.call(0.0, tz - 1.0)
-	var comb := _combiner(geo, "Body")
-	var y := base_y - 8.0   # el primer cuerpo se hunde en el terreno
-	var parts: Array = cfg.temple
-	for i in parts.size():
-		var sz: Vector3 = parts[i]
-		var hh := sz.y + (8.0 if i == 0 else 0.0)
-		_box(comb, "Tier%d" % (i + 1), Vector3(sz.x, hh, sz.z), Vector3(0, y + hh / 2, tz - parts[0].z / 2), wall_mat)
-		y += hh
-	# Hueco de la puerta: tramo recto (0.2 m del arco × 1.6) + semielipse de a = 1.6, b = 1.8 × 1.6 m,
-	# igual al interior de arch.glb escalado; el arco queda pegado al hueco sin franja de muro.
+	var base_y: float = geo.get_meta("base_y")
 	var door: Vector2 = cfg.door
-	var arch_sy := 1.6
-	var leg := 0.2 * arch_sy
-	_box(comb, "Door", Vector3(door.x, leg, 3), Vector3(0, base_y + leg / 2, tz), wall_mat,
-		CSGShape3D.OPERATION_SUBTRACTION)
-	var dome := CSGCylinder3D.new()
-	dome.radius = door.x / 2
-	dome.height = 3
-	dome.sides = 24
-	dome.operation = CSGShape3D.OPERATION_SUBTRACTION
-	dome.material = wall_mat
-	dome.transform = Transform3D(Basis(Vector3.RIGHT, PI / 2).scaled_local(Vector3(1, 1, 1.8 * arch_sy / (door.x / 2))),
-		Vector3(0, base_y + leg, tz))
-	_node(comb, dome, "DoorTop")
-	var arch := _kit_mesh("arch")
-	arch.position = Vector3(0, base_y, tz + 0.5)
-	arch.scale = Vector3(1, arch_sy, 1)
-	_node(geo, arch, "Arch")
-	# Fachada con muros del kit sobre el cuerpo CSG: cada cuerpo del templo lleva piezas en su cara sur
-	# y en las laterales (a 5 cm del plano, sin colisión: la da el CSG). La cara de la puerta deja libre
-	# la columna central de 4 m hasta el alto del arco.
-	var facade := _node(geo, Node3D.new(), "Facade")
-	var fy := base_y
-	for i in parts.size():
-		var sz: Vector3 = parts[i]
-		var zf: float = tz - parts[0].z / 2 + sz.z / 2   # cara sur del cuerpo i
-		_facade(facade, "T%dS" % (i + 1), Vector3(0, fy, zf), 0.0, sz.x, sz.y, Vector2(4.0, 4.0) if i == 0 else Vector2.ZERO)
-		for sx in [1, -1]:
-			_facade(facade, "T%d%s" % [i + 1, "E" if sx == 1 else "W"], Vector3(sx * sz.x / 2, fy, zf - sz.z / 2),
-				sx * PI / 2, sz.z, sz.y, Vector2.ZERO)
-		fy += sz.y
-	for sx in [-1, 1]:
-		var pil := _kit_mesh("pillar")
-		pil.position = Vector3(sx * 4.0, base_y - 1.0, tz + 1.0)
-		pil.scale = Vector3(1.4, 1.6, 1.4)
-		_node(geo, pil, "DoorPillar%s" % ("W" if sx < 0 else "E"))
-	_area(root, "ExitTrigger", Vector3(door.x, 3, 1.5), Vector3(0, base_y + 1.5, tz + 0.5)).set_meta("doc", "Kaelen entra al templo → GameState.advance_level() (A)")
-	var torch := OmniLight3D.new()
-	torch.light_color = Color(1.0, 0.6, 0.3)
-	torch.light_energy = 2.0
-	torch.omni_range = 10
-	torch.position = Vector3(0, base_y + 5, tz + 3)
-	_node(geo, torch, "DoorLight")
 
 	# Sendero: polilínea `path` (x, z) de sur a norte con curvas a 45° (la isla "calavera" tiene un hueco
 	# en la nariz, x ∈ [-1, 11], z ∈ [2, 12], justo en la línea recta), pilares bajos cada 8 m a los
@@ -356,9 +326,350 @@ func _path_at(path: Array, dist: float) -> Array:
 	return [path[0], Vector2.RIGHT]
 
 
+# --- Entorno del exterior: estanques, bosque lejano y niebla ----------------------------------
+
+# Los ojos y la nariz de la calavera son huecos que atraviesan la isla (se veía el vacío). Cada estanque es
+# un plano de agua con shader (olas por vértice, ondas cuantizadas) a la altura del borde del hueco. No
+# lleva colisión ni suelo: Kaelen nunca llega (las paredes invisibles encierran el sendero y la explanada),
+# así que antes tampoco podía caer ahí; el agua solo tapa la vista.
+func _ponds(root: Node3D, cfg: Dictionary) -> void:
+	var ponds := _node(root, Node3D.new(), "Ponds") as Node3D
+	var shader := load("res://shaders/water_psx.gdshader") as Shader
+	for i in cfg.ponds.size():
+		var pd: Array = cfg.ponds[i]
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		var mesh := PlaneMesh.new()
+		mesh.size = Vector2(pd[1].x * 2.0, pd[1].y * 2.0)
+		mesh.subdivide_width = 10
+		mesh.subdivide_depth = 10
+		mesh.material = mat
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		mi.position = Vector3(pd[0].x, pd[2], pd[0].y)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.set_meta("pond_half", pd[1])
+		_node(ponds, mi, "Pond%d" % (i + 1))
+
+
+# Anillos de siluetas de árboles (tarjetas con shader, un MultiMesh por anillo = 1 llamada de dibujo cada
+# uno) alrededor de la isla y por debajo de su nivel, asomando del mar de niebla: el borde parece seguir
+# en un bosque enorme. La cámara de Kaelen ve hasta 300 m, así que los anillos quedan dentro de ese rango.
+func _forest(root: Node3D, cfg: Dictionary) -> void:
+	var forest := _node(root, Node3D.new(), "Forest") as Node3D
+	var shader := load("res://shaders/forest_silhouette.gdshader") as Shader
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7021
+	var center: Vector3 = cfg.forest_center
+	for i in cfg.forest_rings.size():
+		var rg: Dictionary = cfg.forest_rings[i]
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		mat.set_shader_parameter("fade_near", rg.fade[0])
+		mat.set_shader_parameter("fade_far", rg.fade[1])
+		# Una sola malla por anillo: cada árbol son 4 vértices en su pie (VERTEX), la esquina en UV y el
+		# tamaño (ancho, alto) en UV2; el shader los gira hacia la cámara. (Un MultiMesh no se guarda si el
+		# generador corre con --headless, por eso no se usa.)
+		var verts := PackedVector3Array()
+		var uvs := PackedVector2Array()
+		var sizes := PackedVector2Array()
+		var idx := PackedInt32Array()
+		for k in rg.count:
+			var ang: float = (k + rng.randf_range(-0.4, 0.4)) * TAU / rg.count
+			var rad: float = rng.randf_range(rg.radius[0], rg.radius[1])
+			var h: float = rng.randf_range(rg.height[0], rg.height[1])
+			var w: float = h * rng.randf_range(0.3, 0.5)
+			var pos: Vector3 = center + Vector3(cos(ang) * rad, rng.randf_range(rg.base[0], rg.base[1]), sin(ang) * rad)
+			var v0 := verts.size()
+			for c in [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]:
+				verts.append(pos)
+				uvs.append(c)
+				sizes.append(Vector2(w, h))
+			idx.append_array(PackedInt32Array([v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3]))
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = verts
+		arrays[Mesh.ARRAY_TEX_UV] = uvs
+		arrays[Mesh.ARRAY_TEX_UV2] = sizes
+		arrays[Mesh.ARRAY_INDEX] = idx
+		var mesh := ArrayMesh.new()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		mesh.surface_set_material(0, mat)
+		mesh.custom_aabb = AABB(center - Vector3(320, 90, 320), Vector3(640, 220, 640))
+		var mmi := MeshInstance3D.new()
+		mmi.mesh = mesh
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_node(forest, mmi, "Ring%d" % (i + 1))
+
+
+# Capas horizontales de niebla (mar de niebla) a distintas alturas bajo la isla.
+func _mist(root: Node3D, cfg: Dictionary) -> void:
+	var mist := _node(root, Node3D.new(), "Mist") as Node3D
+	var shader := load("res://shaders/mist_layer.gdshader") as Shader
+	var center: Vector3 = cfg.forest_center
+	for i in cfg.mist_layers.size():
+		var ml: Array = cfg.mist_layers[i]
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		mat.set_shader_parameter("density", ml[1])
+		var mesh := PlaneMesh.new()
+		mesh.size = Vector2(700, 700)
+		mesh.material = mat
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		mi.position = Vector3(center.x, ml[0], center.z)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_node(mist, mi, "Layer%d" % (i + 1))
+
+
+# --- Templo (fachada del exterior) ---------------------------------------------------------
+# Templo antiguo escalonado (referencia: torre de pisos decrecientes sobre una puerta con frontón, columnas
+# a los lados y alas con tejado inclinado). Solo cambia el diseño: mismas texturas del kit y de
+# `assets/environment/textures/`. La colisión la dan el cuerpo CSG (puerta + alas) y unas cajas
+# (columnas, estatuas, escombros); el resto son mallas sin colisión (inalcanzables o decorativas).
+# Medidas en metros; `f` = z de la cara sur de la puerta; el hueco de la puerta y el `ExitTrigger` no cambian.
+
+func _temple(root: Node3D, cfg: Dictionary, ground: Callable) -> Node3D:
+	var geo := _node(root, Node3D.new(), "Temple") as Node3D
+	var stone := _mat("concrete_512_indexed_dark", Color(0.45, 0.46, 0.5))
+	var trim := _mat("concrete_512_indexed", Color(0.58, 0.57, 0.55))
+	var moss := _mat("concrete_512_indexed_dark", Color(0.3, 0.5, 0.26))
+	var roof := _mat("TerraCotta_512", Color(0.5, 0.5, 0.3))
+	var wood := _mat("TerraCotta_512", Color(0.3, 0.19, 0.11))
+	var metal := _mat("metal_512", Color(0.55, 0.5, 0.45))
+	var f: float = cfg.temple_z
+	var b: float = ground.call(0.0, f - 1.0)
+	geo.set_meta("base_y", b)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20261015
+	var dec := _node(geo, Node3D.new(), "Decor") as Node3D
+
+	# Cuerpo con colisión: bloque de la puerta (12 × 10) y dos alas bajas; se hunde 8 m en el terreno.
+	var comb := _combiner(geo, "Body")
+	_box(comb, "Gate", Vector3(12, 17, 10), Vector3(0, b + 0.5, f - 5), stone)
+	for sx in [-1, 1]:
+		_box(comb, "Wing%s" % ("E" if sx > 0 else "W"), Vector3(14.5, 13, 7), Vector3(sx * 13.25, b - 1.5, f - 5), stone)
+	# Hueco de la puerta: tramo recto (0.2 m del arco × 1.6) + semielipse de a = 1.6, b = 1.8 × 1.6 m,
+	# igual al interior de arch.glb escalado; el arco queda pegado al hueco sin franja de muro.
+	var door: Vector2 = cfg.door
+	var arch_sy := 1.6
+	var leg := 0.2 * arch_sy
+	_box(comb, "Door", Vector3(door.x, leg, 3), Vector3(0, b + leg / 2, f), stone, CSGShape3D.OPERATION_SUBTRACTION)
+	var dome := CSGCylinder3D.new()
+	dome.radius = door.x / 2
+	dome.height = 3
+	dome.sides = 24
+	dome.operation = CSGShape3D.OPERATION_SUBTRACTION
+	dome.material = stone
+	dome.transform = Transform3D(Basis(Vector3.RIGHT, PI / 2).scaled_local(Vector3(1, 1, 1.8 * arch_sy / (door.x / 2))),
+		Vector3(0, b + leg, f))
+	_node(comb, dome, "DoorTop")
+
+	# Fachadas con muros del kit (piezas de ~4 m estiradas, a 5 cm del plano; sin colisión).
+	var facade := _node(geo, Node3D.new(), "Facade")
+	_facade(facade, "GateS", Vector3(0, b, f), 0.0, 12, 9, Vector2(4, 4), ["wall", "wall_ruin", "wall"])
+	for sx in [-1, 1]:
+		var tag := "E" if sx > 0 else "W"
+		_facade(facade, "Wing%sS" % tag, Vector3(sx * 13.25, b, f - 1.5), 0.0, 14.5, 5, Vector2.ZERO,
+			["wall", "wall_window", "wall", "wall_ruin"])
+		_facade(facade, "Wing%sEnd" % tag, Vector3(sx * 20.5, b, f - 5), sx * PI / 2, 7, 5, Vector2.ZERO, ["wall", "wall_ruin"])
+		_facade(facade, "Gate%sSide" % tag, Vector3(sx * 6.0, b + 5, f - 5.75), sx * PI / 2, 8.5, 4, Vector2.ZERO, ["wall"])
+		_facade(facade, "Wing%sBack" % tag, Vector3(sx * 13.25, b, f - 8.5), PI, 14.5, 5, Vector2.ZERO, ["wall"])
+
+	# Puerta: arco del kit pegado al hueco, jambas con columnas, dintel con friso de calaveras, frontón
+	# con tímpano y hojas de madera abiertas hacia dentro (el hueco queda libre: ExitTrigger y paso intactos).
+	var arch := _kit_mesh("arch")
+	arch.position = Vector3(0, b, f + 0.5)
+	arch.scale = Vector3(1, arch_sy, 1)
+	_node(geo, arch, "Arch")
+	var col_body := StaticBody3D.new()
+	col_body.collision_layer = 1
+	col_body.collision_mask = 0
+	_node(geo, col_body, "DecorCollision")
+	for sx in [-1, 1]:
+		for k in 2:
+			var tag2 := "%d%s" % [k, "E" if sx > 0 else "W"]
+			var px: float = sx * (2.5 + k * 1.3)
+			var sc := Vector3(0.8 - k * 0.12, 0.55 - k * 0.04, 0.8 - k * 0.12)
+			var pil := _kit_mesh("pillar")
+			pil.position = Vector3(px, b - 0.1, f + 1.3)
+			pil.scale = sc
+			_node(dec, pil, "Column" + tag2)
+			_frame_box(col_body, "Column" + tag2, Vector3(1.2 * sc.x, 8.0 * sc.y, 1.2 * sc.z),
+				Vector3(px, b + 4.0 * sc.y, f + 1.3))
+			_mbox(dec, "Base" + tag2, Vector3(1.2 * sc.x + 0.3, 0.4, 1.2 * sc.z + 0.3), Vector3(px, b + 0.15, f + 1.3), trim)
+	_mbox(dec, "Lintel", Vector3(9.2, 0.9, 1.9), Vector3(0, b + 4.75, f + 1.0), trim)
+	_mbox(dec, "LintelCap", Vector3(9.6, 0.3, 2.2), Vector3(0, b + 5.35, f + 1.05), stone)
+	for k in 3:
+		_piece(dec, "Frieze%d" % k, "wall_skull", Vector3((k - 1) * 2.9, b + 4.35, f + 2.05), 0.0, Vector3(0.6, 0.2, 1))
+	_mprism(dec, "Pediment", Vector3(9.6, 3.2, 1.6), Vector3(0, b + 5.5 + 1.6, f + 1.0), trim)
+	_mprism(dec, "Tympanum", Vector3(7.0, 2.2, 0.6), Vector3(0, b + 5.7 + 1.1, f + 2.0), stone)
+	_piece(dec, "TympanumSkull", "wall_skull", Vector3(0, b + 6.3, f + 2.35), 0.0, Vector3(0.55, 0.4, 1))
+	for ax in [-4.7, 4.7]:
+		_mcyl(dec, "Acroter%s" % ("E" if ax > 0 else "W"), 0.0, 0.4, 1.2, Vector3(ax, b + 5.95, f + 1.0), trim, 4)
+	_mcyl(dec, "AcroterTop", 0.0, 0.45, 1.5, Vector3(0, b + 8.95, f + 1.0), trim, 4)
+	for sx in [-1, 1]:   # hojas de madera entreabiertas hacia dentro, con refuerzos de metal
+		var leaf := Node3D.new()
+		leaf.position = Vector3(sx * door.x / 2, b + 0.1, f - 0.1)
+		leaf.rotation_degrees.y = -sx * 78.0
+		_node(dec, leaf, "Leaf%s" % ("E" if sx > 0 else "W"))
+		var lw := door.x / 2 - 0.05
+		_mbox(leaf, "Wood", Vector3(lw, 2.9, 0.16), Vector3(-sx * lw / 2, 1.45, 0), wood)
+		for k in 3:
+			_mbox(leaf, "Strap%d" % k, Vector3(lw + 0.04, 0.16, 0.2), Vector3(-sx * lw / 2, 0.5 + k * 1.0, 0), metal)
+	# Guardianes de piedra a los lados de la puerta (pedestal + cuerpo + cabeza) con colisión simple.
+	for sx in [-1, 1]:
+		var gx: float = sx * 7.6
+		_mbox(dec, "Pedestal%d" % sx, Vector3(2.0, 1.3, 2.0), Vector3(gx, b + 0.65, f + 2.2), trim)
+		_mbox(dec, "Beast%d" % sx, Vector3(1.2, 1.0, 1.9), Vector3(gx, b + 1.8, f + 2.2), stone)
+		_mbox(dec, "BeastHead%d" % sx, Vector3(0.9, 0.85, 0.9), Vector3(gx, b + 2.15, f + 3.0), stone)
+		_frame_box(col_body, "Guardian%d" % sx, Vector3(2.0, 2.4, 2.0), Vector3(gx, b + 1.2, f + 2.2))
+
+	# Torre escalonada: cuatro pisos decrecientes con cornisa, frontón en la cara sur y remate.
+	_mbox(dec, "GateCornice", Vector3(13.6, 0.6, 11.4), Vector3(0, b + 9.3, f - 5), trim)
+	var tiers := [Vector3(10.4, 5.0, 8.4), Vector3(8.4, 4.6, 7.0), Vector3(6.6, 4.2, 5.8), Vector3(4.8, 3.6, 4.4)]
+	var ty := b + 9.6
+	var zc := f - 5.0
+	for i in tiers.size():
+		var t: Vector3 = tiers[i]
+		_mbox(dec, "Tier%d" % (i + 1), t, Vector3(0, ty + t.y / 2, zc), stone)
+		_facade(dec, "Tier%dS" % (i + 1), Vector3(0, ty, zc + t.z / 2), 0.0, t.x, t.y, Vector2.ZERO,
+			["wall_window", "wall"] if i % 2 == 0 else ["wall", "wall_skull", "wall"])
+		_mbox(dec, "Cornice%d" % (i + 1), Vector3(t.x + 1.2, 0.5, t.z + 1.2), Vector3(0, ty + t.y + 0.25, zc), trim)
+		_mprism(dec, "TierPediment%d" % (i + 1), Vector3(t.x * 0.62, t.y * 0.55, 0.9),
+			Vector3(0, ty + t.y + 0.5 + t.y * 0.275, zc + t.z / 2 + 0.45), trim)
+		for sx in [-1, 1]:
+			for sz in [-1, 1]:
+				_mcyl(dec, "Acroter%d_%d_%d" % [i, sx, sz], 0.0, 0.32, 1.0,
+					Vector3(sx * (t.x / 2 + 0.4), ty + t.y + 1.0, zc + sz * (t.z / 2 + 0.4)), trim, 4)
+		ty += t.y + 0.5
+	_mcyl(dec, "Finial", 0.0, 1.7, 4.5, Vector3(0, ty + 2.25, zc), trim, 4)
+	_mcyl(dec, "FinialSpire", 0.0, 0.18, 2.2, Vector3(0, ty + 5.6, zc), metal, 6)
+
+	# Alas con tejado inclinado a dos aguas (caballete a lo largo de X), tejas rotas y musgo.
+	for sx in [-1, 1]:
+		var tag := "E" if sx > 0 else "W"
+		_mprism(dec, "Roof" + tag, Vector3(9.0, 3.0, 15.4), Vector3(sx * 13.25, b + 6.5, f - 5), roof, Vector3(0, 90, 0))
+		_mbox(dec, "Eave" + tag, Vector3(15.0, 0.4, 0.6), Vector3(sx * 13.25, b + 5.1, f - 1.0), trim)
+		for k in 3:
+			var south := k % 2 == 0
+			_mbox(dec, "RoofMoss%s%d" % [tag, k], Vector3(2.0 + rng.randf() * 2.0, 0.08, 1.4),
+				Vector3(sx * (9.0 + rng.randf() * 10.0), b + 6.56, f - 5 + (2.25 if south else -2.25)),
+				moss, Vector3(33.7 if south else -33.7, 0, 0))
+		for k in 5:   # tejas caídas sobre el caballete
+			_mbox(dec, "Tile%s%d" % [tag, k], Vector3(0.7, 0.12, 0.5),
+				Vector3(sx * (8.0 + rng.randf() * 11.0), b + 8.1, f - 5 + rng.randf_range(-0.6, 0.6)), roof,
+				Vector3(rng.randf_range(-20, 20), rng.randf() * 180.0, rng.randf_range(-20, 20)))
+
+	# Árbol grande con raíces contra el ala oeste (como la referencia), arbustos y escombros.
+	var tree := Vector3(-11.0, b, f - 3.0)
+	_mcyl(dec, "Trunk", 0.9, 1.5, 15.0, tree + Vector3(0, 7.2, 0), wood, 8)
+	for k in 6:
+		var a := k * TAU / 6 + 0.3
+		var root_len := 3.0 + rng.randf() * 2.0
+		var rt := _mcyl(dec, "TreeRoot%d" % k, 0.12, 0.5, root_len, Vector3.ZERO, wood, 5)
+		rt.basis = Basis(Vector3(-sin(a), 0, cos(a)), deg_to_rad(62.0))
+		rt.position = tree + Vector3(cos(a), 0.0, sin(a)) * (1.2 + root_len * 0.38) + Vector3(0, 0.3, 0)
+	for k in 4:
+		var a2 := k * TAU / 4 + 0.6
+		_msphere(dec, "Canopy%d" % k, 5.5, tree + Vector3(cos(a2) * 4.0, 14.5 + (k % 2) * 1.6, sin(a2) * 4.0),
+			moss, Vector3(1, 0.55, 1))
+	_msphere(dec, "CanopyTop", 6.0, tree + Vector3(0, 16.5, 0), moss, Vector3(1, 0.5, 1))
+	for k in 12:
+		var bx := rng.randf_range(-19.0, 19.0)
+		if absf(bx) < 5.0:
+			bx = signf(bx + 0.01) * (5.0 + rng.randf() * 3.0)
+		var bz := f + (rng.randf_range(0.2, 1.6) if absf(bx) < 8.0 else rng.randf_range(-1.2, 0.8))
+		if bx > -13.0 and bx < -9.0:
+			continue
+		_msphere(dec, "Bush%d" % k, 0.5 + rng.randf() * 0.5, Vector3(bx, b + 0.3, bz), moss, Vector3(1.3, 0.8, 1.1))
+	for k in 9:   # piedras caídas con colisión (cajas inclinadas), repartidas por la explanada
+		var rx := rng.randf_range(-9.0, 9.0)
+		if absf(rx) < 2.5:
+			rx += signf(rx + 0.01) * 3.0
+		var rz := f + rng.randf_range(2.8, 8.0)
+		var sz := Vector3(rng.randf_range(0.6, 1.5), rng.randf_range(0.35, 0.8), rng.randf_range(0.6, 1.3))
+		var gy: float = ground.call(rx, rz)
+		var rot := Vector3(rng.randf_range(-10, 10), rng.randf() * 180.0, rng.randf_range(-10, 10))
+		_mbox(dec, "Rubble%d" % k, sz, Vector3(rx, gy + sz.y * 0.3, rz), stone if k % 3 else moss, rot)
+		var cs := CollisionShape3D.new()
+		var bs := BoxShape3D.new()
+		bs.size = sz * 0.9
+		cs.shape = bs
+		cs.transform = Transform3D(Basis.from_euler(rot * PI / 180.0), Vector3(rx, gy + sz.y * 0.3, rz))
+		_node(col_body, cs, "Rubble%d" % k)
+	for sx in [-1, 1]:   # columna caída del kit junto a cada lado de la explanada
+		var pc := _kit_mesh("pillar_collapsed")
+		pc.position = Vector3(sx * 7.6, ground.call(sx * 7.6, f + 6.5) - 0.2, f + 6.5)
+		pc.rotation_degrees.y = sx * 35.0
+		pc.scale = Vector3(1.2, 1.0, 1.2)
+		_node(dec, pc, "FallenPillar%d" % sx)
+
+	_area(root, "ExitTrigger", Vector3(door.x, 3, 1.5), Vector3(0, b + 1.5, f + 0.5)).set_meta("doc", "Kaelen entra al templo → GameState.advance_level() (A)")
+	var torch := OmniLight3D.new()
+	torch.light_color = Color(1.0, 0.6, 0.3)
+	torch.light_energy = 2.0
+	torch.omni_range = 10
+	torch.position = Vector3(0, b + 5, f + 3)
+	_node(geo, torch, "DoorLight")
+	return geo
+
+
+func _mbox(parent: Node, name: String, size: Vector3, pos: Vector3, mat: Material, rot_deg := Vector3.ZERO) -> MeshInstance3D:
+	var m := BoxMesh.new()
+	m.size = size
+	m.material = mat
+	return _mesh_node(parent, name, m, pos, rot_deg)
+
+
+# Prisma triangular: la base (x) y la altura (y) son el triángulo; `size.z` es la longitud de la extrusión.
+func _mprism(parent: Node, name: String, size: Vector3, pos: Vector3, mat: Material, rot_deg := Vector3.ZERO) -> MeshInstance3D:
+	var m := PrismMesh.new()
+	m.size = size
+	m.material = mat
+	return _mesh_node(parent, name, m, pos, rot_deg)
+
+
+func _mcyl(parent: Node, name: String, r_top: float, r_bottom: float, height: float, pos: Vector3, mat: Material,
+		sides := 8) -> MeshInstance3D:
+	var m := CylinderMesh.new()
+	m.top_radius = r_top
+	m.bottom_radius = r_bottom
+	m.height = height
+	m.radial_segments = sides
+	m.rings = 1
+	m.material = mat
+	var mi := _mesh_node(parent, name, m, pos, Vector3.ZERO)
+	if sides == 4:
+		mi.rotation_degrees.y = 45.0
+	return mi
+
+
+func _msphere(parent: Node, name: String, radius: float, pos: Vector3, mat: Material, scl := Vector3.ONE) -> MeshInstance3D:
+	var m := SphereMesh.new()
+	m.radius = radius
+	m.height = radius * 2.0
+	m.radial_segments = 8
+	m.rings = 4
+	m.material = mat
+	var mi := _mesh_node(parent, name, m, pos, Vector3.ZERO)
+	mi.scale = scl
+	return mi
+
+
+func _mesh_node(parent: Node, name: String, mesh: Mesh, pos: Vector3, rot_deg: Vector3) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.position = pos
+	mi.rotation_degrees = rot_deg
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return _node(parent, mi, name) as MeshInstance3D
+
+
 # Cara de muro del kit: `pos` = centro inferior de la cara, `yaw` hace que +Z mire hacia fuera. Piezas de
 # ~4 m estiradas para llenar ancho × alto; `gap` (ancho, alto) deja un hueco centrado abajo (la puerta).
-func _facade(parent: Node, name: String, pos: Vector3, yaw: float, width: float, height: float, gap: Vector2) -> void:
+func _facade(parent: Node, name: String, pos: Vector3, yaw: float, width: float, height: float, gap: Vector2,
+		items: Array = ["wall"]) -> void:
 	var basis := Basis(Vector3.UP, yaw)
 	var rows := maxi(1, ceili(height / 4.0))
 	var sy := height / (4.0 * rows)
@@ -376,7 +687,7 @@ func _facade(parent: Node, name: String, pos: Vector3, yaw: float, width: float,
 			for c in cols:
 				var tc := t0 + (c + 0.5) * (t1 - t0) / cols
 				n += 1
-				_piece(parent, "%s_%d" % [name, n], "wall",
+				_piece(parent, "%s_%d" % [name, n], items[(n - 1) % items.size()],
 					pos + basis * Vector3(tc, r * 4.0 * sy, 1.05), yaw, Vector3(sx, sy, 1))
 
 
