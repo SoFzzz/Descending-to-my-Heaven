@@ -1,11 +1,11 @@
 class_name Hud
 extends CanvasLayer
-## Kaelen's HUD (spec §9): the Pulsing Heart panel at the top left (health = red bar with a beating
+## Kaelen's HUD (spec 9): the Pulsing Heart panel at the top left (health = red bar with a beating
 ## heart, stamina = the blue bar of the same frame), boss bar at the bottom (hidden until show_boss)
 ## and a reticle over the locked target's LockOnPoint.
 ## It is a child of kaelen.tscn, so it exists in any playable scene.
 
-const MARKER_SIZE := 24.0   # reticle sprite size (03_reticle_thin.png), in pixels of the 640×360 view
+const MARKER_SIZE := 24.0   # reticle sprite size (03_reticle_thin.png), in pixels of the 640x360 view
 const BOSS_NAME_HEIGHT := 14.0
 const BOSS_BAR_WIDTH := 304.0   # same length as the original plain bar
 const BOSS_BAR_HEIGHT := 32.0   # name row + bar, matches the BossBar control height
