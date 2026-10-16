@@ -12,6 +12,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/ambient/arena_3_ambience.mp3" id="10_ambience"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/ambient/stone_door.mp3" id="11_gate"]
 [ext_resource type="AudioStream" path="res://assets/audio/bgm/ending_celtic_melancholy.mp3" id="10_ending"]
+[ext_resource type="PackedScene" path="res://scenes/props/ending_room.tscn" id="12_room"]
 
 [node name="Arena3Gameplay" type="Node3D"]
 script = ExtResource("1_gp")
@@ -37,3 +38,8 @@ music = ExtResource("10_ending")
 ; quedaba como cámara activa. La cámara de Kaelen debe ser la actual durante el combate.
 [node name="Camera3D" parent="Kaelen/CameraRig/SpringArm3D" index="0"]
 current = true
+
+; Sala de Elysia rota: hueco al exterior con la isla cayendo (se activa al empezar el final). Su origen
+; es el centro del muro norte de la sala de Elysia (level_builder: z = -(24 + 1) - 20 - 12 - 0.5).
+[node name="EndingRoom" parent="." instance=ExtResource("12_room")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -57.5)

@@ -136,6 +136,7 @@ func play() -> void:
 	if game_state:
 		game_state.set(&"cutscene_active", true)
 	_start_music()
+	_start_fall()
 	var player := _player()
 	if player == null:
 		push_warning("EndingDirector: no hay Kaelen; se salta el final")
@@ -283,3 +284,9 @@ func _finish() -> void:
 		game_state.advance_level()
 	else:
 		push_warning("EndingDirector: no hay GameState; no se puede avanzar al final")
+
+
+## Avisa a la sala de Elysia rota (grupo `ending_room`) de que empieza el final: la isla cae.
+func _start_fall() -> void:
+	if is_inside_tree():
+		get_tree().call_group(EndingRoom.GROUP, &"start_fall")
