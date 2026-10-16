@@ -99,7 +99,7 @@ const FOOTSTEP_MIN_SPEED := 0.5
 const FOOTSTEP_VOLUME_DB := -4.0
 
 # Ground speed at which each clip looks right without sliding (measured by eye with captures; see
-# docs/asset-status.md). Above RUN_ANIM_SPEED the `run` clip is sped up.
+# AGENTS.md, section 15). Above RUN_ANIM_SPEED the `run` clip is sped up.
 const WALK_ANIM_SPEED := 1.4
 const RUN_ANIM_SPEED := 4.2
 

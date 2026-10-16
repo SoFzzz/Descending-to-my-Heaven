@@ -108,7 +108,7 @@ const EXTERIOR := {
 	# width 3.2 m, height 3.2 m (the normal door of section 7.3 is 3 x 2; this is the temple one).
 	"door": Vector2(3.2, 3.2),
 	# Ponds that cover the holes of the island [center (x, z), half-axes (x, z), water y]: left eye, right
-	# eye and nose of the skull (measured with rays against `island_main`; see docs/problemas-mapa.md).
+	# eye and nose of the skull (measured with rays against `island_main`; see AGENTS.md, sections 1.2 and 9.1).
 	"ponds": [[Vector2(-17.5, -10.0), Vector2(11.0, 14.0), -0.3], [Vector2(27.5, -10.0), Vector2(9.5, 14.0), -0.3],
 		[Vector2(6.0, 6.5), Vector2(9.5, 9.5), 1.4]],
 	# Distant forest: rings of silhouettes (radius, base y, height) and mist layers [y, density].
