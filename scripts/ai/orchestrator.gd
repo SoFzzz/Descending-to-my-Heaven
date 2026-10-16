@@ -272,8 +272,8 @@ static func _toggle(sig: Signal, callable: Callable, connect_it: bool) -> void:
 		sig.disconnect(callable)
 
 
-func _on_player_damaged(amount: int, _current: int, _max_value: int) -> void:
-	model.on_player_damaged(amount)
+func _on_player_damaged(amount: int, _current: int, max_value: int) -> void:
+	model.on_player_damaged(roundi(amount * OrchestratorModel.hp_damage_scale(max_value)))
 	_time_since_hit = 0.0
 
 

@@ -80,6 +80,15 @@ func reset() -> void:
 	_wave_out = false
 
 
+## Kaelen pierde vida máxima tras cada jefe (100 / 70 / 40): el mismo golpe pesa más en la arena 3 y
+## la intensidad nunca llegaba al PICO. El daño se escala a medias hacia una vida de 100 (x1,0 / x1,2 /
+## x1,8), así el golpe cuenta como un tramo de vida parecido en las tres arenas sin igualarlo del todo.
+static func hp_damage_scale(max_hp: int) -> float:
+	if max_hp <= 0:
+		return 1.0
+	return clampf(lerpf(1.0, 100.0 / float(max_hp), 0.5), 1.0, 2.0)
+
+
 func on_player_damaged(amount: int) -> void:
 	intensity = clampf(intensity + amount * DAMAGE_FACTOR, 0.0, 100.0)
 
