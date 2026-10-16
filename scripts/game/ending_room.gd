@@ -35,9 +35,13 @@ const WIND_STREAM := "res://assets/audio/sfx/ambient/wind_fall.mp3"
 const WIND_BUS := &"SFX"
 const WIND_VOLUME_DB := -9.0
 const WIND_SILENT_DB := -60.0
-## Racha de aire (StormFX gust): semiancho (m) y fondo (m) por delante del hueco.
-const GUST_RADIUS := 11.0
+## Racha de aire (StormFX gust): semiancho (m) y fondo (m). Solo se ve FUERA, a través del hueco: su
+## centro está a GUST_Z (local; el muro norte es z = 0) y toda su extensión queda por detrás de
+## GUST_MAX_Z, más lejos que la barrera de seguridad. Nada de viento visible dentro de la sala.
+const GUST_RADIUS := 14.0
 const GUST_DEPTH := 12.0
+const GUST_Z := -34.0
+const GUST_MAX_Z := -6.0
 
 var falling := false
 var intensity := 0.0   ## 0 = hueco quieto con deriva lenta, 1 = caída a toda velocidad
@@ -191,7 +195,7 @@ func _exit_tree() -> void:
 
 # --- Construcción ---------------------------------------------------------------------------
 
-## Cielo de fondo: degradado con resplandor cálido en el horizonte, sin niebla (la niebla de la
+## Cielo de fondo: atardecer apagado y frío (melancólico), con un resplandor tenue en el horizonte, sin niebla (la niebla de la
 ## arena lo apagaría a esa distancia).
 func _build_backdrop() -> void:
 	var sh := Shader.new()
@@ -201,12 +205,12 @@ varying vec3 wpos;
 void vertex() { wpos = VERTEX; }
 void fragment() {
 	float t = clamp(wpos.y / 120.0 * 0.5 + 0.5, 0.0, 1.0);
-	vec3 low = vec3(0.86, 0.58, 0.46);
-	vec3 mid = vec3(0.46, 0.52, 0.72);
-	vec3 high = vec3(0.10, 0.13, 0.30);
+	vec3 low = vec3(0.60, 0.50, 0.54);
+	vec3 mid = vec3(0.36, 0.43, 0.58);
+	vec3 high = vec3(0.08, 0.10, 0.23);
 	vec3 c = t < 0.5 ? mix(low, mid, smoothstep(0.2, 0.5, t)) : mix(mid, high, smoothstep(0.5, 0.95, t));
 	float glow = exp(-length(vec2(wpos.x + 40.0, (wpos.y - 8.0) * 1.5)) / 45.0);
-	ALBEDO = c + vec3(1.0, 0.85, 0.6) * glow * 0.5;
+	ALBEDO = c + vec3(0.85, 0.75, 0.72) * glow * 0.28;
 }
 """
 	var m := ShaderMaterial.new()
@@ -262,7 +266,7 @@ func _build_clouds() -> void:
 	_clouds.name = "Clouds"
 	var q := QuadMesh.new()
 	q.size = Vector2(12, 22)
-	q.material = _particle_material(Color(0.9, 0.9, 0.97, 0.85), _soft_puff_texture())
+	q.material = _particle_material(Color(0.7, 0.74, 0.84, 0.8), _soft_puff_texture())
 	_clouds.mesh = q
 	_clouds.amount = 64
 	_clouds.lifetime = 3.4
@@ -284,7 +288,7 @@ func _build_clouds() -> void:
 
 
 ## Rachas de viento (Storm & Wind 3D Free, StormFX "gust" de aire): líneas y motas que suben a toda
-## velocidad por delante del hueco. Empieza apagado y se forma durante RAMP_TIME al empezar la caída.
+## velocidad lejos, por detrás del hueco (visibles solo a través de él). Empieza apagado y se forma durante RAMP_TIME al empezar la caída.
 func _build_streaks() -> void:
 	StormFX.default_transparency = 1   # tramado (dither): casa con el aspecto PSX
 	_streaks = StormFX.new()
@@ -299,7 +303,7 @@ func _build_streaks() -> void:
 	_streaks.interval = 0.0
 	_streaks.seed = 3.0
 	_streaks.set_param(&"thickness", 1.6)
-	_streaks.position = Vector3(0, 2, -4)
+	_streaks.position = Vector3(0, 2, GUST_Z)
 	_streaks.rotation_degrees = Vector3(90, 0, 0)   # sopla hacia -Z local = hacia arriba
 	_streaks.visible = false
 	_streaks.set_process(false)   # nada que dibujar ni actualizar hasta que empiece la caída
@@ -493,15 +497,15 @@ func _build_dust() -> void:
 	_dust.name = "CeilingDust"
 	var dm := BoxMesh.new()
 	dm.size = Vector3(0.06, 0.06, 0.06)
-	dm.material = _flat_material(Color(0.62, 0.58, 0.5))
+	dm.material = _flat_material(Color(0.42, 0.42, 0.45))
 	_dust.mesh = dm
 	_dust.emitting = false
-	_dust.amount = 40
+	_dust.amount = 14
 	_dust.lifetime = 3.0
 	_dust.local_coords = true
 	_dust.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-	_dust.emission_box_extents = Vector3(4.5, 0.1, 5.5)
-	_dust.position = Vector3(0.0, 5.9, 4.5)
+	_dust.emission_box_extents = Vector3(4.0, 0.1, 2.5)   # solo cerca del hueco, sutil
+	_dust.position = Vector3(0.0, 5.9, 2.8)
 	_dust.direction = Vector3.DOWN
 	_dust.spread = 15.0
 	_dust.gravity = Vector3(0, -1.2, 0)
@@ -540,12 +544,12 @@ func _flat_material(c: Color) -> StandardMaterial3D:
 	return m
 
 
-## Luz fría de cielo que entra por el hueco y contrasta con la luz cálida del altar.
+## Luz fría y tenue de cielo que entra por el hueco; contrasta con la luz cálida del altar sin apagar la escena.
 func _build_light() -> void:
 	var l := OmniLight3D.new()
 	l.name = "SkyLight"
-	l.light_color = Color(0.65, 0.75, 1.0)
-	l.light_energy = 1.4
+	l.light_color = Color(0.6, 0.7, 0.92)
+	l.light_energy = 1.15
 	l.omni_range = 14.0
 	l.position = Vector3(0.3, 3.6, -1.5)
 	add_child(l)

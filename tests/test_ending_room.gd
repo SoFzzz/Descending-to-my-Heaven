@@ -82,3 +82,42 @@ func test_gameplay_places_room_at_north_wall() -> void:
 	assert_almost(room.position.z, wall.position.z, 0.01, "origen en el centro del muro norte")
 	assert_almost(room.position.x, 0.0, 0.01, "centrada")
 	gp.free()
+
+
+func test_wind_effect_only_outside_the_room() -> void:
+	var room := (load("res://scenes/props/ending_room.tscn") as PackedScene).instantiate()
+	room._ready()
+	var streaks := room.get_node(^"Outside/WindStreaks") as Node3D
+	assert_true(streaks != null, "las rachas existen, dentro de Outside")
+	if streaks:
+		# Toda su extensión (Z local; el muro norte es z = 0 y +Z entra a la sala) queda tras el hueco.
+		var extent: float = Room.GUST_DEPTH + Room.GUST_RADIUS
+		assert_true(streaks.position.z + extent < Room.GUST_MAX_Z, "viento por detrás de la barrera")
+	# Ninguna partícula visible de aire dentro de la sala: lo único que cae dentro es polvo y guijarros.
+	var inside := ["CeilingDust", "FallingPebbles"]
+	for n in room.get_children():
+		if n is CPUParticles3D or n is StormFX:
+			assert_true(String(n.name) in inside, "partículas dentro de la sala: %s" % n.name)
+	var dust := room.get_node(^"CeilingDust") as CPUParticles3D
+	assert_true(dust.amount <= 20, "polvo sutil")
+	room.free()
+
+
+func test_stone_not_gold() -> void:
+	var level := (load("res://scenes/levels/arena_3.tscn") as PackedScene).instantiate()
+	var wall := level.get_node(^"Geometry/EndingHall/RoomWallN") as CSGBox3D
+	var mat := wall.material as BaseMaterial3D
+	assert_true(mat != null and mat.albedo_texture != null
+			and not mat.albedo_texture.resource_path.contains("gold512"), "muro norte de piedra")
+	level.free()
+	var room := (load("res://scenes/props/ending_room.tscn") as PackedScene).instantiate()
+	room._ready()
+	var bad := 0
+	for mi in room.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		var bm := m.mesh.surface_get_material(0) if m.mesh and m.mesh.get_surface_count() > 0 else null
+		var tex := (bm as BaseMaterial3D).albedo_texture if bm is BaseMaterial3D else null
+		if tex and tex.resource_path.contains("gold512"):
+			bad += 1
+	assert_eq(bad, 0, "ningún bloque usa gold512")
+	room.free()
