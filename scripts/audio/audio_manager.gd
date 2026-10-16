@@ -1,12 +1,12 @@
 extends Node
-## Autoload "AudioManager" (Tarea 17): música con fundido, efectos 3D con variación de tono, sonidos
-## de interfaz y atenuación de la música durante la pausa.
+## Autoload "AudioManager": music with crossfades, 3D sound effects with pitch variation, UI sounds
+## and music attenuation while paused.
 ##
-## Buses (default_bus_layout.tres): Master → Music / SFX / UI. Sigue procesando en pausa
-## (PROCESS_MODE_ALWAYS): la música baja PAUSE_MUSIC_DROP_DB y los efectos 3D en curso se congelan.
-## Cualquier cambio de foco de la interfaz (flechas, D-pad, stick, Tab) suena como "mover" y los
-## botones (BaseButton) que entran al árbol reciben solos los sonidos de confirmar/volver;
-## `set_meta(&"ui_sound", &"back")` o `&"none"` en un botón cambia o anula el de pulsar.
+## Buses (default_bus_layout.tres): Master -> Music / SFX / UI. It keeps processing while paused
+## (PROCESS_MODE_ALWAYS): the music drops by PAUSE_MUSIC_DROP_DB and running 3D effects freeze.
+## Any UI focus change (arrows, D-pad, stick, Tab) plays the "move" sound, and buttons (BaseButton)
+## entering the tree get the confirm/back sounds automatically; `set_meta(&"ui_sound", &"back")` or
+## `&"none"` on a button changes or mutes its press sound.
 
 const BUS_MUSIC := &"Music"
 const BUS_SFX := &"SFX"
@@ -14,18 +14,18 @@ const BUS_UI := &"UI"
 
 const DEFAULT_PITCH_VARIATION := 0.1   # ±10 % (spec §11)
 const SFX_POOL_SIZE := 12
-const SFX_UNIT_SIZE := 8.0             # m a los que un efecto 3D suena a volumen pleno
+const SFX_UNIT_SIZE := 8.0             # metres at which a 3D effect plays at full volume
 const SILENT_DB := -60.0
 const PAUSE_MUSIC_DROP_DB := -10.0
-const PAUSE_FADE_SPEED := 60.0         # dB/s con que la música baja o sube al pausar
-## Un botón no suena al recibir foco hasta pasado este tiempo desde que entró al árbol (el foco inicial
-## de un menú no debe sonar).
+const PAUSE_FADE_SPEED := 60.0         # dB/s at which the music drops or recovers when pausing
+## A button does not sound on focus until this long after entering the tree (a menu's initial focus
+## must stay silent).
 const UI_FOCUS_GRACE_MS := 300
-## Tras confirmar/volver no suena "mover" durante este tiempo (el foco salta al abrir otro panel y
-## taparia el sonido de confirmar).
+## After confirm/back the "move" sound is muted for this long (focus jumps when another panel opens
+## and would cover the confirm sound).
 const UI_CONFIRM_QUIET_MS := 180
 const UI_POOL_SIZE := 4
-## Los sonidos de interfaz se recortan y normalizan a -6 dBFS de pico (scripts/tools/make_ui_sounds.py).
+## UI sounds are trimmed and normalised to a -6 dBFS peak (scripts/tools/make_ui_sounds.py).
 const UI_VOLUME_DB := 0.0
 
 const UI_MOVE := preload("res://assets/audio/sfx/ui/ui_move.wav")
@@ -40,6 +40,7 @@ var _music_tween: Tween
 var _music_stopping := false
 var _sfx_pool: Array[AudioStreamPlayer3D] = []
 var _sfx_next := 0
+var _sfx_paused := false
 var _ui_players: Array[AudioStreamPlayer] = []
 var _ui_last_confirm_ms := -100000
 var _pause_drop_db := 0.0
@@ -48,20 +49,20 @@ var _duck_tween: Tween
 var _rng := RandomNumberGenerator.new()
 
 
-# --- Lógica pura (con pruebas) ------------------------------------------------------------------
+# --- Pure logic (unit-tested) -------------------------------------------------------------------
 
-## Factor de tono para `variation` (0.1 = ±10 %) y un número `roll` en [-1, 1].
+## Pitch factor for `variation` (0.1 = ±10 %) and a `roll` number in [-1, 1].
 static func pitch_for(variation: float, roll: float) -> float:
 	return 1.0 + clampf(roll, -1.0, 1.0) * maxf(variation, 0.0)
 
 
-## Atenuación (dB) de la música: PAUSE_MUSIC_DROP_DB en pausa, 0 en juego.
+## Music attenuation (dB): PAUSE_MUSIC_DROP_DB while paused, 0 in play.
 static func pause_target_db(paused: bool) -> float:
 	return PAUSE_MUSIC_DROP_DB if paused else 0.0
 
 
-## Índice del siguiente reproductor del pool: uno libre si lo hay; si todos suenan, el más antiguo
-## (round-robin desde `cursor`). `busy` dice si cada reproductor está sonando.
+## Index of the next pool player: a free one if any; if all are playing, the oldest one
+## (round-robin from `cursor`). `busy` tells whether each player is playing.
 static func pick_pool_slot(busy: Array[bool], cursor: int) -> int:
 	var count := busy.size()
 	if count == 0:
@@ -73,12 +74,12 @@ static func pick_pool_slot(busy: Array[bool], cursor: int) -> int:
 	return cursor % count
 
 
-## Índice de bus por nombre; -1 si no existe (pruebas, o un layout sin ese bus).
+## Bus index by name; -1 if it does not exist (tests, or a layout without that bus).
 static func bus_index(bus: StringName) -> int:
 	return AudioServer.get_bus_index(bus)
 
 
-# --- Ciclo de vida ------------------------------------------------------------------------------
+# --- Lifecycle ----------------------------------------------------------------------------------
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -104,7 +105,7 @@ func _ready() -> void:
 		_ui_players.append(ui_player)
 	get_tree().node_added.connect(_on_node_added)
 	get_viewport().gui_focus_changed.connect(_on_gui_focus_changed)
-	# Los botones que ya estaban en el árbol (si este nodo se crea tarde) también se enganchan.
+	# Buttons that were already in the tree (if this node is created late) get hooked too.
 	_hook_existing(get_tree().root)
 
 
@@ -113,24 +114,26 @@ func _process(delta: float) -> void:
 	var target := pause_target_db(paused)
 	if not is_equal_approx(_pause_drop_db, target):
 		_pause_drop_db = move_toward(_pause_drop_db, target, PAUSE_FADE_SPEED * delta)
-		_apply_music_bus()
-	for player in _sfx_pool:
-		if player.stream_paused != paused:
+		refresh_music_bus()
+	if paused != _sfx_paused:
+		_sfx_paused = paused
+		for player in _sfx_pool:
 			player.stream_paused = paused
 
 
-## El volumen de la música es el elegido en opciones (UserSettings) más el descuento de la pausa.
-func _apply_music_bus() -> void:
+## The music volume is the one chosen in the options (UserSettings) plus the pause and duck offsets.
+## Also called by UserSettings when the music slider moves, so those offsets are not lost.
+func refresh_music_bus() -> void:
 	var idx := bus_index(BUS_MUSIC)
 	if idx < 0:
 		return
-	var settings := get_node_or_null(^"/root/UserSettings")
+	var settings := get_node_or_null(^"/root/UserSettings") if is_inside_tree() else null
 	var base_db: float = settings.call(&"volume_db", BUS_MUSIC) if settings else 0.0
 	AudioServer.set_bus_volume_db(idx, base_db + _pause_drop_db + _duck_db)
 
 
-## Baja la música `db` dB (negativo; 0 la devuelve) en `time` s, p. ej. mientras suenan los blips del
-## final. Se suma al volumen de opciones y al descuento de la pausa.
+## Lowers the music by `db` dB (negative; 0 restores it) over `time` s, e.g. while the ending's blips
+## play. It adds to the options volume and the pause offset.
 func duck_music(db: float, time: float = 1.0) -> void:
 	if _duck_tween and _duck_tween.is_valid():
 		_duck_tween.kill()
@@ -140,17 +143,24 @@ func duck_music(db: float, time: float = 1.0) -> void:
 
 func _set_duck(db: float) -> void:
 	_duck_db = db
-	_apply_music_bus()
+	refresh_music_bus()
 
 
 func get_duck_db() -> float:
 	return _duck_db
 
 
-# --- Música -------------------------------------------------------------------------------------
+## Drops any duck immediately (the scene that requested it is gone).
+func clear_duck() -> void:
+	if _duck_tween and _duck_tween.is_valid():
+		_duck_tween.kill()
+	_set_duck(0.0)
 
-## Cambia la música con un fundido cruzado de `fade_time` s. Si `stream` ya suena no hace nada;
-## con null equivale a stop_music(fade_time).
+
+# --- Music --------------------------------------------------------------------------------------
+
+## Switches the music with a crossfade of `fade_time` s. Does nothing if `stream` is already playing;
+## with null it is the same as stop_music(fade_time).
 func play_music(stream: AudioStream, fade_time: float = 1.0) -> void:
 	if stream == null:
 		stop_music(fade_time)
@@ -176,7 +186,7 @@ func play_music(stream: AudioStream, fade_time: float = 1.0) -> void:
 		_music_tween.chain().tween_callback(outgoing.stop)
 
 
-## Baja la música actual hasta el silencio en `fade_time` s y la detiene.
+## Fades the current music to silence over `fade_time` s and stops it.
 func stop_music(fade_time: float = 1.0) -> void:
 	_kill_music_tween()
 	for player in _music_players:
@@ -193,7 +203,7 @@ func stop_music(fade_time: float = 1.0) -> void:
 	_music_tween.tween_callback(_music_current.stop)
 
 
-## Cuántos reproductores de música suenan ahora (1 en reposo, 2 solo durante un fundido cruzado).
+## How many music players are playing now (1 at rest, 2 only during a crossfade).
 func playing_music_count() -> int:
 	var count := 0
 	for player in _music_players:
@@ -212,10 +222,10 @@ func _kill_music_tween() -> void:
 	_music_tween = null
 
 
-# --- Efectos ------------------------------------------------------------------------------------
+# --- Effects ------------------------------------------------------------------------------------
 
-## Efecto 3D en `position` con tono aleatorio ±`pitch_variation`. Usa un pool fijo de reproductores
-## (si todos suenan, reutiliza el más antiguo). `volume_db` y `unit_size` son opcionales.
+## 3D effect at `position` with a random pitch of ±`pitch_variation`. Uses a fixed player pool
+## (if all are playing it reuses the oldest). `volume_db` and `unit_size` are optional.
 func play_sfx_3d(stream: AudioStream, position: Vector3, pitch_variation: float = DEFAULT_PITCH_VARIATION, \
 		volume_db: float = 0.0, unit_size: float = SFX_UNIT_SIZE) -> void:
 	if stream == null or _sfx_pool.is_empty():
@@ -236,13 +246,13 @@ func play_sfx_3d(stream: AudioStream, position: Vector3, pitch_variation: float 
 	player.play()
 
 
-## Da foco a un botón sin que suene el "mover selección" (foco inicial de un menú).
+## Gives a button focus without the "move selection" sound (a menu's initial focus).
 func grab_focus_silent(button: Control) -> void:
 	button.set_meta(&"ui_added_ms", Time.get_ticks_msec())
 	button.grab_focus()
 
 
-## Sonido de interfaz (sigue sonando en pausa).
+## UI sound (keeps playing while paused).
 func play_ui(stream: AudioStream) -> void:
 	if stream == null:
 		return
@@ -256,7 +266,7 @@ func play_ui(stream: AudioStream) -> void:
 	player.play()
 
 
-## true si algun reproductor de interfaz suena (pruebas y diagnostico).
+## true if any UI player is playing (tests and diagnostics).
 func is_ui_playing() -> bool:
 	for player in _ui_players:
 		if player.playing:
@@ -264,7 +274,7 @@ func is_ui_playing() -> bool:
 	return false
 
 
-# --- Botones ------------------------------------------------------------------------------------
+# --- Buttons ------------------------------------------------------------------------------------
 
 func _on_node_added(node: Node) -> void:
 	var control := node as Control
@@ -290,8 +300,8 @@ func _hook_button(button: BaseButton) -> void:
 	button.mouse_entered.connect(_on_button_focus.bind(button))
 
 
-## Un solo punto para el sonido de foco: el viewport avisa de todo cambio de foco (teclado, mando o
-## código) sea cual sea el control, sin depender de cuándo se enganchó cada botón.
+## Single place for the focus sound: the viewport reports every focus change (keyboard, gamepad or
+## code) whatever the control, regardless of when each button was hooked.
 func _on_gui_focus_changed(control: Control) -> void:
 	_on_button_focus(control)
 
