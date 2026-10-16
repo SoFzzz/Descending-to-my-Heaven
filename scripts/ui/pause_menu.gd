@@ -1,8 +1,8 @@
 extends CanvasLayer
-## Menú de pausa (spec §10.2). Hijo del autoload GameState: existe en todas las escenas, pero solo
-## se abre con "pause" si la escena actual tiene un nodo en el grupo "player" y GameState.can_pause()
-## (sin fundido ni pantalla de muerte). Pausa con get_tree().paused y sigue activo con
-## PROCESS_MODE_ALWAYS. Libera el cursor al abrir y lo recaptura al cerrar.
+## Pause menu (spec 10.2). Child of the GameState autoload: it exists in every scene, but "pause"
+## only opens it if the current scene has a node in the "player" group and GameState.can_pause()
+## (no fade or death screen). Pauses with get_tree().paused and keeps running thanks to
+## PROCESS_MODE_ALWAYS. Frees the cursor on open and recaptures it on close.
 
 @onready var _root: Control = $Root
 @onready var _continue: Button = %Continue
@@ -81,14 +81,14 @@ func close() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-## Oculta sin tocar pausa ni cursor (GameState lo llama al cambiar de escena).
+## Hides without touching pause or cursor (GameState calls it on scene change).
 func close_silently() -> void:
 	_options_menu.visible = false
 	_root.visible = false
 
 
 func _on_main_menu() -> void:
-	# Sigue en pausa durante el fundido; GameState._swap_scene quita la pausa al cambiar de escena.
+	# Stays paused during the fade; GameState._swap_scene unpauses on the scene change.
 	_root.visible = false
 	var game_state := get_node_or_null(^"/root/GameState")
 	if game_state:

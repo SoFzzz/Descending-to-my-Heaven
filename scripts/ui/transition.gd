@@ -1,10 +1,10 @@
 extends CanvasLayer
-## Fundido a negro entre escenas (FADE_TIME al ir a negro y otro tanto al volver). Vive como hijo
-## del autoload GameState, así sobrevive al cambio de escena. Con la pantalla en negro pide a su
-## padre `_swap_scene(path)` (limpieza de pausa, time_scale, fichas…) o, si no lo tiene, cambia
-## de escena directamente.
+## Fade to black between scenes (FADE_TIME going to black and the same coming back). Lives as a
+## child of the GameState autoload so it survives the scene change. With the screen black it asks
+## its parent for `_swap_scene(path)` (pause, time_scale and token cleanup...) or, lacking it,
+## changes scene directly.
 
-signal covered   # la pantalla está en negro y ya se pidió la escena nueva
+signal covered   # the screen is black and the new scene was already requested
 
 const FADE_TIME := 0.5
 
@@ -28,7 +28,7 @@ func fade_to(path: String) -> void:
 		return
 	_busy = true
 	_black.visible = true
-	_black.mouse_filter = Control.MOUSE_FILTER_STOP   # sin clics durante el fundido
+	_black.mouse_filter = Control.MOUSE_FILTER_STOP   # no clicks during the fade
 	await _fade(1.0)
 	var parent := get_parent()
 	if parent and parent.has_method(&"_swap_scene"):
@@ -36,7 +36,7 @@ func fade_to(path: String) -> void:
 	else:
 		get_tree().change_scene_to_file(path)
 	covered.emit()
-	# change_scene_to_file es diferido: se espera a que la escena nueva esté en el árbol.
+	# change_scene_to_file is deferred: wait for the new scene to be in the tree.
 	await get_tree().process_frame
 	await get_tree().process_frame
 	await _fade(0.0)

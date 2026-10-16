@@ -1,24 +1,24 @@
 class_name IslandSilhouette
 extends SubViewportContainer
-## Silueta negra de la isla flotante para el menú principal: un SubViewport 3D con fondo transparente
-## donde la isla del juego y algunos islotes se dibujan en negro sin sombreado. La isla flota arriba y
-## abajo y gira despacio sobre su eje vertical; los islotes flotan con desfase y orbitan.
-## `distance_scale` (>1 aleja la cámara) y `pitch_degrees` se pueden animar con un Tween.
+## Black silhouette of the floating island for the main menu: a 3D SubViewport with a transparent
+## background where the game's island and a few islets are drawn black and unshaded. The island
+## bobs up and down and slowly spins on its vertical axis; the islets float out of phase and orbit.
+## `distance_scale` (>1 moves the camera away) and `pitch_degrees` can be animated with a Tween.
 
 const ISLAND_DIR := "res://assets/environment/island/"
 const MAIN_ISLAND := "island_main"
-## Islotes: modelo, escala, radio y altura de la órbita, fase inicial (rad), velocidad orbital (rad/s).
+## Islets: model, scale, orbit radius and height, initial phase (rad), orbital speed (rad/s).
 const ISLETS := [
 	{&"model": "islet_round", &"scale": 0.34, &"radius": 62.0, &"height": 30.0, &"phase": 0.6, &"speed": 0.16},
 	{&"model": "islet_small", &"scale": 0.9, &"radius": 58.0, &"height": -30.0, &"phase": 2.6, &"speed": -0.2},
 	{&"model": "islet_long", &"scale": 0.3, &"radius": 64.0, &"height": -4.0, &"phase": 4.4, &"speed": 0.12},
 ]
-const SPIN_SPEED := 0.22          # rad/s sobre el eje vertical
-const BOB_AMPLITUDE := 3.0        # unidades de mundo
+const SPIN_SPEED := 0.22          # rad/s around the vertical axis
+const BOB_AMPLITUDE := 3.0        # world units
 const BOB_PERIOD := 5.0           # s
 const CAMERA_DISTANCE := 275.0
 const CAMERA_FOV := 28.0
-const MAIN_CENTER_Y := -16.0      # centro vertical del modelo (cuelga bajo y = 0)
+const MAIN_CENTER_Y := -16.0      # vertical centre of the model (hangs below y = 0)
 
 var distance_scale := 1.0
 var pitch_degrees := 17.0
@@ -86,7 +86,7 @@ func _update(t: float) -> void:
 	_camera.rotation = Vector3(-pitch, 0.0, 0.0)
 
 
-## Material negro puro sin sombreado: la isla se lee como silueta.
+## Pure black unshaded material: the island reads as a silhouette.
 static func silhouette_material() -> StandardMaterial3D:
 	var black := StandardMaterial3D.new()
 	black.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -94,12 +94,12 @@ static func silhouette_material() -> StandardMaterial3D:
 	return black
 
 
-## Desplazamiento vertical de la isla (flotar) en el instante `t`.
+## Vertical offset of the island (bobbing) at time `t`.
 static func bob_offset(t: float) -> float:
 	return sin(t * TAU / BOB_PERIOD) * BOB_AMPLITUDE
 
 
-## Giro de la isla sobre su eje vertical en el instante `t`.
+## Spin of the island around its vertical axis at time `t`.
 static func spin_angle(t: float) -> float:
 	return fposmod(t * SPIN_SPEED, TAU)
 

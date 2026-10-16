@@ -1,14 +1,14 @@
 class_name Credits
 extends Control
-## Pantalla de créditos (spec §10.4): equipo y lista de assets con autor y licencia (requisito CC BY)
-## con botón para volver al menú. Lee res://assets/credits.txt y lo muestra en un ScrollContainer que
-## sube solo, despacio. Al usar la rueda del ratón o las flechas arriba/abajo, el desplazamiento
-## automático se pausa un rato. Esc o el botón vuelven al menú principal con el fundido de GameState.
+## Credits screen (spec 10.4): team and asset list with author and licence (CC BY requirement) with
+## a button to go back to the menu. Reads res://assets/credits.txt and shows it in a ScrollContainer
+## that scrolls up slowly by itself. Using the mouse wheel or the up/down arrows pauses the automatic
+## scroll for a while. Esc or the button return to the main menu with GameState's fade.
 
 const CREDITS_MUSIC := preload("res://assets/audio/bgm/ending_celtic_melancholy_loop.ogg")
 const CREDITS_PATH := "res://assets/credits.txt"
 const MAIN_MENU_PATH := "res://scenes/ui/main_menu.tscn"
-## Títulos de sección de credits.txt (en español) -> clave de traducción.
+## Section titles of credits.txt (in Spanish) -> translation key.
 const SECTION_KEYS := {
 	"Equipo": "CREDITS_SEC_TEAM", "Personajes y jefes": "CREDITS_SEC_CHARACTERS",
 	"Escenario, armas y objetos": "CREDITS_SEC_WORLD", "Shaders": "CREDITS_SEC_SHADERS",
@@ -16,18 +16,18 @@ const SECTION_KEYS := {
 	"Animaciones": "CREDITS_SEC_ANIMATIONS", "Motor": "CREDITS_SEC_ENGINE",
 	"Gracias por jugar": "CREDITS_SEC_THANKS",
 }
-## Etiquetas que se traducen dentro de las líneas (la más larga primero).
+## Labels translated inside the lines (longest first).
 const TOKEN_KEYS := [
 	["Autor y licencia por confirmar", "CREDITS_AUTHOR_LICENSE_TBC"],
 	["autor y licencia por confirmar", "CREDITS_AUTHOR_LICENSE_TBC"],
 	["por confirmar", "CREDITS_TBC"],
 	["Autor:", "CREDITS_AUTHOR"], ["Licencia:", "CREDITS_LICENSE"], ["Fuente:", "CREDITS_SOURCE"],
 ]
-const AUTO_SCROLL_SPEED := 30.0   # píxeles por segundo
-const MANUAL_SCROLL_SPEED := 300.0   # píxeles por segundo con las flechas
-const PAUSE_AFTER_MANUAL := 4.0   # segundos sin auto-scroll tras interactuar a mano
+const AUTO_SCROLL_SPEED := 30.0   # pixels per second
+const MANUAL_SCROLL_SPEED := 300.0   # pixels per second with the arrows
+const PAUSE_AFTER_MANUAL := 4.0   # seconds without auto-scroll after manual interaction
 
-var _scroll_y := 0.0      # posición en float: scroll_vertical es entero y el auto-scroll va a fracciones
+var _scroll_y := 0.0      # float position: scroll_vertical is an int and auto-scroll moves in fractions
 var _pause_left := 0.0
 var _leaving := false
 
@@ -43,7 +43,7 @@ func _ready() -> void:
 	_back.pressed.connect(_go_back)
 	_back.set_meta(&"ui_sound", &"back")
 	_back.grab_focus()
-	# Sin pista propia sigue la de Elysia (si ya suena, no se reinicia).
+	# Without a track of its own it follows Elysia's (if it is already playing it is not restarted).
 	var audio := get_node_or_null(^"/root/AudioManager")
 	if audio:
 		audio.play_music(CREDITS_MUSIC, 1.5)
@@ -69,11 +69,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-## Desplaza el contenido `amount` píxeles (negativo = hacia arriba) y se detiene en los extremos.
+## Scrolls the content `amount` pixels (negative = up) and stops at the ends.
 func _move(amount: float) -> void:
 	var bar: VScrollBar = _scroll.get_v_scroll_bar()
 	var max_pos := maxf(bar.max_value - bar.page, 0.0)
-	# Si la rueda u otra fuente movió la barra, resincronizar la posición en float.
+	# If the wheel or another source moved the bar, resync the float position.
 	if absf(float(_scroll.scroll_vertical) - _scroll_y) >= 1.0:
 		_scroll_y = float(_scroll.scroll_vertical)
 	_scroll_y = clampf(_scroll_y + amount, 0.0, max_pos)
@@ -89,12 +89,12 @@ func _on_scroll_gui_input(event: InputEvent) -> void:
 func _go_back() -> void:
 	if _leaving:
 		return
-	_leaving = true   # sin dobles pulsaciones durante el fundido
+	_leaving = true   # no double presses during the fade
 	_back.disabled = true
 	var game_state := get_node_or_null(^"/root/GameState")
 	if game_state:
-		# _change_scene devuelve false si aún hay un fundido en curso (p. ej. el de entrada a
-		# los créditos): se reactiva el botón para poder volver a intentarlo.
+		# _change_scene returns false while a fade is still running (e.g. the one entering the
+		# credits): the button is re-enabled so the player can try again.
 		if not game_state.call(&"_change_scene", MAIN_MENU_PATH):
 			_leaving = false
 			_back.disabled = false
@@ -105,14 +105,14 @@ func _go_back() -> void:
 func _load_credits() -> String:
 	var text := FileAccess.get_file_as_string(CREDITS_PATH)
 	if text.is_empty():
-		push_warning("Créditos: no se pudo leer '%s'; se muestra el texto de respaldo." % CREDITS_PATH)
+		push_warning("Credits: could not read '%s'; showing the fallback text." % CREDITS_PATH)
 		return tr("CREDITS_FALLBACK")
 	return text
 
 
-## Traduce los títulos de sección y las etiquetas (Autor / Licencia / Fuente / por confirmar) del
-## texto de créditos al idioma actual. En español no cambia nada. Los nombres de assets, autores y
-## licencias no se traducen.
+## Translates the section titles and labels (Autor / Licencia / Fuente / por confirmar) of the
+## credits text into the current language. In Spanish nothing changes. Asset names, authors and
+## licences are not translated.
 static func localize(plain: String) -> String:
 	var lines := plain.replace("\r", "").split("\n")
 	var out: PackedStringArray = []
@@ -125,7 +125,7 @@ static func localize(plain: String) -> String:
 		for token: Array in TOKEN_KEYS:
 			var translated := TranslationServer.translate(StringName(token[1]))
 			var original: String = token[0]
-			if original.unicode_at(0) >= 97:   # empieza en minúscula
+			if original.unicode_at(0) >= 97:   # starts in lowercase
 				translated = translated.substr(0, 1).to_lower() + translated.substr(1)
 			if original.ends_with(":"):
 				translated += ":"
@@ -134,7 +134,7 @@ static func localize(plain: String) -> String:
 	return "\n".join(out)
 
 
-## Convierte el texto plano en BBCode centrado: escapa los corchetes para que no se interpreten como etiquetas.
+## Turns the plain text into centred BBCode: escapes the brackets so they are not parsed as tags.
 func _credits_bbcode(plain: String) -> String:
 	var escaped := plain.replace("[", "[lb]").replace("]", "[rb]")
 	return "[center]%s[/center]" % escaped

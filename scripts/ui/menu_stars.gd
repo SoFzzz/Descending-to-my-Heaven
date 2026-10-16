@@ -1,7 +1,7 @@
 class_name MenuStars
 extends Control
-## Estrellas del fondo del menú: puntos fijos que titilan con senos de fase y periodo distintos.
-## Dibujado barato (unas decenas de rectángulos); se coloca sobre el cielo y bajo la isla.
+## Menu background stars: fixed points that twinkle with sines of different phase and period.
+## Cheap to draw (a few dozen rectangles); placed over the sky and under the island.
 
 @export var count := 70
 @export var seed_value := 11
@@ -12,7 +12,7 @@ var _stars: Array[Dictionary] = []
 var _time := 0.0
 
 
-## Alfa (0..1) de una estrella en el instante `t`: oscila entre `low` y 1 con periodo `period`.
+## Alpha (0..1) of a star at time `t`: oscillates between `low` and 1 with period `period`.
 static func twinkle(t: float, phase: float, period: float, low: float = 0.25) -> float:
 	var wave := 0.5 + 0.5 * sin(TAU * (t / period) + phase)
 	return lerpf(low, 1.0, wave)

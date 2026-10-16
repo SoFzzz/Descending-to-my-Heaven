@@ -1,11 +1,11 @@
 class_name OptionsMenu
 extends Control
-## Menú de opciones (overlay reutilizable): lo abren el menú principal y el de pausa y avisan con
-## `closed` al volver. Tres pestañas: Controles (reasignar teclado/ratón y mando, sensibilidad de
-## cámara, restaurar), Volumen (Master / Music / SFX / UI en vivo) e Idioma (español / inglés).
-## Todo se guarda con el autoload UserSettings. Se navega con flechas / D-pad / stick, Enter / A para
-## elegir, Esc / B para volver y LB / RB para cambiar de pestaña.
-## Al reasignar: se elige una fila, se pulsa Enter / A / clic, y se pulsa la nueva tecla o botón.
+## Options menu (reusable overlay): opened by the main menu and the pause menu, which are told
+## through `closed` when it goes away. Three tabs: Controls (remap keyboard/mouse and gamepad, camera
+## sensitivity, restore), Volume (Master / Music / SFX / UI, live) and Language (Spanish / English).
+## Everything is saved through the UserSettings autoload. Navigate with arrows / D-pad / stick, Enter
+## / A to pick, Esc / B to go back and LB / RB to switch tabs.
+## Remapping: pick a row, press Enter / A / click, then press the new key or button.
 
 signal closed
 
@@ -52,6 +52,7 @@ func _ready() -> void:
 	visible = false
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_build()
+	visibility_changed.connect(_on_visibility_changed)
 	_save_timer = Timer.new()
 	_save_timer.one_shot = true
 	_save_timer.wait_time = SAVE_DELAY
@@ -77,7 +78,7 @@ func is_capturing() -> bool:
 	return _capture_action != &""
 
 
-## Muestra el menú en la pestaña de controles con el foco en ella (sin sonido de "mover").
+## Shows the menu on the controls tab with focus on it (no "move" sound).
 func open() -> void:
 	visible = true
 	_select_tab(TAB_CONTROLS)
@@ -94,7 +95,7 @@ func close() -> void:
 	closed.emit()
 
 
-# --- Construcción -------------------------------------------------------------------------------
+# --- Construction -------------------------------------------------------------------------------
 
 func _build() -> void:
 	var dim := ColorRect.new()
@@ -277,7 +278,7 @@ func _cell_button(action: StringName, slot: StringName) -> Button:
 	var button := Button.new()
 	button.theme_type_variation = &"CellButton"
 	button.custom_minimum_size = Vector2(COL_KB if slot == GameSettings.SLOT_KB else COL_PAD, 19.0)
-	button.add_theme_font_override(&"font", ThemeDB.fallback_font)   # nombres de teclas legibles
+	button.add_theme_font_override(&"font", ThemeDB.fallback_font)   # readable key names
 	button.add_theme_constant_override(&"outline_size", 3)
 	button.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	button.pressed.connect(_begin_capture.bind(action, slot, button))
@@ -294,7 +295,7 @@ func _row(a: Control, b: Control, c: Control) -> HBoxContainer:
 	return row
 
 
-# --- Estado -------------------------------------------------------------------------------------
+# --- State -------------------------------------------------------------------------------------
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready():
@@ -357,7 +358,7 @@ func _focus(control: Control) -> void:
 		control.grab_focus()
 
 
-# --- Reasignación -------------------------------------------------------------------------------
+# --- Remapping -------------------------------------------------------------------------------
 
 func _begin_capture(action: StringName, slot: StringName, button: Button) -> void:
 	if is_capturing():
@@ -426,7 +427,7 @@ func _capture_input(event: InputEvent) -> void:
 	apply_capture(captured)
 
 
-## Asigna `event` a la acción en captura (separado de _input para poder probarlo).
+## Assigns `event` to the action being captured (split from _input so it can be tested).
 func apply_capture(event: InputEvent) -> void:
 	var settings := _settings()
 	if settings == null or not is_capturing():
@@ -444,6 +445,12 @@ func apply_capture(event: InputEvent) -> void:
 		_set_status("OPT_ASSIGNED", GameSettings.event_name(event))
 
 
+## A hidden menu (e.g. the pause menu closing under it) must not keep a half-finished capture.
+func _on_visibility_changed() -> void:
+	if not visible:
+		_cancel_capture()
+
+
 func _on_restore() -> void:
 	var settings := _settings()
 	if settings == null:
@@ -454,7 +461,7 @@ func _on_restore() -> void:
 	_set_status("OPT_RESTORED")
 
 
-# --- Volumen, cámara e idioma -------------------------------------------------------------------
+# --- Volume, camera and language -------------------------------------------------------------------
 
 func _on_volume_changed(value: float, bus: StringName) -> void:
 	var settings := _settings()

@@ -1,11 +1,11 @@
 class_name DialogueBox
 extends Control
-## Caja de diálogo del final (estilo de la banda de la pantalla de muerte): banda negra semitransparente
-## abajo, nombre del hablante arriba (DungeonFont, un color por personaje) y su texto debajo, revelado
-## con Typewriter. Una sola línea de un solo hablante a la vez; el narrador no lleva nombre y va
-## centrado en gris. El prefijo "Kaelen:" / "Elysia:" del texto traducido solo sirve para detectar
-## el hablante: no se muestra. Con la línea completa aparece un triángulo ▼ parpadeante; la caja
-## emite `advanced` cuando el jugador pulsa avanzar (ver Typewriter para las teclas y el bloqueo).
+## Dialogue box of the ending (death screen band style): a semi-transparent black band at the bottom,
+## the speaker name above (DungeonFont, one colour per character) and their text below, revealed
+## with Typewriter. One line from one speaker at a time; the narrator has no name and is centred in
+## grey. The "Kaelen:" / "Elysia:" prefix of the translated text only serves to detect the speaker:
+## it is not shown. Once the line is complete a blinking triangle appears; the box emits `advanced`
+## when the player presses advance (see Typewriter for the keys and the input lock).
 
 signal advanced
 signal line_finished
@@ -21,7 +21,7 @@ const TEXT_FONT_SIZE := 14
 const TEXT_LINES := 2
 const MARKER_BLINK := 0.45
 
-## Nombre que se muestra y color del nombre por hablante (Skin04: gris/negro/blanco con un toque cálido o frío).
+## Displayed name and name colour per speaker (Skin04: grey/black/white with a warm or cold touch).
 const SPEAKER_NAMES := {&"kaelen": "Kaelen", &"elysia": "Elysia"}
 const SPEAKER_COLORS := {
 	&"kaelen": Color(0.78, 0.22, 0.2),
@@ -38,11 +38,12 @@ var band: TextureRect
 var current_speaker: StringName = &""
 var current_body := ""
 var _marker_tween: Tween
+var _fade_tween: Tween
 
 
-# --- Lógica pura ---------------------------------------------------------------------------
+# --- Pure logic ---------------------------------------------------------------------------
 
-## {speaker: StringName (&"" = narrador), name: String, body: String} de una línea de diálogo.
+## {speaker: StringName (&"" = narrator), name: String, body: String} of a dialogue line.
 static func parse_line(line: String) -> Dictionary:
 	var speaker := Typewriter.speaker_of(line)
 	var body := line.substr(Typewriter.prefix_length(line)).strip_edges()
@@ -53,7 +54,7 @@ static func color_for(speaker: StringName) -> Color:
 	return SPEAKER_COLORS.get(speaker, NARRATOR_COLOR)
 
 
-## Banda con el degradado vertical de la pantalla de muerte: transparente, negro, negro, transparente.
+## Band with the death screen's vertical gradient: transparent, black, black, transparent.
 static func make_band_texture() -> GradientTexture2D:
 	var grad := Gradient.new()
 	grad.offsets = PackedFloat32Array([0.0, 0.22, 0.78, 1.0])
@@ -68,7 +69,7 @@ static func make_band_texture() -> GradientTexture2D:
 	return tex
 
 
-# --- Construcción --------------------------------------------------------------------------
+# --- Construction --------------------------------------------------------------------------
 
 func _ready() -> void:
 	theme = MENU_THEME
@@ -118,7 +119,7 @@ func _ready() -> void:
 	marker.color = Color(0.94, 0.94, 0.97)
 	marker.visible = false
 	add_child(marker)
-	# Esquina inferior derecha de la caja (Control anclado: se coloca en _notification/resized).
+	# Bottom right corner of the box (anchored Control: placed on `resized`).
 	resized.connect(_place_marker)
 	_place_marker()
 
@@ -133,9 +134,9 @@ func _place_marker() -> void:
 		marker.position = Vector2(size.x - SIDE_MARGIN - 4.0, size.y - 32.0)
 
 
-# --- Uso -----------------------------------------------------------------------------------
+# --- Usage -----------------------------------------------------------------------------------
 
-## Muestra una línea ("Kaelen: texto", "Elysia: texto" o narración sin prefijo) y empieza a revelarla.
+## Shows a line ("Kaelen: text", "Elysia: text" or unprefixed narration) and starts revealing it.
 func show_line(line: String) -> void:
 	var parsed := parse_line(line)
 	current_speaker = parsed["speaker"]
@@ -151,7 +152,10 @@ func show_line(line: String) -> void:
 
 
 func fade(alpha: float, time: float) -> void:
-	create_tween().tween_property(self, "modulate:a", alpha, time)
+	if _fade_tween and _fade_tween.is_valid():
+		_fade_tween.kill()
+	_fade_tween = create_tween()
+	_fade_tween.tween_property(self, "modulate:a", alpha, time)
 
 
 func _on_line_finished() -> void:

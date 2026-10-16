@@ -1,38 +1,40 @@
 extends Node
-## Menú principal (spec §10.1). Mitad izquierda: título (DungeonFont) y botones Iniciar / Opciones /
-## Créditos / Salir; mitad derecha: la silueta negra de la isla flotante (IslandSilhouette) sobre un
-## cielo violeta crepuscular con resplandor, estrellas que titilan y ceniza brillante
-## (assets/ui/menu/menu_sky.png, scripts/tools/gen_menu_bg.py). Opciones abre el overlay OptionsMenu. Créditos se oculta si aún no
-## existe scenes/ui/credits.tscn. Foco inicial en Iniciar; navegable con flechas + Enter, mando y ratón.
-## Animaciones con Tweens (todas cortas o ambientales, ninguna bloquea la entrada): entrada escalonada,
-## realce de botones al enfocar / pasar el ratón y salida con fundido a negro.
+## Main menu (spec 10.1). Left half: title (DungeonFont) and the Start / Options / Credits / Quit
+## buttons; right half: the black silhouette of the floating island (IslandSilhouette) over a
+## twilight purple sky with a glow, twinkling stars and glowing ash (assets/ui/menu/menu_sky.png,
+## scripts/tools/gen_menu_bg.py). Options opens the OptionsMenu overlay. Credits is hidden while
+## scenes/ui/credits.tscn does not exist. Initial focus on Start; navigable with arrows + Enter,
+## gamepad and mouse.
+## Animations are Tweens (short or ambient, none blocks input): staggered intro, button highlight on
+## focus / hover and an exit that fades to black.
 
-const CREDITS_SCENE := "res://scenes/ui/credits.tscn"   # igual que GameState.CREDITS_SCENE
+const CREDITS_SCENE := "res://scenes/ui/credits.tscn"   # same as GameState.CREDITS_SCENE
 const MENU_MUSIC := preload("res://assets/audio/bgm/menu_sadness_piano_loop.ogg")
 
-const INTRO_FADE := 0.7           # fundido desde negro
+const INTRO_FADE := 0.7           # fade in from black
 const TITLE_DELAY := 0.25
 const TITLE_TIME := 0.6
-const TITLE_SLIDE := 18.0         # px que sube el título al aparecer
+const TITLE_SLIDE := 18.0         # px the title rises by while appearing
 const BUTTON_DELAY := 0.5
 const BUTTON_STAGGER := 0.12
 const BUTTON_TIME := 0.4
-const BUTTON_SLIDE := 48.0        # px desde la izquierda
+const BUTTON_SLIDE := 48.0        # px of slide-in from the left
 const ISLAND_DELAY := 0.15
 const ISLAND_TIME := 0.9
 const HOVER_TIME := 0.14
-const HOVER_SHIFT := 8.0          # px a la derecha al enfocar
+const HOVER_SHIFT := 8.0          # px to the right when focused
 const HOVER_SCALE := 1.05
-const HOVER_FLASH := 1.35         # brillo inicial al enfocar
+const HOVER_FLASH := 1.35         # initial brightness flash on focus
 const PULSE_PERIOD := 1.3
 const TITLE_GLOW_PERIOD := 4.0
 const GLOW_PERIOD := 6.0
-const EXIT_TIME := 0.4            # salida de Iniciar / Créditos antes del fundido de GameState
+const EXIT_TIME := 0.4            # exit of Start / Credits before GameState's fade
 const QUIT_TIME := 0.25
 
-var _tweens: Dictionary = {}      # Button -> Array[Tween] del realce
+var _tweens: Dictionary = {}      # Button -> Array[Tween] of the highlight
 var _leaving := false
 var _intro: Tween
+var _panel_x := 0.0
 
 @onready var _start: Button = %Start
 @onready var _options: Button = %Options
@@ -49,6 +51,7 @@ var _intro: Tween
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_panel_x = _panel.position.x
 	_credits.visible = ResourceLoader.exists(CREDITS_SCENE)
 	(_credits.get_parent() as Control).visible = _credits.visible
 	_start.pressed.connect(_on_start)
@@ -65,7 +68,7 @@ func _ready() -> void:
 		_tweens[button] = []
 	var audio := get_node_or_null(^"/root/AudioManager")
 	if audio:
-		audio.grab_focus_silent(_start)   # el foco inicial no suena
+		audio.grab_focus_silent(_start)   # the initial focus makes no sound
 		audio.play_music(MENU_MUSIC, 1.5)
 	else:
 		_start.grab_focus()
@@ -87,7 +90,7 @@ func _on_button_resized(button: Button) -> void:
 	button.pivot_offset = Vector2(0.0, button.size.y * 0.5)
 
 
-# --- Entrada ------------------------------------------------------------------------------------
+# --- Intro ------------------------------------------------------------------------------------
 
 func _play_intro() -> void:
 	_fade.color.a = 1.0
@@ -118,7 +121,7 @@ func _play_intro() -> void:
 	_intro.tween_property(_hint, ^"modulate:a", 1.0, 0.5).set_delay(BUTTON_DELAY + BUTTON_STAGGER * float(buttons.size()))
 
 
-## Brillo lento del título (ambiental, no bloquea nada).
+## Slow glow of the title (ambient, blocks nothing).
 func _start_title_glow() -> void:
 	var glow := create_tween().set_loops()
 	glow.tween_property(_title, ^"self_modulate", Color(1.12, 1.08, 1.0), TITLE_GLOW_PERIOD * 0.5) \
@@ -127,14 +130,14 @@ func _start_title_glow() -> void:
 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
-## Respiración lenta del resplandor tras la isla (ambiental).
+## Slow breathing of the glow behind the island (ambient).
 func _start_sky_glow() -> void:
 	var glow := create_tween().set_loops()
 	glow.tween_property(_glow, ^"self_modulate", Color(1.0, 1.0, 1.0, 0.7), GLOW_PERIOD * 0.5) 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	glow.tween_property(_glow, ^"self_modulate", Color(1.0, 1.0, 1.0, 1.0), GLOW_PERIOD * 0.5) 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
-# --- Realce de botones --------------------------------------------------------------------------
+# --- Button highlight --------------------------------------------------------------------------
 
 func _kill(button: Button) -> void:
 	for tween: Tween in _tweens.get(button, []):
@@ -154,7 +157,7 @@ func _refresh_highlight(button: Button) -> void:
 	var enter := create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	var tweens: Array = [enter]
 	_tweens[button] = tweens
-	# Mientras la entrada escalonada mueve el botón no se pisa su posición.
+	# While the staggered intro moves the button its position is left alone.
 	if not (_intro != null and _intro.is_valid() and _intro.is_running()):
 		enter.tween_property(button, ^"position:x", HOVER_SHIFT if on else 0.0, HOVER_TIME)
 	enter.tween_property(button, ^"scale", Vector2.ONE * (HOVER_SCALE if on else 1.0), HOVER_TIME)
@@ -167,7 +170,7 @@ func _refresh_highlight(button: Button) -> void:
 		enter.tween_property(button, ^"modulate", Color.WHITE, HOVER_TIME)
 
 
-## Pulso suave del recuadro de selección mientras el botón sigue enfocado.
+## Soft pulse of the selection frame while the button stays focused.
 func _start_pulse(button: Button) -> void:
 	if _leaving or not is_instance_valid(button) or not button.has_focus():
 		return
@@ -179,7 +182,7 @@ func _start_pulse(button: Button) -> void:
 	(_tweens[button] as Array).append(pulse)
 
 
-# --- Salida -------------------------------------------------------------------------------------
+# --- Exit -------------------------------------------------------------------------------------
 
 func _on_start() -> void:
 	if _begin_leave(EXIT_TIME, true):
@@ -187,6 +190,10 @@ func _on_start() -> void:
 		var game_state := get_node_or_null(^"/root/GameState")
 		if game_state:
 			game_state.call(&"start_new_game")
+			# GameState refuses the change while another fade runs; do not leave the menu stuck.
+			var transition: Node = game_state.get(&"transition")
+			if transition != null and not transition.call(&"is_busy"):
+				_cancel_leave()
 
 
 func _on_options() -> void:
@@ -219,9 +226,8 @@ func _on_quit() -> void:
 		get_tree().quit()
 
 
-## Bloquea la entrada (sin dobles pulsaciones) y lanza la animación de salida: la interfaz se
-## desliza a la izquierda, la isla se aleja y la pantalla se funde a negro. Devuelve false si ya se
-## estaba saliendo.
+## Blocks input (no double presses) and starts the exit animation: the UI slides left, the island
+## recedes and the screen fades to black. Returns false if it was already leaving.
 func _begin_leave(time: float, island_recedes: bool) -> bool:
 	if _leaving:
 		return false
@@ -245,7 +251,7 @@ func _cancel_leave() -> void:
 	_set_buttons_disabled(false)
 	_fade.color.a = 0.0
 	_title.modulate.a = 1.0
-	_panel.position.x = 36.0
+	_panel.position.x = _panel_x
 	_island.distance_scale = 1.0
 	_start.grab_focus()
 
