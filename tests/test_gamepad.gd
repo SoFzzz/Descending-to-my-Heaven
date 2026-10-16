@@ -1,13 +1,13 @@
 extends TestCase
 # Mando de Xbox (XInput): cada acción del juego tiene evento de mando, los menús se navegan con
 # D-pad / stick y A / B, y los eventos simulados (parse_input_event) activan las acciones.
-# Distribución: stick izq. mover, stick der. cámara, X / RB atacar, B rodar, R3 (RS) fijar objetivo,
+# Distribución: stick izq. mover, stick der. cámara, X / RB atacar, B rodar, Y curarse, R3 (RS) fijar objetivo,
 # Start pausa, A / B aceptar / cancelar en los menús, LB / RB cambian de pestaña en opciones.
 
 const GAMEPLAY_ACTIONS: Array[StringName] = [
 	&"move_forward", &"move_back", &"move_left", &"move_right",
 	&"camera_left", &"camera_right", &"camera_up", &"camera_down",
-	&"attack", &"roll", &"lock_on", &"pause",
+	&"attack", &"roll", &"heal", &"lock_on", &"pause",
 ]
 
 
@@ -57,6 +57,7 @@ func test_xbox_layout() -> void:
 	assert_true(InputMap.event_is_action(_pad_button(JOY_BUTTON_RIGHT_SHOULDER, true), &"attack"), "RB attacks")
 	assert_true(InputMap.event_is_action(_pad_button(JOY_BUTTON_X, true), &"attack"), "X attacks")
 	assert_true(InputMap.event_is_action(_pad_button(JOY_BUTTON_B, true), &"roll"), "B rolls")
+	assert_true(InputMap.event_is_action(_pad_button(JOY_BUTTON_Y, true), &"heal"), "Y heals")
 	assert_true(InputMap.event_is_action(_pad_button(JOY_BUTTON_RIGHT_STICK, true), &"lock_on"), "R3 locks on")
 	assert_true(InputMap.event_is_action(_pad_button(JOY_BUTTON_START, true), &"pause"), "Start pauses")
 	assert_true(InputMap.event_is_action(_pad_axis(JOY_AXIS_LEFT_X, -1.0), &"move_left"), "left stick moves")
@@ -105,10 +106,10 @@ func test_options_menu_captures_a_gamepad_button() -> void:
 	settings.save_path = "user://test_gamepad_settings.cfg"
 	var menu := OptionsMenu.new()
 	# Sin árbol: apply_capture busca el autoload, así que se prueba la ruta de datos con GameSettings.
-	var event := GameSettings.capture(_pad_button(JOY_BUTTON_Y, true))
+	var event := GameSettings.capture(_pad_button(JOY_BUTTON_DPAD_UP, true))
 	assert_true(event != null)
 	assert_eq(settings.rebind(&"lock_on", GameSettings.SLOT_PAD, event), &"")
-	assert_true(InputMap.event_is_action(_pad_button(JOY_BUTTON_Y, true), &"lock_on"), "Y now locks on")
+	assert_true(InputMap.event_is_action(_pad_button(JOY_BUTTON_DPAD_UP, true), &"lock_on"), "D-pad up now locks on")
 	assert_true(not InputMap.event_is_action(_pad_button(JOY_BUTTON_RIGHT_STICK, true), &"lock_on"), "R3 no longer does")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(settings.save_path))
 	InputMap.load_from_project_settings()
