@@ -20,6 +20,13 @@ func _process(delta: float) -> void:
 	tick(delta)
 
 
+## Llena el aguante al máximo y avisa (la barra del HUD lo refleja).
+func refill() -> void:
+	current = max_value
+	_time_since_spend = 1.0e9
+	changed.emit(current, max_value)
+
+
 ## Se permite gastar mientras quede algo (aunque no alcance); con 0 no se puede.
 func try_spend(amount: float) -> bool:
 	if current <= 0.0:

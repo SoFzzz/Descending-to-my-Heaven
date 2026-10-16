@@ -1,8 +1,7 @@
 [gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/death_screen.gd" id="1_ds"]
-
-[ext_resource type="Texture2D" path="res://assets/ui/free_psx_ui/skin01_text_block.png" id="2_tb"]
+[ext_resource type="Theme" path="res://scenes/ui/menu_theme.tres" id="2_th"]
 
 [sub_resource type="LabelSettings" id="dead"]
 font_size = 56
@@ -25,6 +24,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 texture_filter = 4
+theme = ExtResource("2_th")
 
 [node name="Shade" type="ColorRect" parent="Root"]
 anchors_preset = 15
@@ -33,30 +33,49 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0, 0, 0.65)
+color = Color(0, 0, 0, 0.7)
 
-[node name="Band" type="TextureRect" parent="Root"]
-anchors_preset = 14
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = 20.0
-offset_top = -46.0
-offset_right = -20.0
-offset_bottom = 46.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("2_tb")
-expand_mode = 1
-
-[node name="Label" type="Label" parent="Root"]
+[node name="Column" type="VBoxContainer" parent="Root"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 28
+
+[node name="Title" type="Label" parent="Root/Column"]
+unique_name_in_owner = true
+layout_mode = 2
 text = "HAS MUERTO"
 label_settings = SubResource("dead")
 horizontal_alignment = 1
-vertical_alignment = 1
+
+[node name="Center" type="CenterContainer" parent="Root/Column"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Root/Column/Center"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Box" type="VBoxContainer" parent="Root/Column/Center/Panel"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Retry" type="Button" parent="Root/Column/Center/Panel/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Reintentar"
+
+[node name="Menu" type="Button" parent="Root/Column/Center/Panel/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Volver al menú"
+
+[node name="Quit" type="Button" parent="Root/Column/Center/Panel/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Salir del juego"
