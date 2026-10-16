@@ -88,17 +88,18 @@ mouse_filter = 2
 
 [node name="Icon" type="TextureRect" parent="Heal"]
 layout_mode = 0
-offset_right = 13.0
-offset_bottom = 26.0
+offset_top = 2.0
+offset_right = 12.0
+offset_bottom = 14.0
 mouse_filter = 2
 texture = ExtResource("6_flask")
 
 [node name="Count" type="Label" parent="Heal"]
 layout_mode = 0
-offset_left = 17.0
-offset_top = 6.0
+offset_left = 16.0
+offset_top = 0.0
 offset_right = 52.0
-offset_bottom = 22.0
+offset_bottom = 16.0
 theme_override_colors/font_color = Color(0.92, 0.88, 0.78, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 3
