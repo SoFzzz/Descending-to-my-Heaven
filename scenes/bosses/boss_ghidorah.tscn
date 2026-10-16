@@ -76,6 +76,7 @@ engage_range = 5.0
 attack_cooldown = 0.35
 gated_hurtboxes = Array[NodePath]([NodePath("HeadCHurtbox"), NodePath("HeadLHurtbox"), NodePath("HeadRHurtbox")])
 gated_grace = 0.25
+intercept_attacks = Array[StringName]([&"beam"])
 
 [node name="CollisionShape3D" parent="." index="0"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)

@@ -65,6 +65,7 @@ detect_radius = 40.0
 engage_range = 3.0
 attack_cooldown = 0.3
 walk_animation = &"run"
+intercept_attacks = Array[StringName]([&"charge", &"pounce"])
 settle_on_death = true
 
 [node name="CollisionShape3D" parent="." index="0"]
