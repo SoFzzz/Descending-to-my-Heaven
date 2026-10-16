@@ -97,3 +97,54 @@ func test_randomizers_have_their_variants() -> void:
 func test_ghidorah_beam_has_fire_and_impact_sounds() -> void:
 	var beam := load("res://resources/attacks/ghidorah_beam.tres") as BossAttack
 	assert_true(beam != null and beam.sfx_active != null and beam.sfx_hit != null)
+
+
+func _wav_stats(path: String) -> Dictionary:
+	# Pico y RMS (lineal 0..1) del WAV de 16 bits original (cabecera de 44 bytes; el recurso importado va comprimido).
+	var data := FileAccess.get_file_as_bytes(path)
+	var count := (data.size() - 44) / 2
+	var peak := 0.0
+	var sum := 0.0
+	for i in count:
+		var v := absf(float(data.decode_s16(44 + i * 2)) / 32768.0)
+		peak = maxf(peak, v)
+		sum += v * v
+	return {"peak": peak, "rms": sqrt(sum / maxf(count, 1.0))}
+
+
+func test_ui_sounds_exist_and_are_clearly_audible() -> void:
+	var sounds := {
+		"ui_move": [0.1, 0.5], "ui_confirm": [0.2, 0.8], "ui_back": [0.15, 0.6],
+		"pause_open": [0.2, 0.8], "pause_close": [0.2, 0.8],
+	}
+	for name: String in sounds:
+		var path := "res://assets/audio/sfx/ui/%s.wav" % name
+		assert_true(ResourceLoader.exists(path), "%s existe" % name)
+		var stream := load(path) as AudioStreamWAV
+		assert_true(stream != null, "%s se carga como WAV" % name)
+		if stream == null:
+			continue
+		var length := stream.get_length()
+		assert_true(length >= sounds[name][0] and length <= sounds[name][1], "%s dura %.2f s (corto)" % [name, length])
+		var stats := _wav_stats(path)
+		assert_true(float(stats["peak"]) >= 0.4, "%s pico %.2f >= -8 dBFS" % [name, stats["peak"]])
+		assert_true(float(stats["rms"]) >= 0.08, "%s RMS %.3f >= -22 dBFS" % [name, stats["rms"]])
+
+
+func test_ui_manager_streams_point_to_those_files_and_volume_is_not_muted() -> void:
+	assert_true(AM.UI_MOVE.resource_path.ends_with("ui_move.wav"))
+	assert_true(AM.UI_CONFIRM.resource_path.ends_with("ui_confirm.wav"))
+	assert_true(AM.UI_BACK.resource_path.ends_with("ui_back.wav"))
+	assert_true(AM.UI_VOLUME_DB > -6.0, "el volumen del reproductor de interfaz no esta atenuado")
+	assert_true(AudioServer.get_bus_index(&"UI") >= 0, "el bus UI existe")
+	assert_true(AudioServer.get_bus_volume_db(AudioServer.get_bus_index(&"UI")) > -6.0, "el bus UI no esta atenuado")
+	assert_true(not AudioServer.is_bus_mute(AudioServer.get_bus_index(&"UI")), "el bus UI no esta silenciado")
+
+
+func test_menu_theme_is_monochrome_skin04() -> void:
+	var theme := load("res://scenes/ui/menu_theme.tres") as Theme
+	var colors: Array[Color] = [theme.get_color(&"font_color", &"Button"), theme.get_color(&"font_color", &"Label"),
+			theme.get_color(&"font_color", &"TitleLabel")]
+	for c in colors:
+		assert_true(maxf(c.r, maxf(c.g, c.b)) - minf(c.r, minf(c.g, c.b)) < 0.1, "texto gris/blanco, no morado: %s" % c)
+		assert_true(c.v > 0.8, "texto claro")
