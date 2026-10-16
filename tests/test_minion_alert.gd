@@ -17,3 +17,14 @@ func test_alert_does_not_revive_a_dead_minion() -> void:
 	minion.alert()
 	assert_eq(minion.state, MinionBrain.State.DEAD)
 	minion.free()
+
+
+func test_order_to_sets_and_clears_the_order() -> void:
+	var minion := Minion.new()
+	assert_true(not minion.has_order())
+	minion.order_to(Vector3(4, 0, 2), 1.5)
+	assert_true(minion.has_order())
+	minion.clear_order()
+	assert_true(not minion.has_order())
+	assert_true(not minion.is_retreating())
+	minion.free()

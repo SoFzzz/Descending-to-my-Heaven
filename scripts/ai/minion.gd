@@ -32,6 +32,7 @@ const TURN_SPEED := 10.0
 const EYE_HEIGHT := 1.5
 const CHEST_HEIGHT := 1.2       # Kaelen's chest (1.70 m capsule)
 const WORLD_MASK := 1
+const ORDER_ARRIVE := 0.8       # m al punto de la orden a partir de los cuales se queda quieto
 
 @export var cost := 1
 @export var attack_range := 1.5
@@ -92,6 +93,10 @@ var _holding_token := false   # result of the last request/release (AttackTokens
 var _model_root: Node3D       # instanced model (null = placeholder)
 var _anim: AnimationPlayer
 var _current_kind: StringName = &""
+var _order_point := Vector3.ZERO   # punto de cerco que le dio el Orquestador (pinza)
+var _order_left := 0.0
+var _retreat_left := 0.0           # s que le quedan de retirada (vida baja)
+var _retreated := false
 
 
 func _ready() -> void:
@@ -118,6 +123,9 @@ func _physics_process(delta: float) -> void:
 	_find_player()
 	_state_time += delta
 	_token_cooldown = maxf(0.0, _token_cooldown - delta)
+	_order_left = maxf(0.0, _order_left - delta)
+	_retreat_left = maxf(0.0, _retreat_left - delta)
+	_check_retreat()
 
 	var distance := INF
 	var sees := false
@@ -144,6 +152,35 @@ func _physics_process(delta: float) -> void:
 	_update_animation()
 
 
+## Orden de posición del Orquestador (pinza): ir al punto y quedarse en CIRCLE allí `duration` s.
+func order_to(point: Vector3, duration := 1.2) -> void:
+	_order_point = point
+	_order_left = duration
+
+
+func clear_order() -> void:
+	_order_left = 0.0
+
+
+func has_order() -> bool:
+	return _order_left > 0.0
+
+
+func is_retreating() -> bool:
+	return _retreat_left > 0.0
+
+
+## Dejar de atacar: con poca vida un esbirro normal se aleja unos segundos y vuelve.
+func _check_retreat() -> void:
+	if state == MinionState.DEAD or state == MinionState.ATTACK or _retreat_left > 0.0:
+		return
+	if MinionBrain.should_retreat(float(health.current) / maxf(1.0, float(health.max_value)), sfx_spawn != null, _retreated):
+		_retreated = true
+		_retreat_left = MinionBrain.RETREAT_TIME
+		_order_left = 0.0
+		_release_token()
+
+
 ## Lo pone en persecución y sin radio de pérdida: lo usa el Orquestador con las oleadas, que nacen
 ## a > 8 m (normalmente fuera del radio de detección) y, sin esto, se quedarían en IDLE.
 func alert() -> void:
@@ -157,13 +194,23 @@ func alert() -> void:
 func _run_state(delta: float) -> void:
 	match state:
 		MinionState.CHASE:
-			if _player:
+			if _player and _retreat_left > 0.0:
+				_navigate_to(MinionBrain.retreat_point(global_position, _player.global_position), move_speed)
+				_face_direction(Vector3(velocity.x, 0.0, velocity.z), delta)
+			elif _player and _order_left > 0.0:
+				_go_to_order(delta, move_speed)
+			elif _player:
 				_navigate_to(_player.global_position, move_speed)
 				_face_direction(Vector3(velocity.x, 0.0, velocity.z), delta)
 			else:
 				_stop()
 		MinionState.CIRCLE:
-			if _player:
+			if _player and _retreat_left > 0.0:
+				_navigate_to(MinionBrain.retreat_point(global_position, _player.global_position), move_speed)
+				_face_direction(Vector3(velocity.x, 0.0, velocity.z), delta)
+			elif _player and _order_left > 0.0:
+				_go_to_order(delta, move_speed * 0.85)
+			elif _player:
 				_navigate_to(_orbit_point(), move_speed * ORBIT_SPEED_FACTOR)
 				_face_direction(_player.global_position - global_position, delta)
 			else:
@@ -180,6 +227,18 @@ func _run_state(delta: float) -> void:
 		_:
 			_stop()
 	move_and_slide()
+
+
+## Va al punto de cerco y, al llegar, se queda mirando a Kaelen.
+func _go_to_order(delta: float, speed: float) -> void:
+	var to_point := _order_point - global_position
+	to_point.y = 0.0
+	if to_point.length() <= ORDER_ARRIVE:
+		_stop()
+		_face_direction(_player.global_position - global_position, delta)
+	else:
+		_navigate_to(_order_point, speed)
+		_face_direction(Vector3(velocity.x, 0.0, velocity.z), delta)
 
 
 func _change_state(next: MinionState) -> void:
@@ -235,7 +294,12 @@ func _update_token(distance: float) -> void:
 	if tokens == null:
 		return
 	if state == MinionState.CHASE or state == MinionState.CIRCLE:
-		if distance <= TOKEN_RANGE and _token_cooldown <= 0.0:
+		# Amenaza compartida: si el jefe está avisando/atacando cerca de Kaelen, no inicia ataque.
+		if _holding_token and tokens.get(&"boss_threat_near") == true:
+			_release_token()
+		elif _retreat_left > 0.0:
+			pass
+		elif distance <= TOKEN_RANGE and _token_cooldown <= 0.0:
 			_holding_token = tokens.request(self)   # returns true if it already holds one
 		elif distance > TOKEN_DROP_RANGE and _holding_token:
 			_release_token()
