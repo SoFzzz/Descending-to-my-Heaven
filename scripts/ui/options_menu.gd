@@ -98,7 +98,7 @@ func close() -> void:
 
 func _build() -> void:
 	var dim := ColorRect.new()
-	dim.color = Color(0.02, 0.0, 0.06, 0.62)
+	dim.color = Color(0.0, 0.0, 0.0, 0.66)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
 	var center := CenterContainer.new()
@@ -146,7 +146,7 @@ func _build() -> void:
 	_status = Label.new()
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status.add_theme_font_size_override(&"font_size", 11)
-	_status.add_theme_color_override(&"font_color", Color(0.85, 0.8, 1.0))
+	_status.add_theme_color_override(&"font_color", Color(0.86, 0.86, 0.9))
 	_status.custom_minimum_size = Vector2(0.0, 14.0)
 	_status.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	box.add_child(_status)
@@ -188,7 +188,7 @@ func _build_controls_page() -> Control:
 			fixed.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			fixed.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 			fixed.add_theme_font_size_override(&"font_size", 13)
-			fixed.add_theme_color_override(&"font_color", Color(0.85, 0.8, 1.0))
+			fixed.add_theme_color_override(&"font_color", Color(0.86, 0.86, 0.9))
 			pad = fixed
 			_rows[[action, GameSettings.SLOT_PAD]] = fixed
 		list.add_child(_row(name_label, kb, pad))
@@ -209,7 +209,7 @@ func _build_controls_page() -> Control:
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.custom_minimum_size = Vector2(COL_ACTION + COL_KB + COL_PAD, 0.0)
 	note.add_theme_font_size_override(&"font_size", 11)
-	note.add_theme_color_override(&"font_color", Color(0.8, 0.76, 0.92))
+	note.add_theme_color_override(&"font_color", Color(0.74, 0.73, 0.8))
 	list.add_child(note)
 	return _scroll
 
@@ -401,6 +401,9 @@ func _input(event: InputEvent) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and not is_capturing() and event.is_action_pressed(&"ui_cancel"):
+		var audio := _audio()
+		if audio:
+			audio.play_ui(audio.UI_BACK)
 		close()
 		get_viewport().set_input_as_handled()
 

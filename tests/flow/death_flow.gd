@@ -91,7 +91,7 @@ func _run() -> void:
 	_check(get_tree().paused, "juego en pausa")
 	var retry: Button = ds.get_node("%Retry")
 	_check(get_viewport().gui_get_focus_owner() == retry, "foco inicial en Reintentar")
-	_check(ds.get_node("Root/Column/Center/Panel/Box").get_child_count() == 3, "3 botones")
+	_check(ds.get_node("Root/Center/Panel/Box").get_child_count() == 3, "3 botones")
 	await _shot("death_screen")
 	# Navegación con teclado: ui_down mueve el foco.
 	var down := InputEventAction.new()

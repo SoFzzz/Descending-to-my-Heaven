@@ -86,6 +86,7 @@ Autor: Riria / Ririsaurus. Licencia: uso comercial, no comercial y personal; no 
 
 Be Not Afraid UI (--Unholy), sonidos de interfaz
 Autor: Atelier Magicae (Atelier Magicae || Bunnixia || Rin Hinasaki). Licencia: uso comercial, no comercial y personal; no redistribuir. Crédito obligatorio: Atelier Magicae.
+Archivos usados (recortados y normalizados): BNA_UI1 (mover), BNA_UI21 (aceptar), BNA_UI6 (volver), BNA_UI7 (abrir pausa), BNA_UI26 (cerrar pausa).
 
 40 Free PSX Footsteps
 Autor y licencia por confirmar. (No se usa en el juego.)

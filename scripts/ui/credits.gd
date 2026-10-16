@@ -62,6 +62,9 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel"):
+		var audio := get_node_or_null(^"/root/AudioManager")
+		if audio and not _leaving:
+			audio.play_ui(audio.UI_BACK)
 		_go_back()
 		get_viewport().set_input_as_handled()
 

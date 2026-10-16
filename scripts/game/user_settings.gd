@@ -57,6 +57,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	add_menu_nav_keys()
 	load_settings()
 
 
@@ -266,9 +267,26 @@ func _replace_slot(action: StringName, slot: StringName, events: Array) -> void:
 		InputMap.action_add_event(action, event.duplicate())
 
 
+## W/A/S/D también mueven el foco de los menús (además de flechas y D-Pad), como en el juego.
+func add_menu_nav_keys() -> void:
+	var pairs := {&"ui_up": KEY_W, &"ui_down": KEY_S, &"ui_left": KEY_A, &"ui_right": KEY_D}
+	for action: StringName in pairs:
+		if not InputMap.has_action(action):
+			continue
+		var event := InputEventKey.new()
+		event.physical_keycode = pairs[action] as Key
+		var present := false
+		for existing in InputMap.action_get_events(action):
+			if existing is InputEventKey and (existing as InputEventKey).physical_keycode == event.physical_keycode:
+				present = true
+		if not present:
+			InputMap.action_add_event(action, event)
+
+
 ## Vuelve a los controles del proyecto (project.godot) y lo guarda.
 func restore_default_bindings() -> void:
 	InputMap.load_from_project_settings()
+	add_menu_nav_keys()
 	bindings_changed.emit()
 	save_settings()
 
