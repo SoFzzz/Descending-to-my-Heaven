@@ -401,6 +401,9 @@ func _input(event: InputEvent) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and not is_capturing() and event.is_action_pressed(&"ui_cancel"):
+		var audio := _audio()
+		if audio:
+			audio.play_ui(audio.UI_BACK)
 		close()
 		get_viewport().set_input_as_handled()
 

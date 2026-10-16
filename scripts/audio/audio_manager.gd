@@ -21,6 +21,12 @@ const PAUSE_FADE_SPEED := 60.0         # dB/s con que la música baja o sube al 
 ## Un botón no suena al recibir foco hasta pasado este tiempo desde que entró al árbol (el foco inicial
 ## de un menú no debe sonar).
 const UI_FOCUS_GRACE_MS := 300
+## Tras confirmar/volver no suena "mover" durante este tiempo (el foco salta al abrir otro panel y
+## taparia el sonido de confirmar).
+const UI_CONFIRM_QUIET_MS := 180
+const UI_POOL_SIZE := 4
+## Los sonidos de interfaz se recortan y normalizan a -6 dBFS de pico (scripts/tools/make_ui_sounds.py).
+const UI_VOLUME_DB := 0.0
 
 const UI_MOVE := preload("res://assets/audio/sfx/ui/ui_move.wav")
 const UI_CONFIRM := preload("res://assets/audio/sfx/ui/ui_confirm.wav")
@@ -34,7 +40,8 @@ var _music_tween: Tween
 var _music_stopping := false
 var _sfx_pool: Array[AudioStreamPlayer3D] = []
 var _sfx_next := 0
-var _ui_player: AudioStreamPlayer
+var _ui_players: Array[AudioStreamPlayer] = []
+var _ui_last_confirm_ms := -100000
 var _pause_drop_db := 0.0
 var _rng := RandomNumberGenerator.new()
 
@@ -87,9 +94,12 @@ func _ready() -> void:
 		player3d.unit_size = SFX_UNIT_SIZE
 		add_child(player3d)
 		_sfx_pool.append(player3d)
-	_ui_player = AudioStreamPlayer.new()
-	_ui_player.bus = BUS_UI
-	add_child(_ui_player)
+	for i in UI_POOL_SIZE:
+		var ui_player := AudioStreamPlayer.new()
+		ui_player.bus = BUS_UI
+		ui_player.process_mode = Node.PROCESS_MODE_ALWAYS
+		add_child(ui_player)
+		_ui_players.append(ui_player)
 	get_tree().node_added.connect(_on_node_added)
 	get_viewport().gui_focus_changed.connect(_on_gui_focus_changed)
 	# Los botones que ya estaban en el árbol (si este nodo se crea tarde) también se enganchan.
@@ -216,8 +226,22 @@ func grab_focus_silent(button: Control) -> void:
 func play_ui(stream: AudioStream) -> void:
 	if stream == null:
 		return
-	_ui_player.stream = stream
-	_ui_player.play()
+	var player := _ui_players[0]
+	for candidate in _ui_players:
+		if not candidate.playing:
+			player = candidate
+			break
+	player.stream = stream
+	player.volume_db = UI_VOLUME_DB
+	player.play()
+
+
+## true si algun reproductor de interfaz suena (pruebas y diagnostico).
+func is_ui_playing() -> bool:
+	for player in _ui_players:
+		if player.playing:
+			return true
+	return false
 
 
 # --- Botones ------------------------------------------------------------------------------------
@@ -253,6 +277,8 @@ func _on_gui_focus_changed(control: Control) -> void:
 
 
 func _on_button_pressed(button: BaseButton) -> void:
+	if button.get_meta(&"ui_sound", &"confirm") != &"none":
+		_ui_last_confirm_ms = Time.get_ticks_msec()
 	match button.get_meta(&"ui_sound", &"confirm"):
 		&"back":
 			play_ui(UI_BACK)
@@ -268,5 +294,7 @@ func _on_button_focus(control: Control) -> void:
 	if control.get_meta(&"ui_sound", &"") == &"silent_focus":
 		return
 	if Time.get_ticks_msec() - int(control.get_meta(&"ui_added_ms", 0)) < UI_FOCUS_GRACE_MS:
+		return
+	if Time.get_ticks_msec() - _ui_last_confirm_ms < UI_CONFIRM_QUIET_MS:
 		return
 	play_ui(UI_MOVE)
