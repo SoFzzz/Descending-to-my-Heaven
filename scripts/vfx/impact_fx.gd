@@ -20,7 +20,7 @@ const DUST_POOL := 4
 ## Ataques de jefe que golpean el suelo: levantan polvo donde cae la hitbox.
 const GROUND_ATTACKS: Array[StringName] = [&"slam", &"stomp", &"pounce"]
 
-const SPARK_COLOR := Color(1.0, 0.92, 0.65)
+const SPARK_COLOR := Color(1.0, 0.78, 0.38)
 const SPARK_EDGE := Color(1.0, 0.45, 0.12)
 const DUST_COLOR := Color(0.62, 0.58, 0.52)
 const DUST_EDGE := Color(0.38, 0.35, 0.32)
@@ -191,7 +191,7 @@ func _make_particles(is_dust: bool) -> CPUParticles3D:
 		mat.set_shader_parameter(&"shape", 0.0)
 		mat.set_shader_parameter(&"color", SPARK_COLOR)
 		mat.set_shader_parameter(&"edge_color", SPARK_EDGE)
-		mat.set_shader_parameter(&"energy", 2.2)
+		mat.set_shader_parameter(&"energy", 1.9)
 		p.amount = 14
 		p.lifetime = 0.42
 		p.spread = 70.0
