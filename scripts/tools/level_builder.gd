@@ -562,6 +562,7 @@ func _exit_ending(root: Node3D, geo: Node3D, cfg: Dictionary, half_d: float,
 	_box(comb, "RoomWallW", Vector3(1, room.y, room.z), Vector3(-room.x / 2 - 0.5, room.y / 2, zc), wall_mat)
 	_box(comb, "RoomDoor", Vector3(GATE_W, GATE_H, 3), Vector3(0, GATE_H / 2, zc + room.z / 2 + 0.5),
 		wall_mat, CSGShape3D.OPERATION_SUBTRACTION)
+	_break_room(comb, room, zc, room_mat)
 	# Altar (bloqueo; se reemplaza por el Altar de Modular Dungeon en la fase de arte).
 	var altar_z := zc - room.z / 2 + 2.0
 	_box(comb, "AltarStep", Vector3(6, 0.5, 4), Vector3(0, 0.25, altar_z), room_mat)
@@ -585,6 +586,24 @@ func _exit_ending(root: Node3D, geo: Node3D, cfg: Dictionary, half_d: float,
 	_node(ending, Marker3D.new(), "KaelenEndPoint").position = Vector3(0, 0, altar_z + 3.0)
 	# ExitTrigger del piso 3 no lleva a otro piso: se deja en el pasillo por si A lo necesita.
 	return {"pos": Vector3(0, 1.5, z0 - 3.0), "size": Vector3(GATE_W, 3.0, 2.0)}
+
+
+# Sala de Elysia rota: hueco irregular en el muro norte (sube hasta el techo) y techo abierto en
+# esa esquina; el exterior, los escombros y la caída los pone scenes/props/ending_room.tscn.
+func _break_room(comb: CSGCombiner3D, room: Vector3, zc: float, mat: Material) -> void:
+	var wz := zc - room.z / 2 - 0.5
+	# [nombre, tamaño, posición (x, y, z), giro en Z (grados), giro en Y (grados)]
+	var cuts := [
+		["BreakWallA", Vector3(6.0, 3.6, 3.0), Vector3(0.3, 3.2, wz), 0.0, 0.0],
+		["BreakWallB", Vector3(3.2, 2.6, 3.0), Vector3(-1.6, 5.0, wz), 14.0, 0.0],
+		["BreakWallC", Vector3(2.6, 2.6, 3.0), Vector3(-3.4, 2.0, wz), 28.0, 0.0],
+		["BreakWallD", Vector3(2.0, 3.0, 3.0), Vector3(3.8, 4.6, wz), -22.0, 0.0],
+		["BreakCeilA", Vector3(5.0, 3.0, 4.5), Vector3(0.8, 6.5, wz + 2.4), 0.0, 14.0],
+		["BreakCeilB", Vector3(2.4, 3.0, 2.6), Vector3(-2.4, 6.5, wz + 3.2), 0.0, -26.0],
+	]
+	for c in cuts:
+		var b := _box(comb, c[0], c[1], c[2], mat, CSGShape3D.OPERATION_SUBTRACTION)
+		b.rotation_degrees = Vector3(0, c[4], c[3])
 
 
 func _corridor(comb: CSGCombiner3D, z0: float, length: float, dir: int, width: float,
