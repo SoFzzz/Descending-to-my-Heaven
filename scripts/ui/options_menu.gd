@@ -1,8 +1,9 @@
 class_name OptionsMenu
 extends Control
 ## Options menu (reusable overlay): opened by the main menu and the pause menu, which are told
-## through `closed` when it goes away. Three tabs: Controls (remap keyboard/mouse and gamepad, camera
-## sensitivity, restore), Volume (Master / Music / SFX / UI, live) and Language (Spanish / English).
+## through `closed` when it goes away. Four tabs: Controls (remap keyboard/mouse and gamepad, camera
+## sensitivity, restore), Volume (Master / Music / SFX / UI, live), Display (window mode, windowed
+## resolution, VSync, FPS cap; applied live) and Language (Spanish / English).
 ## Everything is saved through the UserSettings autoload. Navigate with arrows / D-pad / stick, Enter
 ## / A to pick, Esc / B to go back and LB / RB to switch tabs.
 ## Remapping: pick a row, press Enter / A / click, then press the new key or button.
@@ -11,8 +12,14 @@ signal closed
 
 const TAB_CONTROLS := 0
 const TAB_VOLUME := 1
-const TAB_LANGUAGE := 2
-const TAB_KEYS: Array[String] = ["OPT_TAB_CONTROLS", "OPT_TAB_VOLUME", "OPT_TAB_LANGUAGE"]
+const TAB_DISPLAY := 2
+const TAB_LANGUAGE := 3
+const TAB_KEYS: Array[String] = ["OPT_TAB_CONTROLS", "OPT_TAB_VOLUME", "OPT_TAB_DISPLAY", "OPT_TAB_LANGUAGE"]
+const MODE_KEYS := {
+	GameSettings.MODE_WINDOWED: "DISP_MODE_WINDOWED",
+	GameSettings.MODE_FULLSCREEN: "DISP_MODE_FULLSCREEN",
+	GameSettings.MODE_EXCLUSIVE: "DISP_MODE_EXCLUSIVE",
+}
 const ACTION_KEYS := {
 	&"move_forward": "ACT_MOVE_FORWARD", &"move_back": "ACT_MOVE_BACK",
 	&"move_left": "ACT_MOVE_LEFT", &"move_right": "ACT_MOVE_RIGHT",
@@ -38,6 +45,10 @@ var _volume_labels: Dictionary = {}  # bus -> Label
 var _sens_slider: HSlider
 var _sens_label: Label
 var _lang_buttons: Dictionary = {}  # locale -> Button
+var _mode_button: Button
+var _res_button: Button
+var _vsync_button: Button
+var _fps_button: Button
 var _capture_action: StringName = &""
 var _capture_slot: StringName = &""
 var _capture_button: Button
@@ -59,6 +70,9 @@ func _ready() -> void:
 	_save_timer.process_mode = Node.PROCESS_MODE_ALWAYS
 	_save_timer.timeout.connect(_save_now)
 	add_child(_save_timer)
+	var settings := _settings()
+	if settings:
+		settings.display_changed.connect(_refresh_all)
 	_refresh_all()
 
 
@@ -139,7 +153,7 @@ func _build() -> void:
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.custom_minimum_size = Vector2(0.0, 196.0)
 	box.add_child(stack)
-	_pages = [_build_controls_page(), _build_volume_page(), _build_language_page()]
+	_pages = [_build_controls_page(), _build_volume_page(), _build_display_page(), _build_language_page()]
 	for page in _pages:
 		page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		stack.add_child(page)
@@ -243,6 +257,35 @@ func _build_volume_page() -> Control:
 	return page
 
 
+func _build_display_page() -> Control:
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override(&"separation", 12)
+	page.alignment = BoxContainer.ALIGNMENT_CENTER
+	_mode_button = _display_row(page, "DISP_MODE", _on_mode_pressed)
+	_res_button = _display_row(page, "DISP_RESOLUTION", _on_resolution_pressed)
+	_vsync_button = _display_row(page, "DISP_VSYNC", _on_vsync_pressed)
+	_fps_button = _display_row(page, "DISP_FPS", _on_fps_pressed)
+	return page
+
+
+## One "label + value button" row; pressing the button cycles to the next value.
+func _display_row(page: Control, label_key: String, handler: Callable) -> Button:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override(&"separation", 10)
+	var name_label := _header_label(label_key, 190.0)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	row.add_child(name_label)
+	var button := Button.new()
+	button.theme_type_variation = &"CellButton"
+	button.custom_minimum_size = Vector2(230.0, 22.0)
+	button.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	button.pressed.connect(handler)
+	row.add_child(button)
+	page.add_child(row)
+	return button
+
+
 func _build_language_page() -> Control:
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override(&"separation", 10)
@@ -319,9 +362,19 @@ func _refresh_all() -> void:
 		(_volume_labels[bus] as Label).text = "%d%%" % roundi(settings.get_volume(bus) * 100.0)
 	_sens_slider.set_value_no_signal(settings.look_sensitivity)
 	_sens_label.text = "%.2fx" % settings.look_sensitivity
+	_refresh_display(settings)
 	for loc: String in _lang_buttons:
 		(_lang_buttons[loc] as Button).set_pressed_no_signal(loc == settings.locale)
 	_show_status()
+
+
+func _refresh_display(settings: GameSettings) -> void:
+	_mode_button.text = "< %s >" % tr(MODE_KEYS[settings.window_mode])
+	var size := GameSettings.scale_size(settings.window_scale)
+	_res_button.text = "< %d x %d >" % [size.x, size.y]
+	_res_button.disabled = settings.window_mode != GameSettings.MODE_WINDOWED
+	_vsync_button.text = "< %s >" % tr("DISP_ON" if settings.vsync else "DISP_OFF")
+	_fps_button.text = "< %s >" % (tr("DISP_UNLIMITED") if settings.fps_limit == 0 else str(settings.fps_limit))
 
 
 func _set_status(key: String, arg := "") -> void:
@@ -345,6 +398,8 @@ func _select_tab(index: int) -> void:
 	_restore.visible = index == TAB_CONTROLS
 	if index == TAB_CONTROLS and not is_capturing():
 		_set_status("OPT_CONTROLS_HINT")
+	elif index == TAB_DISPLAY:
+		_set_status("DISP_HINT")
 	elif index != TAB_CONTROLS:
 		_status.text = ""
 		_status_key = "OPT_CONTROLS_HINT"
@@ -480,6 +535,36 @@ func _on_sensitivity_changed(value: float) -> void:
 	settings.set_look_sensitivity(value, false)
 	_sens_label.text = "%.2fx" % value
 	_schedule_save()
+
+
+## Next entry of `values` after `current` (wraps around).
+static func _next_in(values: Array, current: Variant) -> Variant:
+	var idx := values.find(current)
+	return values[(idx + 1) % values.size()]
+
+
+func _on_mode_pressed() -> void:
+	var settings := _settings()
+	if settings:
+		settings.set_window_mode(_next_in(GameSettings.WINDOW_MODES, settings.window_mode))
+
+
+func _on_resolution_pressed() -> void:
+	var settings := _settings()
+	if settings:
+		settings.set_window_scale(_next_in(settings.available_scales(), settings.window_scale))
+
+
+func _on_vsync_pressed() -> void:
+	var settings := _settings()
+	if settings:
+		settings.set_vsync(not settings.vsync)
+
+
+func _on_fps_pressed() -> void:
+	var settings := _settings()
+	if settings:
+		settings.set_fps_limit(_next_in(GameSettings.FPS_LIMITS, settings.fps_limit))
 
 
 func _on_language_picked(loc: String) -> void:
