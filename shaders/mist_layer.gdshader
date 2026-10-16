@@ -1,6 +1,7 @@
-// Capa de niebla baja del exterior: un plano horizontal enorme con ruido de valor que se desplaza muy
-// despacio. Mezcla el color de bruma con transparencia; sin luces, sin sombras y sin escribir profundidad.
-// Varias capas a distintas alturas forman el "mar de niebla" bajo la isla y funden el vacío con el horizonte.
+// Low mist layer of the exterior: a huge horizontal plane with value noise that drifts very slowly.
+// Blends the haze color with transparency; unlit, no shadows and no depth writes.
+// Several layers at different heights form the "sea of mist" under the island and blend the void
+// into the horizon.
 shader_type spatial;
 render_mode unshaded, cull_disabled, shadows_disabled, depth_draw_never, blend_mix;
 
@@ -8,7 +9,7 @@ uniform vec3 haze_color : source_color = vec3(0.42, 0.46, 0.55);
 uniform float density : hint_range(0.0, 1.0) = 0.55;
 uniform float noise_scale = 0.035;
 uniform vec2 drift = vec2(0.012, 0.007);
-uniform float clear_radius = 30.0;   // sin niebla justo bajo la cámara para que no tape la isla
+uniform float clear_radius = 30.0;   // no mist right under the camera so it does not cover the island
 
 varying vec3 v_world;
 

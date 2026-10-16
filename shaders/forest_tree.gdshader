@@ -1,8 +1,8 @@
-// Árboles lejanos del exterior (modelos del pack PS1, ver scripts/environment/forest_ring.gd): textura con
-// recorte de alfa, sin luces y con la neblina del entorno desactivada: el propio shader los oscurece y los
-// funde hacia el color de la bruma según la distancia a la cámara y según la altura (los pies se pierden
-// en el mar de niebla). Filtro nearest y posición cuantizada en pantalla para mantener el look PSX.
-// INSTANCE_CUSTOM = (y del pie del árbol, altura total en metros).
+// Distant trees of the exterior (PS1 pack models, see scripts/environment/forest_ring.gd): alpha-cut
+// texture, unlit and with the environment fog disabled: the shader itself darkens them and blends
+// them toward the haze color by camera distance and by height (the trunks fade into the sea of
+// mist). Nearest filtering to keep the PSX look.
+// INSTANCE_CUSTOM = (y of the tree base, total height in meters).
 shader_type spatial;
 render_mode unshaded, cull_disabled, fog_disabled, shadows_disabled, depth_draw_opaque;
 
