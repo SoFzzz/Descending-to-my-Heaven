@@ -206,15 +206,15 @@ Al derrotar al jefe aparece, con un fundido de 2,5 s, un tinte multiplicativo su
 5. Elysia: ¿Lo sientes? La isla ya no flota.
 6. Elysia: Los tres guardianes la mantenían en el aire. Y tú los has vencido.
 7. Kaelen: No había otro camino hasta ti.
-8. Elysia: Aquí vive gente, Kaelen. Familias. Niños. Todos caerán con nosotros.
+8. Elysia: Aquí vive gente, Kaelen. Familias. Niños. Todos caerán con nosotras.
 9. Elysia: Esa es la parte que más duele.
 10. Kaelen: Lo sé. Y aun así lo volvería a hacer.
 11. Kaelen: No vine a salvar a nadie. Vine a verte otra vez. Solo eso.
 12. (narrador) Elysia baja la mirada. Más allá del hueco, una torre se desprende y se pierde entre las nubes.
 13. Elysia: Debería odiarte por esto. Pero no puedo. Ni siquiera ahora.
 14. Elysia: Esperé tanto tu luz... y llega justo cuando todo se apaga.
-15. Kaelen: Entonces no la soltemos. Que la caída nos encuentre juntos.
-16. Elysia: Juntos, entonces. Aunque no quede cielo al que volver.
+15. Kaelen: Entonces no la soltemos. Que la caída nos encuentre juntas.
+16. Elysia: Juntas, entonces. Aunque no quede cielo al que volver.
 17. (narrador) Se abrazan mientras el suelo se desprende del cielo.
 18. Elysia: Cierra los ojos, Kaelen. Caer también es una forma de volar.
 19. (narrador) Y el templo, con sus muertos y sus velas, se hundió despacio en las nubes.
