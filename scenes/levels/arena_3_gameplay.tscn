@@ -13,6 +13,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/ambient/stone_door.mp3" id="11_gate"]
 [ext_resource type="AudioStream" path="res://assets/audio/bgm/ending_celtic_melancholy.mp3" id="10_ending"]
 [ext_resource type="PackedScene" path="res://scenes/props/ending_room.tscn" id="12_room"]
+[ext_resource type="Script" path="res://scripts/game/arena_mood.gd" id="90_mood"]
 
 [node name="Arena3Gameplay" type="Node3D"]
 script = ExtResource("1_gp")
@@ -25,6 +26,20 @@ gate_sound = ExtResource("11_gate")
 exit_advances_level = false
 
 [node name="Level" parent="." instance=ExtResource("2_level")]
+
+[node name="Mood" type="Node" parent="."]
+script = ExtResource("90_mood")
+ambient_color = Color(0.55, 0.55, 0.58, 1)
+ambient_energy = 0.65
+fog_color = Color(0.52, 0.52, 0.54, 1)
+fog_begin = 12.0
+fog_end = 80.0
+sun_color = Color(0.95, 0.85, 0.7, 1)
+sun_energy = 0.95
+brightness = 1.0
+contrast = 1.05
+saturation = 0.8
+defeat_tint = Color(1, 0.94, 0.72, 1)
 
 [node name="Kaelen" parent="." instance=ExtResource("3_kaelen")]
 
