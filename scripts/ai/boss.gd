@@ -23,6 +23,8 @@ signal attack_started(attack: BossAttack)
 enum State { IDLE, CHASE, TELEGRAPH, ACTIVE, RECOVER, ROAR, DEAD }
 
 const PHASE2_SPEED := 1.25
+## Radio (m) del sello que aparece bajo el jefe al rugir al pasar a la fase 2.
+const PHASE2_SEAL_RADIUS := 5.0
 const TURN_SPEED := 4.0            # rad/s-ish smoothing toward Kaelen
 const TRACK_FRACTION := 0.7        # during the first 70 % of the warning it keeps turning; then it commits
 const DODGE_RECORD_RANGE := 12.0   # only rolls this close count for the anticipation bonus
@@ -208,6 +210,7 @@ func _physics_process(delta: float) -> void:
 		_cancel_attack()
 		_play(roar_animation)
 		_play_sfx(sfx_phase2)
+		ImpactFx.seal(self, PHASE2_SEAL_RADIUS, 1.0, "blood")
 		_set_state(State.ROAR)
 	elif _pending_repel and can_repel():
 		start_repel()
@@ -325,6 +328,9 @@ func _begin_active() -> void:
 	_play_sfx(current_attack.sfx_active, visual.global_position if visual else global_position)
 	if _hitbox:
 		_hitbox.activate()
+		if current_attack.id in ImpactFx.GROUND_ATTACKS and is_inside_tree():
+			var spot := Vector3(_hitbox.global_position.x, global_position.y + 0.1, _hitbox.global_position.z)
+			ImpactFx.dust(get_tree(), spot, 1.8)
 	for path in current_attack.extra_hitbox_paths:
 		var extra := get_node_or_null(path) as Hitbox
 		if extra:
@@ -584,6 +590,7 @@ func start_repel() -> void:
 	repelling = true
 	_play(roar_animation)
 	_play_sfx(sfx_phase2)
+	ImpactFx.seal(self, repel_radius, repel_push_delay)   # el sello es el aviso: se cierra justo antes de la onda
 	_set_state(State.ROAR)
 	_repel_push_left = repel_push_delay
 
