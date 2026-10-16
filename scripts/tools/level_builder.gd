@@ -528,6 +528,7 @@ func _entry_hall(geo: Node3D, half_d: float, floor_mat: Material, wall_mat: Mate
 	var base_d := steps * STEP_D + 1.0   # bloque macizo bajo la escalera para recortarla
 	_box(comb, "StairBase", Vector3(GATE_W, 3, base_d), Vector3(0, -1.5, z0 + 6.0 + base_d / 2), floor_mat)
 	_stairs(comb, Vector3(0, 0, z0 + 6.0), 1, -1, steps, GATE_W, floor_mat)
+	_stair_ramp(geo, "EntryRamp", Vector3(0, 0, z0 + 6.0), 1, -1, steps, GATE_W)
 
 
 # Salida norte de los pisos 1 y 2: pasillo + escalera que sube 4 m + rellano con ExitTrigger.
@@ -538,6 +539,7 @@ func _exit_stairs(geo: Node3D, half_d: float, floor_mat: Material, wall_mat: Mat
 	var comb := _combiner(geo, "ExitHall")
 	_corridor(comb, z0, run, -1, GATE_W, GATE_H + 4.5, floor_mat, wall_mat)
 	_stairs(comb, Vector3(0, 0, z0 - 3.0), -1, 1, steps, GATE_W, floor_mat)
+	_stair_ramp(geo, "ExitRamp", Vector3(0, 0, z0 - 3.0), -1, 1, steps, GATE_W)
 	var top := steps * STEP_H
 	_box(comb, "Landing", Vector3(GATE_W, top, 4.0), Vector3(0, top / 2, z0 - run + 2.0), floor_mat)
 	return {"pos": Vector3(0, top + 1.0, z0 - run + 2.0), "size": Vector3(GATE_W, 2.0, 3.0)}
@@ -609,6 +611,43 @@ func _stairs(comb: CSGCombiner3D, start: Vector3, dir: int, up: int, steps: int,
 		else:   # baja: se recorta del suelo (las escaleras de llegada solo se ven)
 			_box(comb, "Step%d" % i, Vector3(width, -top + 0.01, STEP_D),
 				Vector3(0, top / 2, z), mat, CSGShape3D.OPERATION_SUBTRACTION)
+
+
+# Rampa de colisión de una escalera: los peldaños CSG solo se ven; el jugador pisa un plano inclinado que
+# pasa a 2 cm por encima de los cantos de los peldaños, así que un CharacterBody3D la sube y la baja sin
+# el salto brusco de un escalón de 0.25 m (antes dependía de `_try_step_up`, que lo teletransporta).
+# Cuña convexa: `start` = pie de la escalera, `dir` = sentido en Z, `up` = 1 sube / -1 baja.
+func _stair_ramp(parent: Node, name: String, start: Vector3, dir: int, up: int, steps: int,
+		width: float) -> StaticBody3D:
+	var slope := STEP_H / STEP_D
+	var total := steps * STEP_H
+	var sink := -0.02   # negativo = 2 cm por encima de los cantos (que no los roce la cápsula)
+	var prof: Array = []   # perfil (s a lo largo de la escalera, y) de la cara superior
+	if up > 0:
+		prof = [Vector2(-(STEP_H - sink) / slope, 0.0), Vector2((total - STEP_H + sink) / slope, total),
+			Vector2(steps * STEP_D + 0.3, total)]
+	else:
+		prof = [Vector2(-sink / slope, 0.0), Vector2((total - sink) / slope, -total),
+			Vector2(steps * STEP_D + 0.3, -total)]
+	var pts := PackedVector3Array()
+	var low := minf(prof[0].y, prof[2].y) - 0.6
+	for p: Vector2 in prof:
+		for sx in [-1, 1]:
+			pts.append(Vector3(sx * width / 2, start.y + p.y, start.z + dir * p.x))
+	for p: Vector2 in [prof[0], prof[2]]:
+		for sx in [-1, 1]:
+			pts.append(Vector3(sx * width / 2, start.y + low, start.z + dir * p.x))
+	var body := StaticBody3D.new()
+	body.collision_layer = 1
+	body.collision_mask = 0
+	body.set_meta("doc", "Rampa de colisión de la escalera (los peldaños CSG son visuales)")
+	_node(parent, body, name)
+	var col := CollisionShape3D.new()
+	var shape := ConvexPolygonShape3D.new()
+	shape.points = pts
+	col.shape = shape
+	_node(body, col, "Shape")
+	return body
 
 
 func _gates(root: Node3D, half_d: float) -> void:
