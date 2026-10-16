@@ -1,20 +1,20 @@
 extends CanvasLayer
-## Pantalla de muerte (spec §10.4). Con Events.player_died: espera DEATH_DELAY (la caída de Kaelen),
-## muestra "HAS MUERTO" con fundido y, pasado TITLE_TIME, un panel con tres botones: Reintentar
-## (GameState.reload_current_arena), Volver al menú y Salir del juego. Mientras los botones están
-## visibles el árbol está en pausa (esta capa sigue activa: PROCESS_MODE_ALWAYS) y el cursor libre.
-## Hijo del autoload GameState; GameState la oculta (hide_now) al cambiar de escena.
+## Death screen (spec 10.4). On Events.player_died: waits DEATH_DELAY (Kaelen's fall), fades in the
+## "YOU DIED" title and, after TITLE_TIME, a panel with three buttons: Retry
+## (GameState.reload_current_arena), Back to menu and Quit. While the buttons are visible the tree
+## is paused (this layer keeps running: PROCESS_MODE_ALWAYS) and the cursor is free.
+## Child of the GameState autoload; GameState hides it (hide_now) on scene change.
 
 const FADE_IN := 1.0
-const DEATH_DELAY := 1.6   # desde la muerte hasta que aparece el título (animación de caída)
-const TITLE_TIME := 1.2    # desde que aparece el título hasta que aparecen los botones
+const DEATH_DELAY := 1.6   # from the death until the title appears (fall animation)
+const TITLE_TIME := 1.2    # from the title appearing until the buttons appear
 const BUTTONS_FADE := 0.4
-## Música de la pantalla de muerte: ogg en bucle (loop=true en el .import, empalmado en compás);
-## suena mientras la pantalla esté visible y hide_now() la corta con fundido.
+## Death screen music: looping ogg (loop=true in the .import, spliced on the beat); it plays while
+## the screen is visible and hide_now() fades it out.
 const DEATH_SOUND := preload("res://assets/audio/bgm/death_screen_loop.ogg")
 const SOUND_FADE_OUT := 0.8
 
-## Texto de respaldo si la clave de traducción no existe todavía (tr() devuelve la clave).
+## Fallback text if the translation key does not exist yet (tr() returns the key).
 const FALLBACKS := {
 	"DEATH_TITLE": "HAS MUERTO",
 	"DEATH_RETRY": "Reintentar",
@@ -26,7 +26,9 @@ var _active := false
 var _buttons_shown := false
 var _sound: AudioStreamPlayer
 var _sound_tween: Tween
-var _run_id := 0   # invalida las esperas de una muerte anterior
+var _fade_tween: Tween
+var _panel_tween: Tween
+var _run_id := 0   # invalidates the waits of a previous death
 
 @onready var _root: Control = $Root
 @onready var _title: Label = %Title
@@ -48,12 +50,12 @@ func _ready() -> void:
 		events.player_died.connect(_on_player_died)
 
 
-## Texto traducido; si no hay traducción (tr devuelve la clave) usa el español de respaldo.
+## Translated text; without a translation (tr returns the key) uses the Spanish fallback.
 func text_for(key: String) -> String:
 	return fallback_text(key, tr(key))
 
 
-## `translated` es lo que devolvió tr(key): si es la propia clave se usa el español de respaldo.
+## `translated` is what tr(key) returned: if it is the key itself the Spanish fallback is used.
 static func fallback_text(key: String, translated: String) -> String:
 	return FALLBACKS.get(key, key) if translated == key else translated
 
@@ -91,11 +93,12 @@ func _on_player_died() -> void:
 	_play_death_sound()
 	await get_tree().create_timer(DEATH_DELAY, true, false, true).timeout
 	if run != _run_id or not _active:
-		return   # ya se cambió de escena por otra vía
+		return   # the scene was already changed by another path
 	_root.visible = true
 	_root.modulate.a = 0.0
 	_title.modulate.a = 1.0
-	create_tween().set_ignore_time_scale(true).tween_property(_root, ^"modulate:a", 1.0, FADE_IN)
+	_fade_tween = _restart_tween(_fade_tween)
+	_fade_tween.tween_property(_root, ^"modulate:a", 1.0, FADE_IN)
 	await get_tree().create_timer(TITLE_TIME, true, false, true).timeout
 	if run != _run_id or not _active:
 		return
@@ -108,7 +111,8 @@ func _show_buttons() -> void:
 		button.disabled = false
 	_panel.visible = true
 	_panel.modulate.a = 0.0
-	create_tween().set_ignore_time_scale(true).tween_property(_panel, ^"modulate:a", 1.0, BUTTONS_FADE)
+	_panel_tween = _restart_tween(_panel_tween)
+	_panel_tween.tween_property(_panel, ^"modulate:a", 1.0, BUTTONS_FADE)
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	var audio := get_node_or_null(^"/root/AudioManager")
@@ -116,6 +120,13 @@ func _show_buttons() -> void:
 		audio.grab_focus_silent(_retry)
 	else:
 		_retry.grab_focus()
+
+
+## Kills `old` (if alive) and returns a new tween that ignores time scale.
+func _restart_tween(old: Tween) -> Tween:
+	if old and old.is_valid():
+		old.kill()
+	return create_tween().set_ignore_time_scale(true)
 
 
 func _lock_buttons() -> void:
@@ -145,7 +156,7 @@ func _on_quit() -> void:
 	get_tree().quit()
 
 
-## Si no se pudo iniciar el fundido (escena inexistente) no se deja la pantalla bloqueada.
+## If the fade could not start (missing scene) the screen is not left locked.
 func _after_leave(game_state: Node) -> void:
 	var transition: Node = game_state.get(&"transition") if game_state else null
 	if transition == null or not transition.call(&"is_busy"):
@@ -177,6 +188,9 @@ func _fade_out_sound() -> void:
 
 
 func hide_now() -> void:
+	for tween: Tween in [_fade_tween, _panel_tween]:
+		if tween and tween.is_valid():
+			tween.kill()
 	_fade_out_sound()
 	_active = false
 	_buttons_shown = false
