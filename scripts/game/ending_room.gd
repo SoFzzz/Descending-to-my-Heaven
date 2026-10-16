@@ -35,13 +35,16 @@ const WIND_STREAM := "res://assets/audio/sfx/ambient/wind_fall.mp3"
 const WIND_BUS := &"SFX"
 const WIND_VOLUME_DB := -9.0
 const WIND_SILENT_DB := -60.0
+## Racha de aire (StormFX gust): semiancho (m) y fondo (m) por delante del hueco.
+const GUST_RADIUS := 11.0
+const GUST_DEPTH := 12.0
 
 var falling := false
 var intensity := 0.0   ## 0 = hueco quieto con deriva lenta, 1 = caída a toda velocidad
 
 var _outside: Node3D
 var _clouds: CPUParticles3D
-var _streaks: CPUParticles3D
+var _streaks: StormFX
 var _dust: CPUParticles3D
 var _pebbles: CPUParticles3D
 var _rocks: Array[Dictionary] = []   # {node, speed, spin}
@@ -86,7 +89,9 @@ func start_fall() -> void:
 	falling = true
 	_dust.emitting = true
 	_pebbles.emitting = true
-	_streaks.emitting = true
+	_streaks.visible = true
+	_streaks.set_process(true)
+	_streaks.play()
 	if is_inside_tree():
 		_tween = create_tween()
 		_tween.tween_property(self, "intensity", 1.0, RAMP_TIME).set_trans(Tween.TRANS_SINE) \
@@ -159,7 +164,7 @@ func _process(delta: float) -> void:
 func _apply_speed() -> void:
 	var s := speed_for(intensity)
 	_clouds.speed_scale = s
-	_streaks.speed_scale = s
+	_streaks.speed = 0.4 + s * 1.4
 
 
 func _shake(cam: Camera3D) -> void:
@@ -278,28 +283,26 @@ func _build_clouds() -> void:
 	_outside.add_child(_clouds)
 
 
-## Rachas de viento: líneas finas muy rápidas cerca del hueco (solo durante la caída).
+## Rachas de viento (Storm & Wind 3D Free, StormFX "gust" de aire): líneas y motas que suben a toda
+## velocidad por delante del hueco. Empieza apagado y se forma durante RAMP_TIME al empezar la caída.
 func _build_streaks() -> void:
-	_streaks = CPUParticles3D.new()
+	StormFX.default_transparency = 1   # tramado (dither): casa con el aspecto PSX
+	_streaks = StormFX.new()
 	_streaks.name = "WindStreaks"
-	var q := QuadMesh.new()
-	q.size = Vector2(0.1, 7.0)
-	q.material = _particle_material(Color(0.9, 0.93, 1.0, 0.55), null)
-	_streaks.mesh = q
-	_streaks.emitting = false
-	_streaks.amount = 36
-	_streaks.lifetime = 0.7
-	_streaks.local_coords = true
-	_streaks.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-	_streaks.emission_box_extents = Vector3(10, 1, 7)
-	_streaks.position = Vector3(0, -14, -9)
-	_streaks.direction = Vector3.UP
-	_streaks.spread = 0.0
-	_streaks.gravity = Vector3.ZERO
-	_streaks.initial_velocity_min = 48.0
-	_streaks.initial_velocity_max = 62.0
-	_streaks.color_ramp = _fade_ramp()
-	_streaks.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_streaks.kind = "gust"
+	_streaks.style = "air"
+	_streaks.radius = GUST_RADIUS
+	_streaks.height = GUST_DEPTH
+	_streaks.light = false
+	_streaks.autoplay = false
+	_streaks.appear = RAMP_TIME
+	_streaks.interval = 0.0
+	_streaks.seed = 3.0
+	_streaks.set_param(&"thickness", 1.6)
+	_streaks.position = Vector3(0, 2, -4)
+	_streaks.rotation_degrees = Vector3(90, 0, 0)   # sopla hacia -Z local = hacia arriba
+	_streaks.visible = false
+	_streaks.set_process(false)   # nada que dibujar ni actualizar hasta que empiece la caída
 	_outside.add_child(_streaks)
 
 
