@@ -1,5 +1,5 @@
 extends TestCase
-# Minion.alert(): pone al esbirro en CHASE y le quita el radio de pérdida (sin necesitar la escena).
+# Minion.alert(): puts the minion in CHASE and removes its lose radius (without needing the scene).
 
 
 func test_alert_sets_chase_and_unlimited_lose_radius() -> void:

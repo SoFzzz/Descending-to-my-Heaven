@@ -1,5 +1,5 @@
 extends TestCase
-# SquadTactics (pinza y amenazas compartidas) y su uso en AttackTokens.
+# SquadTactics (pincer and shared threats) and their use in AttackTokens.
 
 const TokensScript := preload("res://scripts/ai/attack_tokens.gd")
 
@@ -24,7 +24,7 @@ func test_pincer_points_all_on_the_far_side_and_on_the_ring() -> void:
 	for p in pts:
 		assert_almost(p.distance_to(player), SquadTactics.PINCER_RADIUS, 0.001)
 		assert_true(p.normalized().dot(to_boss) < -0.4, "en el hemisferio opuesto al jefe")
-	# El abanico es simétrico: el punto central está a 180°.
+	# The fan is symmetric: the centre point is at 180°.
 	assert_almost(pts[1].normalized().dot(to_boss), -1.0, 0.001)
 	assert_true(pts[0].distance_to(pts[2]) > pts[0].distance_to(pts[1]), "separados")
 

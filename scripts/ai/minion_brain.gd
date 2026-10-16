@@ -22,8 +22,8 @@ enum State { IDLE, CHASE, CIRCLE, ATTACK, RECOVER, STUNNED, DEAD }
 const DETECT_RADIUS := 12.0
 const FOV_DEG := 110.0
 
-## Retirada táctica (dejar de atacar): un esbirro NORMAL con la vida por debajo de RETREAT_HEALTH
-## se aleja RETREAT_TIME s hasta ~RETREAT_DISTANCE m de Kaelen y vuelve (una vez por vida).
+## Tactical retreat (stop attacking): a NORMAL minion with health below RETREAT_HEALTH
+## backs off for RETREAT_TIME s to ~RETREAT_DISTANCE m from Kaelen and comes back (once per life).
 const RETREAT_HEALTH := 0.3
 const RETREAT_TIME := 3.5
 const RETREAT_DISTANCE := 9.0
@@ -66,12 +66,12 @@ func next_state(state: State, ctx: Dictionary) -> State:
 	return state
 
 
-## ¿Debe retirarse ahora? Solo los normales (no élites), una vez, con la vida por debajo del umbral.
+## Should it retreat now? Only normal minions (not elites), once, with health below the threshold.
 static func should_retreat(hp_ratio: float, is_elite: bool, already_retreated: bool) -> bool:
 	return not is_elite and not already_retreated and hp_ratio > 0.0 and hp_ratio < RETREAT_HEALTH
 
 
-## Punto al que huye: lejos de Kaelen, en la línea que los une, a `lookahead` m de su posición.
+## Point it flees to: away from Kaelen, along the line joining them, `lookahead` m from its position.
 static func retreat_point(from: Vector3, player_pos: Vector3, lookahead := 6.0) -> Vector3:
 	var away := Vector3(from.x - player_pos.x, 0.0, from.z - player_pos.z)
 	if away.length_squared() < 0.0001:

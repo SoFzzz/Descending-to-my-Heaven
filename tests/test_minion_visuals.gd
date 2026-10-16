@@ -1,5 +1,5 @@
 extends TestCase
-# Visuales del esbirro: elección de clip, escalas de velocidad y montaje del modelo (sin escena .tscn).
+# Minion visuals: clip choice, speed scales and model mounting (without a .tscn scene).
 
 const S := MinionBrain.State
 
@@ -39,7 +39,7 @@ func test_defaults_keep_placeholder_behavior() -> void:
 	assert_true(minion.sfx_attack == null and minion.sfx_hurt == null and minion.sfx_death == null)
 	assert_almost(minion.model_yaw_offset, PI)
 	assert_true(minion.tint.is_equal_approx(Color.WHITE))
-	# Sin modelo todo es no-op: no revienta ni cambia el estado.
+	# Without a model everything is a no-op: it neither crashes nor changes the state.
 	minion._setup_visuals()
 	minion._update_animation(true)
 	minion._play_death()

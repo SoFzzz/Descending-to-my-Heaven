@@ -1,7 +1,7 @@
 extends TestCase
-# Tarea 13: ataques y escenas de Blackhorn y Ghidorah (§7.4, §8.2). El avance, las aperturas y las hurtboxes
-# expuestas viven en Boss / BossAttack (ver test_boss_attack.gd).
-# Solo estructura y datos: el comportamiento en ejecución se comprueba con el arnés de verificación.
+# Task 13: attacks and scenes of Blackhorn and Ghidorah (7.4, 8.2). The advance, the openers and the
+# exposed hurtboxes live in Boss / BossAttack (see test_boss_attack.gd).
+# Structure and data only: runtime behaviour is checked with the verification harness.
 
 const ATTACK_DIR := "res://resources/attacks/"
 const BLACKHORN := "res://scenes/bosses/boss_blackhorn.tscn"
@@ -24,7 +24,7 @@ func _shape(boss: Node, path: String) -> Shape3D:
 	return node.shape if node else null
 
 
-# --- Recursos de ataque ---------------------------------------------------------------------------
+# --- Attack resources ---------------------------------------------------------------------------
 
 func test_blackhorn_attack_ranges() -> void:
 	var slam := _attack("blackhorn_slam.tres")
@@ -80,7 +80,7 @@ func test_attack_timings_are_sane() -> void:
 		assert_true(a.animation != &"", file + ": animación")
 
 
-# --- Escenas ----------------------------------------------------------------------------------------
+# --- Scenes ------------------------------------------------------------------------------------
 
 func _check_attack_wiring(boss: Boss, label: String) -> void:
 	assert_eq(boss.attacks.size(), 3, label + ": 3 ataques")
@@ -160,7 +160,7 @@ func test_ghidorah_scene() -> void:
 	assert_almost((_shape(boss, "BeamHitbox") as BoxShape3D).size.z, 2.0, 0.001, "rayo: zona corta que viaja con el impacto")
 	assert_almost((_shape(boss, "BeamHitbox") as BoxShape3D).size.x, 1.5)
 	assert_almost((_shape(boss, "TailSweepHitbox") as BoxShape3D).size.z, 9.6, 0.001, "cola de 9.6 m: del cuerpo al borde del aviso, sin hueco")
-	# Cabezas: solo hurtbox (esfera r 1.0), cerradas hasta que baje la cabeza.
+	# Heads: hurtbox only (sphere r 1.0), closed until the head comes down.
 	for head in ["HeadCHurtbox", "HeadLHurtbox", "HeadRHurtbox"]:
 		var hurt := boss.get_node_or_null(NodePath(head)) as Hurtbox
 		assert_true(hurt != null, head)

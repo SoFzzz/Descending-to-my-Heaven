@@ -103,7 +103,7 @@ func test_boss_phase_change_at_half() -> void:
 	assert_true(not BossBrain.should_enter_phase2(0, 400, 1), "muerto no cambia de fase")
 
 
-# --- Ataques de apertura (largo alcance) mientras el jefe todavía se acerca -----------------------
+# --- Opener attacks (long range) while the boss is still approaching ---------------------------
 
 func _opener(id: StringName, min_range: float, max_range: float, phase_min := 1) -> BossAttack:
 	var a := _attack(id, min_range, max_range, 1.0, phase_min)
