@@ -36,6 +36,15 @@ func _wait(seconds: float) -> void:
 	await get_tree().create_timer(seconds, true, false, true).timeout
 
 
+## Waits until `cond` is true or `timeout` s pass (real time). Fade-outs are tweens stepped per frame, so
+## a fixed sleep can fire before the tween's last step after a long frame.
+func _wait_until(cond: Callable, timeout: float) -> void:
+	var waited := 0.0
+	while not cond.call() and waited < timeout:
+		await _wait(0.05)
+		waited += 0.05
+
+
 func _scene() -> Node:
 	return get_tree().current_scene
 
@@ -78,7 +87,7 @@ func _run() -> void:
 	await _wait(2.5)
 	_check(_audio_playing() == 1 and AudioManager.get_current_music() == level.boss_music, "suena la música del jefe")
 	_kill()
-	await _wait(0.8)
+	await _wait_until(func() -> bool: return _audio_playing() == 0, 3.0)
 	_check(_audio_playing() == 0, "tras morir se para la música del jefe (reproductores: %d)" % _audio_playing())
 	_check(level.get_node("Ambience").playing == false, "se para el ambiente")
 	level._on_boss_state_changed(Boss.State.ACTIVE)   # el jefe detecta a Kaelen caída
@@ -115,7 +124,7 @@ func _run() -> void:
 		await _wait(2.5)
 		_check(_audio_playing() == 1 and AudioManager.get_current_music() == level.boss_music, "reintento %d: un único reproductor con la música del jefe" % attempt)
 		_kill()
-		await _wait(0.8)
+		await _wait_until(func() -> bool: return _audio_playing() == 0, 3.0)
 		_check(_audio_playing() == 0, "reintento %d: silencio tras morir" % attempt)
 		await _wait(2.6)
 	# 4. Volver al menú.
@@ -124,6 +133,25 @@ func _run() -> void:
 	_check(_scene().scene_file_path.ends_with("main_menu.tscn"), "vuelve al menú principal")
 	_check(_audio_playing() == 1 and AudioManager.get_current_music() != null, "suena la música del menú (reproductores: %d)" % _audio_playing())
 	_check(not get_tree().paused, "menú sin pausa")
+	# Idle music uses a single player, also after repeated and different play_music calls.
+	AudioManager.stop_music(0.0)
+	var track_a := load("res://assets/audio/bgm/boss1_ancient_creature_battle_loop.ogg") as AudioStream
+	var track_b := load("res://assets/audio/bgm/boss2_hellhound_battle_loop.ogg") as AudioStream
+	AudioManager.play_music(track_a, 0.0)
+	AudioManager.play_music(track_a, 0.0)
+	AudioManager.play_music(track_b, 0.0)
+	_check(_audio_playing() == 1, "single music player after changing track")
+	AudioManager.stop_music(0.0)
+	_check(_audio_playing() == 0, "stop_music(0) silences it")
+	# The music slider keeps the pause attenuation (moving it while paused used to undo it).
+	get_tree().paused = true
+	await _wait(0.4)
+	UserSettings.set_volume(&"Music", 0.5, false)
+	var music_idx := AudioServer.get_bus_index(&"Music")
+	_check(absf(AudioServer.get_bus_volume_db(music_idx) - (linear_to_db(0.5) + AudioManager.PAUSE_MUSIC_DROP_DB)) < 0.1,
+			"music slider while paused keeps the pause drop")
+	get_tree().paused = false
+	UserSettings.set_volume(&"Music", 1.0, false)
 	# 5. Entrar a la arena 3 desde cero: vida 40 llena.
 	await _load_arena(3)
 	player = _scene().get_node("Kaelen")
