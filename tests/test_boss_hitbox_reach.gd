@@ -68,7 +68,7 @@ func test_ghidorah_tail_has_no_hole_at_the_body() -> void:
 
 
 func test_bosses_are_tougher_than_before() -> void:
-	# Difficulty figures (see docs/): more health, shorter warnings and recoveries, little dead time.
+	# Difficulty figures (see AGENTS.md, section 8.5): more health, shorter warnings and recoveries, little dead time.
 	var expected := {
 		"res://scenes/bosses/boss_bonedragon.tscn": 500,
 		"res://scenes/bosses/boss_blackhorn.tscn": 625,

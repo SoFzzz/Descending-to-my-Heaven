@@ -31,7 +31,7 @@ HEADS = {"c": (NECK_C, "頭", "jaw"), "l": (NECK_L, "左頭", "左顎"), "r": (N
 TAIL_L = ["左尾"] + [f"左尾{i}" for i in range(2, 11)]
 TAIL_R = ["右尾"] + [f"右尾{i}" for i in range(2, 11)]
 TAIL_W = [1 + i * 0.2 for i in range(10)]
-# Ajustes de las correcciones de Tarea 13 (medidos con la malla en Godot, ver docs/asset-status.md)
+# Ajustes de las correcciones de Tarea 13 (medidos con la malla en Godot, ver AGENTS.md, section 15)
 TAIL_LIFT = 40.0     # grados que se sube la base de cada cola (si no, cuelgan ~2.5 m bajo los pies)
 BITE_LEAN = 45.0     # inclinación del torso en bite: la cabeza central baja a ~0.6 m (hueso) sin escalar
 SIDE_DIP = 60.0      # inclinación de los cuellos laterales en bite (bajan a ~2.2 m, alcanzables)
