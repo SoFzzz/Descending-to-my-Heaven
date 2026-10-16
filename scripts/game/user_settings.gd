@@ -7,6 +7,7 @@ extends Node
 ## - Camera sensitivity (mouse and right stick).
 ## - Controls: each remappable action has two "slots": keyboard/mouse (SLOT_KB) and gamepad
 ##   (SLOT_PAD, buttons and triggers). The stick axes (move and camera) are fixed.
+## - Display: window mode, windowed size (multiples of 640x360), VSync and FPS cap; Alt+Enter toggles fullscreen.
 ## Loaded and applied in _ready; every change calls save_settings().
 ## The event logic is static, or instance-level without depending on the tree, so it can be tested
 ## without a scene.
@@ -14,6 +15,7 @@ extends Node
 signal locale_changed(locale: String)
 signal volume_changed(bus: StringName, linear: float)
 signal bindings_changed
+signal display_changed
 
 const SAVE_PATH := "user://settings.cfg"
 const DEFAULT_LOCALE := "es"
@@ -22,6 +24,19 @@ const BUSES: Array[StringName] = [&"Master", &"Music", &"SFX", &"UI"]
 const MIN_DB := -60.0
 const SENSITIVITY_MIN := 0.4
 const SENSITIVITY_MAX := 2.0
+
+## Window modes. FULLSCREEN is a borderless window covering the monitor (fast alt-tab, keeps the
+## desktop resolution); EXCLUSIVE takes over the display (true exclusive fullscreen on Windows).
+const MODE_WINDOWED := 0
+const MODE_FULLSCREEN := 1
+const MODE_EXCLUSIVE := 2
+const WINDOW_MODES: Array[int] = [MODE_WINDOWED, MODE_FULLSCREEN, MODE_EXCLUSIVE]
+const BASE_SIZE := Vector2i(640, 360)
+## Windowed sizes are whole multiples of the 640x360 base resolution (pixel-perfect stretch).
+const WINDOW_SCALES: Array[int] = [1, 2, 3, 4]
+const DEFAULT_SCALE := 2
+const FPS_LIMITS: Array[int] = [0, 30, 60, 120]   # 0 = unlimited
+const TITLE_BAR_MARGIN := 48   # room kept for the title bar and the taskbar when checking fit
 
 const SLOT_KB := &"kb"
 const SLOT_PAD := &"pad"
@@ -50,6 +65,10 @@ var save_path := SAVE_PATH
 var locale := DEFAULT_LOCALE
 var look_sensitivity := 1.0
 var volumes: Dictionary = {}   # StringName -> linear float 0..1
+var window_mode := MODE_WINDOWED
+var window_scale := DEFAULT_SCALE
+var vsync := true
+var fps_limit := 0
 
 
 func _init() -> void:
@@ -60,6 +79,13 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	add_menu_nav_keys()
 	load_settings()
+
+
+## Alt+Enter toggles between windowed and fullscreen from anywhere (menus, pause, game).
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.is_echo() and event.alt_pressed and 			(event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER):
+		toggle_fullscreen()
+		get_viewport().set_input_as_handled()
 
 
 # --- Pure event logic ---------------------------------------------------------------------------
@@ -352,12 +378,128 @@ func set_look_sensitivity(value: float, persist := true) -> void:
 		save_settings()
 
 
+# --- Display ------------------------------------------------------------------------------------
+
+static func sanitize_mode(value: Variant) -> int:
+	if value is int and WINDOW_MODES.has(value):
+		return value
+	return MODE_WINDOWED
+
+
+static func sanitize_scale(value: Variant) -> int:
+	if value is int and WINDOW_SCALES.has(value):
+		return value
+	return DEFAULT_SCALE
+
+
+static func sanitize_fps(value: Variant) -> int:
+	if value is int and FPS_LIMITS.has(value):
+		return value
+	return 0
+
+
+static func sanitize_vsync(value: Variant) -> bool:
+	return value if value is bool else true
+
+
+static func scale_size(scale: int) -> Vector2i:
+	return BASE_SIZE * scale
+
+
+## Scales whose window fits in a usable screen area of `usable` pixels (the 1x window always counts).
+static func scales_that_fit(usable: Vector2i) -> Array[int]:
+	var out: Array[int] = []
+	for scale in WINDOW_SCALES:
+		var size := scale_size(scale)
+		if scale == WINDOW_SCALES[0] or (size.x <= usable.x and size.y + TITLE_BAR_MARGIN <= usable.y):
+			out.append(scale)
+	return out
+
+
+## Scales offered on the monitor the window is on.
+func available_scales() -> Array[int]:
+	if DisplayServer.get_name() == "headless":
+		return WINDOW_SCALES.duplicate()
+	var screen := DisplayServer.window_get_current_screen()
+	return scales_that_fit(DisplayServer.screen_get_usable_rect(screen).size)
+
+
+func set_window_mode(mode: int, persist := true) -> void:
+	window_mode = sanitize_mode(mode)
+	_finish_display_change(persist)
+
+
+func set_window_scale(scale: int, persist := true) -> void:
+	window_scale = sanitize_scale(scale)
+	_finish_display_change(persist)
+
+
+func set_vsync(enabled: bool, persist := true) -> void:
+	vsync = enabled
+	_finish_display_change(persist)
+
+
+func set_fps_limit(limit: int, persist := true) -> void:
+	fps_limit = sanitize_fps(limit)
+	_finish_display_change(persist)
+
+
+func toggle_fullscreen() -> void:
+	set_window_mode(MODE_WINDOWED if window_mode != MODE_WINDOWED else MODE_FULLSCREEN)
+
+
+func _finish_display_change(persist: bool) -> void:
+	apply_display()
+	display_changed.emit()
+	if persist:
+		save_settings()
+
+
+## Pushes mode, size, vsync and the FPS cap to the engine. Does nothing outside the tree (tests build
+## loose instances) and the window calls are skipped without a real window (headless).
+func apply_display() -> void:
+	if not is_inside_tree():
+		return
+	Engine.max_fps = fps_limit
+	if DisplayServer.get_name() == "headless":
+		return
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
+	match window_mode:
+		MODE_FULLSCREEN:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		MODE_EXCLUSIVE:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
+		_:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+			_apply_window_size()
+			_apply_window_size.call_deferred()   # the mode switch finishes a frame later
+
+
+func _apply_window_size() -> void:
+	if window_mode != MODE_WINDOWED:
+		return
+	var scales := available_scales()
+	var scale := window_scale
+	while scale > 1 and not scales.has(scale):
+		scale -= 1
+	var size := scale_size(scale)
+	var screen := DisplayServer.window_get_current_screen()
+	var area := DisplayServer.screen_get_usable_rect(screen)
+	DisplayServer.window_set_size(size)
+	var decorated := DisplayServer.window_get_size_with_decorations()
+	DisplayServer.window_set_position(area.position + (area.size - decorated) / 2)
+
+
 # --- Save / load --------------------------------------------------------------------------------
 
 func save_settings() -> bool:
 	var cfg := ConfigFile.new()
 	cfg.set_value("general", "locale", locale)
 	cfg.set_value("general", "look_sensitivity", look_sensitivity)
+	cfg.set_value("display", "window_mode", window_mode)
+	cfg.set_value("display", "window_scale", window_scale)
+	cfg.set_value("display", "vsync", vsync)
+	cfg.set_value("display", "fps_limit", fps_limit)
 	for bus in BUSES:
 		cfg.set_value("audio", String(bus), get_volume(bus))
 	for action in REMAP_ACTIONS:
@@ -383,10 +525,15 @@ func load_settings() -> bool:
 		for bus in BUSES:
 			volumes[bus] = clampf(_number(cfg.get_value("audio", String(bus), 1.0), 1.0), 0.0, 1.0)
 		_load_bindings(cfg)
+		window_mode = sanitize_mode(cfg.get_value("display", "window_mode", MODE_WINDOWED))
+		window_scale = sanitize_scale(cfg.get_value("display", "window_scale", DEFAULT_SCALE))
+		vsync = sanitize_vsync(cfg.get_value("display", "vsync", true))
+		fps_limit = sanitize_fps(cfg.get_value("display", "fps_limit", 0))
 		var stored_locale: Variant = cfg.get_value("general", "locale", DEFAULT_LOCALE)
 		locale = stored_locale if stored_locale is String else DEFAULT_LOCALE
 	set_locale(locale if LOCALES.has(locale) else DEFAULT_LOCALE, false)
 	apply_volumes()
+	apply_display()
 	bindings_changed.emit()
 	return loaded
 
