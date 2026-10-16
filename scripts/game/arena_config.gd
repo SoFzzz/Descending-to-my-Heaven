@@ -1,23 +1,23 @@
 class_name ArenaConfig
 extends Resource
-## Configuración de una arena: la escena de gameplay se la pasa al Orquestador
-## (Orchestrator.begin_arena), que genera esbirros/élites con ella.
+## Configuration of one arena. The gameplay scene hands it to the Orchestrator
+## (Orchestrator.begin_arena), which spawns minions and elites from it.
 
 @export var arena_id: int = 1
-## Umbral de presión: base x desempeño del jugador x fase del jefe >= base -> grupo grande
-## (wave_size_max); por debajo, grupo pequeño (wave_size_min).
+## Pressure threshold: base x player performance x boss phase >= base -> large group
+## (wave_size_max); below it, small group (wave_size_min).
 @export var base_budget: float = 4.0
 @export var minion_scene: PackedScene
-## Opcional (puede ser null): sin ella el grupo es de esbirros normales. Con ella, cada grupo lleva
-## exactamente 1 élite en lugar de uno de sus esbirros (1 élite + 1 o 2 normales).
+## Optional (may be null): without it every group is made of regular minions. With it, each group
+## carries exactly 1 elite in place of one of its minions (1 elite + 1 or 2 regular ones).
 @export var elite_scene: PackedScene
-## Esbirros vivos a la vez, élite incluida (límite duro: 3).
+## Minions alive at once, elite included (hard limit: 3).
 @export var max_alive := 3
-## Tamaño del grupo (esbirros, élite incluida): lo decide el Orquestador entre min y max.
+## Group size (minions, elite included): the Orchestrator picks it between min and max.
 @export var wave_size_min := 2
 @export var wave_size_max := 3
-## Ventana del jefe: segundos sin apariciones desde que muere el último esbirro de una oleada
-## (la intensidad la escala x0.9..x1.3).
+## Boss window: seconds without spawns after the last minion of a wave dies
+## (the intensity scales it x0.9..x1.3).
 @export var clear_delay := 12.0
-## Segundos entre entrar a la arena y la primera oleada.
+## Seconds between entering the arena and the first wave.
 @export var first_wave_delay := 3.0

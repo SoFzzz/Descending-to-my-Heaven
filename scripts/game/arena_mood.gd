@@ -1,27 +1,27 @@
 class_name ArenaMood
 extends Node
-## Iluminación propia de cada arena (diseño §6.3) y filtro de color tras derrotar al jefe.
-## Va como hijo `Mood` de arena_N_gameplay.tscn: los valores se definen en la escena de juego y no en
-## arena_N.tscn (generada). Al entrar copia el Environment del nivel (el recurso del nivel no se
-## toca) y le aplica luz ambiente, niebla, ajustes de color y el color/energía de `Sun`.
-## Con Events.boss_defeated aparece, con un fundido, un tinte multiplicativo sutil sobre el mundo
-## (CanvasLayer bajo el HUD) que dura hasta cambiar de escena.
+## Per-arena lighting (design §6.3) and the colour filter shown after the boss is defeated.
+## Lives as the `Mood` child of arena_N_gameplay.tscn: the values are set in the gameplay scene, not in
+## the generated arena_N.tscn. On entry it duplicates the level's Environment (the level resource is
+## left untouched) and applies ambient light, fog, colour adjustments and the colour/energy of `Sun`.
+## On Events.boss_defeated a subtle multiplicative tint fades in over the world (a CanvasLayer
+## below the HUD) and stays until the scene changes.
 
-@export_group("Luz ambiente y niebla")
+@export_group("Ambient light and fog")
 @export var ambient_color := Color(0.45, 0.48, 0.58)
 @export var ambient_energy := 0.35
 @export var fog_color := Color(0.42, 0.46, 0.55)
 @export var fog_begin := 6.0
 @export var fog_end := 48.0
-@export_group("Sol")
+@export_group("Sun")
 @export var sun_color := Color(1.0, 1.0, 1.0)
 @export var sun_energy := 0.35
-@export_group("Tono")
+@export_group("Tone")
 @export_range(0.5, 1.5) var brightness := 1.0
 @export_range(0.5, 1.5) var contrast := 1.0
 @export_range(0.0, 1.5) var saturation := 1.0
-@export_group("Jefe derrotado")
-## Tinte multiplicativo (blanco = sin tinte) y segundos del fundido.
+@export_group("Boss defeated")
+## Multiplicative tint (white = no tint) and fade duration in seconds.
 @export var defeat_tint := Color(1.0, 1.0, 1.0)
 @export var defeat_fade := 2.5
 
@@ -40,7 +40,7 @@ func _ready() -> void:
 		events.boss_defeated.connect(_on_boss_defeated)
 
 
-## Aplica la iluminación al nivel `level` (hijos WorldEnvironment y Sun).
+## Applies the lighting to `level` (children WorldEnvironment and Sun).
 func apply_to(level: Node) -> void:
 	var world := level.get_node_or_null(^"WorldEnvironment") as WorldEnvironment
 	if world and world.environment:
@@ -67,7 +67,7 @@ func _on_boss_defeated(_boss: Node3D) -> void:
 	show_defeat_tint()
 
 
-## Fundido hacia el tinte del jefe derrotado.
+## Fades towards the defeated-boss tint.
 func show_defeat_tint() -> void:
 	if _tint_rect == null:
 		var layer := CanvasLayer.new()
