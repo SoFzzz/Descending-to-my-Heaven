@@ -69,6 +69,8 @@ var _health_ratio := 1.0
 @onready var _boss_clip: Control = $BossBar/Bar/Clip
 @onready var _boss_over: NinePatchRect = $BossBar/Bar/Clip/Over
 @onready var _marker: TextureRect = $LockOnMarker
+@onready var _heal_box: Control = $Heal
+@onready var _heal_count: Label = $Heal/Count
 
 
 func _ready() -> void:
@@ -92,6 +94,9 @@ func bind_player(player: Player) -> void:
 	if _stamina:
 		_stamina.changed.connect(_on_stamina_changed)
 		_on_stamina_changed(_stamina.current, _stamina.max_value)
+	if not player.heal_charges_changed.is_connected(_on_heal_charges_changed):
+		player.heal_charges_changed.connect(_on_heal_charges_changed)
+	_on_heal_charges_changed(player.heal_charges, Player.HEAL_CHARGES)
 
 
 func show_boss(boss_name: String, health: Health) -> void:
@@ -175,6 +180,16 @@ static func fill_width(ratio: float, inset_l: float, inset_r: float, width: floa
 	return inset_l + (width - inset_l - inset_r) * clampf(ratio, 0.0, 1.0)
 
 
+## Text of the flask counter ("x10").
+static func heal_text(charges: int) -> String:
+	return "x%d" % maxi(0, charges)
+
+
+## Opacity of the flask counter: dimmed when no uses are left.
+static func heal_alpha(charges: int) -> float:
+	return 1.0 if charges > 0 else 0.35
+
+
 static func _ratio(current: float, max_value: float) -> float:
 	return clampf(current / max_value, 0.0, 1.0) if max_value > 0.0 else 0.0
 
@@ -182,6 +197,11 @@ static func _ratio(current: float, max_value: float) -> float:
 func _on_health_changed(current: int, max_value: int) -> void:
 	_health_ratio = _ratio(current, max_value)
 	_health_bar.value = _health_ratio
+
+
+func _on_heal_charges_changed(current: int, _max_value: int) -> void:
+	_heal_count.text = heal_text(current)
+	_heal_box.modulate.a = heal_alpha(current)
 
 
 func _on_stamina_changed(current: float, max_value: float) -> void:
