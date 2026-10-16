@@ -58,8 +58,8 @@ static func start(boss: Boss) -> ShaderWarmup:
 
 
 ## Adds `warm` to `boss` once the frame ends; frees it if the boss is gone by then (no orphan).
-static func _attach(boss: Boss, warm: ShaderWarmup) -> void:
-	if is_instance_valid(boss) and boss.is_inside_tree():
+static func _attach(boss: Variant, warm: ShaderWarmup) -> void:
+	if is_instance_valid(boss) and (boss as Node).is_inside_tree():
 		boss.add_child(warm)
 	else:
 		warm.free()
