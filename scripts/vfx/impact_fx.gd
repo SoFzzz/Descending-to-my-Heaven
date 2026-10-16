@@ -22,6 +22,9 @@ const GROUND_ATTACKS: Array[StringName] = [&"slam", &"stomp", &"pounce"]
 
 const SPARK_COLOR := Color(1.0, 0.78, 0.38)
 const SPARK_EDGE := Color(1.0, 0.45, 0.12)
+const HEAL_COLOR := Color(0.55, 1.0, 0.6)
+const HEAL_EDGE := Color(0.2, 0.75, 0.35)
+const HEAL_SPARK := Color(1.0, 0.92, 0.5)
 const DUST_COLOR := Color(0.62, 0.58, 0.52)
 const DUST_EDGE := Color(0.38, 0.35, 0.32)
 
@@ -63,6 +66,14 @@ static func dust(tree: SceneTree, pos: Vector3, size := 1.0) -> void:
 	var fx := instance(tree)
 	if fx:
 		fx._emit_dust(pos, size, DUST_COLOR, DUST_EDGE, 0.9)
+
+
+## Curación: bocanada verde que sube y chispas doradas alrededor de `pos` (pies de Kaelen).
+static func heal(tree: SceneTree, pos: Vector3) -> void:
+	var fx := instance(tree)
+	if fx:
+		fx._emit_dust(pos + Vector3.UP * 0.2, 0.6, HEAL_COLOR, HEAL_EDGE, 1.6)
+		fx._emit_sparks(pos + Vector3.UP * 0.9, 0.7, true, HEAL_SPARK, HEAL_EDGE)
 
 
 ## Humo oscuro con brasas (muerte de un esbirro).
@@ -208,14 +219,16 @@ func _make_particles(is_dust: bool) -> CPUParticles3D:
 	return p
 
 
-func _emit_sparks(pos: Vector3, power: float, hot: bool) -> void:
+func _emit_sparks(pos: Vector3, power: float, hot: bool, tint := Color(0, 0, 0, 0), edge := Color(0, 0, 0, 0)) -> void:
 	if not is_inside_tree():
 		return
 	var p := _sparks[_next_spark]
 	_next_spark = (_next_spark + 1) % _sparks.size()
 	var mat := p.material_override as ShaderMaterial
-	mat.set_shader_parameter(&"color", SPARK_COLOR if hot else Color(1.0, 0.7, 0.5))
-	mat.set_shader_parameter(&"edge_color", SPARK_EDGE if hot else Color(0.8, 0.12, 0.06))
+	var base := SPARK_COLOR if hot else Color(1.0, 0.7, 0.5)
+	var rim := SPARK_EDGE if hot else Color(0.8, 0.12, 0.06)
+	mat.set_shader_parameter(&"color", base if tint.a == 0.0 else tint)
+	mat.set_shader_parameter(&"edge_color", rim if edge.a == 0.0 else edge)
 	p.amount = clampi(roundi(14.0 * power), 4, 24)
 	p.global_position = pos
 	p.restart()

@@ -23,6 +23,18 @@ func take_damage(amount: int) -> void:
 		died.emit()
 
 
+## Cura hasta `max_value`; devuelve lo recuperado realmente (0 si está muerto o ya al máximo).
+func heal(amount: int) -> int:
+	if is_dead() or amount <= 0:
+		return 0
+	var healed := mini(amount, max_value - current)
+	if healed <= 0:
+		return 0
+	current += healed
+	changed.emit(current, max_value)
+	return healed
+
+
 func reset(new_max: int = -1) -> void:
 	if new_max > 0:
 		max_value = new_max

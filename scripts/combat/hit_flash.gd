@@ -29,6 +29,24 @@ static func flash(model: Node, color: Color = COLOR_ENEMY, duration: float = DUR
 	tween.tween_callback(_set_all.bind(mats, 0.0, color))
 
 
+## Brillo suave y progresivo (sube a `peak` y baja a 0 en `duration` s): curación, buffs. A diferencia de
+## `flash`, nunca tapa del todo la textura (peak < 1).
+static func glow(model: Node, color: Color, peak: float, duration: float) -> void:
+	if model == null or not model.is_inside_tree():
+		return
+	var mats := _materials(model)
+	if mats.is_empty():
+		return
+	var old: Variant = model.get_meta(META_TWEEN) if model.has_meta(META_TWEEN) else null
+	if old is Tween and (old as Tween).is_valid():
+		(old as Tween).kill()
+	_set_all(mats, 0.0, color)
+	var tween := model.create_tween()
+	model.set_meta(META_TWEEN, tween)
+	tween.tween_method(_set_pulse.bind(mats, color, peak), 0.0, 1.0, duration)
+	tween.tween_callback(_set_all.bind(mats, 0.0, color))
+
+
 ## Apaga el parpadeo ya.
 static func clear(model: Node) -> void:
 	if model == null:
@@ -98,6 +116,10 @@ static func _collect(node: Node, out: Array) -> void:
 
 static func _set_amount(value: float, mats: Array, color: Color) -> void:
 	_set_all(mats, value, color)
+
+
+static func _set_pulse(t: float, mats: Array, color: Color, peak: float) -> void:
+	_set_all(mats, peak * sin(PI * clampf(t, 0.0, 1.0)), color)
 
 
 static func _set_all(mats: Array, value: float, color: Color) -> void:
