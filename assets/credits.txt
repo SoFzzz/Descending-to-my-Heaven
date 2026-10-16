@@ -128,6 +128,15 @@ Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist y Blackhorn.
 Las animaciones del Bone Dragon y de Mecha King Ghidorah se hicieron por script en el proyecto.
 
 
+Entorno
+
+PS1-Style Tree Pack (arboles del bosque lejano y el arbol del templo, assets/environment/trees/)
+Autor: por confirmar. Licencia: por confirmar (el pack no incluye readme).
+
+SBS - Photorealistic Texture Pack 3 (512x512), textura "Elements 12" (agua de los estanques)
+Screaming Brain Studios. Licencia: CC0 / dominio publico.
+
+
 Audio
 
 Dialogue Bleeps Pack (voces de los dialogos del final)
