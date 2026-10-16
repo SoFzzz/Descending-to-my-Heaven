@@ -61,6 +61,7 @@ ACT_MOVE_LEFT,Izquierda,Move left
 ACT_MOVE_RIGHT,Derecha,Move right
 ACT_ATTACK,Atacar,Attack
 ACT_ROLL,Rodar,Roll
+ACT_HEAL,Curarse,Heal
 ACT_LOCK_ON,Fijar objetivo,Lock on
 ACT_PAUSE,Pausa,Pause
 KEY_SPACE,Espacio,Space

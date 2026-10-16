@@ -55,9 +55,9 @@ func test_rebind_to_a_used_key_swaps_the_actions() -> void:
 func test_rebind_gamepad_button_and_axes_are_fixed() -> void:
 	var settings := _fresh()
 	var pad := InputEventJoypadButton.new()
-	pad.button_index = JOY_BUTTON_Y
+	pad.button_index = JOY_BUTTON_LEFT_SHOULDER
 	assert_eq(settings.rebind(&"roll", GameSettings.SLOT_PAD, pad), &"")
-	assert_eq(settings.slot_text(&"roll", GameSettings.SLOT_PAD), "Y")
+	assert_eq(settings.slot_text(&"roll", GameSettings.SLOT_PAD), "LB")
 	assert_eq(settings.rebind(&"move_left", GameSettings.SLOT_PAD, pad), &"!", "the sticks cannot be reassigned")
 	assert_eq(settings.rebind(&"roll", GameSettings.SLOT_KB, pad), &"!", "a button does not fit the keyboard slot")
 	assert_eq(settings.slot_text(&"move_left", GameSettings.SLOT_PAD), "LS")

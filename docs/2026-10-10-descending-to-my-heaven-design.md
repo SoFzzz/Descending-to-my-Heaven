@@ -16,7 +16,7 @@ Estética: fantasía oscura PSX (baja resolución interna, texturas con filtro *
 ## 2. Alcance
 
 ### Dentro (obligatorio)
-- Kaelen: moverse, cámara orbital, fijar objetivo (lock-on), ataque ligero (combo de 2-3 golpes), rodar con invulnerabilidad, estamina, recibir daño, morir.
+- Kaelen: moverse, cámara orbital, fijar objetivo (lock-on), ataque ligero (combo de 2-3 golpes), rodar con invulnerabilidad, estamina, frasco de curación (10 usos por nivel), recibir daño, morir.
 - 3 enfrentamientos de jefe + esbirros.
 - Sistema de jefe único reutilizable (vida, 3-4 ataques con aviso, fase 2 al 50%).
 - IA de esbirros, IA de selección de ataques del jefe y Orquestador (sección 8).
@@ -77,6 +77,7 @@ Estado real de cada modelo (rig y animaciones verificados): ver [`asset-status.m
 | Estamina | 100; regenera 30/s tras 0.6 s sin gastar |
 | Costo rodar / atacar | 25 / 20 |
 | Invulnerabilidad al rodar | 0.35 s de 0.6 s |
+| Frasco de curación | 10 usos por nivel; cura el 38 % de la vida máxima (38 / 27 / 15 HP en las arenas 1 / 2 / 3); 0,9 s de uso |
 | Daño de Kaelen | 20 / 20 / 36 (golpes 1, 2 y 3 del combo; duplicado el 2026-10-14, el valor original era 10 / 10 / 18) |
 | Vida esbirro | 30 |
 | Vida jefe | 400 / 500 / 600 |
@@ -88,6 +89,13 @@ Impactos: hitbox `Area3D` activada en ventanas de la animación; hurtbox en cada
 - *Pausa de impacto* (`scripts/combat/hit_stop.gd`): al acertar Kaelen baja `Engine.time_scale` a 0,05 durante 60 ms de reloj real (40 ms cuando ella recibe daño). Las peticiones no se apilan (mientras hay una activa se ignoran) y el tiempo se restaura siempre: al terminar, al pausar el juego, al morir (la pantalla de muerte pausa el árbol), al cambiar de escena y al salir el nodo del árbol; si otro sistema cambió la escala durante el impacto no se pisa. Los `Tween` de la interfaz que ignoran la escala de tiempo no se ven afectados.
 - *Parpadeo de material* (`scripts/combat/hit_flash.gd`): al recibir un golpe (cualquier `Hurtbox` con daño) el modelo de jefes, esbirros, élites y Kaelen se tiñe 0,1 s: blanco en enemigos, rojo en Kaelen. Es un uniform `hit_flash` / `hit_flash_color` del shader `psx_lit` (sin pases extra ni overlays), animado con un `Tween` atado al modelo.
 - *Cámara*: Kaelen sacude la cámara (0,07 m, 0,22 s, `CameraRig.shake`) cuando un golpe le quita el 15 % o más de su vida máxima. Con un jefe fijado a más de 8 m el brazo se alarga 0,4 m por metro de más (máximo +3 m) para encuadrar a los jefes enormes.
+
+**Frasco de curación (implementado 2026-10-15, para que el juego sea más justo):**
+- *Cargas:* 10 en cada nivel (exterior y las tres arenas). Se rellenan al entrar a cada nivel y al reintentar tras morir (Kaelen se reconstruye y `level_gameplay._refill_player` llama a `refill_heals`).
+- *Cantidad:* `round(vida máxima × 0,38)`: 38 / 27 / 15 HP con vida máxima 100 / 70 / 40. En la arena 3 sigue siendo un tercio de la barra, aunque en HP absolutos cura menos que en la arena 1.
+- *Uso:* subestado de MOVE (`Player.try_heal`). Dura 0,9 s: Kaelen camina al 35 % de su velocidad, el modelo brilla en verde y suena el trago; la vida llega al final y solo entonces se gasta la carga. Un golpe recibido, rodar, atacar, morir o una escena dirigida lo cancelan **sin gastar la carga** (el castigo de que te golpeen es el tiempo perdido, no el frasco). No se puede empezar durante ataque, rodada, HURT, muerte, pausa ni escenas dirigidas, ni con la vida llena ni sin cargas.
+- *Animación y sonido:* el modelo de Kaelen no tiene clip de beber: se reutiliza la locomoción (andar lento) con un brillo verde progresivo (`HitFlash.glow`, uniform `hit_flash` de `psx_lit`), una bocanada verde con chispas doradas al curar (`ImpactFx.heal`) y el sonido `Firebuff 1` del pack Free Fantasy SFX (TomMusic, ya usado).
+- *Orquestador:* la intensidad solo sube con `player_damaged` y con la vida baja (`hp_ratio` por debajo de `LOW_HP_RATIO` / `FORCE_RELAX_HP`). Curarse no emite ningún evento de daño, así que no cuenta como "va bien"; solo saca antes a Kaelen del respiro forzado por vida baja, que es lo correcto.
 
 ## 5. Flujo del juego
 
@@ -485,6 +493,7 @@ Límite de esbirros vivos: 3. Cada grupo lleva exactamente 1 élite (más vida/d
 
 ## 9. HUD
 - Barras de vida y estamina (esquina superior izquierda).
+- Contador del frasco de curación bajo las barras: icono de frasco y "x10"; se atenúa al llegar a 0.
 - Barra del jefe con su nombre (parte inferior), visible solo durante el enfrentamiento.
 - Mensajes grandes centrados: "HAS MUERTO" / nombre del jefe derrotado.
 - Indicador de lock-on sobre el objetivo.
@@ -522,6 +531,7 @@ Todo se guarda en `user://settings.cfg` (`ConfigFile`, autoload `UserSettings`) 
 | Cámara | Ratón | Stick derecho (RS), zona muerta 0,2, curva cuadrática |
 | Atacar | Clic izquierdo | RB y X |
 | Rodar | Espacio | B |
+| Curarse (frasco) | R | Y |
 | Fijar objetivo | Clic central / Q | R3 (clic del stick derecho) |
 | Pausa | Esc | Start |
 | Menús: moverse / aceptar / volver | Flechas / Enter / Esc | D-pad o stick izquierdo / A / B |
@@ -529,7 +539,7 @@ Todo se guarda en `user://settings.cfg` (`ConfigFile`, autoload `UserSettings`) 
 | Depuración | F3 / F5 / F6 | — |
 
 Atacar también avanza los diálogos del final. Distribución tipo Dark Souls: RB ataque, B rodar,
-R3 fijar, sin botón de guardia (el juego no la tiene); LB, LT, RT, Y y A quedan libres.
+Y curarse, R3 fijar, sin botón de guardia (el juego no la tiene); LB, LT, RT y A quedan libres.
 
 ### 10.4 Pantalla de muerte y créditos
 - Muerte: "HAS MUERTO" + fundido + reaparición automática (sin menú).

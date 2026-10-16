@@ -28,7 +28,7 @@ const SLOT_PAD := &"pad"
 ## Acciones que el jugador puede reasignar, en el orden en que salen en la pantalla de controles.
 const REMAP_ACTIONS: Array[StringName] = [
 	&"move_forward", &"move_back", &"move_left", &"move_right",
-	&"attack", &"roll", &"lock_on", &"pause",
+	&"attack", &"roll", &"heal", &"lock_on", &"pause",
 ]
 ## Acciones cuyo mando va en los ejes de los sticks (no se reasignan, solo se muestran).
 const PAD_FIXED: Array[StringName] = [&"move_forward", &"move_back", &"move_left", &"move_right"]
