@@ -1,7 +1,8 @@
 extends Node
-## Menú principal (spec §10.1). Mitad izquierda: título y botones Iniciar / Créditos / Salir; mitad
-## derecha: la silueta negra de la isla flotante (IslandSilhouette) sobre un fondo oscuro con un toque
-## de burdeos (assets/ui/menu/menu_sky.png, scripts/tools/gen_menu_bg.py). Créditos se oculta si aún no
+## Menú principal (spec §10.1). Mitad izquierda: título (DungeonFont) y botones Iniciar / Opciones /
+## Créditos / Salir; mitad derecha: la silueta negra de la isla flotante (IslandSilhouette) sobre un
+## cielo violeta crepuscular con resplandor, estrellas que titilan y ceniza brillante
+## (assets/ui/menu/menu_sky.png, scripts/tools/gen_menu_bg.py). Opciones abre el overlay OptionsMenu. Créditos se oculta si aún no
 ## existe scenes/ui/credits.tscn. Foco inicial en Iniciar; navegable con flechas + Enter, mando y ratón.
 ## Animaciones con Tweens (todas cortas o ambientales, ninguna bloquea la entrada): entrada escalonada,
 ## realce de botones al enfocar / pasar el ratón y salida con fundido a negro.
@@ -25,6 +26,7 @@ const HOVER_SCALE := 1.05
 const HOVER_FLASH := 1.35         # brillo inicial al enfocar
 const PULSE_PERIOD := 1.3
 const TITLE_GLOW_PERIOD := 4.0
+const GLOW_PERIOD := 6.0
 const EXIT_TIME := 0.4            # salida de Iniciar / Créditos antes del fundido de GameState
 const QUIT_TIME := 0.25
 
@@ -33,6 +35,7 @@ var _leaving := false
 var _intro: Tween
 
 @onready var _start: Button = %Start
+@onready var _options: Button = %Options
 @onready var _credits: Button = %Credits
 @onready var _quit: Button = %Quit
 @onready var _fade: ColorRect = $UI/Root/Fade
@@ -40,6 +43,8 @@ var _intro: Tween
 @onready var _panel: Control = $UI/Root/Panel
 @onready var _island: IslandSilhouette = $UI/Root/Island
 @onready var _hint: Label = $UI/Root/Hint
+@onready var _glow: TextureRect = $UI/Root/Glow
+@onready var _options_menu: OptionsMenu = $UI/Root/OptionsMenu
 
 
 func _ready() -> void:
@@ -47,6 +52,8 @@ func _ready() -> void:
 	_credits.visible = ResourceLoader.exists(CREDITS_SCENE)
 	(_credits.get_parent() as Control).visible = _credits.visible
 	_start.pressed.connect(_on_start)
+	_options.pressed.connect(_on_options)
+	_options_menu.closed.connect(_on_options_closed)
 	_credits.pressed.connect(_on_credits)
 	_quit.pressed.connect(_on_quit)
 	for button in _buttons():
@@ -56,12 +63,15 @@ func _ready() -> void:
 		button.focus_exited.connect(_refresh_highlight.bind(button))
 		button.resized.connect(_on_button_resized.bind(button))
 		_tweens[button] = []
-	_start.grab_focus()   # the AudioManager ignores the focus of a button that has just appeared
-	_play_intro()
-	_start_title_glow()
 	var audio := get_node_or_null(^"/root/AudioManager")
 	if audio:
+		audio.grab_focus_silent(_start)   # el foco inicial no suena
 		audio.play_music(MENU_MUSIC, 1.5)
+	else:
+		_start.grab_focus()
+	_play_intro()
+	_start_title_glow()
+	_start_sky_glow()
 
 
 func _exit_tree() -> void:
@@ -70,7 +80,7 @@ func _exit_tree() -> void:
 
 
 func _buttons() -> Array[Button]:
-	return [_start, _credits, _quit]
+	return [_start, _options, _credits, _quit]
 
 
 func _on_button_resized(button: Button) -> void:
@@ -84,12 +94,14 @@ func _play_intro() -> void:
 	_title.modulate.a = 0.0
 	_hint.modulate.a = 0.0
 	_island.modulate.a = 0.0
+	_glow.modulate.a = 0.0
 	_panel.modulate.a = 0.0
 	var title_y := _title.position.y
 	_title.position.y = title_y + TITLE_SLIDE
 	_intro = create_tween().set_parallel(true)
 	_intro.tween_property(_fade, ^"color:a", 0.0, INTRO_FADE)
 	_intro.tween_property(_island, ^"modulate:a", 1.0, ISLAND_TIME).set_delay(ISLAND_DELAY)
+	_intro.tween_property(_glow, ^"modulate:a", 1.0, ISLAND_TIME * 1.5).set_delay(ISLAND_DELAY)
 	_intro.tween_property(_title, ^"modulate:a", 1.0, TITLE_TIME).set_delay(TITLE_DELAY)
 	_intro.tween_property(_title, ^"position:y", title_y, TITLE_TIME).set_delay(TITLE_DELAY) \
 			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
@@ -103,7 +115,7 @@ func _play_intro() -> void:
 		_intro.tween_property(slot, ^"modulate:a", 1.0, BUTTON_TIME).set_delay(delay)
 		_intro.tween_property(buttons[i], ^"position:x", 0.0, BUTTON_TIME).set_delay(delay) \
 				.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_intro.tween_property(_hint, ^"modulate:a", 1.0, 0.5).set_delay(BUTTON_DELAY + BUTTON_STAGGER * 3.0)
+	_intro.tween_property(_hint, ^"modulate:a", 1.0, 0.5).set_delay(BUTTON_DELAY + BUTTON_STAGGER * float(buttons.size()))
 
 
 ## Brillo lento del título (ambiental, no bloquea nada).
@@ -113,6 +125,13 @@ func _start_title_glow() -> void:
 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	glow.tween_property(_title, ^"self_modulate", Color(0.88, 0.86, 0.84), TITLE_GLOW_PERIOD * 0.5) \
 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+## Respiración lenta del resplandor tras la isla (ambiental).
+func _start_sky_glow() -> void:
+	var glow := create_tween().set_loops()
+	glow.tween_property(_glow, ^"self_modulate", Color(1.0, 1.0, 1.0, 0.7), GLOW_PERIOD * 0.5) 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	glow.tween_property(_glow, ^"self_modulate", Color(1.0, 1.0, 1.0, 1.0), GLOW_PERIOD * 0.5) 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 # --- Realce de botones --------------------------------------------------------------------------
@@ -168,6 +187,22 @@ func _on_start() -> void:
 		var game_state := get_node_or_null(^"/root/GameState")
 		if game_state:
 			game_state.call(&"start_new_game")
+
+
+func _on_options() -> void:
+	if _leaving:
+		return
+	_set_buttons_disabled(true)
+	_options_menu.open()
+
+
+func _on_options_closed() -> void:
+	_set_buttons_disabled(false)
+	var audio := get_node_or_null(^"/root/AudioManager")
+	if audio:
+		audio.grab_focus_silent(_options)
+	else:
+		_options.grab_focus()
 
 
 func _on_credits() -> void:

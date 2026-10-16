@@ -1,6 +1,6 @@
 """Genera el fondo del menú principal (640x360, pixel art): assets/ui/menu/menu_sky.png
-Degradado vertical gris carbón/azul muy oscuro (#141218) a burdeos apagado (#241418), con un resplandor
-tenue tras la isla (mitad derecha), bandas de niebla y dither Bayer 4x4. La isla se dibuja aparte, en 3D.
+Degradado vertical violeta crepuscular (#2a2640) a malva apagado (#54344a), con un resplandor
+cálido tras la isla (mitad derecha), bandas de niebla y dither Bayer 4x4. La isla se dibuja aparte, en 3D.
 Uso: python scripts/tools/gen_menu_bg.py   (desde la raíz del proyecto; necesita Pillow)."""
 import math
 import random
@@ -9,8 +9,8 @@ from PIL import Image, ImageDraw
 W, H = 640, 360
 BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
 OUT = "assets/ui/menu/"
-TOP, BOTTOM = (0x14, 0x12, 0x18), (0x24, 0x14, 0x18)
-GLOW_CENTER, GLOW_RADIUS, GLOW_COLOR = (480, 170), 190.0, (74, 26, 36)
+TOP, BOTTOM = (0x2a, 0x26, 0x40), (0x54, 0x34, 0x4a)
+GLOW_CENTER, GLOW_RADIUS, GLOW_COLOR = (480, 170), 230.0, (172, 108, 132)
 
 
 def lerp(a, b, t):
@@ -35,7 +35,7 @@ def sky() -> Image.Image:
     for _ in range(22):
         y = random.randint(200, 340)
         x = random.randint(-80, W - 60)
-        d.rectangle([x, y, x + random.randint(90, 260), y + random.randint(1, 2)], fill=(120, 80, 96, 20))
+        d.rectangle([x, y, x + random.randint(90, 260), y + random.randint(1, 2)], fill=(190, 150, 170, 26))
     out = img.convert("RGBA")
     out.alpha_composite(fog)
     return out.convert("RGB")
