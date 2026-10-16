@@ -1,50 +1,50 @@
 class_name EndingRoom
 extends Node3D
-## Sala de Elysia rota: el muro norte y el techo de arena_3 tienen un hueco (lo abre level_builder.gd,
-## `_break_room`) y por él se ve cómo la isla cae en picada. Esta escena (scenes/props/ending_room.tscn)
-## se instancia en arena_3_gameplay.tscn con su origen en el centro del muro norte de la sala
-## (0, 0, -57.5); +Z entra a la sala y -Z es el exterior.
+## Broken Elysia room: the north wall and the ceiling of arena_3 have a hole (opened by level_builder.gd,
+## `_break_room`) through which the island can be seen plummeting. This scene
+## (scenes/props/ending_room.tscn) is instanced in arena_3_gameplay.tscn with its origin at the centre
+## of the room's north wall (0, 0, -57.5); +Z goes into the room and -Z is the outside.
 ##
-## Ilusión de caída barata (gl_compatibility): la sala no se mueve; hacia arriba se mueven nubes
-## (CPUParticles3D), rachas de viento, islotes del kit y fragmentos de la propia isla. Todo lo de fuera
-## solo se dibuja y se mueve cuando la cámara está cerca de la sala. Al llegar a Kaelen el final
-## (`start_fall()`, llamado por EndingDirector) la velocidad sube de una deriva lenta a la caída, se
-## activa el polvo del techo y un leve temblor de la cámara activa.
+## Cheap falling illusion (gl_compatibility): the room does not move; clouds (CPUParticles3D), wind
+## streaks, kit islets and fragments of the island itself move upwards. Everything outside is only
+## drawn and moved while the camera is near the room. When the ending reaches Kaelen (`start_fall()`,
+## called by EndingDirector) the speed rises from a slow drift to the fall, the ceiling dust turns on
+## and the active camera shakes slightly.
 ##
-## Colisión: `SafetyBarrier` (invisible) tapa el hueco y los bloques grandes caídos tienen colisión,
-## así que Kaelen no puede caer por el hueco.
+## Collision: `SafetyBarrier` (invisible) covers the hole and the large fallen blocks have collision,
+## so Kaelen cannot fall through the hole.
 
 const GROUP := &"ending_room"
 const TEX := "res://assets/environment/textures/"
 const KIT := "res://assets/environment/kit/"
 const ISLAND := "res://assets/environment/island/"
 
-## Velocidad relativa de lo exterior antes de empezar el final (deriva lenta) y tiempo de aceleración.
+## Relative speed of the outside before the ending starts (slow drift) and the ramp-up time.
 const IDLE_SPEED := 0.1
 const RAMP_TIME := 2.5
-## Temblor de cámara (m de desplazamiento del frustum) y frecuencia del ruido (rad/s).
+## Camera shake (frustum offset in m) and noise frequency (rad/s).
 const SHAKE_AMOUNT := 0.035
 const SHAKE_FREQ := 38.0
-## Lo exterior se muestra si la cámara está a menos de esta distancia (Z local) del muro norte.
+## The outside is shown if the camera is closer than this distance (local Z) to the north wall.
 const SHOW_DISTANCE := 24.0
-## Rango vertical (m, local) por el que suben las rocas antes de reaparecer abajo.
+## Vertical range (m, local) the rocks climb through before reappearing below.
 const ROCK_BOTTOM := -75.0
 const ROCK_TOP := 85.0
-## Viento de la caída (WIND-FALL): bucle por debajo de la música y los diálogos del final.
+## Falling wind (WIND-FALL): a loop below the music and the ending dialogue.
 const WIND_STREAM := "res://assets/audio/sfx/ambient/wind_fall.mp3"
 const WIND_BUS := &"SFX"
 const WIND_VOLUME_DB := -9.0
 const WIND_SILENT_DB := -60.0
-## Racha de aire (StormFX gust): semiancho (m) y fondo (m). Solo se ve FUERA, a través del hueco: su
-## centro está a GUST_Z (local; el muro norte es z = 0) y toda su extensión queda por detrás de
-## GUST_MAX_Z, más lejos que la barrera de seguridad. Nada de viento visible dentro de la sala.
+## Air gust (StormFX gust): half width (m) and depth (m). It is only visible OUTSIDE, through the hole:
+## its centre is at GUST_Z (local; the north wall is z = 0) and its whole extent stays behind
+## GUST_MAX_Z, farther than the safety barrier. No wind is visible inside the room.
 const GUST_RADIUS := 14.0
 const GUST_DEPTH := 12.0
 const GUST_Z := -34.0
 const GUST_MAX_Z := -6.0
 
 var falling := false
-var intensity := 0.0   ## 0 = hueco quieto con deriva lenta, 1 = caída a toda velocidad
+var intensity := 0.0   ## 0 = still hole with a slow drift, 1 = fall at full speed
 
 var _outside: Node3D
 var _clouds: CPUParticles3D
@@ -59,12 +59,12 @@ var _wind: AudioStreamPlayer
 var _wind_tween: Tween
 
 
-## Velocidad relativa de la caída para una intensidad 0..1.
+## Relative fall speed for an intensity 0..1.
 static func speed_for(level: float) -> float:
 	return lerpf(IDLE_SPEED, 1.0, clampf(level, 0.0, 1.0))
 
 
-## Nueva altura de una roca que sube: al pasar el tope reaparece abajo.
+## New height of a rising rock: past the top it reappears at the bottom.
 static func wrap_height(y: float) -> float:
 	return y - (ROCK_TOP - ROCK_BOTTOM) if y > ROCK_TOP else y
 
@@ -86,7 +86,7 @@ func _ready() -> void:
 	_outside.visible = false
 
 
-## Empieza la caída de la isla (llamado por EndingDirector al arrancar el final). Solo actúa una vez.
+## Starts the island's fall (called by EndingDirector when the ending starts). Acts only once.
 func start_fall() -> void:
 	if falling:
 		return
@@ -106,15 +106,15 @@ func start_fall() -> void:
 	_start_wind()
 
 
-## Viento: entra con la misma curva y duración que la aceleración de la caída (RAMP_TIME).
+## Wind: fades in with the same curve and duration as the fall's acceleration (RAMP_TIME).
 func _start_wind() -> void:
 	if _wind == null:
 		var stream := load(WIND_STREAM) as AudioStreamMP3
 		if stream == null:
-			push_warning("EndingRoom: falta %s" % WIND_STREAM)
+			push_warning("EndingRoom: missing %s" % WIND_STREAM)
 			return
 		stream = stream.duplicate() as AudioStreamMP3
-		stream.loop = true   # más corto que el final: se repite
+		stream.loop = true   # shorter than the ending: it repeats
 		_wind = AudioStreamPlayer.new()
 		_wind.name = "WindFall"
 		_wind.stream = stream
@@ -128,12 +128,13 @@ func _start_wind() -> void:
 		_wind_tween.kill()
 	if is_inside_tree():
 		_wind_tween = create_tween()
-		_wind_tween.tween_property(_wind, "volume_db", WIND_VOLUME_DB, RAMP_TIME) 				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		_wind_tween.tween_property(_wind, "volume_db", WIND_VOLUME_DB, RAMP_TIME) \
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	else:
 		_wind.volume_db = WIND_VOLUME_DB
 
 
-## Fundido de salida del viento (al pasar a créditos).
+## Fades the wind out (when moving on to the credits).
 func stop_wind(fade: float = 1.2) -> void:
 	if _wind == null or not _wind.playing:
 		return
@@ -193,10 +194,10 @@ func _exit_tree() -> void:
 	_release_camera()
 
 
-# --- Construcción ---------------------------------------------------------------------------
+# --- Construction ---------------------------------------------------------------------------
 
-## Cielo de fondo: atardecer apagado y frío (melancólico), con un resplandor tenue en el horizonte, sin niebla (la niebla de la
-## arena lo apagaría a esa distancia).
+## Backdrop sky: a muted, cold (melancholic) dusk with a faint glow on the horizon and no fog (the
+## arena fog would wash it out at that distance).
 func _build_backdrop() -> void:
 	var sh := Shader.new()
 	sh.code = """shader_type spatial;
@@ -260,7 +261,7 @@ func _fade_ramp() -> Gradient:
 	return g
 
 
-## Nubes: manchas verticales que suben desde abajo; con la caída activa cruzan la vista en ~3 s.
+## Clouds: vertical patches rising from below; with the fall active they cross the view in ~3 s.
 func _build_clouds() -> void:
 	_clouds = CPUParticles3D.new()
 	_clouds.name = "Clouds"
@@ -287,10 +288,10 @@ func _build_clouds() -> void:
 	_outside.add_child(_clouds)
 
 
-## Rachas de viento (Storm & Wind 3D Free, StormFX "gust" de aire): líneas y motas que suben a toda
-## velocidad lejos, por detrás del hueco (visibles solo a través de él). Empieza apagado y se forma durante RAMP_TIME al empezar la caída.
+## Wind gusts (Storm & Wind 3D Free, StormFX air "gust"): lines and specks rising at full speed far
+## behind the hole (visible only through it). It starts off and builds up over RAMP_TIME when the fall begins.
 func _build_streaks() -> void:
-	StormFX.default_transparency = 1   # tramado (dither): casa con el aspecto PSX
+	StormFX.default_transparency = 1   # dithered: matches the PSX look
 	_streaks = StormFX.new()
 	_streaks.name = "WindStreaks"
 	_streaks.kind = "gust"
@@ -306,14 +307,14 @@ func _build_streaks() -> void:
 	_streaks.position = Vector3(0, 2, GUST_Z)
 	_streaks.rotation_degrees = Vector3(90, 0, 0)   # sopla hacia -Z local = hacia arriba
 	_streaks.visible = false
-	_streaks.set_process(false)   # nada que dibujar ni actualizar hasta que empiece la caída
+	_streaks.set_process(false)   # nothing to draw or update until the fall begins
 	_outside.add_child(_streaks)
 
 
 func _build_rocks() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 20261015
-	# Islotes lejanos (parallax: los más lejanos suben más despacio): [glb, x, y, z, escala, velocidad].
+	# Distant islets (parallax: the farther ones rise more slowly): [glb, x, y, z, scale, speed].
 	var islets := [
 		["islet_round", -38.0, -20.0, -62.0, 0.9, 11.0], ["islet_long", 46.0, 10.0, -85.0, 1.0, 9.0],
 		["islet_l", 6.0, 55.0, -105.0, 1.2, 7.0], ["islet_small", 14.0, -45.0, -30.0, 1.0, 17.0],
@@ -329,7 +330,7 @@ func _build_rocks() -> void:
 		n.rotation_degrees = Vector3(rng.randf_range(-7, 7), rng.randf_range(0, 360), rng.randf_range(-7, 7))
 		_outside.add_child(n)
 		_rocks.append({"node": n, "speed": float(it[5]), "spin": Vector3(0.0, rng.randf_range(-0.03, 0.03), 0.0)})
-	# Fragmentos de la propia isla que se desprenden (muro del kit, columna caída y bloques).
+	# Fragments of the island itself breaking off (kit wall, fallen pillar and blocks).
 	var wall_scn := load(KIT + "wall_ruin.glb") as PackedScene
 	var pillar_scn := load(KIT + "pillar_collapsed.glb") as PackedScene
 	var chunk_mat := _stone_material("concrete_512_indexed", Color(0.7, 0.7, 0.75))
@@ -357,7 +358,7 @@ func _build_rocks() -> void:
 				"spin": Vector3(rng.randf_range(-1.2, 1.2), rng.randf_range(-1.2, 1.2), rng.randf_range(-1.2, 1.2))})
 
 
-## Material de piedra del kit: textura con proyección triplanar local y filtro nearest (look PSX).
+## Kit stone material: texture with local triplanar projection and nearest filtering (PSX look).
 func _stone_material(tex_name: String, tint: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_texture = load(TEX + tex_name + ".png")
@@ -369,18 +370,18 @@ func _stone_material(tex_name: String, tint: Color) -> StandardMaterial3D:
 	return m
 
 
-## Escombros dentro de la sala (estáticos) y barrera de seguridad del hueco.
+## Rubble inside the room (static) and the safety barrier of the hole.
 func _build_rubble() -> void:
 	var rubble := Node3D.new()
 	rubble.name = "Rubble"
 	add_child(rubble)
 	var mat := _stone_material("concrete_512_indexed", Color(0.62, 0.6, 0.62))
 	var dark := _stone_material("concrete_512_indexed_dark", Color(0.6, 0.58, 0.6))
-	# Pieza del kit: muro caído y columna rota.
+	# Kit pieces: fallen wall and broken pillar.
 	_kit_piece(rubble, "wall_ruin", Vector3(-4.1, 0.0, 2.3), Vector3(0, 28, 74), 0.9)
 	_kit_piece(rubble, "pillar_collapsed", Vector3(4.3, 0.55, 3.6), Vector3(0, -35, 90), 1.4)
 	_kit_piece(rubble, "wall_ruin", Vector3(2.6, 0.0, 0.2), Vector3(0, 8, 28), 0.45)
-	# Bloques: [x, z, tamaño, giro Y, con colisión]. Nada en el pasillo central (|x| < 2.5, z > 4.6).
+	# Blocks: [x, z, size, Y rotation, with collision]. Nothing in the central aisle (|x| < 2.5, z > 4.6).
 	var blocks := [
 		[-4.6, 5.2, Vector3(1.4, 0.9, 1.1), 20.0, true], [-5.2, 7.6, Vector3(0.9, 0.6, 0.8), -40.0, true],
 		[4.8, 6.0, Vector3(1.2, 0.8, 1.3), 55.0, true], [5.3, 8.6, Vector3(0.7, 0.5, 0.9), 10.0, false],
@@ -411,7 +412,7 @@ func _build_rubble() -> void:
 			shape.size = size
 			cs.shape = shape
 			body.add_child(cs)
-	# Trozos rotos sobre el alféizar del hueco (borde irregular).
+	# Broken chunks on the sill of the hole (irregular edge).
 	for i in 7:
 		var mi := MeshInstance3D.new()
 		var bm := BoxMesh.new()
@@ -421,7 +422,7 @@ func _build_rubble() -> void:
 		mi.position = Vector3(-4.0 + i * 1.25, 0.9 + (i % 3) * 0.25, 0.1)
 		mi.rotation_degrees = Vector3(i * 13 % 17 - 8, i * 31 % 50, i * 23 % 40 - 20)
 		rubble.add_child(mi)
-	# Barrera invisible que tapa el hueco del muro (y el alféizar): Kaelen no puede salir ni caer.
+	# Invisible barrier covering the hole in the wall (and the sill): Kaelen can neither leave nor fall.
 	var barrier := StaticBody3D.new()
 	barrier.name = "SafetyBarrier"
 	barrier.collision_layer = 1
@@ -446,7 +447,7 @@ func _kit_piece(parent: Node3D, item: String, pos: Vector3, rot_deg: Vector3, sc
 	parent.add_child(n)
 
 
-## Grietas: tiras oscuras que irradian del hueco por el suelo y suben por los muros laterales.
+## Cracks: dark strips radiating from the hole across the floor and climbing the side walls.
 func _build_cracks() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 77
@@ -459,7 +460,7 @@ func _build_cracks() -> void:
 	m.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	# Suelo: ramas en zigzag que parten del muro norte (plano XZ, y = 0.03).
+	# Floor: zigzag branches starting at the north wall (XZ plane, y = 0.03).
 	for i in 7:
 		var p := Vector3(-4.5 + i * 1.5, 0.03, 0.8)
 		var dir := Vector3(rng.randf_range(-0.5, 0.5), 0.0, 1.0).normalized()
@@ -468,7 +469,7 @@ func _build_cracks() -> void:
 			_strip(st, p, q, Vector3.UP, 0.05 + (6 - s) * 0.008)
 			dir = (dir + Vector3(rng.randf_range(-0.8, 0.8), 0.0, 0.0)).normalized()
 			p = q
-	# Muros laterales: grietas que bajan del techo (plano YZ, x = ±5.96).
+	# Side walls: cracks coming down from the ceiling (YZ plane, x = ±5.96).
 	for side in [-1.0, 1.0]:
 		for i in 3:
 			var p := Vector3(side * 5.96, 5.9, 2.0 + i * 3.4)
@@ -483,7 +484,7 @@ func _build_cracks() -> void:
 	cracks.add_child(mi)
 
 
-## Segmento de grieta como cuadrilátero de ancho `w`, perpendicular a `normal` en el plano del trazo.
+## Crack segment as a quad of width `w`, perpendicular to `normal` in the plane of the stroke.
 func _strip(st: SurfaceTool, a: Vector3, b: Vector3, normal: Vector3, w: float) -> void:
 	var side := (b - a).cross(normal).normalized() * w * 0.5
 	st.set_normal(normal)
@@ -491,7 +492,7 @@ func _strip(st: SurfaceTool, a: Vector3, b: Vector3, normal: Vector3, w: float) 
 		st.add_vertex(v)
 
 
-## Polvo y guijarros que caen del techo roto mientras dura el final.
+## Dust and pebbles falling from the broken ceiling during the ending.
 func _build_dust() -> void:
 	_dust = CPUParticles3D.new()
 	_dust.name = "CeilingDust"
@@ -504,7 +505,7 @@ func _build_dust() -> void:
 	_dust.lifetime = 3.0
 	_dust.local_coords = true
 	_dust.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-	_dust.emission_box_extents = Vector3(4.0, 0.1, 2.5)   # solo cerca del hueco, sutil
+	_dust.emission_box_extents = Vector3(4.0, 0.1, 2.5)   # only near the hole, subtle
 	_dust.position = Vector3(0.0, 5.9, 2.8)
 	_dust.direction = Vector3.DOWN
 	_dust.spread = 15.0
@@ -544,7 +545,7 @@ func _flat_material(c: Color) -> StandardMaterial3D:
 	return m
 
 
-## Luz fría y tenue de cielo que entra por el hueco; contrasta con la luz cálida del altar sin apagar la escena.
+## Cold, dim sky light coming through the hole; it contrasts with the altar's warm light without dimming the scene.
 func _build_light() -> void:
 	var l := OmniLight3D.new()
 	l.name = "SkyLight"
