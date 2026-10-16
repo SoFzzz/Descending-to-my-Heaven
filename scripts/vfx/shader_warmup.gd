@@ -46,6 +46,11 @@ static func start(boss: Boss) -> ShaderWarmup:
 			for child in copy.find_children("*", "Node3D", true, false):
 				(child as Node3D).visible = true
 			count += 1
+	# Efectos de impacto, sellos y viento (ImpactFx, MagicArea, StormFX): sus shaders se compilan aqui.
+	for sample in ImpactFx.warmup_samples():
+		warm.add_child(sample)
+		sample.position = Vector3(0.0, -0.4, -DISTANCE)
+		count += 1
 	if count == 0:
 		warm.free()
 		return null
@@ -57,6 +62,8 @@ func _ready() -> void:
 	# Los efectos con apertura animada (el rayo) se muestran abiertos del todo; sus nodos hijos
 	# solo existen aqui, ya dentro del arbol.
 	for child in get_children():
+		if child is CPUParticles3D:
+			(child as CPUParticles3D).emitting = true   # chispas y polvo de ImpactFx
 		if "open_amount" in child:
 			child.set(&"open_amount", 1.0)
 			child.set_process(false)

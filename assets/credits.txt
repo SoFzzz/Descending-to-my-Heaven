@@ -68,12 +68,21 @@ Shaders
 Godot-PSX-Starter-kit (portado a Godot 4)
 Autor: DruidCZ; shaders de MenacingMecha y Ahopness. Licencia: MIT.
 
+Godot FX Collection Free (heyheythere, https://heyheythere.itch.io/godot-fx-collection)
+Se usan dos de sus paquetes, sin activar los plugins (addons/storm_wind y addons/magic_circles):
+Storm & Wind 3D Free by heyheythere - https://heyheythere.itch.io/storm-wind-3d-free - CC BY 4.0
+Magic Circles 3D Free by heyheythere - https://heyheythere.itch.io/magic-circles-3d-free - CC BY 4.0
+Licencia: Creative Commons Attribution 4.0 International (https://creativecommons.org/licenses/by/4.0/).
+
 
 Audio
 
 Música "Blazing Honor"
 Autor: EpicOrderSounds. Licencia: Royalty-Free Music License v1.0 (uso personal y comercial; el crédito se agradece; prohibido redistribuir la pista suelta y usarla para entrenar IA).
 Music by EpicOrderSounds.
+
+Viento de la isla cayendo en el final (WIND-FALL)
+Autor y licencia por confirmar (aportado por la autora del proyecto).
 
 Pistas de música usadas: sadness piano4 (menú), ancient creature battle (jefe 1), hellhound battle (jefe 2), LVS04_10_Battlefield (jefe 3), celtic melancholy (encuentro con Elysia y créditos).
 Autor y licencia por confirmar.

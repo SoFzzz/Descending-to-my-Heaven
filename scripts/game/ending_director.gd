@@ -27,6 +27,9 @@ const SHOT_2_HOLD := 1.5
 const EMBRACE_FADE_TIME := 1.8
 const EMBRACE_BLACK_HOLD := 0.6
 
+## Fundido de salida del viento de la caída al pasar a créditos (s).
+const WIND_FADE_OUT := 1.2
+
 const TEXT_LAYER := 20
 const TEXT_FONT_SIZE := 14
 const TEXT_BOTTOM_MARGIN := 24.0
@@ -285,6 +288,8 @@ func _game_state() -> Node:
 
 ## Cierra la secuencia: pide el siguiente paso (créditos) con el fundido propio de GameState.
 func _finish() -> void:
+	if is_inside_tree():
+		get_tree().call_group(EndingRoom.GROUP, &"stop_wind", WIND_FADE_OUT)
 	var game_state := _game_state()
 	if game_state and game_state.has_method(&"advance_level"):
 		game_state.advance_level()

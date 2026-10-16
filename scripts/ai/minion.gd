@@ -356,6 +356,8 @@ func _die() -> void:
 	if events:
 		events.enemy_died.emit(self, cost)
 	_play_sfx(sfx_death)
+	if is_inside_tree():
+		ImpactFx.puff(get_tree(), global_position + Vector3.UP * 0.5)
 	_play_death()
 	get_tree().create_timer(corpse_time).timeout.connect(queue_free)
 

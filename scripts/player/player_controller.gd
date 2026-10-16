@@ -381,6 +381,8 @@ func try_roll() -> bool:
 		_model.rotation.y = atan2(_roll_dir.x, _roll_dir.z)
 	_play_action(&"roll")
 	_play_sfx(sfx_roll)
+	if is_inside_tree():
+		ImpactFx.dust(get_tree(), global_position + Vector3.UP * 0.1, 0.5)
 	return true
 
 

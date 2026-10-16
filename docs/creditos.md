@@ -51,6 +51,8 @@ Animaciones: Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist, Stra
 | Asset | Autor | Licencia |
 |---|---|---|
 | Beam VFX - Godot 3D (rayo de Ghidorah, `assets/vfx/beam/`) | Binbun (https://binbun3d.itch.io/beam-vfx) | CC0 1.0 (crédito no obligatorio) |
+| Storm & Wind 3D Free (racha de viento del final, chispas, polvo y humo de impacto; `addons/storm_wind/`, sin activar el plugin) | heyheythere (https://heyheythere.itch.io/storm-wind-3d-free) | CC BY 4.0 (crédito obligatorio: `addons/storm_wind/LICENSE.txt`) |
+| Magic Circles 3D Free (sello del aviso de repulsión y del rugido de fase 2, onda de impacto del rayo; `addons/magic_circles/`, sin activar el plugin) | heyheythere (https://heyheythere.itch.io/magic-circles-3d-free) | CC BY 4.0 (crédito obligatorio: `addons/magic_circles/LICENSE.txt`) |
 | Godot-PSX-Starter-kit (portado a Godot 4) | DruidCZ; shaders de MenacingMecha y Ahopness | MIT (`shaders/psx/LICENSE-psx-starter-kit.txt`) |
 
 ## Audio
@@ -64,7 +66,10 @@ Usado en el juego (2026-10-15, Tarea 17):
 | Be Not Afraid UI (BNA_UI1, 6, 7, 21 y 26, recortados) | Menús y pausa | Atelier Magicae | Uso libre, no redistribuir | "Atelier Magicae" (obligatorio) |
 | Efectos aportados (esbirros: ataque, muerte y pasos; Kaelen: golpe recibido, caída, cansancio, rodada; jefes: mordida, coletazo, golpe al suelo, embestida, salto; ambiente de las arenas 1–3; puerta de piedra; pantalla de muerte) | Esbirros, Kaelen, ataques de jefes, escenarios y pantalla de muerte | Por confirmar | Por confirmar | — |
 | `sadness piano4`, `ancient creature battle`, `hellhound battle`, `LVS04_10_Battlefield_bpm180_loop`, `celtic melancholy` | Menú, jefes 1–3, final y créditos | Por confirmar | Por confirmar | — |
+| `WIND-FALL` | Viento de la isla cayendo en el final (`assets/audio/sfx/ambient/wind_fall.mp3`) | Por confirmar (lo aportó la autora del proyecto) | Por confirmar | — |
 | Dialogue Bleeps Pack | Voces (blips) de Kaelen y Elysia en los diálogos del final (`assets/audio/sfx/dialogue/`) | dmochas | Por confirmar (el pack no incluye readme) | dmochas |
+
+Del bundle "Godot FX Collection Free" (heyheythere, CC BY 4.0) se evaluaron también VFX 2D, Sprite FX, Weather FX, Scene Transitions, Retro Screen FX, PSX Look y Toon Look y no se copiaron: sus shaders son de `canvas_item` (2D) o duplican el post-proceso PSX y las transiciones propias del proyecto.
 
 Entorno del exterior (2026-10-15):
 

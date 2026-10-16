@@ -52,6 +52,7 @@ func _ready() -> void:
 	if events:
 		events.player_died.connect(_on_player_died)
 	player.footstep_stream = footstep_stream
+	ImpactFx.instance(get_tree())   # chispas de impacto, polvo y sellos (reserva de emisores)
 	_start_level_music()
 	_add_torch_sounds()
 	_start_ambience()
