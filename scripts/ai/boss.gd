@@ -181,6 +181,7 @@ func _ready() -> void:
 		var skeletons := _model.find_children("*", "Skeleton3D", true, false)
 		_skeleton = skeletons.front() as Skeleton3D if not skeletons.is_empty() else null
 	_set_gated(false)
+	_warm_up()
 	_play(idle_animation)
 
 
@@ -282,6 +283,22 @@ func _run_state(delta: float, target_ok: bool) -> void:
 				repelling = false
 				_play(idle_animation)
 				_set_state(State.CHASE if target_ok else State.IDLE)
+
+
+## Removes the first-use hitches (shaders of the attack effects and warnings, animation tracks): see
+## ShaderWarmup. Without a window (tests) it does nothing.
+func _warm_up() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	if _anim:
+		for attack in attacks:
+			if _anim.has_animation(attack.animation):
+				_anim.play(attack.animation, 0.0)
+				_anim.seek(0.0, true)
+		if _anim.has_animation(idle_animation):
+			_anim.play(idle_animation, 0.0)
+			_anim.seek(0.0, true)
+	ShaderWarmup.start(self)
 
 
 # --- Attacks ----------------------------------------------------------------------------------
