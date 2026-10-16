@@ -9,7 +9,9 @@ const FADE_IN := 1.0
 const DEATH_DELAY := 1.6   # desde la muerte hasta que aparece el título (animación de caída)
 const TITLE_TIME := 1.2    # desde que aparece el título hasta que aparecen los botones
 const BUTTONS_FADE := 0.4
-const DEATH_SOUND := preload("res://assets/audio/sfx/ui/death_screen.mp3")
+## Música de la pantalla de muerte: ogg en bucle (loop=true en el .import, empalmado en compás);
+## suena mientras la pantalla esté visible y hide_now() la corta con fundido.
+const DEATH_SOUND := preload("res://assets/audio/bgm/death_screen_loop.ogg")
 const SOUND_FADE_OUT := 0.8
 
 ## Texto de respaldo si la clave de traducción no existe todavía (tr() devuelve la clave).
@@ -23,6 +25,7 @@ const FALLBACKS := {
 var _active := false
 var _buttons_shown := false
 var _sound: AudioStreamPlayer
+var _sound_tween: Tween
 var _run_id := 0   # invalida las esperas de una muerte anterior
 
 @onready var _root: Control = $Root
@@ -156,17 +159,21 @@ func _play_death_sound() -> void:
 		_sound.stream = DEATH_SOUND
 		_sound.bus = &"UI"
 		add_child(_sound)
+	if _sound_tween and _sound_tween.is_valid():
+		_sound_tween.kill()   # a fade-out from a previous death must not stop this one
 	_sound.volume_db = 0.0
 	_sound.play()
 
 
-## The sound is longer than the screen: when the scene changes it fades out.
+## The music loops while the screen is up: when the scene changes it fades out.
 func _fade_out_sound() -> void:
 	if _sound == null or not _sound.playing:
 		return
-	var tween := create_tween().set_ignore_time_scale(true)
-	tween.tween_property(_sound, "volume_db", -60.0, SOUND_FADE_OUT)
-	tween.tween_callback(_sound.stop)
+	if _sound_tween and _sound_tween.is_valid():
+		_sound_tween.kill()
+	_sound_tween = create_tween().set_ignore_time_scale(true)
+	_sound_tween.tween_property(_sound, "volume_db", -60.0, SOUND_FADE_OUT)
+	_sound_tween.tween_callback(_sound.stop)
 
 
 func hide_now() -> void:

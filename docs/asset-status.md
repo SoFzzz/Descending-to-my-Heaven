@@ -175,3 +175,16 @@ Efecto del pack "Beam VFX - Godot 3D" de Binbun (CC0, https://binbun3d.itch.io/b
 
 Arenas 1, 2 y 3 con piezas del kit (`kit_std.tres`): arenas 1 y 3 con `GridMap`; arena 2 (octógono) con baldosas de `GridMap`, 3 piezas de muro por cara giradas 45° y colisión por cajas. Exterior con fachada de piezas `wall`, arco ajustado al hueco y sendero con curva alrededor de la nariz de la isla. Se regeneran con `level_builder.gd` (opción `-- out=<dir>/` para probar sin tocar las escenas).
 
+
+## Música en bucle (2026-10-15)
+
+Las pistas originales (jefes 1-3, menú, final y pantalla de muerte) duraban entre 19 y 133 s y acababan con un fundido de salida de 2,5 a 8 s seguido de hasta 4 s de silencio digital, y empezaban con un fundido de entrada: al repetirse con `loop=true` se oía bajar el volumen, un hueco y un nuevo arranque. Se generan versiones `*_loop.ogg` (`assets/audio/bgm/`) sin silencio final, con la cola del fundido de salida solapada sobre el fundido de entrada y el punto de bucle en un múltiplo de compás (tempo estimado de cada pista), de modo que el final enlaza con el principio sin hueco. Los originales quedan en `assets/audio/bgm/source/` (con `.gdignore`, no se importan). `loop=true` y `loop_offset=0` en cada `.import`; el bucle lo hace el propio stream (no se escucha `finished`). `exterior_forest_night.ogg` ya era continuo (60 s planos) y no se tocó. La música de la pantalla de muerte es ahora `death_screen_loop.ogg`: suena en bucle mientras la pantalla está visible y `hide_now()` la baja con fundido. Prueba: `tests/test_music_loops.gd`.
+
+| Pista | Original | Silencio inicial / final | Bucle |
+|---|---|---|---|
+| boss1_ancient_creature_battle | 73,9 s | 0,3 s / 3,4 s | 68,2 s (38 compases, solape 2,5 s) |
+| boss2_hellhound_battle | 60,9 s | 0,7 s / 3,8 s | 53,1 s (20 compases, solape 4,4 s) |
+| boss3_battlefield_loop | 132,7 s | 0,0 s / 1,4 s | 126,3 s (63 compases, solape 5,2 s) |
+| menu_sadness_piano | 75,2 s | 0,7 s / 3,7 s | 65,9 s (23 compases, solape 5,8 s) |
+| ending_celtic_melancholy (final y créditos) | 69,2 s | 0,4 s / 3,5 s | 60,1 s (24 compases, solape 5,7 s) |
+| death_screen | 23,6 s | 0,1 s / 4,0 s | 18,3 s (10 compases, solape 1,6 s) |

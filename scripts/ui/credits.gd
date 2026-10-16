@@ -5,7 +5,7 @@ extends Control
 ## sube solo, despacio. Al usar la rueda del ratón o las flechas arriba/abajo, el desplazamiento
 ## automático se pausa un rato. Esc o el botón vuelven al menú principal con el fundido de GameState.
 
-const CREDITS_MUSIC := preload("res://assets/audio/bgm/ending_celtic_melancholy.mp3")
+const CREDITS_MUSIC := preload("res://assets/audio/bgm/ending_celtic_melancholy_loop.ogg")
 const CREDITS_PATH := "res://assets/credits.txt"
 const MAIN_MENU_PATH := "res://scenes/ui/main_menu.tscn"
 ## Títulos de sección de credits.txt (en español) -> clave de traducción.
