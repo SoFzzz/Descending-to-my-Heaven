@@ -16,7 +16,7 @@ const DUNGEON_FONT := preload("res://assets/fonts/DungeonFont.ttf")
 const BAND_HEIGHT := 112.0
 const BAND_ALPHA := 0.88
 const SIDE_MARGIN := 64.0
-const NAME_FONT_SIZE := 20
+const NAME_FONT_SIZE := 26
 const TEXT_FONT_SIZE := 14
 const TEXT_LINES := 2
 const MARKER_BLINK := 0.45
@@ -88,7 +88,7 @@ func _ready() -> void:
 	var column := VBoxContainer.new()
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	column.offset_top = -BAND_HEIGHT + 20.0
+	column.offset_top = -BAND_HEIGHT + 16.0
 	column.offset_bottom = -22.0
 	column.offset_left = SIDE_MARGIN
 	column.offset_right = -SIDE_MARGIN
@@ -130,7 +130,7 @@ func _ready() -> void:
 
 func _place_marker() -> void:
 	if marker:
-		marker.position = Vector2(size.x - SIDE_MARGIN + 14.0, size.y - 34.0)
+		marker.position = Vector2(size.x - SIDE_MARGIN - 4.0, size.y - 32.0)
 
 
 # --- Uso -----------------------------------------------------------------------------------
