@@ -17,7 +17,6 @@ const BEAT_FAST := 0.38
 const BEAT_HOLD := 0.3
 
 const DRAGON_BAR := preload("res://assets/ui/dragonhpbar/dragonhpbar_thin.png")
-const PIXEL_BAR := preload("res://assets/ui/pixel_ui_pack_3/05_boss_bar.png")
 
 ## Boss bar skins: texture, full and empty frame regions inside it, the stretchable middle (the
 ## frame keeps `margin_l` px on the left and `margin_r` px on the right, the rest stretches to
@@ -34,19 +33,9 @@ const DRAGON_STYLE := {
 	&"scale": 1.0,
 	&"name_overlap": 2.0,
 }
-const BLACKHORN_STYLE := {
-	&"texture": PIXEL_BAR,
-	&"full": Rect2(0, 21, 48, 6),
-	&"empty": Rect2(240, 21, 48, 6),
-	&"margin_l": 3,
-	&"margin_r": 3,
-	&"fill": Vector2(2.0, 2.0),
-	&"scale": 4.0 / 3.0,   # 6 px frame -> 8 px high, same 304 px length
-	&"name_overlap": 0.0,
-}
 const BOSS_BAR_STYLES := {
 	"Bone Dragon": DRAGON_STYLE,
-	"Blackhorn": BLACKHORN_STYLE,
+	"Blackhorn": DRAGON_STYLE,
 	"Mecha King Ghidorah": DRAGON_STYLE,
 }
 const DEFAULT_BOSS_BAR := DRAGON_STYLE

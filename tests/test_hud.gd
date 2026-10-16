@@ -26,12 +26,12 @@ func test_every_boss_has_a_bar_skin() -> void:
 		assert_true(Hud.BOSS_BAR_STYLES.has(boss_name), boss_name)
 
 
-func test_all_boss_bars_share_the_original_length_and_stay_thin() -> void:
+func test_all_boss_bars_use_the_thin_dragon_style() -> void:
 	for boss_name in Hud.BOSS_BAR_STYLES:
 		var style: Dictionary = Hud.BOSS_BAR_STYLES[boss_name]
 		var height: float = (style[&"full"] as Rect2).size.y * style[&"scale"]
 		assert_true(height <= 16.0, boss_name + " bar is thin")
-	var blackhorn: Dictionary = Hud.BOSS_BAR_STYLES["Blackhorn"]
-	assert_almost((blackhorn[&"full"] as Rect2).size.y * blackhorn[&"scale"], 8.0)
 	var dragon: Dictionary = Hud.BOSS_BAR_STYLES["Bone Dragon"]
 	assert_almost((dragon[&"full"] as Rect2).size.y * dragon[&"scale"], 16.0)
+	for boss_name in Hud.BOSS_BAR_STYLES:
+		assert_eq(Hud.BOSS_BAR_STYLES[boss_name], dragon, boss_name + " uses the dragon bar")

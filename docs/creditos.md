@@ -43,7 +43,7 @@ Animaciones: Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist, Stra
 | dragonhpbar | Barra de vida de Bone Dragon y Mecha King Ghidorah (`assets/ui/dragonhpbar/`; `dragonhpbar_thin.png` es una copia reducida a la mitad) | Por confirmar | Por confirmar |
 | Fondo del menú principal | Degradado del fondo (`assets/ui/menu/`), dibujado por script con `scripts/tools/gen_menu_bg.py` | Equipo del proyecto | — |
 | Pulsing Heart | Barra de vida (corazón latiendo) y de estamina de Kaelen (`assets/ui/pulsing_heart/`) | Por confirmar | Por confirmar |
-| Pixel UI pack 3 | Barra de vida de Blackhorn y marcador de fijado, reducido a la mitad en `03_reticle_thin.png` (`assets/ui/pixel_ui_pack_3/`) | Por confirmar | Por confirmar |
+| Pixel UI pack 3 | Marcador de fijado, reducido a la mitad en `03_reticle_thin.png` (`assets/ui/pixel_ui_pack_3/`) | Por confirmar | Por confirmar |
 
 
 ## Shaders
