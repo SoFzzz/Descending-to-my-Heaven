@@ -66,6 +66,13 @@ Usado en el juego (2026-10-15, Tarea 17):
 | `sadness piano4`, `ancient creature battle`, `hellhound battle`, `LVS04_10_Battlefield_bpm180_loop`, `celtic melancholy` | Menú, jefes 1–3, final y créditos | Por confirmar | Por confirmar | — |
 | Dialogue Bleeps Pack | Voces (blips) de Kaelen y Elysia en los diálogos del final (`assets/audio/sfx/dialogue/`) | dmochas | Por confirmar (el pack no incluye readme) | dmochas |
 
+Entorno del exterior (2026-10-15):
+
+| Asset | Uso | Autor | Licencia | Crédito |
+|---|---|---|---|---|
+| PS1-Style Tree Pack (modelos `tree01`–`tree03`, `tree05`–`tree08` y sus texturas) | Bosque lejano (3 anillos) y árbol junto al templo; `assets/environment/trees/` | Por confirmar | Por confirmar (el pack no incluye readme ni licencia) | — |
+| SBS Photorealistic Texture Pack 3 (512x512), `PTP-Elements_12-512x512.png` | Textura del agua de los estanques (`assets/environment/textures/water_sbs_elements12.png`) | Screaming Brain Studios | CC0 / dominio público (`SBS_License.txt`) | Opcional |
+
 Sin uso: música "Blazing Honor" (EpicOrderSounds; uso libre, no redistribuir suelta), `skull dragon battle`, `black dragon battle`, `wyvern battle` y 40 Free PSX Footsteps (autor y licencia por confirmar).
 
 **Aviso:** Ririsaurus y Atelier Magicae prohíben redistribuir los archivos originales, que están en `_source/sfx/` del repositorio: el repositorio debe seguir privado (§13.2 del diseño).

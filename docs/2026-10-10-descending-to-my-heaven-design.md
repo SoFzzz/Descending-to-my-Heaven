@@ -141,7 +141,7 @@ Se descartó `floating_island` (61 MB, texturas fotográficas). El exterior usa:
 - Un sendero con **colisión invisible** (caja) y paredes invisibles a los lados.
 - La fachada del templo armada con piezas de `PSX_Dungeon` (muros, arco, puerta) y la `ExitTrigger` en la puerta.
 - `base_env.tres` (cielo + niebla de distancia) para ocultar el vacío.
-- **Actualización 2026-10-15:** el templo es un edificio escalonado generado por `level_builder._temple` (torre de cuatro pisos, frontón y columnas sobre la puerta, alas con tejado, ruinas); los tres huecos de la isla (ojos y nariz) llevan estanques con shader de agua; el vacío se cubre con un mar de niebla en capas y tres anillos de siluetas de bosque; las escaleras de las arenas tienen una rampa de colisión bajo los peldaños visuales. Detalle en `docs/problemas-mapa.md`.
+- **Actualización 2026-10-15:** el templo es un edificio escalonado generado por `level_builder._temple` (torre de cuatro pisos, frontón y columnas sobre la puerta, alas con tejado, ruinas); los tres huecos de la isla (ojos y nariz) llevan estanques con shader de agua; el vacío se cubre con un mar de niebla en capas y tres anillos de árboles lejanos (modelos del pack PS1 de árboles, oscurecidos y fundidos con la bruma por distancia); los estanques usan una textura de agua del pack SBS (CC0); las escaleras de las arenas tienen una rampa de colisión bajo los peldaños visuales. Detalle en `docs/problemas-mapa.md`.
 
 ### 6.3 Diseño de las arenas
 

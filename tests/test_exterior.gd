@@ -32,13 +32,35 @@ func test_ponds_cover_every_island_hole() -> void:
 	level.free()
 
 
-func test_forest_rings_and_mist_exist() -> void:
+func test_forest_rings_use_pack_trees_and_mist_exists() -> void:
 	var level := _level()
 	var rings := level.get_node("Forest").get_children()
 	assert_eq(rings.size(), 3, "tres anillos de bosque")
-	for r: MeshInstance3D in rings:
-		assert_true(r.mesh.get_surface_count() == 1 and r.mesh.surface_get_array_len(0) >= 360, "%s vacío" % r.name)
+	var total := 0
+	var kinds := {}
+	for r in rings:
+		assert_true(r is ForestRing, "%s no es un ForestRing" % r.name)
+		var fr := r as ForestRing
+		fr.build()   # en la prueba no entra al árbol, así que no corrió _ready
+		assert_true(fr.tree_paths.size() >= 4, "%s: varios tipos de árbol del pack" % r.name)
+		for p in fr.tree_paths:
+			assert_true(p.begins_with("res://assets/environment/trees/"), "modelo fuera del pack: %s" % p)
+		for m in fr.multimeshes:
+			total += m.multimesh.instance_count
+			kinds[m.multimesh.mesh] = true
+			assert_true((m.material_override as ShaderMaterial).get_shader_parameter("albedo_tex") != null, "árbol sin textura")
+	assert_true(total >= 180, "árboles instanciados (%d)" % total)
+	assert_true(kinds.size() >= 4, "varios modelos distintos en uso (%d)" % kinds.size())
 	assert_true(level.get_node("Mist").get_child_count() >= 2, "capas de niebla")
+	assert_true(level.get_node_or_null("Temple/Decor/Tree") is ForestRing, "árbol del templo del pack")
+	level.free()
+
+
+func test_ponds_use_sbs_water_texture() -> void:
+	var level := _level()
+	for p: MeshInstance3D in level.get_node("Ponds").get_children():
+		var tex := (p.mesh.material as ShaderMaterial).get_shader_parameter("water_tex") as Texture2D
+		assert_true(tex != null and tex.resource_path.ends_with("water_sbs_elements12.png"), "%s sin textura de agua" % p.name)
 	level.free()
 
 
