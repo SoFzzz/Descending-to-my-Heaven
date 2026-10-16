@@ -32,7 +32,7 @@ const TURN_SPEED := 10.0
 const EYE_HEIGHT := 1.5
 const CHEST_HEIGHT := 1.2       # Kaelen's chest (1.70 m capsule)
 const WORLD_MASK := 1
-const ORDER_ARRIVE := 0.8       # m al punto de la orden a partir de los cuales se queda quieto
+const ORDER_ARRIVE := 0.8       # m to the order point within which it stands still
 
 @export var cost := 1
 @export var attack_range := 1.5
@@ -59,12 +59,12 @@ const ORDER_ARRIVE := 0.8       # m al punto de la orden a partir de los cuales 
 @export var sfx_attack: AudioStream
 @export var sfx_hurt: AudioStream
 @export var sfx_death: AudioStream
-## Pasos de un esbirro normal: pista larga de varias pisadas que suena en bucle mientras camina.
-## Los élites (los que tienen `sfx_spawn`) no la usan ni el sonido de ataque de los normales.
+## Footsteps of a normal minion: a long track of several steps that loops while it walks.
+## Elites (those with `sfx_spawn`) use neither it nor the normal minions' attack sound.
 @export var sfx_step: AudioStream
 
-## Pasos: solo se oyen los de esbirros a menos de STEP_HEARING_DISTANCE m de Kaelen y nunca más de
-## STEP_MAX_VOICES a la vez en toda la escena (cada uno es un reproductor 3D en bucle).
+## Footsteps: only those of minions within STEP_HEARING_DISTANCE m of Kaelen are heard, and never more than
+## STEP_MAX_VOICES at once in the whole scene (each one is a looping 3D player).
 const STEP_HEARING_DISTANCE := 14.0
 const STEP_MAX_VOICES := 3
 const STEP_VOLUME_DB := -6.0
@@ -93,9 +93,9 @@ var _holding_token := false   # result of the last request/release (AttackTokens
 var _model_root: Node3D       # instanced model (null = placeholder)
 var _anim: AnimationPlayer
 var _current_kind: StringName = &""
-var _order_point := Vector3.ZERO   # punto de cerco que le dio el Orquestador (pinza)
+var _order_point := Vector3.ZERO   # encirclement point given by the Orchestrator (pincer)
 var _order_left := 0.0
-var _retreat_left := 0.0           # s que le quedan de retirada (vida baja)
+var _retreat_left := 0.0           # s of retreat left (low health)
 var _retreated := false
 
 
@@ -152,8 +152,10 @@ func _physics_process(delta: float) -> void:
 	_update_animation()
 
 
-## Orden de posición del Orquestador (pinza): ir al punto y quedarse en CIRCLE allí `duration` s.
+## Position order from the Orchestrator (pincer): go to the point and stay in CIRCLE there for `duration` s.
 func order_to(point: Vector3, duration := 1.2) -> void:
+	if state == MinionState.DEAD:
+		return   # a corpse takes no orders (it could arrive late, from a squad built before it died)
 	_order_point = point
 	_order_left = duration
 
@@ -170,7 +172,7 @@ func is_retreating() -> bool:
 	return _retreat_left > 0.0
 
 
-## Dejar de atacar: con poca vida un esbirro normal se aleja unos segundos y vuelve.
+## Stop attacking: with low health a normal minion backs away for a few seconds and comes back.
 func _check_retreat() -> void:
 	if state == MinionState.DEAD or state == MinionState.ATTACK or _retreat_left > 0.0:
 		return
@@ -181,8 +183,8 @@ func _check_retreat() -> void:
 		_release_token()
 
 
-## Lo pone en persecución y sin radio de pérdida: lo usa el Orquestador con las oleadas, que nacen
-## a > 8 m (normalmente fuera del radio de detección) y, sin esto, se quedarían en IDLE.
+## Puts it in pursuit with no lose radius: used by the Orchestrator for the waves, which spawn
+## farther than 8 m (normally outside the detection radius) and, without this, would stay IDLE.
 func alert() -> void:
 	if state == MinionState.DEAD:
 		return
@@ -229,7 +231,7 @@ func _run_state(delta: float) -> void:
 	move_and_slide()
 
 
-## Va al punto de cerco y, al llegar, se queda mirando a Kaelen.
+## Goes to the encirclement point and, on arrival, stands looking at Kaelen.
 func _go_to_order(delta: float, speed: float) -> void:
 	var to_point := _order_point - global_position
 	to_point.y = 0.0
@@ -294,7 +296,7 @@ func _update_token(distance: float) -> void:
 	if tokens == null:
 		return
 	if state == MinionState.CHASE or state == MinionState.CIRCLE:
-		# Amenaza compartida: si el jefe está avisando/atacando cerca de Kaelen, no inicia ataque.
+		# Shared threat: if the boss is warning / attacking near Kaelen, it does not start an attack.
 		if _holding_token and tokens.get(&"boss_threat_near") == true:
 			_release_token()
 		elif _retreat_left > 0.0:
@@ -305,8 +307,8 @@ func _update_token(distance: float) -> void:
 			_release_token()
 
 
-## Consulta a AttackTokens (la fuente de verdad): si lo reiniciaron (reset) con este esbirro vivo,
-## deja de creer que tiene ficha. Sin autoload (pruebas con -s) usa su copia local.
+## Asks AttackTokens (the source of truth): if it was reset with this minion alive,
+## it stops believing it holds a token. Without the autoload (tests with -s) it uses its local copy.
 func _has_token() -> bool:
 	var tokens := _tokens()
 	if tokens and _holding_token:
@@ -314,7 +316,7 @@ func _has_token() -> bool:
 	return _holding_token
 
 
-## Devuelve la ficha (lo usa el Orquestador al terminar la arena).
+## Gives the token back (used by the Orchestrator when the arena ends).
 func release_token() -> void:
 	_release_token()
 
@@ -637,7 +639,7 @@ func _play_death() -> void:
 	tween.tween_property(holder, "position:y", holder.position.y - DEATH_SINK, DEATH_FALL_TIME)
 
 
-## ¿Puede sonar el bucle de pasos? `has_voice`: este esbirro ya tiene uno de los reproductores.
+## Can the footstep loop play? `has_voice`: this minion already owns one of the players.
 static func step_voice_allowed(walking: bool, distance: float, voices_in_use: int, has_voice: bool) -> bool:
 	if not walking or distance > STEP_HEARING_DISTANCE:
 		return false
@@ -647,7 +649,8 @@ static func step_voice_allowed(walking: bool, distance: float, voices_in_use: in
 func _update_steps() -> void:
 	if sfx_step == null or sfx_spawn != null or not is_inside_tree():
 		return
-	var walking := (state == MinionState.CHASE or state == MinionState.CIRCLE) and is_on_floor() 			and Vector2(velocity.x, velocity.z).length() > STEP_MIN_SPEED
+	var walking := (state == MinionState.CHASE or state == MinionState.CIRCLE) and is_on_floor() \
+			and Vector2(velocity.x, velocity.z).length() > STEP_MIN_SPEED
 	var distance := global_position.distance_to(_player.global_position) if _player else INF
 	if step_voice_allowed(walking, distance, _step_voices_in_use, _step_player != null):
 		if _step_player == null:
