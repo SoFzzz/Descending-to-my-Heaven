@@ -1,5 +1,5 @@
 extends TestCase
-# Visuales del esbirro: elección de clip, escalas de velocidad y montaje del modelo (sin escena .tscn).
+# Minion visuals: clip choice, speed scales and model mounting (no .tscn scene).
 
 const S := MinionBrain.State
 
@@ -9,9 +9,9 @@ func test_clip_kind_by_state() -> void:
 	assert_eq(Minion.clip_kind(S.IDLE, 3.0), &"idle")
 	assert_eq(Minion.clip_kind(S.CHASE, 3.0), &"walk")
 	assert_eq(Minion.clip_kind(S.CIRCLE, 2.0), &"walk")
-	assert_eq(Minion.clip_kind(S.CHASE, 0.0), &"idle", "quieto en persecución -> idle")
+	assert_eq(Minion.clip_kind(S.CHASE, 0.0), &"idle", "standing still while chasing -> idle")
 	assert_eq(Minion.clip_kind(S.ATTACK, 0.0), &"attack")
-	assert_eq(Minion.clip_kind(S.RECOVER, 0.0), &"attack", "el golpe termina durante RECOVER")
+	assert_eq(Minion.clip_kind(S.RECOVER, 0.0), &"attack", "the hit finishes during RECOVER")
 	assert_eq(Minion.clip_kind(S.STUNNED, 0.0), &"hurt")
 	assert_eq(Minion.clip_kind(S.DEAD, 0.0), &"death")
 
@@ -19,15 +19,15 @@ func test_clip_kind_by_state() -> void:
 func test_walk_speed_scale_is_proportional_and_clamped() -> void:
 	assert_almost(Minion.walk_speed_scale(3.5, 3.5, 1.0), 1.0)
 	assert_almost(Minion.walk_speed_scale(2.1, 3.5, 1.0), 0.6)
-	assert_almost(Minion.walk_speed_scale(3.5, 3.5, 0.5), 0.5, 0.001, "walk_anim_speed multiplica")
+	assert_almost(Minion.walk_speed_scale(3.5, 3.5, 0.5), 0.5, 0.001, "walk_anim_speed multiplies")
 	assert_almost(Minion.walk_speed_scale(0.1, 3.5, 1.0), Minion.WALK_SCALE_MIN)
 	assert_almost(Minion.walk_speed_scale(99.0, 3.5, 1.0), Minion.WALK_SCALE_MAX)
-	assert_almost(Minion.walk_speed_scale(2.0, 0.0, 0.7), 0.7, 0.001, "sin move_speed no divide")
+	assert_almost(Minion.walk_speed_scale(2.0, 0.0, 0.7), 0.7, 0.001, "no move_speed does not divide")
 
 
 func test_fit_speed_only_speeds_up() -> void:
 	assert_almost(Minion.fit_speed(3.2, 1.6), 2.0)
-	assert_almost(Minion.fit_speed(0.8, 1.6), 1.0, 0.001, "un clip corto no se ralentiza")
+	assert_almost(Minion.fit_speed(0.8, 1.6), 1.0, 0.001, "a short clip is not slowed down")
 	assert_almost(Minion.fit_speed(0.0, 1.6), 1.0)
 	assert_almost(Minion.fit_speed(1.0, 0.0), 1.0)
 
@@ -39,7 +39,7 @@ func test_defaults_keep_placeholder_behavior() -> void:
 	assert_true(minion.sfx_attack == null and minion.sfx_hurt == null and minion.sfx_death == null)
 	assert_almost(minion.model_yaw_offset, PI)
 	assert_true(minion.tint.is_equal_approx(Color.WHITE))
-	# Sin modelo todo es no-op: no revienta ni cambia el estado.
+	# Without a model everything is a no-op: it neither crashes nor changes the state.
 	minion._setup_visuals()
 	minion._update_animation(true)
 	minion._play_death()
@@ -103,10 +103,10 @@ func test_apply_tint_multiplies_modulate_color() -> void:
 	root.add_child(mi)
 
 	Minion._apply_tint(root, Color(1, 1, 1, 1))
-	assert_true((mat.get_shader_parameter("modulate_color") as Color).is_equal_approx(Color(0.5, 1.0, 1.0, 1.0)), "blanco no cambia nada")
+	assert_true((mat.get_shader_parameter("modulate_color") as Color).is_equal_approx(Color(0.5, 1.0, 1.0, 1.0)), "white changes nothing")
 	Minion._apply_tint(root, Color(0.5, 0.5, 1.0, 1.0))
 	var result := mat.get_shader_parameter("modulate_color") as Color
-	assert_true(result.is_equal_approx(Color(0.25, 0.5, 1.0, 1.0)), "multiplica por el tinte")
+	assert_true(result.is_equal_approx(Color(0.25, 0.5, 1.0, 1.0)), "multiplies by the tint")
 	root.free()
 
 
@@ -116,12 +116,12 @@ func test_attach_weapon_needs_the_bone() -> void:
 	var skeleton := Skeleton3D.new()
 	rig.add_child(skeleton)
 	var weapon := Node3D.new()
-	assert_true(minion._attach_weapon(rig, weapon) == null, "sin hueso no se engancha")
+	assert_true(minion._attach_weapon(rig, weapon) == null, "without the bone it is not attached")
 	# glTF import renames "mixamorig:RightHand" to "mixamorig_RightHand": the export still finds it.
 	skeleton.add_bone("mixamorig_RightHand")
 	var attachment := minion._attach_weapon(rig, weapon)
 	assert_true(attachment != null)
-	assert_true(weapon.get_parent() != null and weapon.get_parent().get_parent() == attachment, "arma bajo WeaponGrip")
+	assert_true(weapon.get_parent() != null and weapon.get_parent().get_parent() == attachment, "weapon under WeaponGrip")
 	assert_eq(attachment.bone_name, "mixamorig_RightHand")
 	rig.free()
 	minion.free()
