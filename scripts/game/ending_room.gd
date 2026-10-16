@@ -30,6 +30,11 @@ const SHOW_DISTANCE := 24.0
 ## Rango vertical (m, local) por el que suben las rocas antes de reaparecer abajo.
 const ROCK_BOTTOM := -75.0
 const ROCK_TOP := 85.0
+## Viento de la caída (WIND-FALL): bucle por debajo de la música y los diálogos del final.
+const WIND_STREAM := "res://assets/audio/sfx/ambient/wind_fall.mp3"
+const WIND_BUS := &"SFX"
+const WIND_VOLUME_DB := -9.0
+const WIND_SILENT_DB := -60.0
 
 var falling := false
 var intensity := 0.0   ## 0 = hueco quieto con deriva lenta, 1 = caída a toda velocidad
@@ -43,6 +48,8 @@ var _rocks: Array[Dictionary] = []   # {node, speed, spin}
 var _shaken_cam: Camera3D
 var _time := 0.0
 var _tween: Tween
+var _wind: AudioStreamPlayer
+var _wind_tween: Tween
 
 
 ## Velocidad relativa de la caída para una intensidad 0..1.
@@ -87,6 +94,48 @@ func start_fall() -> void:
 	else:
 		intensity = 1.0
 	_apply_speed()
+	_start_wind()
+
+
+## Viento: entra con la misma curva y duración que la aceleración de la caída (RAMP_TIME).
+func _start_wind() -> void:
+	if _wind == null:
+		var stream := load(WIND_STREAM) as AudioStreamMP3
+		if stream == null:
+			push_warning("EndingRoom: falta %s" % WIND_STREAM)
+			return
+		stream = stream.duplicate() as AudioStreamMP3
+		stream.loop = true   # más corto que el final: se repite
+		_wind = AudioStreamPlayer.new()
+		_wind.name = "WindFall"
+		_wind.stream = stream
+		_wind.bus = WIND_BUS if AudioServer.get_bus_index(WIND_BUS) >= 0 else &"Master"
+		_wind.process_mode = Node.PROCESS_MODE_ALWAYS
+		add_child(_wind)
+	_wind.volume_db = WIND_SILENT_DB
+	if is_inside_tree():
+		_wind.play()
+	if _wind_tween:
+		_wind_tween.kill()
+	if is_inside_tree():
+		_wind_tween = create_tween()
+		_wind_tween.tween_property(_wind, "volume_db", WIND_VOLUME_DB, RAMP_TIME) 				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	else:
+		_wind.volume_db = WIND_VOLUME_DB
+
+
+## Fundido de salida del viento (al pasar a créditos).
+func stop_wind(fade: float = 1.2) -> void:
+	if _wind == null or not _wind.playing:
+		return
+	if _wind_tween:
+		_wind_tween.kill()
+	if not is_inside_tree():
+		_wind.stop()
+		return
+	_wind_tween = create_tween()
+	_wind_tween.tween_property(_wind, "volume_db", WIND_SILENT_DB, fade)
+	_wind_tween.tween_callback(_wind.stop)
 
 
 func _process(delta: float) -> void:

@@ -64,6 +64,7 @@ Usado en el juego (2026-10-15, Tarea 17):
 | Be Not Afraid UI | Menús y pausa | Atelier Magicae | Uso libre, no redistribuir | "Atelier Magicae" (obligatorio) |
 | Efectos aportados (esbirros: ataque, muerte y pasos; Kaelen: golpe recibido, caída, cansancio, rodada; jefes: mordida, coletazo, golpe al suelo, embestida, salto; ambiente de las arenas 1–3; puerta de piedra; pantalla de muerte) | Esbirros, Kaelen, ataques de jefes, escenarios y pantalla de muerte | Por confirmar | Por confirmar | — |
 | `sadness piano4`, `ancient creature battle`, `hellhound battle`, `LVS04_10_Battlefield_bpm180_loop`, `celtic melancholy` | Menú, jefes 1–3, final y créditos | Por confirmar | Por confirmar | — |
+| `WIND-FALL` | Viento de la isla cayendo en el final (`assets/audio/sfx/ambient/wind_fall.mp3`) | Por confirmar (lo aportó la autora del proyecto) | Por confirmar | — |
 | Dialogue Bleeps Pack | Voces (blips) de Kaelen y Elysia en los diálogos del final (`assets/audio/sfx/dialogue/`) | dmochas | Por confirmar (el pack no incluye readme) | dmochas |
 
 Sin uso: música "Blazing Honor" (EpicOrderSounds; uso libre, no redistribuir suelta), `skull dragon battle`, `black dragon battle`, `wyvern battle` y 40 Free PSX Footsteps (autor y licencia por confirmar).

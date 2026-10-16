@@ -46,6 +46,21 @@ func test_fall_starts_only_when_asked() -> void:
 	room.free()
 
 
+func test_wind_is_prepared_when_fall_starts() -> void:
+	var room := (load("res://scenes/props/ending_room.tscn") as PackedScene).instantiate()
+	room._ready()
+	assert_true(room.get_node_or_null(^"WindFall") == null, "sin viento durante el combate")
+	room.start_fall()
+	var wind := room.get_node_or_null(^"WindFall") as AudioStreamPlayer
+	assert_true(wind != null, "el viento se crea al empezar la caída")
+	if wind:
+		assert_true(wind.stream is AudioStreamMP3 and (wind.stream as AudioStreamMP3).loop, "en bucle")
+		assert_true(wind.stream.resource_path == "" or wind.stream.resource_path.ends_with("wind_fall.mp3"), "stream")
+		assert_true(Room.WIND_VOLUME_DB < 0.0, "por debajo de los diálogos y la música")
+	room.stop_wind(0.1)   # fuera del árbol: no falla
+	room.free()
+
+
 func test_generated_arena_has_hole() -> void:
 	var level := (load("res://scenes/levels/arena_3.tscn") as PackedScene).instantiate()
 	var hall := level.get_node(^"Geometry/EndingHall")
