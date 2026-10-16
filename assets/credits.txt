@@ -68,6 +68,12 @@ Shaders
 Godot-PSX-Starter-kit (portado a Godot 4)
 Autor: DruidCZ; shaders de MenacingMecha y Ahopness. Licencia: MIT.
 
+Godot FX Collection Free (heyheythere, https://heyheythere.itch.io/godot-fx-collection)
+Se usan dos de sus paquetes, sin activar los plugins (addons/storm_wind y addons/magic_circles):
+Storm & Wind 3D Free by heyheythere - https://heyheythere.itch.io/storm-wind-3d-free - CC BY 4.0
+Magic Circles 3D Free by heyheythere - https://heyheythere.itch.io/magic-circles-3d-free - CC BY 4.0
+Licencia: Creative Commons Attribution 4.0 International (https://creativecommons.org/licenses/by/4.0/).
+
 
 Audio
 

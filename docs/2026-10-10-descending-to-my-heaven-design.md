@@ -169,7 +169,8 @@ Se descartó `floating_island` (61 MB, texturas fotográficas). El exterior usa:
 **Sala de Elysia rota (la isla cae):** la sala está dentro de la isla y la isla está cayendo. El muro norte tiene un hueco irregular (cortes sustractivos `BreakWall*` y `BreakCeil*` que añade `_break_room()` en `level_builder.gd`, solo en la sección de `arena_3`) que sube hasta el techo, así que desde el altar se ve el cielo. `scenes/props/ending_room.tscn` (`scripts/game/ending_room.gd`, instanciada en `arena_3_gameplay.tscn` con su origen en el centro del muro norte, z = −57,5) pone lo demás: fondo de cielo con degradado, escombros y bloques del kit (`wall_ruin`, `pillar_collapsed`) y primitivas con la textura de concreto, grietas oscuras en suelo y muros, luz fría del cielo y una `SafetyBarrier` invisible que tapa el hueco (Kaelen no puede salir ni caer; los bloques grandes también tienen colisión y nada estorba el camino entre la puerta y el `EndingTrigger`).
 - **Ilusión de caída:** la sala no se mueve; hacia arriba se desplazan nubes (`CPUParticles3D`), rachas de viento, los islotes del exterior (`islet_*`) y fragmentos de la propia isla, con parallax (lo lejano sube más despacio). Todo lo exterior solo se dibuja y se mueve con la cámara cerca de la sala.
 - **Activación:** durante el combate y al entrar a la sala el hueco muestra una deriva lenta (10 % de velocidad). `EndingDirector.play()` llama `start_fall()` (grupo `ending_room`): en 2,5 s la velocidad sube al 100 %, empieza a caer polvo y guijarros del techo y la cámara activa tiembla levemente. Los planos `EndingCam1` y `EndingCam2` miran hacia el norte con el hueco y la caída detrás de Elysia.
-- **Audio:** no hay en el repositorio un sonido de viento ni de derrumbe, así que esta parte no suena; queda pendiente añadir un loop de viento/derrumbe cuando exista.
+- **Viento (VFX):** las rachas son un `StormFX` "gust" de aire (Storm & Wind 3D Free) que sopla hacia arriba delante del hueco, apagado hasta `start_fall()` y formándose durante los mismos 2,5 s de la aceleración.
+- **Audio:** `assets/audio/sfx/ambient/wind_fall.mp3` (WIND-FALL, aportado por la autora del proyecto) suena en bucle desde `start_fall()` con su propio `AudioStreamPlayer` en el bus SFX a -9 dB (por debajo de los diálogos y la música): entra con un fundido de 2,5 s sincronizado con la aceleración y `EndingDirector._finish()` lo baja en 1,2 s (`stop_wind`) justo antes de pasar a créditos.
 
 ### 6.4 Uso de los kits de dungeon y texturas en Godot
 
@@ -608,6 +609,24 @@ En gl_compatibility cada shader se compila la primera vez que se dibuja. En el n
 | Media / mediana / p99 durante los ataques | 3,6 / 3,3 / 6,2 ms | 3,6 / 3,3 / 6,2 ms |
 
 Causa: el rayo (5 shaders y 2 sistemas de partículas GPU) y los avisos rojos del suelo se compilaban en el primer disparo; el resto del coste de un ataque es despreciable (los fotogramas con ataque activo cuestan lo mismo que sin él). Corrección: `ShaderWarmup` dibuja una vez, en la carga y fuera de pantalla (un `SubViewport` de 64 × 64 con su propio mundo 3D), una copia de cada efecto y de cada aviso de los ataques del jefe, y se libera a los 3 fotogramas; además cada animación de ataque se reproduce una vez al cargar para que el `AnimationPlayer` resuelva sus pistas. No se ejecuta sin ventana (pruebas).
+
+### 12.2 Efectos de impacto y sellos (Storm & Wind 3D Free y Magic Circles 3D Free)
+Los dos paquetes se copian como recursos sueltos (`addons/storm_wind`, `addons/magic_circles`, con su `LICENSE.txt`, CC BY 4.0) y no se activa ningún plugin: sus clases (`StormFX`, `MagicArea`) y shaders funcionan por ruta. Los paquetes 2D del bundle (VFX 2D, Sprite FX, Weather FX, Scene Transitions, Retro Screen FX) usan shaders `canvas_item`, y PSX Look / Retro Screen duplican el post-proceso propio (`shaders/psx/`), así que no se integraron.
+
+`ImpactFx` (`scripts/vfx/impact_fx.gd`) es un único nodo colgado de la raíz con reservas fijas de `CPUParticles3D` de un disparo (6 de chispas y 4 de polvo) que se reutilizan, así que golpear no crea nodos ni mallas. Todos dibujan con `spark.gdshader` de Storm & Wind en modo tramado (`dither`, como el aspecto PSX).
+
+| Efecto | Dónde |
+|---|---|
+| Chispas en el punto de golpe (metal: más; hueso: chispas y polvo; carne: pocas, rojizas) | `Events.hit_landed`, que ya emite `Hitbox`; no se tocó `hitbox.gd` |
+| Polvo al rodar | `PlayerController.try_roll` |
+| Polvo en golpes al suelo (`slam`, `stomp`, `pounce`) | `Boss._begin_active` |
+| Humo oscuro con brasas | muerte de un esbirro (`Minion._die`) |
+| Sello de fuego que se cierra justo antes de la onda (aviso) | `Boss.start_repel` (radio = `repel_radius`, forma durante `repel_push_delay`) |
+| Sello de sangre de 5 m | rugido de la fase 2 (`Boss._physics_process`) |
+| Onda de brasas en el suelo y esfera de impacto más pequeña y cálida | rayo de Ghidorah (`BeamVfx`, escena `beam_vfx.tscn`) |
+| Racha de aire que sube por el hueco | final (`EndingRoom`) |
+
+Rendimiento: `ShaderWarmup` añade al `SubViewport` de precalentamiento una muestra de cada efecto nuevo (chispas, polvo, sello, onda y racha), así que no vuelven los tirones del primer uso. Medido con `ghidorah_profile.gd` en `arena_3_gameplay` antes y después (GTX 1050, 1280 × 720, sin vsync, dos rondas): fotograma más lento 27,7 → 20,9 ms, media 5,4 → 4,0 ms (los números absolutos varían con la carga de la máquina; sin tirón nuevo en el primer rayo ni en las primeras mordidas).
 
 ## 13. Repositorio y assets
 ### 13.1 Estructura
