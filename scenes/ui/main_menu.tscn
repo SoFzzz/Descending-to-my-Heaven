@@ -9,7 +9,7 @@
 
 [sub_resource type="Gradient" id="glow_grad"]
 offsets = PackedFloat32Array(0, 0.45, 1)
-colors = PackedColorArray(1, 0.72, 0.8, 0.55, 0.9, 0.5, 0.65, 0.22, 0.6, 0.3, 0.5, 0)
+colors = PackedColorArray(0.86, 0.86, 0.92, 0.5, 0.6, 0.58, 0.68, 0.2, 0.4, 0.38, 0.48, 0)
 
 [sub_resource type="GradientTexture2D" id="glow_tex"]
 gradient = SubResource("glow_grad")
@@ -24,7 +24,7 @@ blend_mode = 1
 
 [sub_resource type="LabelSettings" id="hint"]
 font_size = 12
-font_color = Color(0.75, 0.7, 0.62, 1)
+font_color = Color(0.7, 0.7, 0.73, 1)
 outline_size = 4
 outline_color = Color(0, 0, 0, 1)
 
@@ -89,7 +89,7 @@ initial_velocity_min = 14.0
 initial_velocity_max = 34.0
 scale_amount_min = 1.0
 scale_amount_max = 2.5
-color = Color(1, 0.88, 0.8, 0.75)
+color = Color(0.88, 0.88, 0.92, 0.75)
 
 [node name="Island" type="SubViewportContainer" parent="UI/Root"]
 texture_filter = 1

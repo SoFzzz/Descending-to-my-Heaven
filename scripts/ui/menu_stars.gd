@@ -6,7 +6,7 @@ extends Control
 @export var count := 70
 @export var seed_value := 11
 @export var area := Rect2(0.0, 0.0, 640.0, 250.0)
-@export var base_color := Color(0.95, 0.9, 1.0)
+@export var base_color := Color(0.94, 0.94, 0.97)
 
 var _stars: Array[Dictionary] = []
 var _time := 0.0
