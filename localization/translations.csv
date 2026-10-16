@@ -52,6 +52,18 @@ VOL_MASTER,General,Master
 VOL_MUSIC,Música,Music
 VOL_SFX,Efectos,Effects
 VOL_UI,Interfaz,Interface
+OPT_TAB_DISPLAY,Pantalla,Display
+DISP_MODE,Modo de ventana,Window mode
+DISP_MODE_WINDOWED,Ventana,Windowed
+DISP_MODE_FULLSCREEN,Pantalla completa sin bordes,Borderless fullscreen
+DISP_MODE_EXCLUSIVE,Pantalla completa exclusiva,Exclusive fullscreen
+DISP_RESOLUTION,Resolución de ventana,Window resolution
+DISP_VSYNC,Sincronización vertical,VSync
+DISP_FPS,Límite de FPS,FPS limit
+DISP_ON,Activada,On
+DISP_OFF,Desactivada,Off
+DISP_UNLIMITED,Sin límite,Unlimited
+DISP_HINT,Pulsa Enter / A para cambiar el valor. Alt+Enter alterna pantalla completa.,Press Enter / A to change the value. Alt+Enter toggles fullscreen.
 OPT_LANGUAGE_PICK,Elige el idioma del juego,Choose the game language
 LANG_ES,Español,Español
 LANG_EN,English,English
