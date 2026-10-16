@@ -1,0 +1,83 @@
+keys,es,en
+MENU_START,Iniciar,Start
+MENU_OPTIONS,Opciones,Options
+MENU_CREDITS,Créditos,Credits
+MENU_QUIT,Salir,Quit
+MENU_HINT,"Flechas / cruceta + Enter / A, o ratón","Arrows / D-pad + Enter / A, or mouse"
+PAUSE_TITLE,Pausa,Paused
+PAUSE_CONTINUE,Continuar,Resume
+PAUSE_OPTIONS,Opciones,Options
+PAUSE_MAIN_MENU,Volver al menú principal,Back to main menu
+PAUSE_QUIT,Salir del juego,Quit game
+CREDITS_TITLE,Créditos,Credits
+CREDITS_BACK,Volver al menú,Back to menu
+CREDITS_FALLBACK,"Descending to my Heaven
+
+No se pudo cargar la lista de créditos.","Descending to my Heaven
+
+The credits list could not be loaded."
+CREDITS_SEC_TEAM,Equipo,Team
+CREDITS_SEC_CHARACTERS,Personajes y jefes,Characters and bosses
+CREDITS_SEC_WORLD,"Escenario, armas y objetos","Scenery, weapons and items"
+CREDITS_SEC_SHADERS,Shaders,Shaders
+CREDITS_SEC_AUDIO,Audio,Audio
+CREDITS_SEC_UI,Interfaz,Interface
+CREDITS_SEC_VFX,Efectos visuales,Visual effects
+CREDITS_SEC_ANIMATIONS,Animaciones,Animations
+CREDITS_SEC_ENGINE,Motor,Engine
+CREDITS_SEC_THANKS,Gracias por jugar,Thanks for playing
+CREDITS_AUTHOR,Autor,Author
+CREDITS_LICENSE,Licencia,License
+CREDITS_SOURCE,Fuente,Source
+CREDITS_AUTHOR_LICENSE_TBC,Autor y licencia por confirmar,Author and license to be confirmed
+CREDITS_TBC,por confirmar,to be confirmed
+OPT_TITLE,Opciones,Options
+OPT_TAB_CONTROLS,Controles,Controls
+OPT_TAB_VOLUME,Volumen,Volume
+OPT_TAB_LANGUAGE,Idioma,Language
+OPT_BACK,Volver,Back
+OPT_RESTORE,Restaurar por defecto,Restore defaults
+OPT_COL_ACTION,Acción,Action
+OPT_COL_KEYBOARD,Teclado / ratón,Keyboard / mouse
+OPT_COL_GAMEPAD,Mando,Gamepad
+OPT_PRESS_ANY,Pulsa una tecla o botón... (Esc cancela),Press a key or button... (Esc cancels)
+OPT_PRESS_PAD,Pulsa un botón del mando... (Back cancela),Press a gamepad button... (Back cancels)
+OPT_ASSIGNED,Asignado: %s,Assigned: %s
+OPT_SWAPPED,Intercambiado con «%s»,"Swapped with ""%s"""
+OPT_RESTORED,Controles restaurados,Controls restored
+OPT_CONTROLS_HINT,"Elige una acción y pulsa Enter / A, luego la nueva tecla o botón","Pick an action, press Enter / A, then the new key or button"
+OPT_SENSITIVITY,Sensibilidad de cámara,Camera sensitivity
+OPT_FIXED_NOTE,Mover: WASD / stick izquierdo. Cámara: ratón / stick derecho (fijos).,Move: WASD / left stick. Camera: mouse / right stick (fixed).
+VOL_MASTER,General,Master
+VOL_MUSIC,Música,Music
+VOL_SFX,Efectos,Effects
+VOL_UI,Interfaz,Interface
+OPT_LANGUAGE_PICK,Elige el idioma del juego,Choose the game language
+LANG_ES,Español,Español
+LANG_EN,English,English
+ACT_MOVE_FORWARD,Avanzar,Move forward
+ACT_MOVE_BACK,Retroceder,Move back
+ACT_MOVE_LEFT,Izquierda,Move left
+ACT_MOVE_RIGHT,Derecha,Move right
+ACT_ATTACK,Atacar,Attack
+ACT_ROLL,Rodar,Roll
+ACT_LOCK_ON,Fijar objetivo,Lock on
+ACT_PAUSE,Pausa,Pause
+KEY_SPACE,Espacio,Space
+KEY_ESCAPE,Esc,Esc
+KEY_ENTER,Enter,Enter
+MOUSE_LEFT,Clic izq.,Left click
+MOUSE_RIGHT,Clic der.,Right click
+MOUSE_MIDDLE,Clic central,Middle click
+MOUSE_OTHER,Ratón %d,Mouse %d
+HUD_BOSS,Jefe,Boss
+DEATH_TITLE,HAS MUERTO,YOU DIED
+DEATH_RETRY,Reintentar,Retry
+DEATH_MENU,Volver al menú,Main menu
+DEATH_QUIT,Salir del juego,Quit game
+ENDING_SHOT_1,"Tres pisos de acero y sangre...
+y en lo alto del templo, tu luz seguía encendida.","Three floors of steel and blood...
+and at the top of the temple, your light was still burning."
+ENDING_SHOT_2,"Kaelen: ""Elysia... por fin te encuentro.""
+Elysia: ""Sabía que vendrías por mí.""","Kaelen: ""Elysia... I've finally found you.""
+Elysia: ""I knew you would come for me."""

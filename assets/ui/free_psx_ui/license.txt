@@ -1,6 +1,7 @@
 Free PSX UI
 Autor: rohhsa (https://rohhsa.itch.io)
 Licencia: CC0 1.0 Universal (dominio publico); el texto legal esta en legalcode.txt.
-Origen: carpeta fullres_1440p. Se usa el Skin01: skin01_text_block.png y pause_text.png (de ella se recompone pausa_text.png con las letras P, A, U y S)
-son copias sin modificar; selection_square.png es un recorte del primer rectangulo de Menu-SelectionSquares.png
-reducido a 128x33 px para que el borde mida 3 px en la vista de 640x360.
+Origen: carpeta fullres_1440p. Skin01 (skin01_text_block.png y pause_text.png, sin modificar; pausa_text.png recompone las letras P, A, U y S) ya no se usa en los menus.
+Skin04: skin04_text_block.png es Skin04-Cropped_Text-Block.png reducido a 432x120 px y aclarado de color.
+selection_square.png es un recorte del primer rectangulo de Menu-SelectionSquares.png reducido a 128x33 px (el borde mide 3 px en la vista de 640x360);
+skin04_selection_square.png es el mismo recorte recoloreado a lavanda.

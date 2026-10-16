@@ -48,12 +48,25 @@ func snap_to_target() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		rotate_view(-event.relative.x * MOUSE_SENSITIVITY, -event.relative.y * MOUSE_SENSITIVITY)
+		var k := MOUSE_SENSITIVITY * look_sensitivity()
+		rotate_view(-event.relative.x * k, -event.relative.y * k)
 	# "pause" is handled by the pause menu (GameState). A click recaptures the mouse if it was
 	# released (e.g. after alt-tab), never while the game is paused.
 	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not get_tree().paused:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		get_viewport().set_input_as_handled()
+
+
+## Respuesta del stick derecho: la zona muerta ya la aplica Input.get_vector (0.2 en el InputMap);
+## aquí se suaviza con una curva cuadrática para apuntar fino con poco recorrido y girar rápido a fondo.
+static func stick_look(raw: Vector2) -> Vector2:
+	return raw * raw.length()
+
+
+## Multiplicador de sensibilidad elegido en opciones (ratón y stick); 1.0 si no hay ajustes.
+func look_sensitivity() -> float:
+	var settings := get_node_or_null(^"/root/UserSettings") if is_inside_tree() else null
+	return float(settings.get("look_sensitivity")) if settings else 1.0
 
 
 func rotate_view(d_yaw: float, d_pitch: float) -> void:
@@ -63,9 +76,10 @@ func rotate_view(d_yaw: float, d_pitch: float) -> void:
 
 
 func _process(delta: float) -> void:
-	var stick := Input.get_vector("camera_left", "camera_right", "camera_up", "camera_down")
+	var stick := stick_look(Input.get_vector("camera_left", "camera_right", "camera_up", "camera_down"))
 	if stick != Vector2.ZERO:
-		rotate_view(-stick.x * STICK_SPEED * delta, -stick.y * STICK_SPEED * delta)
+		var speed := STICK_SPEED * look_sensitivity()
+		rotate_view(-stick.x * speed * delta, -stick.y * speed * delta)
 	var lock_target := _lock_target()
 	var boss := lock_target != null and lock_target.is_in_group(&"boss")
 	var t := minf(1.0, ZOOM_SPEED * delta)

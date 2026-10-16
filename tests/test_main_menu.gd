@@ -8,9 +8,13 @@ func test_menu_scene_has_the_three_buttons_in_the_left_half() -> void:
 	var start := menu.get_node(^"%Start") as Button
 	var credits := menu.get_node(^"%Credits") as Button
 	var quit := menu.get_node(^"%Quit") as Button
-	assert_eq(start.text, "Iniciar")
-	assert_eq(credits.text, "Créditos")
-	assert_eq(quit.text, "Salir")
+	assert_eq(start.text, "MENU_START", "the buttons carry translation keys")
+	assert_eq(credits.text, "MENU_CREDITS")
+	assert_eq(quit.text, "MENU_QUIT")
+	assert_true(menu.get_node(^"%Options") is Button, "Options button")
+	TranslationServer.set_locale("es")
+	assert_eq(TranslationServer.translate(&"MENU_START"), "Iniciar")
+	assert_eq(TranslationServer.translate(&"MENU_QUIT"), "Salir")
 	assert_eq(start.focus_mode, Control.FOCUS_ALL)
 	var panel := menu.get_node(^"UI/Root/Panel") as Control
 	assert_true(panel.offset_right <= 320.0, "panel stays in the left half")
