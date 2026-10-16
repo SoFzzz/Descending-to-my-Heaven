@@ -54,7 +54,8 @@
 | **T15** Verificación manual | Paso 3 de la Tarea 15: partida completa con F6/F5 (el commit ya está en `feat/aza`). Pendiente además: añadir `assets/credits.txt` al filtro de exportación de recursos no-recurso (T19). |
 | **T16** Revisión a mano | Ver en juego animaciones, espada del Knight, hoz del Straw Reaper y caída de TheWrapper. El Aura Battler no se usa: el élite de la arena 3 es el Straw Reaper (2026-10-15). |
 | **T17** Audio | Completa (2026-10-15). Incluye música por escena (menú, exterior, jefes, final y créditos), SFX de espada, pasos de Kaelen y esbirros, monstruos, élites (el élite de la Plague usa el set del Knight), ataques de jefes (sin sonido en los avisos), rugidos de fase y muerte, rayo de Ghidorah, antorchas, ambiente de arenas, puerta de piedra, pantalla de muerte, sonidos de Kaelen (golpe, muerte, rodar, cansancio), voces tipo blip en los diálogos del final (pack de dmochas), UI y volumen configurable en Opciones. Licencias "por confirmar": TomMusic y las pistas BGM salvo Blazing Honor. |
-| **T18–T19** Pulido, playtest, exportar Windows | Ver tareas 18 y 19. `docs/playtest.md` aún no existe. |
+| **T18** Pulido y playtest | En curso (2026-10-15). Hecho: menú de opciones (controles reasignables, volumen por bus, sensibilidad, idioma español/inglés, mando de Xbox) y sonidos faltantes. En curso: pausa de impacto, parpadeo al recibir golpe, iluminación por arena y balance con F3. Pendiente: playtest con 2 personas externas, registrado en [playtest.md](playtest.md). |
+| **T19** Congelación, exportar Windows | Pendiente (ver tarea 19). |
 | **Integración** | `feat/aza` va 55 commits por delante de `main`. No hay merge ni PR a `main` todavía. |
 
 ### Riesgos y mejoras anotadas
@@ -69,7 +70,7 @@
 - **Otros:** `player_died` solo se emite en la primera muerte de cada instancia de Kaelen (funciona porque la recarga crea otra). Blackhorn: `idle`/`charge` y `walk`/`run` duran lo mismo (posibles clips duplicados; solo se usa `run`). El error `Parameter "material" is null` al cerrar corridas headless con Kaelen es del renderizador dummy y es inofensivo.
 - **Peso de Ghidorah:** `assets/bosses/ghidorah/ghidorah.glb` pesa ~26 MB con 9.1k triángulos; probablemente tiene texturas incrustadas sin reducir (la regla del proyecto es 256 px). Revisarlo antes de exportar (T19).
 - **Licencias por carpeta:** solo 4 carpetas de `assets/` tienen `license.txt` (`bosses/blackhorn`, `characters/elysia`, `characters/kaelen`, `minions/knight`). Faltan en `bosses/bonedragon`, `bosses/ghidorah`, `environment/island`, `environment/kit`, `environment/textures`, `minions/plague_arcanist`, `minions/skeleton`, `minions/straw_reaper`, `minions/thewrapper` y `weapons/greatsword`. El diseño (§13.1) pide uno por carpeta.
-- **Playtest:** `docs/playtest.md` aún no existe; lo piden T18 y T19.
+- **Playtest:** `docs/playtest.md` existe como plantilla (2026-10-15); falta rellenarla con las dos sesiones de la T18.
 - **Documentación:** la regla de escenas ("`<nivel>_gameplay.tscn` instancia el nivel como hijo `Level`") ya está corregida en §6.4 del documento de diseño. El texto original de las tareas 8 y 15 conserva la redacción antigua; lo vigente es lo que dice esta sección.
 
 ## Restricciones globales
