@@ -841,7 +841,7 @@ func start_repel() -> void:
 	repelling = true
 	_play(roar_animation)
 	_play_sfx(sfx_phase2)
-	ImpactFx.seal(self, repel_radius, repel_push_delay)   # el sello es el aviso: se cierra justo antes de la onda
+	ImpactFx.seal(self, repel_radius, repel_push_delay)   # the seal is the warning: it closes right before the shockwave
 	_set_state(State.ROAR)
 	_repel_push_left = repel_push_delay
 
