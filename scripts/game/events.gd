@@ -1,5 +1,5 @@
 extends Node
-## Autoload "Events": bus de señales del Contrato (plan de trabajo). Stub de la Tarea 1.
+## Autoload "Events": global signal bus shared by gameplay, UI and audio.
 
 @warning_ignore_start("unused_signal")
 signal player_damaged(amount: int, current: int, max_value: int)

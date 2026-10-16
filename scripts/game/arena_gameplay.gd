@@ -1,19 +1,24 @@
 extends "res://scripts/game/level_gameplay.gd"
-## Raíz de `arena_N_gameplay.tscn` (Tarea 9). Además de lo de level_gameplay.gd (Kaelen en
-## PlayerStart + material PSX): coloca al jefe (hijo `Boss`) en BossStart mirando a Kaelen,
-## cierra las rejas, emite Events.arena_entered y arranca al Orquestador
-## (Orchestrator.begin_arena), que genera los esbirros en los `spawn_point`; muestra la barra
-## del jefe en el HUD de Kaelen. Con Events.boss_defeated oculta la barra y, GATE_OPEN_DELAY s
-## después, baja GateExit (meta `open_offset`) y emite Events.arena_cleared. Cuando Kaelen cruza ExitTrigger con la reja abierta emite `exit_reached`
-## y llama a GameState.advance_level() (el paso de nivel es de las Tareas 10/15).
-
-signal exit_reached
+## Root of `arena_N_gameplay.tscn`. On top of level_gameplay.gd (Kaelen at PlayerStart + PSX
+## material) it places the boss (child `Boss`) at BossStart facing Kaelen, closes the gates, emits
+## Events.arena_entered and starts the Orchestrator (Orchestrator.begin_arena), which spawns the
+## minions at the `spawn_point`s; it shows the boss bar in Kaelen's HUD. On Events.boss_defeated it
+## hides the bar and, GATE_OPEN_DELAY s later, lowers GateExit (meta `open_offset`) and emits
+## Events.arena_cleared. The ExitTrigger is handled by level_gameplay.gd; here we only require the
+## arena to be cleared (`_can_exit`).
 
 const GATE_OPEN_DELAY := 3.0
 const GATE_OPEN_TIME := 2.0
 const GATE_CLOSE_TIME := 1.0
+## The gate sound outlasts the movement: it is cut with a fade after this time.
+const GATE_SOUND_MAX_TIME := 6.0
+const GATE_SOUND_FADE := 1.5
 
 @export var config: ArenaConfig
+## Boss fight music: starts (with a fade) when the boss notices Kaelen.
+@export var boss_music: AudioStream
+## Sound of the stone gates opening or closing (3D, at the gate).
+@export var gate_sound: AudioStream
 
 var arena_cleared := false
 
@@ -21,7 +26,6 @@ var arena_cleared := false
 
 var _gate_entry: Node3D
 var _gate_exit: Node3D
-var _exit_used := false
 
 
 func _ready() -> void:
@@ -33,14 +37,12 @@ func _ready() -> void:
 		if boss_start:
 			boss.spawn_at(boss_start, player.global_position)
 		else:
-			push_warning("%s no tiene BossStart" % level.name)
+			push_warning("%s has no BossStart" % level.name)
 		boss.health.died.connect(_on_boss_died)
+		boss.state_changed.connect(_on_boss_state_changed)
 	_gate_entry = level.get_node_or_null("GateEntry") as Node3D
 	_gate_exit = level.get_node_or_null("GateExit") as Node3D
 	_close_entry_gate()
-	var exit_trigger := level.get_node_or_null("ExitTrigger") as Area3D
-	if exit_trigger:
-		exit_trigger.body_entered.connect(_on_exit_trigger_body_entered)
 	var hud := player.get_node_or_null(^"HUD") as Hud
 	if hud and boss:
 		hud.show_boss(boss.display_name, boss.health)
@@ -53,9 +55,9 @@ func _ready() -> void:
 		orchestrator.begin_arena(config, self, boss)
 
 
-# --- Rejas ------------------------------------------------------------------------------------
+# --- Gates ------------------------------------------------------------------------------------
 
-## La reja de entrada arranca abierta (bajada) y sube detrás de Kaelen.
+## The entry gate starts open (lowered) and rises behind Kaelen.
 func _close_entry_gate() -> void:
 	if _gate_entry == null:
 		return
@@ -64,6 +66,7 @@ func _close_entry_gate() -> void:
 	# _ready, before it is in the physics space, gets its old transform back).
 	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tween.tween_property(_gate_entry, "position", closed, GATE_CLOSE_TIME).from(closed + _open_offset(_gate_entry))
+	_play_gate_sound(_gate_entry)
 
 
 func _open_exit_gate() -> void:
@@ -71,13 +74,39 @@ func _open_exit_gate() -> void:
 		return
 	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tween.tween_property(_gate_exit, "position", _gate_exit.position + _open_offset(_gate_exit), GATE_OPEN_TIME)
+	_play_gate_sound(_gate_exit)
+
+
+func _play_gate_sound(gate: Node3D) -> void:
+	if gate_sound == null:
+		return
+	var sound := AudioStreamPlayer3D.new()
+	sound.stream = gate_sound
+	sound.bus = &"SFX"
+	sound.unit_size = 12.0
+	add_child(sound)
+	sound.global_position = gate.global_position
+	sound.play()
+	var tween := create_tween()   # pauses with the tree, like the sound
+	tween.tween_interval(GATE_SOUND_MAX_TIME - GATE_SOUND_FADE)
+	tween.tween_property(sound, "volume_db", -60.0, GATE_SOUND_FADE)
+	tween.tween_callback(sound.queue_free)
 
 
 static func _open_offset(gate: Node3D) -> Vector3:
 	return gate.get_meta(&"open_offset", Vector3(0, -6.1, 0))
 
 
-# --- Jefe -------------------------------------------------------------------------------------
+# --- Boss -------------------------------------------------------------------------------------
+
+## The boss music starts when the boss leaves idle (notices Kaelen).
+func _on_boss_state_changed(state: Boss.State) -> void:
+	if state == Boss.State.IDLE or boss_music == null or boss.health.is_dead() or _player_dead:
+		return
+	var audio := _audio()
+	if audio:
+		audio.play_music(boss_music, MUSIC_FADE)
+
 
 func _on_boss_died() -> void:
 	var hud := player.get_node_or_null(^"HUD") as Hud
@@ -89,6 +118,9 @@ func _on_boss_defeated(defeated: Node3D) -> void:
 	if defeated != boss or arena_cleared:
 		return
 	arena_cleared = true
+	var audio := _audio()
+	if audio:
+		audio.stop_music(MUSIC_FADE)
 	get_tree().create_timer(GATE_OPEN_DELAY, false, true).timeout.connect(_on_gate_delay_finished)
 
 
@@ -99,11 +131,6 @@ func _on_gate_delay_finished() -> void:
 		events.arena_cleared.emit(config.arena_id if config else 1)
 
 
-func _on_exit_trigger_body_entered(body: Node3D) -> void:
-	if _exit_used or not arena_cleared or body != player:
-		return
-	_exit_used = true
-	exit_reached.emit()
-	var game_state := get_node_or_null(^"/root/GameState")
-	if game_state and game_state.has_method(&"advance_level"):
-		game_state.call_deferred(&"advance_level")   # deferred: we are inside a physics signal
+## The ExitTrigger can be used only with the boss defeated (the gate has opened or is opening).
+func _can_exit() -> bool:
+	return arena_cleared

@@ -8,26 +8,28 @@
 [ext_resource type="Resource" path="res://resources/attacks/blackhorn_slam.tres" id="7_slam"]
 [ext_resource type="Resource" path="res://resources/attacks/blackhorn_pounce.tres" id="8_pounce"]
 [ext_resource type="Resource" path="res://resources/attacks/blackhorn_charge.tres" id="9_charge"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/blackhorn_phase2_roar.mp3" id="a_roar"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/blackhorn_death.mp3" id="a_death"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.7
 height = 3.2
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hurt"]
-radius = 0.8
-height = 3.0
+radius = 1.0
+height = 3.2
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_claw"]
 radius = 0.6
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_slam"]
-radius = 3.0
+radius = 3.8
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_pounce"]
-size = Vector3(2, 2, 4)
+size = Vector3(3.2, 2.4, 5)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_charge"]
-size = Vector3(1.5, 2.5, 3)
+size = Vector3(2.4, 2.5, 4)
 
 [sub_resource type="StandardMaterial3D" id="Mat_telegraph"]
 transparency = 1
@@ -38,29 +40,32 @@ no_depth_test = false
 
 [sub_resource type="CylinderMesh" id="Cyl_slam"]
 material = SubResource("Mat_telegraph")
-top_radius = 3.0
-bottom_radius = 3.0
+top_radius = 3.8
+bottom_radius = 3.8
 height = 0.02
 radial_segments = 32
 rings = 1
 
 [sub_resource type="BoxMesh" id="Box_pounce"]
 material = SubResource("Mat_telegraph")
-size = Vector3(2, 0.02, 7)
+size = Vector3(3.2, 0.02, 8)
 
 [sub_resource type="BoxMesh" id="Box_charge"]
 material = SubResource("Mat_telegraph")
-size = Vector3(1.5, 0.02, 15)
+size = Vector3(2.4, 0.02, 16)
 
 [node name="BossBlackhorn" instance=ExtResource("1_base")]
 display_name = "Blackhorn"
 attacks = Array[ExtResource("5_attack")]([ExtResource("7_slam"), ExtResource("8_pounce"), ExtResource("9_charge")])
-max_health = 500
+max_health = 625
+sfx_phase2 = ExtResource("a_roar")
+sfx_death = ExtResource("a_death")
 move_speed = 4.5
 detect_radius = 40.0
 engage_range = 3.0
-attack_cooldown = 0.5
+attack_cooldown = 0.3
 walk_animation = &"run"
+intercept_attacks = Array[StringName]([&"charge", &"pounce"])
 settle_on_death = true
 
 [node name="CollisionShape3D" parent="." index="0"]
@@ -68,7 +73,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 shape = SubResource("CapsuleShape3D_body")
 
 [node name="Health" parent="." index="1"]
-max_value = 500
+max_value = 625
 
 [node name="LockOnPoint" parent="." index="3"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
@@ -110,7 +115,7 @@ collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
-damage = 18
+damage = 21
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="ClawLHitbox"]
 shape = SubResource("SphereShape3D_claw")
@@ -121,7 +126,7 @@ collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
-damage = 18
+damage = 21
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="ClawRHitbox"]
 shape = SubResource("SphereShape3D_claw")
@@ -133,31 +138,31 @@ collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
-damage = 20
+damage = 23
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SlamHitbox"]
 shape = SubResource("SphereShape3D_slam")
 
 [node name="PounceHitbox" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -2.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, -2)
 collision_layer = 32
 collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
-damage = 18
+damage = 21
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PounceHitbox"]
 shape = SubResource("BoxShape3D_pounce")
 
 [node name="ChargeHitbox" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -2.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -1.7)
 collision_layer = 32
 collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
-damage = 25
+damage = 28
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="ChargeHitbox"]
 shape = SubResource("BoxShape3D_charge")
@@ -169,13 +174,13 @@ cast_shadow = 0
 mesh = SubResource("Cyl_slam")
 
 [node name="pounce" type="MeshInstance3D" parent="Telegraphs"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -3.5)
 visible = false
 cast_shadow = 0
 mesh = SubResource("Box_pounce")
 
 [node name="charge" type="MeshInstance3D" parent="Telegraphs"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -8.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -7.7)
 visible = false
 cast_shadow = 0
 mesh = SubResource("Box_charge")

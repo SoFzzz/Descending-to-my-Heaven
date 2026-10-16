@@ -8,6 +8,10 @@
 [ext_resource type="Resource" path="res://resources/attacks/ghidorah_bite.tres" id="7_bite"]
 [ext_resource type="Resource" path="res://resources/attacks/ghidorah_tail_sweep.tres" id="8_tail"]
 [ext_resource type="Resource" path="res://resources/attacks/ghidorah_beam.tres" id="9_beam"]
+[ext_resource type="PackedScene" path="res://assets/vfx/beam/beam_vfx.tscn" id="10_beamvfx"]
+[ext_resource type="Script" path="res://scripts/vfx/ghidorah_beam_aim.gd" id="11_beamaim"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/ghidorah_phase2_roar.mp3" id="a_roar"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/ghidorah_death.mp3" id="a_death"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 1.4
@@ -24,14 +28,14 @@ height = 3.0
 [sub_resource type="SphereShape3D" id="SphereShape3D_head"]
 radius = 1.0
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_bite"]
-radius = 1.5
+[sub_resource type="BoxShape3D" id="BoxShape3D_bite"]
+size = Vector3(4.6, 2.4, 7)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_tail"]
-size = Vector3(2.5, 3, 6)
+size = Vector3(2.8, 3, 9.6)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_beam"]
-size = Vector3(1.5, 1.5, 20)
+size = Vector3(1.5, 2.4, 2)
 
 [sub_resource type="StandardMaterial3D" id="Mat_telegraph"]
 transparency = 1
@@ -40,19 +44,9 @@ albedo_color = Color(1, 0.08, 0.04, 0.4)
 cull_mode = 2
 no_depth_test = false
 
-[sub_resource type="StandardMaterial3D" id="Mat_beam"]
-transparency = 1
-shading_mode = 0
-albedo_color = Color(1, 0.75, 0.2, 0.55)
-cull_mode = 2
-
-[sub_resource type="CylinderMesh" id="Cyl_bite"]
+[sub_resource type="BoxMesh" id="Box_bite"]
 material = SubResource("Mat_telegraph")
-top_radius = 1.5
-bottom_radius = 1.5
-height = 0.02
-radial_segments = 24
-rings = 1
+size = Vector3(4.6, 0.02, 7)
 
 [sub_resource type="CylinderMesh" id="Cyl_tail"]
 material = SubResource("Mat_telegraph")
@@ -66,27 +60,30 @@ rings = 1
 material = SubResource("Mat_telegraph")
 size = Vector3(1.5, 0.02, 20)
 
-[sub_resource type="BoxMesh" id="Box_beam_fx"]
-material = SubResource("Mat_beam")
-size = Vector3(1.1, 1.1, 20)
+[sub_resource type="BoxMesh" id="Box_beam_zone"]
+material = SubResource("Mat_telegraph")
+size = Vector3(1.5, 0.02, 1)
 
 [node name="BossGhidorah" instance=ExtResource("1_base")]
 display_name = "Mecha King Ghidorah"
 attacks = Array[ExtResource("5_attack")]([ExtResource("7_bite"), ExtResource("8_tail"), ExtResource("9_beam")])
-max_health = 600
+max_health = 750
+sfx_phase2 = ExtResource("a_roar")
+sfx_death = ExtResource("a_death")
 move_speed = 3.0
 detect_radius = 50.0
-engage_range = 6.0
-attack_cooldown = 0.6
+engage_range = 5.0
+attack_cooldown = 0.35
 gated_hurtboxes = Array[NodePath]([NodePath("HeadCHurtbox"), NodePath("HeadLHurtbox"), NodePath("HeadRHurtbox")])
 gated_grace = 0.25
+intercept_attacks = Array[StringName]([&"beam"])
 
 [node name="CollisionShape3D" parent="." index="0"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
 shape = SubResource("CapsuleShape3D_body")
 
 [node name="Health" parent="." index="1"]
-max_value = 600
+max_value = 750
 
 [node name="LockOnPoint" parent="." index="3"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
@@ -123,14 +120,6 @@ bone_name = "右頭"
 
 [node name="Follow" type="RemoteTransform3D" parent="Model/Armature/Skeleton3D/HeadRAttach"]
 remote_path = NodePath("../../../../../HeadRHurtbox")
-update_rotation = false
-update_scale = false
-
-[node name="JawAttach" type="BoneAttachment3D" parent="Model/Armature/Skeleton3D"]
-bone_name = "jaw"
-
-[node name="Follow" type="RemoteTransform3D" parent="Model/Armature/Skeleton3D/JawAttach"]
-remote_path = NodePath("../../../../../BiteHitbox")
 update_rotation = false
 update_scale = false
 
@@ -210,25 +199,25 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 shape = SubResource("SphereShape3D_head")
 
 [node name="BiteHitbox" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, -2)
+collision_layer = 32
+collision_mask = 64
+monitoring = false
+monitorable = false
+script = ExtResource("4_hitbox")
+damage = 14
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BiteHitbox"]
+shape = SubResource("BoxShape3D_bite")
+
+[node name="TailSweepHitbox" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 4.8)
 collision_layer = 32
 collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
 damage = 12
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="BiteHitbox"]
-shape = SubResource("SphereShape3D_bite")
-
-[node name="TailSweepHitbox" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 6.5)
-collision_layer = 32
-collision_mask = 64
-monitoring = false
-monitorable = false
-script = ExtResource("4_hitbox")
-damage = 10
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TailSweepHitbox"]
 shape = SubResource("BoxShape3D_tail")
@@ -240,22 +229,20 @@ collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
-damage = 14
+damage = 16
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="BeamHitbox"]
 shape = SubResource("BoxShape3D_beam")
 
-[node name="BeamVisual" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -12)
+[node name="BeamVisual" parent="." instance=ExtResource("10_beamvfx")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -2)
 visible = false
-cast_shadow = 0
-mesh = SubResource("Box_beam_fx")
 
 [node name="bite" type="MeshInstance3D" parent="Telegraphs"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -3.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -2)
 visible = false
 cast_shadow = 0
-mesh = SubResource("Cyl_bite")
+mesh = SubResource("Box_bite")
 
 [node name="tail_sweep" type="MeshInstance3D" parent="Telegraphs"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
@@ -268,3 +255,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -12)
 visible = false
 cast_shadow = 0
 mesh = SubResource("Box_beam")
+
+[node name="HitZone" type="MeshInstance3D" parent="Telegraphs/beam"]
+cast_shadow = 0
+mesh = SubResource("Box_beam_zone")
+
+[node name="BeamAim" type="Node" parent="."]
+script = ExtResource("11_beamaim")

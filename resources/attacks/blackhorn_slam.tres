@@ -1,20 +1,22 @@
 [gd_resource type="Resource" script_class="BossAttack" format=3]
 
 [ext_resource type="Script" path="res://scripts/ai/boss_attack.gd" id="1_attack"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/attack_ground_slam.mp3" id="2_sfx"]
 
 [resource]
 script = ExtResource("1_attack")
 id = &"slam"
 min_range = 0.0
 max_range = 4.0
-telegraph_time = 1.35
+telegraph_time = 1.15
 active_time = 0.45
-recovery_time = 0.9
+recovery_time = 0.75
 base_weight = 1.0
-damage = 20
+damage = 23
 animation = &"attack_slam"
 hitbox_path = NodePath("SlamHitbox")
 phase_min = 1
 lateral = false
 spin_degrees = 0.0
 opener = true
+sfx_active = ExtResource("2_sfx")

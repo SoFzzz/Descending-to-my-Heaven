@@ -1,0 +1,58 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/enemies/minion_base.tscn" id="1_base"]
+[ext_resource type="PackedScene" uid="uid://dg2nc87dfby8j" path="res://assets/minions/knight/knight.glb" id="2_model"]
+[ext_resource type="PackedScene" uid="uid://bbhws8udmep3e" path="res://assets/minions/knight/knight_sword.glb" id="3_sword"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/knight_spawn.mp3" id="a_spawn"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/knight_hurt.mp3" id="a_hurt"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/knight_death.mp3" id="a_death"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.4
+height = 2.1
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hurt"]
+radius = 0.45
+height = 2.1
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sword"]
+size = Vector3(0.2, 0.2, 1.2)
+
+[node name="MinionKnightElite" instance=ExtResource("1_base")]
+cost = 3
+damage = 30
+model_scene = ExtResource("2_model")
+tint = Color(0.72, 0.62, 0.62, 1)
+weapon_scene = ExtResource("3_sword")
+weapon_transform = Transform3D(0, 1, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0)
+walk_anim_speed = 0.5
+sfx_spawn = ExtResource("a_spawn")
+sfx_hurt = ExtResource("a_hurt")
+sfx_death = ExtResource("a_death")
+
+[node name="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="Health" parent="."]
+max_value = 90
+
+[node name="Hurtbox" parent="."]
+surface = &"metal"
+
+[node name="CollisionShape3D" parent="Hurtbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
+shape = SubResource("CapsuleShape3D_hurt")
+
+[node name="Hitbox" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, -1)
+
+[node name="CollisionShape3D" parent="Hitbox"]
+shape = SubResource("BoxShape3D_sword")
+
+[node name="NavigationAgent3D" parent="."]
+radius = 0.4
+height = 2.1
+
+[node name="LockOnPoint" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.575, 0)

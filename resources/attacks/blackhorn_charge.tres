@@ -1,17 +1,18 @@
 [gd_resource type="Resource" script_class="BossAttack" format=3]
 
 [ext_resource type="Script" path="res://scripts/ai/boss_attack.gd" id="1_attack"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/attack_charge.mp3" id="2_sfx"]
 
 [resource]
 script = ExtResource("1_attack")
 id = &"charge"
 min_range = 8.0
 max_range = 16.0
-telegraph_time = 1.0
+telegraph_time = 0.9
 active_time = 0.9
-recovery_time = 1.4
+recovery_time = 1.1
 base_weight = 1.2
-damage = 25
+damage = 28
 animation = &"charge"
 hitbox_path = NodePath("ChargeHitbox")
 phase_min = 2
@@ -19,3 +20,4 @@ lateral = false
 spin_degrees = 0.0
 advance_distance = 12.0
 opener = true
+sfx_active = ExtResource("2_sfx")

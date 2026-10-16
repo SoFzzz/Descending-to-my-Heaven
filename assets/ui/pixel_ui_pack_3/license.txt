@@ -1,0 +1,4 @@
+Pixel UI pack 3
+Autor: por confirmar
+Licencia: por confirmar (el pack no incluye licencia ni readme)
+Se usa 03_reticle.png (marcador de fijado), copia sin modificar de 03.png.

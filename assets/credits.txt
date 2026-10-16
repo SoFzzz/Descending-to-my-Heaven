@@ -1,0 +1,161 @@
+Descending to my Heaven
+
+
+Equipo
+
+Paula Sofia Gonzalez Zambrano
+David Alejandro Aza Jojoa
+Stehven Alexander Obando Cordoba
+
+
+Personajes y jefes
+
+Kaelen: Low poly woman knight
+Autor: desconocido (créditos a quien corresponda). Licencia: desconocida. Fuente: no encontrada.
+
+Elysia: Ancient Elf Lady PSX
+Autor: Seifert (Peter_Seifert). Licencia: CC BY 4.0.
+Fuente: https://sketchfab.com/3d-models/ancient-elf-lady-psx-ff06ac3ff7474fe3b9f51bf8e68d96bb
+
+Élite 1: Knight | PS1 PSX
+Autor: crimsongcat. Licencia: Sketchfab Standard.
+Fuente: https://sketchfab.com/3d-models/knight-ps1-psx-66c3a171c44c403684fbc6ae2c7b94c1
+
+Jefe 2: Blackhorn of the Shattered Peaks
+Autor: imaginais. Sin licencia formal; el autor autoriza su uso en juegos.
+Fuente: https://imaginais.itch.io/blackhorn-of-the-shattered-peaks
+
+Élite 3: The Straw Reaper
+Autor: imaginais. Uso comercial permitido.
+
+Reserva jefe 3: PSX Insectoid Demon
+Autor: Seifert (Peter_Seifert). Licencia: CC BY 4.0 (texto en license.txt del modelo).
+
+Jefe 1: Bone Dragon
+Autor y licencia por confirmar.
+
+Jefe 3: Mecha King Ghidorah
+Autor y licencia por confirmar.
+
+Esbirros 1: Skeleton
+Autor y licencia por confirmar.
+
+Esbirros 2: Plague Arcanist
+Autor y licencia por confirmar.
+
+Esbirros 3: TheWrapper V2
+Autor y licencia por confirmar.
+
+
+Escenario, armas y objetos
+
+Floating island
+Autor: Katydid. Licencia: CC BY 4.0 (texto en license.txt del modelo).
+
+Low-Poly Fantasy RPG Items (Lite)
+Autor: Game Dev Skill Up. Licencia: ver README del paquete.
+
+PSX_Dungeon: autor y licencia por confirmar.
+Modular Dungeon: autor y licencia por confirmar.
+Demonic weapons pack: autor y licencia por confirmar.
+Fantasy Weapon Starter Pack: autor y licencia por confirmar.
+Float-islands: autor y licencia por confirmar.
+Retro PSX Style Mansion: autor y licencia por confirmar.
+
+
+Shaders
+
+Godot-PSX-Starter-kit (portado a Godot 4)
+Autor: DruidCZ; shaders de MenacingMecha y Ahopness. Licencia: MIT.
+
+Godot FX Collection Free (heyheythere, https://heyheythere.itch.io/godot-fx-collection)
+Se usan dos de sus paquetes, sin activar los plugins (addons/storm_wind y addons/magic_circles):
+Storm & Wind 3D Free by heyheythere - https://heyheythere.itch.io/storm-wind-3d-free - CC BY 4.0
+Magic Circles 3D Free by heyheythere - https://heyheythere.itch.io/magic-circles-3d-free - CC BY 4.0
+Licencia: Creative Commons Attribution 4.0 International (https://creativecommons.org/licenses/by/4.0/).
+
+
+Audio
+
+Música "Blazing Honor"
+Autor: EpicOrderSounds. Licencia: Royalty-Free Music License v1.0 (uso personal y comercial; el crédito se agradece; prohibido redistribuir la pista suelta y usarla para entrenar IA).
+Music by EpicOrderSounds.
+
+Viento de la isla cayendo en el final (WIND-FALL)
+Autor y licencia por confirmar (aportado por la autora del proyecto).
+
+Pistas de música usadas: sadness piano4 (menú), ancient creature battle (jefe 1), hellhound battle (jefe 2), LVS04_10_Battlefield (jefe 3), celtic melancholy (encuentro con Elysia y créditos).
+Autor y licencia por confirmar.
+
+Free Fantasy SFX Pack By TomMusic (espada, pasos, antorchas, hechizos y ambiente Forest Night)
+Autor: TomMusic (https://tommusic.itch.io/). Licencia: por confirmar (el ReadMe.txt del pack no indica términos de uso).
+
+Monsters SFX Vol.1 (rugidos, gruñidos y aliento de dragón)
+Autor: Riria / Ririsaurus. Licencia: uso comercial, no comercial y personal; no redistribuir los archivos. El crédito es agradecido pero no necesario.
+
+Be Not Afraid UI (--Unholy), sonidos de interfaz
+Autor: Atelier Magicae (Atelier Magicae || Bunnixia || Rin Hinasaki). Licencia: uso comercial, no comercial y personal; no redistribuir. Crédito obligatorio: Atelier Magicae.
+Archivos usados (recortados y normalizados): BNA_UI1 (mover), BNA_UI21 (aceptar), BNA_UI6 (volver), BNA_UI7 (abrir pausa), BNA_UI26 (cerrar pausa).
+
+40 Free PSX Footsteps
+Autor y licencia por confirmar. (No se usa en el juego.)
+
+Efectos de sonido aportados: ataque, pasos y muerte de los esbirros; golpe recibido, caída, cansancio y rodada de Kaelen; ataques de los jefes (mordida, coletazo, golpe al suelo, embestida, salto); ambiente de las arenas 1 a 3; puerta de piedra; pantalla de muerte
+Autor y licencia: por confirmar.
+
+
+Interfaz
+
+Free PSX UI
+Autor: rohhsa (rohhsa.itch.io). Licencia: CC0.
+Se usa el Skin04 (panel y recuadro de selección, retocados de color).
+
+DungeonFont (tipografía de títulos y botones)
+Autor: 0x72 y vrtxrry (vrtxrry.itch.io/dungeonfont). Licencia: CC0, según los metadatos del archivo de la fuente (por confirmar en la página de origen).
+
+Fondo del menú principal (degradado violeta con resplandor; la silueta de la isla es el modelo de la isla del juego en negro) y deslizadores de volumen
+Dibujado por script en el proyecto (scripts/tools/gen_menu_bg.py).
+
+dragonhpbar (barra de vida de Bone Dragon y Ghidorah; se usa una copia reducida a la mitad, dragonhpbar_thin.png)
+Autor y licencia por confirmar.
+
+Pulsing Heart (barra de vida y estamina de Kaelen)
+Autor y licencia por confirmar.
+
+Pixel UI pack 3 (barra de Blackhorn y marcador de fijado; el marcador es una copia reducida a la mitad, 03_reticle_thin.png)
+Autor y licencia por confirmar.
+
+
+Efectos visuales
+
+Beam VFX - Godot 3D
+Autor: Binbun. Licencia: CC0.
+
+
+Animaciones
+
+Mixamo (Adobe) para Kaelen, Skeleton, Knight, Plague Arcanist y Blackhorn.
+Las animaciones del Bone Dragon y de Mecha King Ghidorah se hicieron por script en el proyecto.
+
+
+Entorno
+
+PS1-Style Tree Pack (arboles del bosque lejano y el arbol del templo, assets/environment/trees/)
+Autor: por confirmar. Licencia: por confirmar (el pack no incluye readme).
+
+SBS - Photorealistic Texture Pack 3 (512x512), textura "Elements 12" (agua de los estanques)
+Screaming Brain Studios. Licencia: CC0 / dominio publico.
+
+
+Audio
+
+Dialogue Bleeps Pack (voces de los dialogos del final)
+Autor: dmochas. Licencia: por confirmar (el pack no incluye readme).
+
+
+Motor
+
+Godot Engine (MIT)
+
+
+Gracias por jugar

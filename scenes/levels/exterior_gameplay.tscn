@@ -3,9 +3,13 @@
 [ext_resource type="Script" path="res://scripts/game/level_gameplay.gd" id="1_gp"]
 [ext_resource type="PackedScene" path="res://scenes/levels/exterior.tscn" id="2_level"]
 [ext_resource type="PackedScene" path="res://scenes/player/kaelen.tscn" id="3_kaelen"]
+[ext_resource type="AudioStream" path="res://assets/audio/bgm/exterior_forest_night.ogg" id="4_music"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/player/run_dirt.ogg" id="5_steps"]
 
 [node name="ExteriorGameplay" type="Node3D"]
 script = ExtResource("1_gp")
+level_music = ExtResource("4_music")
+footstep_stream = ExtResource("5_steps")
 
 [node name="Level" parent="." instance=ExtResource("2_level")]
 

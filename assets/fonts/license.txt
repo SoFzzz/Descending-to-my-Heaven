@@ -1,0 +1,4 @@
+DungeonFont
+Autor: 0x72 y vrtxrry (https://vrtxrry.itch.io/dungeonfont)
+Licencia: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/), segun los metadatos del propio archivo TTF.
+Por confirmar en la pagina de origen (no se incluyo archivo de licencia aparte).

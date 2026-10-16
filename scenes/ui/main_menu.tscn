@@ -1,37 +1,35 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_mm"]
-[ext_resource type="PackedScene" path="res://scenes/levels/exterior.tscn" id="2_ext"]
+[ext_resource type="Texture2D" path="res://assets/ui/menu/menu_sky.png" id="2_sky"]
 [ext_resource type="Theme" path="res://scenes/ui/menu_theme.tres" id="3_th"]
+[ext_resource type="Script" path="res://scripts/ui/island_silhouette.gd" id="4_isl"]
+[ext_resource type="Script" path="res://scripts/ui/menu_stars.gd" id="5_stars"]
+[ext_resource type="PackedScene" path="res://scenes/ui/options_menu.tscn" id="6_opt"]
 
-[sub_resource type="LabelSettings" id="title"]
-font_size = 40
-font_color = Color(0.95, 0.88, 0.7, 1)
-outline_size = 8
-outline_color = Color(0.08, 0.02, 0.02, 1)
-shadow_size = 4
-shadow_color = Color(0, 0, 0, 0.7)
-shadow_offset = Vector2(2, 2)
+[sub_resource type="Gradient" id="glow_grad"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(0.86, 0.86, 0.92, 0.5, 0.6, 0.58, 0.68, 0.2, 0.4, 0.38, 0.48, 0)
+
+[sub_resource type="GradientTexture2D" id="glow_tex"]
+gradient = SubResource("glow_grad")
+width = 256
+height = 256
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="CanvasItemMaterial" id="additive"]
+blend_mode = 1
 
 [sub_resource type="LabelSettings" id="hint"]
 font_size = 12
-font_color = Color(0.75, 0.7, 0.62, 1)
+font_color = Color(0.7, 0.7, 0.73, 1)
 outline_size = 4
 outline_color = Color(0, 0, 0, 1)
 
-[node name="MainMenu" type="Node3D"]
+[node name="MainMenu" type="Node"]
 script = ExtResource("1_mm")
-
-[node name="Background" parent="." instance=ExtResource("2_ext")]
-
-[node name="CameraPivot" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-
-[node name="Camera3D" type="Camera3D" parent="CameraPivot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 32, 92)
-current = true
-fov = 60.0
-far = 1000.0
 
 [node name="UI" type="CanvasLayer" parent="."]
 
@@ -41,7 +39,70 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+texture_filter = 4
 theme = ExtResource("3_th")
+
+[node name="Sky" type="TextureRect" parent="UI/Root"]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_sky")
+expand_mode = 1
+
+[node name="Glow" type="TextureRect" parent="UI/Root"]
+material = SubResource("additive")
+layout_mode = 0
+offset_left = 290.0
+offset_top = 20.0
+offset_right = 670.0
+offset_bottom = 320.0
+mouse_filter = 2
+texture = SubResource("glow_tex")
+expand_mode = 1
+
+[node name="Stars" type="Control" parent="UI/Root"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("5_stars")
+count = 80
+
+[node name="Ash" type="CPUParticles2D" parent="UI/Root"]
+position = Vector2(320, 380)
+amount = 70
+lifetime = 12.0
+preprocess = 12.0
+emission_shape = 3
+emission_rect_extents = Vector2(330, 4)
+direction = Vector2(0.25, -1)
+spread = 14.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 14.0
+initial_velocity_max = 34.0
+scale_amount_min = 1.0
+scale_amount_max = 2.5
+color = Color(0.88, 0.88, 0.92, 0.75)
+
+[node name="Island" type="SubViewportContainer" parent="UI/Root"]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 0.5
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_filter = 2
+stretch = true
+script = ExtResource("4_isl")
 
 [node name="Vignette" type="ColorRect" parent="UI/Root"]
 anchors_preset = 15
@@ -50,55 +111,108 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0, 0, 0.3)
+color = Color(0, 0, 0, 0.05)
 
 [node name="Title" type="Label" parent="UI/Root"]
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = 44.0
-offset_bottom = 100.0
-grow_horizontal = 2
-text = "Descending to my Heaven"
-label_settings = SubResource("title")
-horizontal_alignment = 1
+offset_left = 30.0
+offset_top = 22.0
+offset_right = 340.0
+offset_bottom = 132.0
+theme_type_variation = &"TitleLabel"
+theme_override_font_sizes/font_size = 48
+theme_override_constants/line_spacing = -10
+text = "Descending
+to my Heaven"
+auto_translate_mode = 2
 vertical_alignment = 1
 
-[node name="Buttons" type="VBoxContainer" parent="UI/Root"]
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -90.0
-offset_top = -170.0
-offset_right = 90.0
-offset_bottom = -50.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_constants/separation = 8
+[node name="Panel" type="PanelContainer" parent="UI/Root"]
+offset_left = 36.0
+offset_top = 142.0
+offset_right = 252.0
+offset_bottom = 312.0
+
+[node name="Buttons" type="VBoxContainer" parent="UI/Root/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 4
 alignment = 1
 
-[node name="Start" type="Button" parent="UI/Root/Buttons"]
-unique_name_in_owner = true
-text = "Iniciar"
+[node name="StartSlot" type="Control" parent="UI/Root/Panel/Buttons"]
+custom_minimum_size = Vector2(168, 30)
+layout_mode = 2
 
-[node name="Credits" type="Button" parent="UI/Root/Buttons"]
+[node name="Start" type="Button" parent="UI/Root/Panel/Buttons/StartSlot"]
 unique_name_in_owner = true
-text = "Créditos"
-
-[node name="Quit" type="Button" parent="UI/Root/Buttons"]
-unique_name_in_owner = true
-text = "Salir"
-
-[node name="Hint" type="Label" parent="UI/Root"]
-anchors_preset = 12
-anchor_top = 1.0
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -26.0
-offset_bottom = -8.0
 grow_horizontal = 2
+grow_vertical = 2
+text = "MENU_START"
+
+[node name="OptionsSlot" type="Control" parent="UI/Root/Panel/Buttons"]
+custom_minimum_size = Vector2(168, 30)
+layout_mode = 2
+
+[node name="Options" type="Button" parent="UI/Root/Panel/Buttons/OptionsSlot"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "MENU_OPTIONS"
+
+[node name="CreditsSlot" type="Control" parent="UI/Root/Panel/Buttons"]
+custom_minimum_size = Vector2(168, 30)
+layout_mode = 2
+
+[node name="Credits" type="Button" parent="UI/Root/Panel/Buttons/CreditsSlot"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "MENU_CREDITS"
+
+[node name="QuitSlot" type="Control" parent="UI/Root/Panel/Buttons"]
+custom_minimum_size = Vector2(168, 30)
+layout_mode = 2
+
+[node name="Quit" type="Button" parent="UI/Root/Panel/Buttons/QuitSlot"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "MENU_QUIT"
+
+[node name="Hint" type="Label" parent="UI/Root"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 36.0
+offset_top = -26.0
+offset_right = 316.0
+offset_bottom = -8.0
 grow_vertical = 0
-text = "Flechas + Enter o ratón"
+text = "MENU_HINT"
 label_settings = SubResource("hint")
-horizontal_alignment = 1
+
+[node name="OptionsMenu" parent="UI/Root" instance=ExtResource("6_opt")]
+layout_mode = 1
+
+[node name="Fade" type="ColorRect" parent="UI/Root"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)

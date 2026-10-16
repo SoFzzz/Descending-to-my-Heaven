@@ -7,6 +7,7 @@ extends RefCounted
 ##         × (0.3 if id == last_attack_id, otherwise 1)
 ##         × (1 + 0.5 × |dodge_bias| if the attack is lateral)
 ##         × (1.25 if phase == 2)
+##         × multipliers[id] (optional: tactical preferences, e.g. tail swipe when Kaelen circles the boss)
 ## Attacks with phase_min > phase score 0. choose() draws weighted between the 2 best scores.
 
 const REPEAT_PENALTY := 0.3
@@ -22,7 +23,7 @@ var dodge_bias: float = 0.0
 var _dodges: Array[int] = []
 
 
-static func score(attack: BossAttack, distance: float, last_attack_id: StringName, dodge_bias: float, phase: int) -> float:
+static func score(attack: BossAttack, distance: float, last_attack_id: StringName, dodge_bias: float, phase: int, multipliers := {}) -> float:
 	if attack == null or attack.phase_min > phase:
 		return 0.0
 	if distance < attack.min_range or distance > attack.max_range:
@@ -34,6 +35,8 @@ static func score(attack: BossAttack, distance: float, last_attack_id: StringNam
 		s *= 1.0 + LATERAL_BONUS * absf(dodge_bias)
 	if phase == 2:
 		s *= PHASE2_MULTIPLIER
+	# Tactical preferences (BossTactics / boss specialisation): id → factor.
+	s *= float(multipliers.get(attack.id, 1.0))
 	return s
 
 
@@ -41,7 +44,7 @@ static func score(attack: BossAttack, distance: float, last_attack_id: StringNam
 ## `approaching`: the boss has not reached its engage_range yet, so only `opener` attacks (long
 ## range) are candidates and the last one used is never repeated (otherwise it would keep
 ## launching the same far attack instead of closing in).
-func choose(attacks: Array[BossAttack], distance: float, phase: int, rng: RandomNumberGenerator, approaching := false) -> BossAttack:
+func choose(attacks: Array[BossAttack], distance: float, phase: int, rng: RandomNumberGenerator, approaching := false, multipliers := {}) -> BossAttack:
 	var best: BossAttack = null
 	var best_score := 0.0
 	var second: BossAttack = null
@@ -49,7 +52,7 @@ func choose(attacks: Array[BossAttack], distance: float, phase: int, rng: Random
 	for attack in attacks:
 		if approaching and (not attack.opener or attack.id == last_attack_id):
 			continue
-		var s := score(attack, distance, last_attack_id, dodge_bias, phase)
+		var s := score(attack, distance, last_attack_id, dodge_bias, phase, multipliers)
 		if s <= 0.0:
 			continue
 		if s > best_score:

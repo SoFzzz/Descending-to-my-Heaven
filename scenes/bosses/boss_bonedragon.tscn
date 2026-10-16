@@ -8,6 +8,8 @@
 [ext_resource type="Resource" path="res://resources/attacks/bonedragon_bite.tres" id="6_bite"]
 [ext_resource type="Resource" path="res://resources/attacks/bonedragon_tail_sweep.tres" id="7_tail"]
 [ext_resource type="Resource" path="res://resources/attacks/bonedragon_stomp.tres" id="8_stomp"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/bonedragon_phase2_roar.mp3" id="a_roar"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bosses/bonedragon_death.mp3" id="a_death"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_torso"]
 size = Vector3(1.6, 3.2, 1.4)
@@ -24,13 +26,13 @@ radius = 0.35
 height = 1.2
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_bite"]
-radius = 1.2
+radius = 1.7
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_tail"]
-size = Vector3(1.6, 2, 4.5)
+size = Vector3(2.2, 2.2, 5.5)
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_stomp"]
-radius = 2.5
+radius = 2.9
 
 [sub_resource type="StandardMaterial3D" id="Mat_telegraph"]
 transparency = 1
@@ -41,24 +43,24 @@ no_depth_test = false
 
 [sub_resource type="CylinderMesh" id="Cyl_bite"]
 material = SubResource("Mat_telegraph")
-top_radius = 1.2
-bottom_radius = 1.2
+top_radius = 1.7
+bottom_radius = 1.7
 height = 0.02
 radial_segments = 24
 rings = 1
 
 [sub_resource type="CylinderMesh" id="Cyl_stomp"]
 material = SubResource("Mat_telegraph")
-top_radius = 2.5
-bottom_radius = 2.5
+top_radius = 2.9
+bottom_radius = 2.9
 height = 0.02
 radial_segments = 32
 rings = 1
 
 [sub_resource type="CylinderMesh" id="Cyl_tail"]
 material = SubResource("Mat_telegraph")
-top_radius = 5.31
-bottom_radius = 5.31
+top_radius = 5.5
+bottom_radius = 5.5
 height = 0.02
 radial_segments = 48
 rings = 1
@@ -66,7 +68,10 @@ rings = 1
 [node name="BossBonedragon" instance=ExtResource("1_base")]
 display_name = "Bone Dragon"
 attacks = Array[ExtResource("5_attack")]([ExtResource("6_bite"), ExtResource("7_tail"), ExtResource("8_stomp")])
-max_health = 400
+max_health = 500
+circling_attack = &"tail_sweep"
+sfx_phase2 = ExtResource("a_roar")
+sfx_death = ExtResource("a_death")
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
@@ -110,7 +115,7 @@ collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
-damage = 25
+damage = 28
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Model/metarig/Skeleton3D/SkullAttach/BiteHitbox"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
@@ -181,25 +186,25 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
 shape = SubResource("CapsuleShape3D_hindleg")
 
 [node name="TailSweepHitbox" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 2.75)
 collision_layer = 32
 collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
-damage = 20
+damage = 23
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TailSweepHitbox"]
 shape = SubResource("BoxShape3D_tail")
 
 [node name="StompHitbox" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -1.2)
 collision_layer = 32
 collision_mask = 64
 monitoring = false
 monitorable = false
 script = ExtResource("4_hitbox")
-damage = 30
+damage = 34
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StompHitbox"]
 shape = SubResource("SphereShape3D_stomp")
@@ -211,7 +216,7 @@ cast_shadow = 0
 mesh = SubResource("Cyl_bite")
 
 [node name="stomp" type="MeshInstance3D" parent="Telegraphs"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -1.2)
 visible = false
 cast_shadow = 0
 mesh = SubResource("Cyl_stomp")

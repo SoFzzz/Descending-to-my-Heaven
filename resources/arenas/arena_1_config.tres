@@ -1,11 +1,13 @@
 [gd_resource type="Resource" script_class="ArenaConfig" format=3]
 
 [ext_resource type="Script" path="res://scripts/game/arena_config.gd" id="1_config"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/minion_base.tscn" id="2_minion"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/minion_skeleton.tscn" id="2_minion"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/minion_knight_elite.tscn" id="3_elite"]
 
 [resource]
 script = ExtResource("1_config")
 arena_id = 1
 base_budget = 4.0
 minion_scene = ExtResource("2_minion")
-max_alive = 6
+elite_scene = ExtResource("3_elite")
+max_alive = 3

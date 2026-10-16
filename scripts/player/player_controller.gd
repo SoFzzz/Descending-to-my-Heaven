@@ -4,8 +4,12 @@ extends CharacterBody3D
 ## i-frames and stamina cost), ATTACK (3-hit combo with the greatsword; hyper armor: a hit does not
 ## interrupt it and does less damage), HURT (stunned when taking damage) and DEAD (no control;
 ## respawn is handled by GameState, Task 10). Every hit taken grants HURT_IFRAMES of invulnerability.
+## Healing is a sub-state of MOVE (see try_heal): a flask with HEAL_CHARGES uses per level.
 
 enum State { MOVE, ROLL, ATTACK, HURT, DEAD }
+
+## Emitted when the number of flask uses changes (the HUD shows it).
+signal heal_charges_changed(current: int, max_value: int)
 
 const WALK_SPEED := 5.0          # m/s (Task 3)
 const ACCELERATION := 30.0       # m/s² when starting to move
@@ -18,6 +22,19 @@ const ROLL_IFRAME_START := 0.05
 const ROLL_IFRAME_END := 0.40
 const ROLL_COST := 25.0
 const ROLL_SPEED := 7.0          # constant m/s during the whole roll
+
+# --- Healing flask ---
+## Uses per level (refilled on entering an arena and on retrying: the player scene is rebuilt).
+const HEAL_CHARGES := 10
+## Fraction of the level's max HP restored by one use (38 / 27 / 15 HP at 100 / 70 / 40 max HP).
+const HEAL_RATIO := 0.38
+## Seconds from pressing the button until the HP is restored (the use is spent only then).
+const HEAL_DURATION := 0.9
+## Walk speed multiplier while drinking.
+const HEAL_MOVE_MULT := 0.35
+const HEAL_GLOW_COLOR := Color(0.55, 1.0, 0.55)
+const HEAL_GLOW_PEAK := 0.4
+const HEAL_SFX_VOLUME_DB := -3.0
 
 # --- Combo (spec §4) ---
 const COMBO_DAMAGE: Array[int] = [20, 20, 36]
@@ -64,6 +81,8 @@ const HURT_DURATION := 0.4
 ## After any hit that does not kill her (also in ATTACK) she is invulnerable for this long, counted
 ## from the hit; HURT ends earlier (HURT_DURATION) and she can act while still invulnerable.
 const HURT_IFRAMES := 1.0
+## Damage (as a fraction of max HP) from which a hit also shakes the camera.
+const HEAVY_HIT_RATIO := 0.15
 ## Meanwhile the model blinks: it toggles its visibility every HURT_BLINK_INTERVAL s.
 const HURT_BLINK_INTERVAL := 0.08
 ## Hyper armor: in ATTACK a hit does not interrupt the slash (no HURT) and only this fraction of its
@@ -72,8 +91,15 @@ const ATTACK_DAMAGE_TAKEN_MULT := 0.5
 ## Orders (roll, attack) pressed while they cannot be executed are kept for this long.
 const BUFFER_TIME := 0.2
 
+# --- Audio ---
+## Meters traveled between two footsteps (the run sample lasts 0.5 s: at 5 m/s it plays every ~0.4 s).
+const FOOTSTEP_STRIDE := 2.0
+## Below this horizontal speed (m/s) there are no footsteps.
+const FOOTSTEP_MIN_SPEED := 0.5
+const FOOTSTEP_VOLUME_DB := -4.0
+
 # Ground speed at which each clip looks right without sliding (measured by eye with captures; see
-# docs/asset-status.md). Above RUN_ANIM_SPEED the `run` clip is sped up.
+# AGENTS.md, section 15). Above RUN_ANIM_SPEED the `run` clip is sped up.
 const WALK_ANIM_SPEED := 1.4
 const RUN_ANIM_SPEED := 4.2
 
@@ -81,6 +107,18 @@ const RUN_ANIM_SPEED := 4.2
 const ACTION_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"attack_3", &"hurt", &"death"]
 # States whose clip is adjusted with a TimeScale (parameters/<state>/speed/scale).
 const SCALED_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"attack_3", &"hurt"]
+
+## Sword swing sound when each attack starts (assign a randomizer to vary it).
+@export var sfx_swing: AudioStream
+## Footstep sound while running; assigned by the level (level_gameplay.gd: stone in arenas, dirt outside).
+@export var footstep_stream: AudioStream
+## Kaelen's sounds: rolling, taking a hit, dying (falling to the ground) and running out of stamina.
+@export var sfx_roll: AudioStream
+@export var sfx_hurt: AudioStream
+@export var sfx_death: AudioStream
+@export var sfx_tired: AudioStream
+## Sound of drinking the flask (starts with the use; the HP arrives HEAL_DURATION later).
+@export var sfx_heal: AudioStream
 
 var state: State = State.MOVE
 ## If nobody assigned them before, they are looked up in _ready (children "Health", "Stamina" and "Hurtbox"). Tests
@@ -92,6 +130,8 @@ var hurtbox: Hurtbox
 var combo_index := 0
 ## How many times she died (Events.player_died is emitted only the first time).
 var death_count := 0
+## Flask uses left in this level.
+var heal_charges := HEAL_CHARGES
 
 @onready var _model: Node3D = $Model
 @onready var _camera_rig: CameraRig = $CameraRig
@@ -108,17 +148,25 @@ var _iframes := false   # roll window
 var _hurt_iframes_left := 0.0   # after taking a hit (HURT_IFRAMES)
 var _victory := false   # after Events.boss_defeated
 var _god := false       # debug (action "debug_god", F6)
+var _cutscene := false  # scripted sequence (set_cutscene): no control, invulnerable
 # Hyper armor: the Hurtbox's multiplier is scaled while attacking and restored afterwards.
 var _armor_on := false
 var _base_damage_multiplier := 1.0
 
+var _footstep_distance := 0.0
 var _attack_time := 0.0
 var _hitbox_on := false
 var _hurt_time := 0.0
 var _last_hp := -1
+var _last_stamina := 0.0
 var _attack_pressed := false   # from _unhandled_input: the click that recaptures the mouse does not attack
 var _buffered_action: StringName = &""
+# Shove (Boss repel): outward velocity that fades linearly to 0 over _shove_total s, inside HURT.
+var _shove_velocity := Vector3.ZERO
+var _shove_total := 0.0
+var _shove_left := 0.0
 var _buffer_left := 0.0
+var _heal_time := -1.0   # < 0: not drinking; otherwise seconds since the use started
 
 
 func _ready() -> void:
@@ -137,7 +185,8 @@ func _ready() -> void:
 	# Events may not exist (tests run with -s), so it is looked up by path.
 	var events := _events()
 	if events:
-		events.boss_defeated.connect(_on_boss_defeated)
+		if not events.boss_defeated.is_connected(_on_boss_defeated):
+			events.boss_defeated.connect(_on_boss_defeated)
 	_build_animation_tree()
 
 
@@ -150,6 +199,9 @@ func _connect_components() -> void:
 		health.changed.connect(_on_health_changed)
 	if not health.died.is_connected(_on_died):
 		health.died.connect(_on_died)
+	if stamina and not stamina.changed.is_connected(_on_stamina_changed):
+		_last_stamina = stamina.current
+		stamina.changed.connect(_on_stamina_changed)
 
 
 func _events() -> Node:
@@ -170,13 +222,24 @@ func _physics_process(delta: float) -> void:
 		_god = not _god
 		print("debug_god: ", _god)
 
+	if _cutscene:
+		_attack_pressed = false
+		_stand_still()
+		_tick_hurt_iframes(delta)
+		_update_invulnerability()
+		_follow_sword()
+		_update_animation(0.0)
+		return
+
 	var want_roll := false
 	var want_attack := false
+	var want_heal := false
 	if state != State.DEAD:
 		if Input.is_action_just_pressed("lock_on") and _lock_on:
 			_lock_on.toggle()
 		want_roll = Input.is_action_just_pressed("roll")
 		want_attack = _attack_pressed
+		want_heal = Input.is_action_just_pressed("heal")
 	_attack_pressed = false
 
 	match state:
@@ -187,7 +250,10 @@ func _physics_process(delta: float) -> void:
 			elif want_attack and try_attack():
 				_stand_still()
 			else:
+				if want_heal:
+					try_heal()
 				_move_step(delta)
+				_advance_heal(delta)
 		State.ROLL:
 			_tick_buffer(delta)
 			_buffer_input(want_roll, want_attack)
@@ -204,14 +270,49 @@ func _physics_process(delta: float) -> void:
 		State.HURT:
 			_tick_buffer(delta)
 			_buffer_input(want_roll, want_attack)
-			_stand_still()
+			_shove_step(delta)
 			_advance_hurt(delta)
 		State.DEAD:
 			_stand_still()
 	_tick_hurt_iframes(delta)
 	_update_invulnerability()
 	_follow_sword()
-	_update_animation(Vector3(velocity.x, 0.0, velocity.z).length())
+	var ground_speed := Vector3(velocity.x, 0.0, velocity.z).length()
+	_tick_footsteps(delta, ground_speed)
+	_update_animation(ground_speed)
+
+
+# --- Audio ---
+
+## Accumulated distance after advancing `delta` s at `speed` m/s. Below FOOTSTEP_MIN_SPEED or if
+## not `walking` (rolling, attacking, airborne, cutscene) it resets.
+static func footstep_progress(accumulated: float, speed: float, delta: float, walking: bool) -> float:
+	if not walking or speed < FOOTSTEP_MIN_SPEED:
+		return 0.0
+	return accumulated + speed * delta
+
+
+## true if the accumulated distance completes a stride.
+static func footstep_due(accumulated: float) -> bool:
+	return accumulated >= FOOTSTEP_STRIDE
+
+
+## Footsteps synchronized with the real speed; only in MOVE and with the feet on the ground.
+func _tick_footsteps(delta: float, ground_speed: float) -> void:
+	var walking := state == State.MOVE and is_on_floor() and not _cutscene
+	_footstep_distance = footstep_progress(_footstep_distance, ground_speed, delta, walking)
+	if footstep_due(_footstep_distance):
+		_footstep_distance -= FOOTSTEP_STRIDE
+		_play_sfx(footstep_stream, FOOTSTEP_VOLUME_DB)
+
+
+## 3D sound at Kaelen. By path: tests run with -s, without autoloads.
+func _play_sfx(stream: AudioStream, volume_db := 0.0) -> void:
+	if stream == null or not is_inside_tree():
+		return
+	var audio := get_node_or_null(^"/root/AudioManager")
+	if audio:
+		audio.play_sfx_3d(stream, global_position, 0.1, volume_db)
 
 
 func _buffer_input(want_roll: bool, want_attack: bool) -> void:
@@ -248,7 +349,7 @@ func _input_direction() -> Vector3:
 func _move_step(delta: float) -> void:
 	var dir := _input_direction()
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
-	var goal := dir * WALK_SPEED
+	var goal := dir * WALK_SPEED * (HEAL_MOVE_MULT if is_healing() else 1.0)
 	var rate := ACCELERATION if goal.length() > horizontal.length() else DECELERATION
 	horizontal = horizontal.move_toward(goal, rate * delta)
 	velocity.x = horizontal.x
@@ -302,11 +403,15 @@ func try_roll() -> bool:
 		dir = get_facing()
 	dir.y = 0.0
 	_roll_dir = dir.normalized() if dir.length_squared() > 0.0001 else Vector3.BACK
+	cancel_heal()
 	_roll_time = 0.0
 	state = State.ROLL
 	if _model:
 		_model.rotation.y = atan2(_roll_dir.x, _roll_dir.z)
 	_play_action(&"roll")
+	_play_sfx(sfx_roll)
+	if is_inside_tree():
+		ImpactFx.dust(get_tree(), global_position + Vector3.UP * 0.1, 0.5)
 	return true
 
 
@@ -338,6 +443,86 @@ func _advance_roll(delta: float) -> void:
 	_update_invulnerability()
 
 
+# --- Healing flask ----------------------------------------------------------------------------
+# Sub-state of MOVE: she keeps walking at HEAL_MOVE_MULT of her speed for HEAL_DURATION s and the HP
+# arrives at the end, when the use is spent. A hit (HURT), a roll, an attack, death or a cutscene
+# cancels it and the use is NOT spent (the cost of being hit is the lost time, not the flask).
+
+## HP restored by one use at `max_hp` max HP.
+static func heal_amount(max_hp: int) -> int:
+	return maxi(1, roundi(float(max_hp) * HEAL_RATIO))
+
+
+func is_healing() -> bool:
+	return _heal_time >= 0.0
+
+
+## Why a use cannot start now ("" if it can): state, scene, pause, empty flask or full health.
+func heal_blocked_reason() -> String:
+	if state != State.MOVE:
+		return "state"
+	if _cutscene or _victory:
+		return "cutscene"
+	if is_inside_tree():
+		if get_tree().paused:
+			return "paused"
+		var game_state := get_node_or_null(^"/root/GameState")
+		if game_state and game_state.cutscene_active:
+			return "cutscene"
+	if _heal_time >= 0.0:
+		return "busy"
+	if heal_charges <= 0:
+		return "empty"
+	if health == null or health.is_dead() or health.current >= health.max_value:
+		return "full"
+	return ""
+
+
+## Starts drinking. Returns false (and spends nothing) in a blocked state or with full health.
+func try_heal() -> bool:
+	if heal_blocked_reason() != "":
+		return false
+	_heal_time = 0.0
+	_play_sfx(sfx_heal, HEAL_SFX_VOLUME_DB)
+	if _model:
+		HitFlash.glow(_model, HEAL_GLOW_COLOR, HEAL_GLOW_PEAK, HEAL_DURATION)
+	return true
+
+
+## Advances the drinking clock; at HEAL_DURATION spends the use and heals.
+func _advance_heal(delta: float) -> void:
+	if _heal_time < 0.0:
+		return
+	_heal_time += delta
+	if _heal_time < HEAL_DURATION - 0.0001:
+		return
+	_heal_time = -1.0
+	if health == null or health.is_dead():
+		return
+	if health.heal(heal_amount(health.max_value)) > 0:
+		heal_charges -= 1
+		heal_charges_changed.emit(heal_charges, HEAL_CHARGES)
+		if is_inside_tree():
+			ImpactFx.heal(get_tree(), global_position)
+		if _model:
+			HitFlash.flash(_model, HEAL_GLOW_COLOR, 0.25)
+
+
+## Aborts the drinking (without spending the use) and clears its glow.
+func cancel_heal(clear_glow := true) -> void:
+	if _heal_time < 0.0:
+		return
+	_heal_time = -1.0
+	if clear_glow and _model:
+		HitFlash.clear(_model)
+
+
+## Gives the flask its full uses back (entering a level, retrying).
+func refill_heals() -> void:
+	heal_charges = HEAL_CHARGES
+	heal_charges_changed.emit(heal_charges, HEAL_CHARGES)
+
+
 # --- Combo attack -----------------------------------------------------------------------------
 
 static func combo_damage(i: int) -> int:
@@ -357,6 +542,7 @@ func try_attack() -> bool:
 	if stamina == null or not stamina.try_spend(ATTACK_COST):
 		return false
 	combo_index = combo_index + 1 if chaining else 0
+	cancel_heal()
 	_set_hitbox_active(false)
 	_attack_time = 0.0
 	state = State.ATTACK
@@ -366,6 +552,7 @@ func try_attack() -> bool:
 	if _anim_tree:
 		_anim_tree.set(StringName("parameters/%s/speed/scale" % ATTACK_ANIMS[hit]), ATTACK_ANIM_SPEED[hit])
 	_play_action(ATTACK_ANIMS[hit])
+	_play_sfx(sfx_swing)
 	return true
 
 
@@ -484,14 +671,41 @@ func _on_health_changed(current: int, max_value: int) -> void:
 		events.player_damaged.emit(previous - current, current, max_value)
 	if current <= 0 or state == State.DEAD:
 		return
+	_play_sfx(sfx_hurt)
+	_hurt_feedback(previous - current, max_value)
 	_start_hurt_iframes()
 	if state != State.ATTACK:   # hyper armor: the slash goes on, without the hurt animation
 		_enter_hurt()
 
 
+## Hit feedback: a short hit-stop and, for a strong hit (>= HEAVY_HIT_RATIO of max HP), a small camera shake.
+func _hurt_feedback(amount: int, max_value: int) -> void:
+	if not is_inside_tree():
+		return
+	HitStop.request(get_tree(), HitStop.HURT_DURATION)
+	if float(amount) / maxf(1.0, float(max_value)) >= HEAVY_HIT_RATIO:
+		var rig := get_node_or_null(^"CameraRig") as CameraRig
+		if rig:
+			rig.shake(0.07, 0.22)
+
+
+## True when the stamina has just run out (it was above 0 and is now 0).
+static func stamina_ran_out(previous: float, current: float) -> bool:
+	return previous > 0.0 and current <= 0.0
+
+
+func _on_stamina_changed(current: float, _max_value: float) -> void:
+	var previous := _last_stamina
+	_last_stamina = current
+	if stamina_ran_out(previous, current) and state != State.DEAD:
+		_play_sfx(sfx_tired)
+
+
 ## HURT interrupts the roll (an attack is not interrupted by damage: hyper armor).
 func _enter_hurt() -> void:
+	cancel_heal(false)   # the hit's own flash replaces the glow
 	_end_attack()
+	_shove_left = 0.0
 	_roll_time = 0.0
 	_iframes = false
 	_hurt_time = 0.0
@@ -506,6 +720,48 @@ func _advance_hurt(delta: float) -> void:
 		_hurt_time = 0.0
 		state = State.MOVE
 		_consume_buffer()
+
+
+# --- Shove (boss repel) ------------------------------------------------------------------------
+
+## Pushes Kaelen with horizontal `push` (m/s) fading to 0 over `duration` s, without damage. She
+## stays in HURT (no control) until the push ends (at least HURT_DURATION). Interrupts attacks too
+## (hyper armor stops damage, not a shove). The roll's i-frames dodge it, as do death, cutscenes and
+## victory. `lift` (m/s) adds an upward hop. Returns true if it was applied.
+func apply_shove(push: Vector3, duration: float, lift := 0.0) -> bool:
+	if state == State.DEAD or _iframes or _cutscene or _victory or duration <= 0.0:
+		return false
+	push.y = 0.0
+	if push.length_squared() < 0.0001:
+		return false
+	_enter_hurt()
+	_hurt_time = minf(0.0, HURT_DURATION - duration)   # HURT lasts as long as the push
+	_shove_velocity = push
+	_shove_total = duration
+	_shove_left = duration
+	velocity.x = push.x
+	velocity.z = push.z
+	if lift > 0.0:
+		velocity.y = lift   # small hop: the shove reads as an impact
+	return true
+
+
+## Shove speed with `left` of `total` seconds remaining: linear fade from `initial` to 0.
+static func shove_velocity_at(initial: Vector3, total: float, left: float) -> Vector3:
+	if total <= 0.0 or left <= 0.0:
+		return Vector3.ZERO
+	return initial * clampf(left / total, 0.0, 1.0)
+
+
+func _shove_step(delta: float) -> void:
+	if _shove_left <= 0.0:
+		_stand_still()
+		return
+	var v := shove_velocity_at(_shove_velocity, _shove_total, _shove_left)
+	velocity.x = v.x
+	velocity.z = v.z
+	_shove_left = maxf(0.0, _shove_left - delta)
+	move_and_slide()
 
 
 func _start_hurt_iframes() -> void:
@@ -537,6 +793,7 @@ func _update_blink() -> void:
 func _on_died() -> void:
 	if state == State.DEAD:
 		return
+	cancel_heal(false)
 	_end_attack()
 	_clear_buffer()
 	_iframes = false
@@ -548,6 +805,7 @@ func _on_died() -> void:
 	if _lock_on:
 		_lock_on.target = null
 	_play_action(&"death")
+	_play_sfx(sfx_death)
 	if death_count == 1:
 		var events := _events()
 		if events:
@@ -560,7 +818,48 @@ func _on_boss_defeated(_boss: Node3D) -> void:
 
 
 func is_invulnerable() -> bool:
-	return _iframes or _hurt_iframes_left > 0.0 or _victory or _god
+	return _iframes or _hurt_iframes_left > 0.0 or _victory or _god or _cutscene
+
+
+## Hands Kaelen over to a scripted sequence (the ending) or gives control back. While on: movement,
+## roll, attack and lock-on are ignored, she stands in idle and cannot be hurt. Turning it on cancels
+## any roll / attack / hurt in progress and the target lock.
+func set_cutscene(on: bool) -> void:
+	if on == _cutscene:
+		return
+	_cutscene = on
+	if on:
+		cancel_heal()
+		if state != State.DEAD:
+			_end_attack()
+			_roll_time = 0.0
+			_hurt_time = 0.0
+			state = State.MOVE
+		_clear_buffer()
+		_iframes = false
+		_hurt_iframes_left = 0.0
+		_update_blink()
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if _lock_on and _lock_on.target != null:
+			_lock_on.toggle()   # with a target, toggle() releases it
+		if state != State.DEAD:
+			_play_action(&"locomotion")
+	_update_invulnerability()
+
+
+func is_cutscene() -> bool:
+	return _cutscene
+
+
+## Turns the model toward a world point (horizontal only). The Mixamo model faces +Z.
+func face_point(point: Vector3) -> void:
+	if _model == null:
+		return
+	var dir := point - global_position
+	dir.y = 0.0
+	if dir.length_squared() > 0.0001:
+		_model.rotation.y = atan2(dir.x, dir.z)
 
 
 func _update_invulnerability() -> void:
@@ -664,7 +963,7 @@ func _build_animation_tree() -> void:
 func _clip_length(player: AnimationPlayer, clip: StringName, fallback: float) -> float:
 	if player.has_animation(clip):
 		return player.get_animation(clip).length
-	push_warning("Kaelen: falta el clip '%s'" % clip)
+	push_warning("Kaelen: missing clip '%s'" % clip)
 	return fallback
 
 

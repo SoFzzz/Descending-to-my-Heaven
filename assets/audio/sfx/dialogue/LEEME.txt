@@ -1,0 +1,5 @@
+Blips de dialogo: "Dialogue Bleeps Pack" de dmochas (solo los usados).
+Kaelen (voz grave): bleep003, bleep010, bleep005 -> kaelen_1..3.ogg
+Elysia (voz aguda): bleep006, bleep016, bleep017 -> elysia_1..3.ogg
+Normalizados a -3 dBFS de pico con scripts/tools/make_dialogue_blips.py (los originales llegaban a -17..-25 dBFS).
+El pack no incluye licencia ni readme: licencia por confirmar.

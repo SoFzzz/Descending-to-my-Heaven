@@ -1,0 +1,117 @@
+keys,es,en
+MENU_START,Iniciar,Start
+MENU_OPTIONS,Opciones,Options
+MENU_CREDITS,Créditos,Credits
+MENU_QUIT,Salir,Quit
+MENU_HINT,"Flechas / cruceta + Enter / A, o ratón","Arrows / D-pad + Enter / A, or mouse"
+PAUSE_TITLE,Pausa,Paused
+PAUSE_CONTINUE,Continuar,Resume
+PAUSE_OPTIONS,Opciones,Options
+PAUSE_MAIN_MENU,Volver al menú principal,Back to main menu
+PAUSE_QUIT,Salir del juego,Quit game
+CREDITS_TITLE,Créditos,Credits
+CREDITS_BACK,Volver al menú,Back to menu
+CREDITS_FALLBACK,"Descending to my Heaven
+
+No se pudo cargar la lista de créditos.","Descending to my Heaven
+
+The credits list could not be loaded."
+CREDITS_SEC_TEAM,Equipo,Team
+CREDITS_SEC_CHARACTERS,Personajes y jefes,Characters and bosses
+CREDITS_SEC_WORLD,"Escenario, armas y objetos","Scenery, weapons and items"
+CREDITS_SEC_SHADERS,Shaders,Shaders
+CREDITS_SEC_AUDIO,Audio,Audio
+CREDITS_SEC_UI,Interfaz,Interface
+CREDITS_SEC_VFX,Efectos visuales,Visual effects
+CREDITS_SEC_ANIMATIONS,Animaciones,Animations
+CREDITS_SEC_ENGINE,Motor,Engine
+CREDITS_SEC_THANKS,Gracias por jugar,Thanks for playing
+CREDITS_AUTHOR,Autor,Author
+CREDITS_LICENSE,Licencia,License
+CREDITS_SOURCE,Fuente,Source
+CREDITS_AUTHOR_LICENSE_TBC,Autor y licencia por confirmar,Author and license to be confirmed
+CREDITS_TBC,por confirmar,to be confirmed
+OPT_TITLE,Opciones,Options
+OPT_TAB_CONTROLS,Controles,Controls
+OPT_TAB_VOLUME,Volumen,Volume
+OPT_TAB_LANGUAGE,Idioma,Language
+OPT_BACK,Volver,Back
+OPT_RESTORE,Restaurar por defecto,Restore defaults
+OPT_COL_ACTION,Acción,Action
+OPT_COL_KEYBOARD,Teclado / ratón,Keyboard / mouse
+OPT_COL_GAMEPAD,Mando,Gamepad
+OPT_PRESS_ANY,Pulsa una tecla o botón... (Esc cancela),Press a key or button... (Esc cancels)
+OPT_PRESS_PAD,Pulsa un botón del mando... (Back cancela),Press a gamepad button... (Back cancels)
+OPT_ASSIGNED,Asignado: %s,Assigned: %s
+OPT_SWAPPED,Intercambiado con «%s»,"Swapped with ""%s"""
+OPT_RESTORED,Controles restaurados,Controls restored
+OPT_CONTROLS_HINT,"Elige una acción y pulsa Enter / A, luego la nueva tecla o botón","Pick an action, press Enter / A, then the new key or button"
+OPT_SENSITIVITY,Sensibilidad de cámara,Camera sensitivity
+OPT_FIXED_NOTE,Mover: WASD / stick izquierdo. Cámara: ratón / stick derecho (fijos).,Move: WASD / left stick. Camera: mouse / right stick (fixed).
+VOL_MASTER,General,Master
+VOL_MUSIC,Música,Music
+VOL_SFX,Efectos,Effects
+VOL_UI,Interfaz,Interface
+OPT_TAB_DISPLAY,Pantalla,Display
+DISP_MODE,Modo de ventana,Window mode
+DISP_MODE_WINDOWED,Ventana,Windowed
+DISP_MODE_FULLSCREEN,Pantalla completa sin bordes,Borderless fullscreen
+DISP_MODE_EXCLUSIVE,Pantalla completa exclusiva,Exclusive fullscreen
+DISP_RESOLUTION,Resolución de ventana,Window resolution
+DISP_VSYNC,Sincronización vertical,VSync
+DISP_FPS,Límite de FPS,FPS limit
+DISP_ON,Activada,On
+DISP_OFF,Desactivada,Off
+DISP_UNLIMITED,Sin límite,Unlimited
+DISP_HINT,Pulsa Enter / A para cambiar el valor. Alt+Enter alterna pantalla completa.,Press Enter / A to change the value. Alt+Enter toggles fullscreen.
+OPT_LANGUAGE_PICK,Elige el idioma del juego,Choose the game language
+LANG_ES,Español,Español
+LANG_EN,English,English
+ACT_MOVE_FORWARD,Avanzar,Move forward
+ACT_MOVE_BACK,Retroceder,Move back
+ACT_MOVE_LEFT,Izquierda,Move left
+ACT_MOVE_RIGHT,Derecha,Move right
+ACT_ATTACK,Atacar,Attack
+ACT_ROLL,Rodar,Roll
+ACT_HEAL,Curarse,Heal
+ACT_LOCK_ON,Fijar objetivo,Lock on
+ACT_PAUSE,Pausa,Pause
+KEY_SPACE,Espacio,Space
+KEY_ESCAPE,Esc,Esc
+KEY_ENTER,Enter,Enter
+MOUSE_LEFT,Clic izq.,Left click
+MOUSE_RIGHT,Clic der.,Right click
+MOUSE_MIDDLE,Clic central,Middle click
+MOUSE_OTHER,Ratón %d,Mouse %d
+HUD_BOSS,Jefe,Boss
+DEATH_TITLE,HAS MUERTO,YOU DIED
+DEATH_RETRY,Reintentar,Retry
+DEATH_MENU,Volver al menú,Main menu
+DEATH_QUIT,Salir del juego,Quit game
+ENDING_01,"Tres pisos de acero y sangre. Y en lo alto del templo, una luz que seguía encendida.","Three floors of steel and blood. And at the top of the temple, a light still burning."
+ENDING_02,Kaelen: Elysia... por fin te encuentro.,Kaelen: Elysia... I've finally found you.
+ENDING_03,Elysia: Kaelen. Sabía que vendrías. Siempre lo supe.,Elysia: Kaelen. I knew you would come. I always knew.
+ENDING_04,"El suelo tiembla. Del techo roto cae polvo, y el cielo se abre sobre el altar.","The floor trembles. Dust falls from the broken ceiling, and the sky opens above the altar."
+ENDING_05,Elysia: ¿Lo sientes? La isla ya no flota.,Elysia: Do you feel that? The island is no longer afloat.
+ENDING_06,Elysia: Los tres guardianes la mantenían en el aire. Y tú los has vencido.,Elysia: The three guardians held it in the air. And you have defeated them.
+ENDING_07,Kaelen: No había otro camino hasta ti.,Kaelen: There was no other way to you.
+ENDING_08,"Elysia: Aquí vive gente, Kaelen. Familias. Niños. Todos caerán con nosotras.","Elysia: People live here, Kaelen. Families. Children. They will all fall with us."
+ENDING_09,Elysia: Esa es la parte que más duele.,Elysia: That is the part that hurts the most.
+ENDING_10,Kaelen: Lo sé. Y aun así lo volvería a hacer.,Kaelen: I know. And I would still do it again.
+ENDING_11,Kaelen: No vine a salvar a nadie. Vine a verte otra vez. Solo eso.,Kaelen: I didn't come to save anyone. I came to see you again. Nothing more.
+ENDING_12,"Elysia baja la mirada. Más allá del hueco, una torre se desprende y se pierde entre las nubes.","Elysia lowers her gaze. Beyond the opening, a tower breaks away and vanishes into the clouds."
+ENDING_13,Elysia: Debería odiarte por esto. Pero no puedo. Ni siquiera ahora.,Elysia: I should hate you for this. But I can't. Not even now.
+ENDING_14,Elysia: Esperé tanto tu luz... y llega justo cuando todo se apaga.,Elysia: I waited so long for your light... and it comes just as everything goes dark.
+ENDING_15,Kaelen: Entonces no la soltemos. Que la caída nos encuentre juntas.,Kaelen: Then let us not let go. Let the fall find us together.
+ENDING_16,"Elysia: Juntas, entonces. Aunque no quede cielo al que volver.","Elysia: Together, then. Even if there is no sky left to return to."
+ENDING_17,Se abrazan mientras el suelo se desprende del cielo.,They embrace as the ground tears away from the sky.
+ENDING_18,"Elysia: Cierra los ojos, Kaelen. Caer también es una forma de volar.","Elysia: Close your eyes, Kaelen. Falling is also a way of flying."
+ENDING_19,"Y el templo, con sus muertos y sus velas, se hundió despacio en las nubes.","And the temple, with its dead and its candles, sank slowly into the clouds."
+TRANS_ZONE_0,El templo,The temple
+TRANS_SUB_0,La entrada,The entrance
+TRANS_FLOOR_1,Piso 1 - Catacumba,Floor 1 - Catacomb
+TRANS_SUB_1,Bone Dragon,Bone Dragon
+TRANS_FLOOR_2,Piso 2 - Claustro,Floor 2 - Cloister
+TRANS_SUB_2,Blackhorn,Blackhorn
+TRANS_FLOOR_3,Piso 3 - Ruinas,Floor 3 - Ruins
+TRANS_SUB_3,Mecha King Ghidorah,Mecha King Ghidorah

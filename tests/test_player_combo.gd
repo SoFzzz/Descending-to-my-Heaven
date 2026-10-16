@@ -19,17 +19,17 @@ func _free_all(nodes: Array) -> void:
 
 
 func test_combo_damage_sequence() -> void:
-	assert_eq(Player.combo_damage(0), 20, "golpe 1")
-	assert_eq(Player.combo_damage(1), 20, "golpe 2")
-	assert_eq(Player.combo_damage(2), 36, "golpe 3")
-	assert_eq(Player.combo_damage(3), 20, "vuelve a empezar")
+	assert_eq(Player.combo_damage(0), 20, "hit 1")
+	assert_eq(Player.combo_damage(1), 20, "hit 2")
+	assert_eq(Player.combo_damage(2), 36, "hit 3")
+	assert_eq(Player.combo_damage(3), 20, "starts over")
 
 
 func test_attack_needs_stamina() -> void:
 	var n := _make_player()
 	var p: Player = n[0]
 	(n[1] as Stamina).current = 0.0
-	assert_true(not p.try_attack(), "try_attack con estamina 0")
+	assert_true(not p.try_attack(), "try_attack with 0 stamina")
 	assert_eq(p.state, Player.State.MOVE)
 	_free_all(n)
 
@@ -38,7 +38,7 @@ func test_attack_spends_stamina() -> void:
 	var n := _make_player()
 	var p: Player = n[0]
 	var s: Stamina = n[1]
-	assert_true(p.try_attack(), "try_attack con estamina llena")
+	assert_true(p.try_attack(), "try_attack with full stamina")
 	assert_eq(p.state, Player.State.ATTACK)
 	assert_almost(s.current, 80.0)
 	_free_all(n)
@@ -49,14 +49,14 @@ func test_combo_chains_inside_window() -> void:
 	var n := _make_player()
 	var p: Player = n[0]
 	assert_true(p.try_attack())
-	assert_true(not p.try_attack(), "no se encadena antes de que termine la ventana de daño")
+	assert_true(not p.try_attack(), "it does not chain before the damage window ends")
 	p._advance_attack(Player.HIT_END[0] + 0.05)
-	assert_true(p.try_attack(), "encadena dentro de la ventana")
+	assert_true(p.try_attack(), "chains within the window")
 	assert_eq(p.combo_index, 1)
 	p._advance_attack(Player.HIT_END[1] + Player.COMBO_WINDOW + 0.01)
-	assert_eq(p.state, Player.State.MOVE, "pasada la ventana vuelve a MOVE")
+	assert_eq(p.state, Player.State.MOVE, "past the window it returns to MOVE")
 	assert_true(p.try_attack())
-	assert_eq(p.combo_index, 0, "el combo vuelve a empezar")
+	assert_eq(p.combo_index, 0, "the combo starts over")
 	_free_all(n)
 
 
@@ -69,7 +69,7 @@ func test_buffered_roll() -> void:
 	p._advance_attack(total - 0.1)
 	p.buffer_action(&"roll")
 	p._advance_attack(0.15)
-	assert_eq(p.state, Player.State.ROLL, "la rodada guardada se ejecuta al terminar el golpe")
+	assert_eq(p.state, Player.State.ROLL, "the stored roll is executed when the hit ends")
 	_free_all(n)
 
 
@@ -82,11 +82,11 @@ func test_buffered_roll_expires() -> void:
 	while p.state == Player.State.ATTACK and t < 5.0:
 		p._advance_attack(0.05)
 		t += 0.05
-	assert_eq(p.state, Player.State.MOVE, "pasados 0.2 s la orden se descarta")
+	assert_eq(p.state, Player.State.MOVE, "after 0.2 s the order is discarded")
 	_free_all(n)
 
 
-# Fuera del ataque el daño la aturde (HURT); durante el ataque ya no lo interrumpe (armadura, ver
+# Outside the attack, damage stuns her (HURT); during the attack it no longer interrupts it (armor, see
 # test_player_defense.gd).
 func test_damage_in_move_enters_hurt() -> void:
 	var n := _make_player()
@@ -105,9 +105,9 @@ func test_death_is_terminal() -> void:
 	var h: Health = n[2]
 	for i in 5:
 		h.take_damage(20)
-		p._tick_hurt_iframes(Player.HURT_IFRAMES)   # cada golpe da i-frames: se dejan pasar
+		p._tick_hurt_iframes(Player.HURT_IFRAMES)   # each hit gives i-frames: let them pass
 	assert_eq(p.state, Player.State.DEAD)
-	assert_eq(p.death_count, 1, "muere una sola vez")
-	assert_true(not p.try_attack(), "sin control al morir")
-	assert_true(not p.try_roll(), "sin control al morir")
+	assert_eq(p.death_count, 1, "dies only once")
+	assert_true(not p.try_attack(), "no control when dying")
+	assert_true(not p.try_roll(), "no control when dying")
 	_free_all(n)

@@ -1,0 +1,10 @@
+Beam VFX - Godot 3D
+Author: Binbun (https://binbun3d.itch.io)
+Source: https://binbun3d.itch.io/beam-vfx
+License: Creative Commons Zero v1.0 Universal (CC0 1.0, public domain dedication), as declared on the itch.io page
+(accessed 2026-10-15). The downloaded zip contains no license file. Credit is not required.
+
+Files here derived from the pack: beam_ball/beam_core/beam_flare/beam_outer/glow_particle .gdshader and
+vfx_beam_controller.gd (unchanged except: noise_texture sampler uses filter_nearest + repeat_enable in
+beam_flare/beam_outer). beam_vfx.tscn is adapted from the pack's base_beam_vfx.tscn (gold tint, 20 m length,
+12-segment meshes, 128 px FastNoiseLite noise, fewer particles). ../../scripts/vfx/beam_vfx.gd is project code.
