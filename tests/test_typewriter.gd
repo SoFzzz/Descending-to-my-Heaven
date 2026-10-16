@@ -194,3 +194,26 @@ func test_blip_bus_exists_and_is_not_muted() -> void:
 	if idx >= 0:
 		assert_true(not AudioServer.is_bus_mute(idx), "bus sin silenciar")
 		assert_true(AudioServer.get_bus_volume_db(idx) > -20.0, "bus no atenuado")
+
+
+func test_empty_text_completes_at_once() -> void:
+	var tw: Node = TW.new()
+	var label := Label.new()
+	var counts := {"finished": 0}
+	tw.finished.connect(func() -> void: counts["finished"] += 1)
+	tw.start(label, "", &"kaelen")
+	assert_eq(counts["finished"], 1, "empty line finishes immediately")
+	assert_true(tw.is_waiting(), "and waits for the player")
+	label.free()
+	tw.free()
+
+
+func test_freed_label_does_not_break_the_reveal() -> void:
+	var tw: Node = TW.new()
+	var label := Label.new()
+	tw.start(label, "Hola mundo", &"kaelen")
+	label.free()
+	tw._process(10.0)
+	assert_true(tw.is_waiting(), "the reveal still completes")
+	tw.free()
+
