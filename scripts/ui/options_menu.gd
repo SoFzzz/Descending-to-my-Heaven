@@ -23,7 +23,7 @@ const MODE_KEYS := {
 const ACTION_KEYS := {
 	&"move_forward": "ACT_MOVE_FORWARD", &"move_back": "ACT_MOVE_BACK",
 	&"move_left": "ACT_MOVE_LEFT", &"move_right": "ACT_MOVE_RIGHT",
-	&"attack": "ACT_ATTACK", &"roll": "ACT_ROLL", &"heal": "ACT_HEAL", &"lock_on": "ACT_LOCK_ON", &"pause": "ACT_PAUSE",
+	&"attack": "ACT_ATTACK", &"heavy_attack": "ACT_HEAVY_ATTACK", &"roll": "ACT_ROLL", &"heal": "ACT_HEAL", &"lock_on": "ACT_LOCK_ON", &"pause": "ACT_PAUSE",
 }
 const BUS_KEYS := {&"Master": "VOL_MASTER", &"Music": "VOL_MUSIC", &"SFX": "VOL_SFX", &"UI": "VOL_UI"}
 const COL_ACTION := 150.0

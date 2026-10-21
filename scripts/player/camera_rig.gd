@@ -31,6 +31,10 @@ var yaw: float = 0.0
 var pitch: float = deg_to_rad(-15.0)
 
 var pivot_height := PIVOT_HEIGHT
+## Scripted walk (Player.scripted_walk): the camera eases in behind this heading (yaw); NAN = free.
+var guide_yaw := NAN
+const GUIDE_TURN_SPEED := 2.5
+const GUIDE_PITCH := deg_to_rad(-12.0)
 
 var _shake_amplitude := 0.0
 var _shake_total := 0.0
@@ -122,6 +126,11 @@ func _process(delta: float) -> void:
 	global_position = global_position.lerp(goal, minf(1.0, FOLLOW_SPEED * delta))
 	if lock_target:
 		_face_point(LockOn.aim_point(lock_target), delta)
+	elif not is_nan(guide_yaw):
+		var k := minf(1.0, GUIDE_TURN_SPEED * delta)
+		yaw = wrapf(lerp_angle(yaw, guide_yaw, k), -PI, PI)
+		pitch = lerpf(pitch, GUIDE_PITCH, k)
+		_apply_rotation()
 
 
 ## Extra arm meters for a boss locked at `distance` m (horizontally) from the camera.

@@ -7,7 +7,7 @@ extends TestCase
 const GAMEPLAY_ACTIONS: Array[StringName] = [
 	&"move_forward", &"move_back", &"move_left", &"move_right",
 	&"camera_left", &"camera_right", &"camera_up", &"camera_down",
-	&"attack", &"roll", &"heal", &"lock_on", &"pause",
+	&"attack", &"heavy_attack", &"roll", &"heal", &"lock_on", &"pause",
 ]
 
 

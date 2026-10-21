@@ -69,7 +69,9 @@ func _on_area_entered(area: Area3D) -> void:
 	hurtbox.receive_hit(damage, source)
 	_play_impact(hurtbox)
 	if source != null and source.is_in_group(&"player") and is_inside_tree():
-		HitStop.request(get_tree())   # hit-stop only on Kaelen's hits
+		# Hit-stop only on Kaelen's hits; she says how strong (light slash vs finisher / slam).
+		var stop: float = source.call(&"hit_stop_time") if source.has_method(&"hit_stop_time") else HitStop.HIT_DURATION
+		HitStop.request(get_tree(), stop)
 	# Events may not exist (tests run with -s), so it is looked up by path.
 	var events := get_node_or_null(^"/root/Events")
 	if events:

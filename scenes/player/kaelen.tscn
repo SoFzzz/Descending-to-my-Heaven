@@ -28,7 +28,7 @@ radius = 0.3
 height = 1.5
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_sword"]
-size = Vector3(0.25, 0.25, 2.15)
+size = Vector3(0.25, 0.25, 1.85)
 
 [node name="Kaelen" type="CharacterBody3D" groups=["player"]]
 collision_layer = 2
@@ -56,10 +56,10 @@ bone_name = "mixamorig_RightHand"
 transform = Transform3D(577.03, 0, 0, 0, 577.03, 0, 0, 0, 577.03, 0, 0, 0)
 
 [node name="Greatsword" parent="Model/Armature/Skeleton3D/RightHand/SwordGrip" instance=ExtResource("3_sword")]
-transform = Transform3D(0, 2.32, 0, 1.45, 0, 0, 0, 0, -1.45, 0.79, 0.08, 0.02)
+transform = Transform3D(0, 1.95, 0, 1.45, 0, 0, 0, 0, -1.45, 0.79, 0.08, 0.02)
 
 [node name="SwordHitboxMarker" type="Marker3D" parent="Model/Armature/Skeleton3D/RightHand/SwordGrip"]
-transform = Transform3D(0, 0, 1, 1, 0, 0, 0, 1, 0, 0.945, 0.08, 0.02)
+transform = Transform3D(0, 0, 1, 1, 0, 0, 0, 1, 0, 0.84, 0.08, 0.02)
 
 [node name="CameraRig" type="Node3D" parent="."]
 script = ExtResource("4_cam")

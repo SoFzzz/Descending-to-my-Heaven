@@ -10,6 +10,8 @@ enum State { MOVE, ROLL, ATTACK, HURT, DEAD }
 
 ## Emitted when the number of flask uses changes (the HUD shows it).
 signal heal_charges_changed(current: int, max_value: int)
+## A scripted walk (scripted_walk) reached its last point.
+signal scripted_walk_finished
 
 const WALK_SPEED := 5.0          # m/s (Task 3)
 const ACCELERATION := 30.0       # m/s² when starting to move
@@ -76,6 +78,50 @@ const HIT_END: Array[float] = [
 ## target this offset is added so the target is hit in the middle of the sweep (the target ends up
 ## at +30°, −35° and +5° of the model).
 const ATTACK_AIM_OFFSET: Array[float] = [deg_to_rad(-30.0), deg_to_rad(35.0), deg_to_rad(-5.0)]
+## With a locked target each hit steps toward it for ATTACK_STEP_TIME s (at most ≈ 0.75 m), unless it
+## is already within ATTACK_STEP_MIN m: strafing out of reach does not make the slash whiff.
+const ATTACK_STEP_SPEED := 3.0
+const ATTACK_STEP_TIME := 0.25
+const ATTACK_STEP_MIN := 1.8
+
+# --- Heavy attack (jump_attack clip): a leap forward that lands with a downward slam ---
+const HEAVY_ANIM := &"jump_attack"
+const HEAVY_DAMAGE := 45
+const HEAVY_COST := 35.0
+const HEAVY_ANIM_SPEED := 1.25
+## Clip seconds (jump_attack, 2.2 s): the hips peak at ≈ 0.8 s; the blade stays behind her head until
+## ≈ 1.25 s and slams down in front at ≈ 1.27-1.40 s (traced frame by frame in kaelen_moves_flow).
+const HEAVY_CLIP_LEAP_START := 0.40
+const HEAVY_CLIP_LEAP_END := 1.00
+const HEAVY_CLIP_HIT_START := 1.15
+const HEAVY_CLIP_HIT_END := 1.50
+const HEAVY_CLIP_IMPACT := 1.28   # dust and camera shake
+const HEAVY_CLIP_END := 1.85      # back to MOVE (the recovery crouch is cut)
+const HEAVY_LEAP_SPEED := 4.2     # m/s while airborne: ≈ 2 m forward
+const HEAVY_LEAP_STOP := 1.6      # m to a locked target at which the leap stops pushing
+## The slam's arc enters from her right, crosses the front and ends low on her LEFT (traced: the blade
+## bottoms out about 77 deg left of her facing). The model turns this much to her right at the start so
+## the arc is centred on the target (re-traced at -55 deg: it crosses the target line at full reach and
+## bottoms out about 25 deg left); the leap still goes straight at the target (_heavy_dir).
+const HEAVY_AIM_OFFSET := deg_to_rad(-55.0)
+## Hit-stop of Kaelen's blows: light on a normal slash, a bit more on the combo's 3rd hit and the slam.
+const HIT_STOP_LIGHT := 0.035
+const HIT_STOP_STRONG := 0.07
+## The same marks in game seconds from the start of the heavy attack.
+const HEAVY_LEAP_START := HEAVY_CLIP_LEAP_START / HEAVY_ANIM_SPEED
+const HEAVY_LEAP_END := HEAVY_CLIP_LEAP_END / HEAVY_ANIM_SPEED
+const HEAVY_HIT_START := HEAVY_CLIP_HIT_START / HEAVY_ANIM_SPEED
+const HEAVY_HIT_END := HEAVY_CLIP_HIT_END / HEAVY_ANIM_SPEED
+const HEAVY_IMPACT := HEAVY_CLIP_IMPACT / HEAVY_ANIM_SPEED
+const HEAVY_END := HEAVY_CLIP_END / HEAVY_ANIM_SPEED
+
+# --- Lock-on strafe ---
+## With a locked target Kaelen keeps facing it and walks around it (strafe clips) at this speed.
+const LOCK_MOVE_SPEED := 3.2
+## Ground speed at which the strafe / walk_back clips look right (by eye; see AGENTS.md section 6).
+const STRAFE_ANIM_SPEED := 2.0
+## How fast the locomotion crossfades between free running and strafing (blend units per s).
+const LOCK_BLEND_RATE := 6.0
 
 const HURT_DURATION := 0.4
 ## After any hit that does not kill her (also in ATTACK) she is invulnerable for this long, counted
@@ -104,9 +150,9 @@ const WALK_ANIM_SPEED := 1.4
 const RUN_ANIM_SPEED := 4.2
 
 # Action states of the AnimationTree (besides "locomotion").
-const ACTION_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"attack_3", &"hurt", &"death"]
+const ACTION_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"attack_3", HEAVY_ANIM, &"hurt", &"death"]
 # States whose clip is adjusted with a TimeScale (parameters/<state>/speed/scale).
-const SCALED_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"attack_3", &"hurt"]
+const SCALED_STATES: Array[StringName] = [&"roll", &"attack_1", &"attack_2", &"attack_3", HEAVY_ANIM, &"hurt"]
 
 ## Sword swing sound when each attack starts (assign a randomizer to vary it).
 @export var sfx_swing: AudioStream
@@ -167,6 +213,14 @@ var _shove_total := 0.0
 var _shove_left := 0.0
 var _buffer_left := 0.0
 var _heal_time := -1.0   # < 0: not drinking; otherwise seconds since the use started
+var _heavy := false      # the ATTACK in progress is the heavy attack (jump_attack)
+var _heavy_pressed := false
+var _heavy_axis_down := false   # the heavy attack's trigger is past its deadzone
+var _heavy_dir := Vector3.ZERO  # where the heavy attack leaps (the target, the input or her facing)
+var _lock_blend := 0.0   # 0 = free locomotion, 1 = strafing around the locked target
+var _walk_points: Array[Vector3] = []   # scripted walk in progress (cutscene)
+var _walk_speed := 0.0
+const WALK_ARRIVE := 0.25              # m to a point at which the scripted walk takes the next one
 
 
 func _ready() -> void:
@@ -213,6 +267,14 @@ func _events() -> Node:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("attack"):
 		_attack_pressed = true
+	elif event is InputEventJoypadMotion and InputMap.event_is_action(event, &"heavy_attack"):
+		# A trigger (RT) sends a stream of motion events while it travels: only the press edge counts.
+		var down := event.is_action_pressed(&"heavy_attack")
+		if down and not _heavy_axis_down:
+			_heavy_pressed = true
+		_heavy_axis_down = down
+	elif event.is_action_pressed("heavy_attack"):
+		_heavy_pressed = true
 
 
 func _physics_process(delta: float) -> void:
@@ -224,23 +286,30 @@ func _physics_process(delta: float) -> void:
 
 	if _cutscene:
 		_attack_pressed = false
-		_stand_still()
+		_heavy_pressed = false
+		if _walk_points.is_empty():
+			_stand_still()
+		else:
+			_scripted_step(delta)
 		_tick_hurt_iframes(delta)
 		_update_invulnerability()
 		_follow_sword()
-		_update_animation(0.0)
+		_update_animation(Vector3(velocity.x, 0.0, velocity.z).length())
 		return
 
 	var want_roll := false
 	var want_attack := false
 	var want_heal := false
+	var want_heavy := false
 	if state != State.DEAD:
 		if Input.is_action_just_pressed("lock_on") and _lock_on:
 			_lock_on.toggle()
 		want_roll = Input.is_action_just_pressed("roll")
 		want_attack = _attack_pressed
+		want_heavy = _heavy_pressed
 		want_heal = Input.is_action_just_pressed("heal")
 	_attack_pressed = false
+	_heavy_pressed = false
 
 	match state:
 		State.MOVE:
@@ -249,6 +318,8 @@ func _physics_process(delta: float) -> void:
 				_roll_step(delta)
 			elif want_attack and try_attack():
 				_stand_still()
+			elif want_heavy and try_heavy_attack():
+				_stand_still()
 			else:
 				if want_heal:
 					try_heal()
@@ -256,20 +327,22 @@ func _physics_process(delta: float) -> void:
 				_advance_heal(delta)
 		State.ROLL:
 			_tick_buffer(delta)
-			_buffer_input(want_roll, want_attack)
+			_buffer_input(want_roll, want_attack, want_heavy)
 			_roll_step(delta)
 		State.ATTACK:
 			# Attacking inside the combo window chains; otherwise it is stored in the buffer.
 			if want_attack and not try_attack():
 				buffer_action(&"attack")
+			if want_heavy and not try_heavy_attack():
+				buffer_action(&"heavy")
 			if want_roll:
 				buffer_action(&"roll")
-			_stand_still()
+			_attack_motion()
 			if state == State.ATTACK:
 				_advance_attack(delta)   # also counts down the buffer
 		State.HURT:
 			_tick_buffer(delta)
-			_buffer_input(want_roll, want_attack)
+			_buffer_input(want_roll, want_attack, want_heavy)
 			_shove_step(delta)
 			_advance_hurt(delta)
 		State.DEAD:
@@ -315,11 +388,13 @@ func _play_sfx(stream: AudioStream, volume_db := 0.0) -> void:
 		audio.play_sfx_3d(stream, global_position, 0.1, volume_db)
 
 
-func _buffer_input(want_roll: bool, want_attack: bool) -> void:
+func _buffer_input(want_roll: bool, want_attack: bool, want_heavy := false) -> void:
 	if want_roll:
 		buffer_action(&"roll")
 	elif want_attack:
 		buffer_action(&"attack")
+	elif want_heavy:
+		buffer_action(&"heavy")
 
 
 func _stand_still() -> void:
@@ -349,7 +424,9 @@ func _input_direction() -> Vector3:
 func _move_step(delta: float) -> void:
 	var dir := _input_direction()
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
-	var goal := dir * WALK_SPEED * (HEAL_MOVE_MULT if is_healing() else 1.0)
+	var target := strafe_target()
+	var top_speed := LOCK_MOVE_SPEED if target else WALK_SPEED
+	var goal := dir * top_speed * (HEAL_MOVE_MULT if is_healing() else 1.0)
 	var rate := ACCELERATION if goal.length() > horizontal.length() else DECELERATION
 	horizontal = horizontal.move_toward(goal, rate * delta)
 	velocity.x = horizontal.x
@@ -359,10 +436,50 @@ func _move_step(delta: float) -> void:
 	if was_on_floor and is_on_wall() and dir != Vector3.ZERO:
 		_try_step_up(dir * WALK_SPEED * delta)
 
-	if dir != Vector3.ZERO:
-		# The Mixamo model faces +Z: it is rotated so its front points toward `dir`.
-		var target_yaw := atan2(dir.x, dir.z)
+	var face := dir
+	if target:
+		face = target.global_position - global_position   # strafe: keep facing the target
+		face.y = 0.0
+	if face.length_squared() > 0.0001:
+		# The Mixamo model faces +Z: it is rotated so its front points toward `face`.
+		var target_yaw := atan2(face.x, face.z)
 		_model.rotation.y = lerp_angle(_model.rotation.y, target_yaw, minf(1.0, TURN_SPEED * delta))
+
+
+## Locked target Kaelen strafes around (only walking in MOVE, outside cutscenes), or null.
+func strafe_target() -> Node3D:
+	if state != State.MOVE or _cutscene:
+		return null
+	return get_lock_target()
+
+
+## Velocity in the model's frame: x = to her right, y = forward (the model faces +Z, its right is −X).
+func local_ground_velocity() -> Vector2:
+	if _model == null:
+		return Vector2.ZERO
+	var b := _model.global_basis.orthonormalized()
+	var v := Vector3(velocity.x, 0.0, velocity.z)
+	return Vector2(-v.dot(b.x), v.dot(b.z))
+
+
+## TimeScale of the strafe blend at local velocity `v` (see local_ground_velocity): forward uses the
+## walk / run speeds; sideways and backwards, STRAFE_ANIM_SPEED. Only speeds up past each clip.
+static func strafe_anim_scale(v: Vector2) -> float:
+	var speed := v.length()
+	if speed <= 0.05:
+		return 1.0
+	if v.y >= absf(v.x):
+		return free_anim_scale(speed)
+	return maxf(0.6, speed / STRAFE_ANIM_SPEED)
+
+
+## TimeScale of the free locomotion at ground `speed` (prevents the feet from sliding).
+static func free_anim_scale(speed: float) -> float:
+	if speed > RUN_ANIM_SPEED:
+		return speed / RUN_ANIM_SPEED
+	if speed > 0.05 and speed < WALK_ANIM_SPEED:
+		return maxf(0.6, speed / WALK_ANIM_SPEED)
+	return 1.0
 
 
 # CharacterBody3D does not climb steps by itself: if it hits something up to MAX_STEP high, it tries to
@@ -530,7 +647,7 @@ static func combo_damage(i: int) -> int:
 
 
 func _in_combo_window() -> bool:
-	return state == State.ATTACK and _attack_time >= HIT_END[combo_index % 3]
+	return state == State.ATTACK and not _heavy and _attack_time >= HIT_END[combo_index % 3]
 
 
 ## Starts a hit from MOVE, or chains the next one inside the window after the previous one.
@@ -545,6 +662,7 @@ func try_attack() -> bool:
 	cancel_heal()
 	_set_hitbox_active(false)
 	_attack_time = 0.0
+	_heavy = false
 	state = State.ATTACK
 	_set_armor(true)
 	_face_attack_direction()
@@ -556,8 +674,43 @@ func try_attack() -> bool:
 	return true
 
 
+## Heavy attack: a leap that lands with a slam (HEAVY_DAMAGE). From MOVE or as a finisher inside
+## the combo window. Spends HEAVY_COST of stamina; it has the same hyper armor as the combo.
+func try_heavy_attack() -> bool:
+	var chaining := _in_combo_window()
+	if not (state == State.MOVE or chaining):
+		return false
+	if stamina == null or not stamina.try_spend(HEAVY_COST):
+		return false
+	cancel_heal()
+	_set_hitbox_active(false)
+	_attack_time = 0.0
+	combo_index = 0
+	_heavy = true
+	state = State.ATTACK
+	_set_armor(true)
+	_heavy_dir = get_facing()
+	_heavy_dir.y = 0.0
+	_heavy_dir = _heavy_dir.normalized()
+	_face_attack_direction()
+	_play_action(HEAVY_ANIM)
+	_play_sfx(sfx_swing)
+	return true
+
+
+func is_heavy_attacking() -> bool:
+	return state == State.ATTACK and _heavy
+
+
+## Hit-stop for the blow Kaelen is landing now (Hitbox asks it): stronger on the finisher and the slam.
+func hit_stop_time() -> float:
+	if _heavy or (state == State.ATTACK and combo_index % 3 == 2):
+		return HIT_STOP_STRONG
+	return HIT_STOP_LIGHT
+
+
 ## At the start of each hit Kaelen turns toward the locked target; without a target, toward the input (with the
-## slash offset). Without a target or input she keeps her facing.
+## slash offset; the heavy slam goes straight). Without a target or input she keeps her facing.
 func _face_attack_direction() -> void:
 	if _model == null or not is_inside_tree():
 		return
@@ -567,8 +720,33 @@ func _face_attack_direction() -> void:
 	else:
 		dir = _input_direction()
 	dir.y = 0.0
+	if dir.length_squared() <= 0.0001 and _heavy:
+		dir = _heavy_dir   # no target or input: the slam still centres on where she was facing
 	if dir.length_squared() > 0.0001:
-		_model.rotation.y = atan2(dir.x, dir.z) + ATTACK_AIM_OFFSET[combo_index % 3]
+		var offset := HEAVY_AIM_OFFSET if _heavy else ATTACK_AIM_OFFSET[combo_index % 3]
+		_model.rotation.y = atan2(dir.x, dir.z) + offset
+		if _heavy:
+			_heavy_dir = dir.normalized()
+
+
+## Horizontal motion during ATTACK: the heavy attack leaps forward while airborne; a combo hit steps
+## toward the locked target at its start (it stops short of it, and walls stop both).
+func _attack_motion() -> void:
+	var v := Vector3.ZERO
+	var target := get_lock_target()
+	var to_target := Vector3.INF
+	if target:
+		to_target = target.global_position - global_position
+		to_target.y = 0.0
+	if _heavy:
+		var airborne := _attack_time >= HEAVY_LEAP_START and _attack_time < HEAVY_LEAP_END
+		if airborne and (target == null or to_target.length() > HEAVY_LEAP_STOP):
+			v = _heavy_dir * HEAVY_LEAP_SPEED
+	elif target and _attack_time < ATTACK_STEP_TIME and to_target.length() > ATTACK_STEP_MIN:
+		v = to_target.normalized() * ATTACK_STEP_SPEED
+	velocity.x = v.x
+	velocity.z = v.z
+	move_and_slide()
 
 
 ## Advances the hit clock: activates the hitbox only inside its damage window, chains a buffered
@@ -576,8 +754,15 @@ func _face_attack_direction() -> void:
 func _advance_attack(delta: float) -> void:
 	_attack_time += delta
 	_tick_buffer(delta)
+	if _heavy:
+		_advance_heavy(delta)
+		return
 	var hit := combo_index % 3
 	_set_hitbox_active(_attack_time >= HIT_START[hit] and _attack_time < HIT_END[hit])
+	if _attack_time >= HIT_END[hit] and _buffered_action == &"heavy":
+		_clear_buffer()
+		if try_heavy_attack():
+			return
 	if _attack_time >= HIT_END[hit] and _buffered_action == &"attack":
 		_clear_buffer()
 		if try_attack():
@@ -588,10 +773,27 @@ func _advance_attack(delta: float) -> void:
 		_consume_buffer()
 
 
+## Heavy attack clock: the blade is live in [HEAVY_HIT_START, HEAVY_HIT_END), the slam raises dust
+## and shakes the camera at HEAVY_IMPACT, and it returns to MOVE at HEAVY_END (a buffered order runs then).
+func _advance_heavy(delta: float) -> void:
+	var was_before := _attack_time - delta < HEAVY_IMPACT
+	_set_hitbox_active(_attack_time >= HEAVY_HIT_START and _attack_time < HEAVY_HIT_END)
+	if was_before and _attack_time >= HEAVY_IMPACT and is_inside_tree():
+		var spot := _sword_hitbox.global_position if _sword_hitbox else global_position + _heavy_dir * 1.6
+		ImpactFx.dust(get_tree(), Vector3(spot.x, global_position.y + 0.1, spot.z), 1.2)
+		if _camera_rig:
+			_camera_rig.shake(0.05, 0.18)
+	if _attack_time >= HEAVY_END:
+		_end_attack()
+		_play_action(&"locomotion")
+		_consume_buffer()
+
+
 func _end_attack() -> void:
 	_set_hitbox_active(false)
 	_set_armor(false)
 	_attack_time = 0.0
+	_heavy = false
 	combo_index = 0
 	if state == State.ATTACK:
 		state = State.MOVE
@@ -619,7 +821,7 @@ func _set_hitbox_active(on: bool) -> void:
 	if _sword_hitbox == null:
 		return
 	if on:
-		_sword_hitbox.damage = combo_damage(combo_index)
+		_sword_hitbox.damage = HEAVY_DAMAGE if _heavy else combo_damage(combo_index)
 		_sword_hitbox.activate()
 	else:
 		_sword_hitbox.deactivate()
@@ -655,6 +857,8 @@ func _consume_buffer() -> bool:
 			return try_roll()
 		&"attack":
 			return try_attack()
+		&"heavy":
+			return try_heavy_attack()
 	return false
 
 
@@ -828,6 +1032,8 @@ func set_cutscene(on: bool) -> void:
 	if on == _cutscene:
 		return
 	_cutscene = on
+	if not on and not _walk_points.is_empty():
+		_end_scripted_walk()
 	if on:
 		cancel_heal()
 		if state != State.DEAD:
@@ -850,6 +1056,55 @@ func set_cutscene(on: bool) -> void:
 
 func is_cutscene() -> bool:
 	return _cutscene
+
+
+## Directed walk (stairs between floors, entering the temple): Kaelen, already in cutscene mode,
+## walks through `points` (only x/z matter; ramps and gravity do the height) at `speed` with her
+## walk/run clip, facing where she goes, and the camera eases in behind her. Emits
+## scripted_walk_finished at the last point; set_cutscene(false) gives control back.
+func scripted_walk(points: Array[Vector3], speed := 2.6) -> void:
+	_walk_points = points.duplicate()
+	_walk_speed = speed
+	if _walk_points.is_empty():
+		_end_scripted_walk()
+
+
+func is_scripted_walking() -> bool:
+	return not _walk_points.is_empty()
+
+
+func _scripted_step(delta: float) -> void:
+	var to := _walk_points[0] - global_position
+	to.y = 0.0
+	while to.length() <= WALK_ARRIVE:
+		_walk_points.pop_front()
+		if _walk_points.is_empty():
+			_end_scripted_walk()
+			return
+		to = _walk_points[0] - global_position
+		to.y = 0.0
+	var dir := to.normalized()
+	var horizontal := Vector3(velocity.x, 0.0, velocity.z).move_toward(dir * _walk_speed, ACCELERATION * delta)
+	velocity.x = horizontal.x
+	velocity.z = horizontal.z
+	if not is_on_floor():
+		velocity.y -= _gravity * delta
+	var was_on_floor := is_on_floor()
+	move_and_slide()
+	if was_on_floor and is_on_wall():
+		_try_step_up(dir * _walk_speed * delta)
+	_model.rotation.y = lerp_angle(_model.rotation.y, atan2(dir.x, dir.z), minf(1.0, TURN_SPEED * delta))
+	if _camera_rig:
+		_camera_rig.guide_yaw = atan2(-dir.x, -dir.z)
+
+
+func _end_scripted_walk() -> void:
+	_walk_points.clear()
+	velocity.x = 0.0
+	velocity.z = 0.0
+	if _camera_rig:
+		_camera_rig.guide_yaw = NAN
+	scripted_walk_finished.emit()
 
 
 ## Turns the model toward a world point (horizontal only). The Mixamo model faces +Z.
@@ -927,7 +1182,7 @@ func _build_animation_tree() -> void:
 			continue
 		var back := AnimationNodeStateMachineTransition.new()
 		back.xfade_time = 0.15
-		if state_name in ATTACK_ANIMS:
+		if state_name in ATTACK_ANIMS or state_name == HEAVY_ANIM:
 			back.xfade_time = 0.2   # requested with travel when the combo window closes
 		else:
 			back.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_AT_END
@@ -957,6 +1212,7 @@ func _build_animation_tree() -> void:
 	_anim_tree.set(&"parameters/hurt/speed/scale", _clip_length(player, &"hurt", HURT_DURATION) / HURT_DURATION)
 	for i in ATTACK_ANIMS.size():
 		_anim_tree.set(StringName("parameters/%s/speed/scale" % ATTACK_ANIMS[i]), ATTACK_ANIM_SPEED[i])
+	_anim_tree.set(StringName("parameters/%s/speed/scale" % HEAVY_ANIM), HEAVY_ANIM_SPEED)
 	_anim_tree.active = true
 
 
@@ -986,10 +1242,24 @@ func _build_locomotion() -> AnimationNodeBlendTree:
 		var clip := AnimationNodeAnimation.new()
 		clip.animation = p[0]
 		space.add_blend_point(clip, p[1], -1, p[0])
+	# Strafe (locked target): x = speed to her right, y = forward speed, in the model's frame.
+	var strafe := AnimationNodeBlendSpace2D.new()
+	strafe.min_space = Vector2(-WALK_SPEED, -WALK_SPEED)
+	strafe.max_space = Vector2(WALK_SPEED, WALK_SPEED)
+	for p in [["idle", Vector2.ZERO], ["walk", Vector2(0, WALK_ANIM_SPEED)], ["run", Vector2(0, RUN_ANIM_SPEED)],
+			["walk_back", Vector2(0, -STRAFE_ANIM_SPEED)], ["strafe_right", Vector2(STRAFE_ANIM_SPEED, 0)],
+			["strafe_left", Vector2(-STRAFE_ANIM_SPEED, 0)]]:
+		var clip := AnimationNodeAnimation.new()
+		clip.animation = p[0]
+		strafe.add_blend_point(clip, p[1], -1, p[0])
 	var tree := AnimationNodeBlendTree.new()
 	tree.add_node(&"locomotion", space)
+	tree.add_node(&"strafe", strafe)
+	tree.add_node(&"lock", AnimationNodeBlend2.new())
 	tree.add_node(&"speed", AnimationNodeTimeScale.new())
-	tree.connect_node(&"speed", 0, &"locomotion")
+	tree.connect_node(&"lock", 0, &"locomotion")
+	tree.connect_node(&"lock", 1, &"strafe")
+	tree.connect_node(&"speed", 0, &"lock")
 	tree.connect_node(&"output", 0, &"speed")
 	return tree
 
@@ -1014,10 +1284,11 @@ func _build_time_scaled_clip(clip_name: StringName, start_offset := 0.0, clip_le
 
 
 func _update_animation(speed: float) -> void:
+	var strafing := strafe_target() != null
+	_lock_blend = move_toward(_lock_blend, 1.0 if strafing else 0.0, LOCK_BLEND_RATE * get_physics_process_delta_time())
+	var local := local_ground_velocity()
 	_anim_tree.set(&"parameters/locomotion/locomotion/blend_position", speed)
-	var anim_scale := 1.0
-	if speed > RUN_ANIM_SPEED:
-		anim_scale = speed / RUN_ANIM_SPEED
-	elif speed > 0.05 and speed < WALK_ANIM_SPEED:
-		anim_scale = maxf(0.6, speed / WALK_ANIM_SPEED)
+	_anim_tree.set(&"parameters/locomotion/strafe/blend_position", local)
+	_anim_tree.set(&"parameters/locomotion/lock/blend_amount", _lock_blend)
+	var anim_scale := lerpf(free_anim_scale(speed), strafe_anim_scale(local), _lock_blend)
 	_anim_tree.set(&"parameters/locomotion/speed/scale", anim_scale)

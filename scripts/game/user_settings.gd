@@ -44,7 +44,7 @@ const SLOT_PAD := &"pad"
 ## Actions the player can remap, in the order they appear on the controls screen.
 const REMAP_ACTIONS: Array[StringName] = [
 	&"move_forward", &"move_back", &"move_left", &"move_right",
-	&"attack", &"roll", &"heal", &"lock_on", &"pause",
+	&"attack", &"heavy_attack", &"roll", &"heal", &"lock_on", &"pause",
 ]
 ## Actions whose gamepad input is on the stick axes (not remappable, only displayed).
 const PAD_FIXED: Array[StringName] = [&"move_forward", &"move_back", &"move_left", &"move_right"]
