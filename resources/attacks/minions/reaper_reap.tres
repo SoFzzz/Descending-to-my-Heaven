@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="MinionAttack" format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/minion_attack.gd" id="1_attack"]
+
+[resource]
+script = ExtResource("1_attack")
+id = &"reap"
+clip = &"attack"
+clip_start = 0.0
+min_range = 0.0
+max_range = 2.2
+weight = 1.0
+windup = 0.55
+active = 0.3
+hits = 1
+hit_gap = 0.3
+recover = 0.9
+damage_mult = 1.0
+lunge_speed = 0.0
+zone_radius = 0.0
+zone_at_target = false
+warning = 0
+cooldown = 0.0

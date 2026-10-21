@@ -21,10 +21,22 @@ const ANIM_BLEND := 0.15        # s of blend between clips
 const MOVE_EPSILON := 0.1       # m/s below which a chasing minion plays idle instead of walk
 const WALK_SCALE_MIN := 0.4
 const WALK_SCALE_MAX := 1.5
-const DEATH_FALL_TIME := 0.6    # fall tween when the model has no death clip
+const DEATH_FALL_TIME := 0.55   # fall tween when the model has no death clip
 const DEATH_SINK := 0.15        # m the model sinks while falling
+const DEATH_BUCKLE := 0.3       # rad it doubles forward before toppling
+const DEATH_BUCKLE_TIME := 0.3
+const DEATH_TWIST := 0.5        # rad it turns while buckling (side given by the orbit sign)
+const DEATH_BOUNCE := 0.12      # rad it rebounds after hitting the floor
+const DEATH_BOUNCE_TIME := 0.12
+const DEATH_STAGGER_SPEED := 1.6
+const DEATH_DUST_OFFSET := 1.0  # m behind its feet, where the torso lands
+const DEATH_DUST_SIZE := 1.2
+const CORPSE_SINK_DEPTH := 0.9  # m the corpse sinks into the floor before it is freed
+const CORPSE_SINK_TIME := 1.0
+const CORPSE_DUST_SIZE := 1.0
 const KIND_IDLE := &"idle"
 const KIND_WALK := &"walk"
+const KIND_RUN := &"run"
 const KIND_ATTACK := &"attack"
 const KIND_HURT := &"hurt"
 const KIND_DEATH := &"death"
@@ -38,6 +50,8 @@ const ORDER_ARRIVE := 0.8       # m to the order point within which it stands st
 @export var attack_range := 1.5
 @export var move_speed := 3.5
 @export var damage := 20
+## Attack repertoire. Empty = the classic single swing (WINDUP/ACTIVE/RECOVER_TIME, anim_attack).
+@export var attacks: Array[MinionAttack] = []
 
 @export_group("Visuals")
 @export var model_scene: PackedScene            ## null = the placeholder (Body/Visor) stays unchanged
@@ -49,11 +63,27 @@ const ORDER_ARRIVE := 0.8       # m to the order point within which it stands st
 @export var anim_attack: StringName = &"attack"
 @export var anim_hurt: StringName = &"hurt"
 @export var anim_death: StringName = &"death"   ## empty or missing -> fall tween
+## Played in a loop over Kaelen's body when she dies (empty or missing = idle).
+@export var anim_taunt: StringName = &""
+## Without a death clip: clip played while the body collapses (e.g. "hurt"). Empty = none.
+@export var death_stagger_clip: StringName = &""
 @export var walk_anim_speed := 1.0              ## speed scale of the walk clip
+## Runners (arena 3): while chasing a Kaelen farther than run_distance they sprint at run_speed with
+## anim_run. Empty anim_run or run_speed <= move_speed = it always walks.
+@export var anim_run: StringName = &""
+@export var run_speed := 0.0
+@export var run_distance := 6.0
+@export var run_anim_speed := 1.0
 @export var weapon_scene: PackedScene           ## optional, hung on weapon_bone
 @export var weapon_bone: StringName = &"mixamorig:RightHand"
 @export var weapon_transform := Transform3D.IDENTITY
-@export var corpse_time := 2.0                  ## s from death to queue_free
+@export var corpse_time := 2.5                  ## s the body lies on the floor before sinking away
+## Death clip: clip seconds skipped at the start (a slow stagger before the fall), clip second at
+## which the body hits the floor (< 0 = the clip's end) and the game seconds that fall may take (the
+## clip is sped up to fit, never slowed down).
+@export var death_clip_start := 0.0
+@export var death_land_at := -1.0
+@export var death_fall_time := 1.5
 @export_group("Audio")
 @export var sfx_spawn: AudioStream              ## elites: sound when they appear
 @export var sfx_attack: AudioStream
@@ -97,17 +127,60 @@ var _order_point := Vector3.ZERO   # encirclement point given by the Orchestrato
 var _order_left := 0.0
 var _retreat_left := 0.0           # s of retreat left (low health)
 var _retreated := false
+var current_attack: MinionAttack
+## Seconds from death until the body is on the floor (set when it dies).
+var death_landing := 0.0
+var _default_attack: MinionAttack   # built from the constants when `attacks` is empty
+var _last_attack_id: StringName = &""
+var _hit_index := -1                # hit window in progress (-1 = none)
+var _rng := RandomNumberGenerator.new()
+var _zone_hitbox: Hitbox            # floor circle of zone attacks (cast, scream), created on demand
+var _zone_telegraph: MeshInstance3D
+var _zone_point := Vector3.ZERO
+
+var _stun_for := STUN_TIME          # length of the current STUNNED (a finisher or the heavy attack stun longer)
+var _knock := Vector3.ZERO          # knockback velocity at the start of the push (fades to 0)
+var _knock_total := 0.0
+var _knock_left := 0.0
+var _flinch: Tween
+var _spell_circle: MagicArea        # magic circle of a cast in progress
+var _orb_sent := false
+var _orb: Node3D                    # the cast's orb while it flies
+var _ready_at := {}                 # attack id -> game time from which it can be chosen again
+var _clock := 0.0
+var _taunting := false              # Kaelen died: it stops and mocks her
+
+## Being hit pushes the minion back: a normal hit KNOCK_SPEED m/s fading over KNOCK_TIME (about 0.35 m),
+## the combo's 3rd hit and the heavy attack FINISHER_KNOCK_* (about 1.3 m) and a longer stun (the heavy
+## one HEAVY_STUN). Elites, heavier, take ELITE_KNOCK_MULT of the push. The body also flinches back.
+const KNOCK_SPEED := 3.2
+const KNOCK_TIME := 0.22
+const FINISHER_KNOCK_SPEED := 7.0
+const FINISHER_KNOCK_TIME := 0.36
+const FINISHER_STUN := 0.65
+const HEAVY_STUN := 1.2
+const ELITE_KNOCK_MULT := 0.5
+const FLINCH_ANGLE := 0.16          # rad the body leans back on a hit (twice on a finisher)
+const FLINCH_TIME := 0.09
+const SPELL_COLOR := Color(0.6, 1.0, 0.3)
+const SPELL_EDGE := Color(0.15, 0.55, 0.08)
+const ZONE_TRACK_FRACTION := 0.6    # a cast follows Kaelen for the first 60 % of its windup
+const LUNGE_STOP := 0.9             # m to Kaelen at which a lunge stops pushing
+const ZONE_HEIGHT := 2.0
 
 
 func _ready() -> void:
 	add_to_group("enemy")
 	add_to_group("lockable")
-	brain.attack_range = attack_range
+	_rng.randomize()
+	brain.attack_range = MinionAttack.reach(attacks, attack_range)
 	brain.circle_range = TOKEN_RANGE
 	hitbox.damage = damage
 	health.died.connect(_on_died)
 	hurtbox.hurt.connect(_on_hurt)
 	agent.velocity_computed.connect(_on_velocity_computed)
+	# Avoidance clamps the safe velocity to max_speed: a runner needs room for its sprint.
+	agent.max_speed = maxf(agent.max_speed, maxf(move_speed, run_speed))
 	# Fixed orbit direction per minion so they do not all pile up on the same side.
 	_orbit_sign = 1.0 if get_instance_id() % 2 == 0 else -1.0
 	_setup_visuals()
@@ -121,7 +194,12 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
 	_find_player()
+	_clock += delta
+	if _taunting:
+		_run_taunt(delta)
+		return
 	_state_time += delta
+	brain.attack_range = MinionAttack.reach(_ready_attacks(), attack_range)
 	_token_cooldown = maxf(0.0, _token_cooldown - delta)
 	_order_left = maxf(0.0, _order_left - delta)
 	_retreat_left = maxf(0.0, _retreat_left - delta)
@@ -137,9 +215,9 @@ func _physics_process(delta: float) -> void:
 		distance = distance,
 		sees_player = sees,
 		has_token = _has_token(),
-		attack_finished = state == MinionState.ATTACK and _state_time >= WINDUP_TIME + ACTIVE_TIME,
-		recover_finished = state == MinionState.RECOVER and _state_time >= RECOVER_TIME,
-		stun_finished = state == MinionState.STUNNED and _state_time >= STUN_TIME,
+		attack_finished = state == MinionState.ATTACK and _state_time >= get_attack().strike_time(),
+		recover_finished = state == MinionState.RECOVER and _state_time >= get_attack().recover,
+		stun_finished = state == MinionState.STUNNED and _state_time >= _stun_for,
 		was_hit = _was_hit,
 		is_dead = health.is_dead(),
 	}
@@ -202,7 +280,8 @@ func _run_state(delta: float) -> void:
 			elif _player and _order_left > 0.0:
 				_go_to_order(delta, move_speed)
 			elif _player:
-				_navigate_to(_player.global_position, move_speed)
+				var to_player := global_position.distance_to(_player.global_position)
+				_navigate_to(_player.global_position, chase_speed(move_speed, run_speed, to_player, run_distance))
 				_face_direction(Vector3(velocity.x, 0.0, velocity.z), delta)
 			else:
 				_stop()
@@ -218,17 +297,23 @@ func _run_state(delta: float) -> void:
 			else:
 				_stop()
 		MinionState.ATTACK:
-			_stop()
-			if _state_time < WINDUP_TIME:
-				if _player:
-					_face_direction(_player.global_position - global_position, delta)
-			elif _state_time < WINDUP_TIME + ACTIVE_TIME:
-				_set_hitbox(true)
-			else:
-				_set_hitbox(false)
+			_run_attack(delta)
+		MinionState.STUNNED:
+			_run_knockback(delta)
 		_:
 			_stop()
 	move_and_slide()
+
+
+## Pushed back by a hit: the push fades linearly; walls stop it (move_and_slide).
+func _run_knockback(delta: float) -> void:
+	_stop()
+	if _knock_left <= 0.0:
+		return
+	var v := _knock * clampf(_knock_left / _knock_total, 0.0, 1.0)
+	velocity.x = v.x
+	velocity.z = v.z
+	_knock_left = maxf(0.0, _knock_left - delta)
 
 
 ## Goes to the encirclement point and, on arrival, stands looking at Kaelen.
@@ -248,11 +333,13 @@ func _change_state(next: MinionState) -> void:
 	state = next
 	_state_time = 0.0
 	if prev == MinionState.ATTACK:
-		_set_hitbox(false)
+		_end_strike()
 		_release_token(true)
 	match next:
+		MinionState.ATTACK:
+			_begin_attack()
 		MinionState.STUNNED:
-			_set_hitbox(false)
+			_end_strike()
 			_release_token(true)
 		MinionState.DEAD:
 			_stop_steps()
@@ -301,10 +388,15 @@ func _update_token(distance: float) -> void:
 			_release_token()
 		elif _retreat_left > 0.0:
 			pass
-		elif distance <= TOKEN_RANGE and _token_cooldown <= 0.0:
+		elif distance <= token_range() and _token_cooldown <= 0.0:
 			_holding_token = tokens.request(self)   # returns true if it already holds one
-		elif distance > TOKEN_DROP_RANGE and _holding_token:
+		elif distance > token_range() + (TOKEN_DROP_RANGE - TOKEN_RANGE) and _holding_token:
 			_release_token()
+
+
+## Radius at which it asks for a token: TOKEN_RANGE, or more for a minion with a ranged attack.
+func token_range() -> float:
+	return maxf(TOKEN_RANGE, brain.attack_range + 0.5)
 
 
 ## Asks AttackTokens (the source of truth): if it was reset with this minion alive,
@@ -386,6 +478,174 @@ func _face_direction(dir: Vector3, delta: float) -> void:
 
 # --- Combat -----------------------------------------------------------------------------------
 
+## The attack in use (or about to be used): the chosen one, else the classic single swing.
+func get_attack() -> MinionAttack:
+	if current_attack:
+		return current_attack
+	if not attacks.is_empty():
+		return attacks[0]
+	if _default_attack == null:
+		_default_attack = MinionAttack.new()
+		_default_attack.id = &"swing"
+		_default_attack.clip = anim_attack
+		_default_attack.max_range = attack_range
+		_default_attack.windup = WINDUP_TIME
+		_default_attack.active = ACTIVE_TIME
+		_default_attack.recover = RECOVER_TIME
+	return _default_attack
+
+
+## Attacks that can be chosen now (off cooldown); all of them if every one is cooling down.
+func _ready_attacks() -> Array:
+	var out: Array = []
+	for a in attacks:
+		if _clock >= float(_ready_at.get(a.id, 0.0)):
+			out.append(a)
+	return out if not out.is_empty() else attacks
+
+
+func _begin_attack() -> void:
+	current_attack = null
+	if not attacks.is_empty():
+		var pool := _ready_attacks()
+		var distance := global_position.distance_to(_player.global_position) if _player else 0.0
+		var i := MinionAttack.choose(pool, distance, _last_attack_id, _rng.randf())
+		current_attack = pool[i]
+	var atk := get_attack()
+	_last_attack_id = atk.id
+	if atk.cooldown > 0.0:
+		_ready_at[atk.id] = _clock + atk.cooldown
+	_hit_index = -1
+	_orb_sent = false
+	hitbox.damage = roundi(damage * atk.damage_mult)
+	if atk.warning != AttackWarning.Level.NONE:
+		AttackWarning.aura_to(_model_root, AttackWarning.color_for(atk.warning), 1.0, AttackWarning.rise_time(atk.windup))
+	if atk.zone_radius > 0.0:
+		_zone_point = _zone_center(atk)
+		_show_zone(atk)
+
+
+func _run_attack(delta: float) -> void:
+	var atk := get_attack()
+	_stop()
+	if _state_time < atk.windup:
+		if _player:
+			_face_direction(_player.global_position - global_position, delta)
+			if atk.zone_radius > 0.0 and _state_time < atk.windup * ZONE_TRACK_FRACTION:
+				_zone_point = _zone_center(atk)
+				_place_zone()
+		if atk.zone_radius > 0.0:
+			if _zone_telegraph:
+				AttackWarning.set_progress(_zone_telegraph, _state_time / atk.windup)
+			if atk.zone_at_target and not _orb_sent and _state_time >= atk.windup * ZONE_TRACK_FRACTION:
+				_orb_sent = true   # the spot is fixed now: the orb flies onto it and lands with the blow
+				_orb = SpellFx.orb(get_parent(), _hand_position(), _zone_point + Vector3.UP * 0.3,
+						atk.windup - _state_time, SPELL_COLOR, SPELL_EDGE)
+		return
+	var idx := atk.hit_index_at(_state_time)
+	if idx != _hit_index:
+		_set_strike(false)
+		if idx >= 0:
+			_set_strike(true)
+			if atk.zone_at_target and idx == 0:
+				SpellFx.burst(get_parent(), _zone_point, atk.zone_radius, SPELL_COLOR, SPELL_EDGE)
+		_hit_index = idx
+	if idx >= 0 and atk.lunge_speed > 0.0:
+		var close := _player != null and global_position.distance_to(_player.global_position) <= LUNGE_STOP
+		if not close:
+			var fwd := get_forward() * atk.lunge_speed
+			velocity.x = fwd.x
+			velocity.z = fwd.z
+
+
+## Where a spell leaves the caster: in front of its chest, at hand height.
+func _hand_position() -> Vector3:
+	return global_position + Vector3.UP * 1.5 + get_forward() * 0.6
+
+
+## Where a zone attack lands: Kaelen's feet (cast) or the minion's own (scream).
+func _zone_center(atk: MinionAttack) -> Vector3:
+	if atk.zone_at_target and _player:
+		return _player.global_position
+	return global_position
+
+
+func _set_strike(on: bool) -> void:
+	if get_attack().zone_radius > 0.0:
+		if _zone_hitbox:
+			if on:
+				_zone_hitbox.damage = hitbox.damage
+				_zone_hitbox.activate()
+			else:
+				_zone_hitbox.deactivate()
+	else:
+		_set_hitbox(on)
+
+
+## Leaves ATTACK: weapon and zone off, warning hidden.
+func _end_strike() -> void:
+	_set_hitbox(false)
+	if _zone_hitbox:
+		_zone_hitbox.deactivate()
+	if _zone_telegraph:
+		_zone_telegraph.visible = false
+	SpellFx.stop_circle(_spell_circle)
+	_spell_circle = null
+	if _orb and is_instance_valid(_orb) and _hit_index < 0:
+		SpellFx.fizzle(_orb)   # interrupted before it landed: it must not fall harmlessly
+	_orb = null
+	if current_attack and current_attack.warning != AttackWarning.Level.NONE:
+		AttackWarning.aura_to(_model_root, AttackWarning.color_for(current_attack.warning), 0.0, AttackWarning.AURA_FADE)
+	_hit_index = -1
+
+
+## Shows the zone's warning: a spell's magic circle (cast) or the yellow ground warning (scream).
+func _show_zone(atk: MinionAttack) -> void:
+	if _zone_hitbox == null:
+		_build_zone()
+	((_zone_hitbox.get_child(0) as CollisionShape3D).shape as CylinderShape3D).radius = atk.zone_radius
+	if atk.zone_at_target:
+		_spell_circle = SpellFx.circle(get_parent(), _zone_point, atk.zone_radius, atk.windup)
+	else:
+		AttackWarning.set_radius(_zone_telegraph, atk.zone_radius)
+		AttackWarning.set_progress(_zone_telegraph, 0.0)
+		_zone_telegraph.visible = true
+	_place_zone()
+
+
+func _place_zone() -> void:
+	if _zone_hitbox == null:
+		return
+	_zone_hitbox.global_position = _zone_point
+	_zone_telegraph.global_position = _zone_point + Vector3.UP * 0.05
+	if _spell_circle and is_instance_valid(_spell_circle):
+		_spell_circle.global_position = _zone_point + Vector3.UP * 0.06
+
+
+## Floor circle (hitbox + warning) shared by every zone attack of this minion. top_level: it stays
+## where it landed even if the minion turns or moves.
+func _build_zone() -> void:
+	_zone_hitbox = Hitbox.new()
+	_zone_hitbox.name = "ZoneHitbox"
+	_zone_hitbox.top_level = true
+	_zone_hitbox.collision_layer = hitbox.collision_layer
+	_zone_hitbox.collision_mask = hitbox.collision_mask
+	_zone_hitbox.monitorable = false
+	_zone_hitbox.sfx_impact = hitbox.sfx_impact
+	var shape := CollisionShape3D.new()
+	var cyl := CylinderShape3D.new()
+	cyl.height = ZONE_HEIGHT
+	shape.shape = cyl
+	shape.position.y = ZONE_HEIGHT * 0.5
+	_zone_hitbox.add_child(shape)
+	add_child(_zone_hitbox)
+	_zone_telegraph = AttackWarning.ground_disc(1.0, AttackWarning.Level.DODGE)   # same look as the bosses'
+	_zone_telegraph.name = "ZoneTelegraph"
+	_zone_telegraph.top_level = true
+	_zone_telegraph.visible = false
+	add_child(_zone_telegraph)
+
+
 func _set_hitbox(on: bool) -> void:
 	if on == _hitbox_on:
 		return
@@ -396,10 +656,82 @@ func _set_hitbox(on: bool) -> void:
 		hitbox.deactivate()
 
 
-func _on_hurt(_amount: int, _source: Node) -> void:
-	if not health.is_dead():
-		_was_hit = true
-		_play_sfx(sfx_hurt)
+func _on_hurt(_amount: int, source: Node) -> void:
+	if health.is_dead():
+		return
+	_was_hit = true
+	_play_sfx(sfx_hurt)
+	var kind := hit_kind(source)
+	_stun_for = HEAVY_STUN if kind == &"heavy" else (FINISHER_STUN if kind == &"finisher" else STUN_TIME)
+	var strong := kind != &"normal"
+	var away := -get_forward()
+	if source is Node3D:
+		away = global_position - (source as Node3D).global_position
+	away.y = 0.0
+	if away.length_squared() < 0.0001:
+		away = -get_forward()
+	var mult := ELITE_KNOCK_MULT if sfx_spawn != null else 1.0
+	_knock = away.normalized() * (FINISHER_KNOCK_SPEED if strong else KNOCK_SPEED) * mult
+	_knock_total = FINISHER_KNOCK_TIME if strong else KNOCK_TIME
+	_knock_left = _knock_total
+	_flinch_back(2.0 if strong else 1.0)
+
+
+## How hard a hit was: &"heavy" (Kaelen's heavy attack), &"finisher" (3rd hit of her combo) or &"normal".
+static func hit_kind(source: Node) -> StringName:
+	var player := source as Player
+	if player == null:
+		return &"normal"
+	if player.is_heavy_attacking():
+		return &"heavy"
+	if player.state == Player.State.ATTACK and player.combo_index % 3 == 2:
+		return &"finisher"
+	return &"normal"
+
+
+## The body leans back for an instant (procedural, on the model holder) and straightens.
+func _flinch_back(scale_by: float) -> void:
+	var holder := get_node_or_null(^"Model") as Node3D
+	if holder == null or not is_inside_tree():
+		return
+	if _flinch and _flinch.is_valid():
+		_flinch.kill()
+	_flinch = create_tween()
+	_flinch.tween_property(holder, "rotation:x", -FLINCH_ANGLE * scale_by, FLINCH_TIME) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_flinch.tween_property(holder, "rotation:x", 0.0, FLINCH_TIME * 3.0 * scale_by) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+## Kaelen died: stop attacking and mock her over her body until the arena reloads.
+func celebrate() -> void:
+	if state == MinionState.DEAD or _taunting:
+		return
+	_taunting = true
+	_end_strike()
+	_release_token()
+	_stop()
+	_stop_steps()
+	if _anim and _anim.is_inside_tree():
+		var clip := anim_taunt if _anim.has_animation(anim_taunt) else anim_idle
+		if _anim.has_animation(clip):
+			_anim.get_animation(clip).loop_mode = Animation.LOOP_LINEAR
+			_anim.speed_scale = 1.0
+			_anim.play(clip, ANIM_BLEND * 2.0)
+			_current_kind = KIND_IDLE
+
+
+func is_taunting() -> bool:
+	return _taunting
+
+
+func _run_taunt(delta: float) -> void:
+	if not is_on_floor():
+		velocity.y -= _gravity * delta
+	_stop()
+	if _player:
+		_face_direction(_player.global_position - global_position, delta)
+	move_and_slide()
 
 
 func _on_died() -> void:
@@ -408,7 +740,9 @@ func _on_died() -> void:
 
 
 func _die() -> void:
-	_set_hitbox(false)
+	if _flinch and _flinch.is_valid():
+		_flinch.kill()
+	_end_strike()
 	_release_token()
 	_stop()
 	remove_from_group("enemy")
@@ -424,14 +758,31 @@ func _die() -> void:
 	_play_sfx(sfx_death)
 	if is_inside_tree():
 		ImpactFx.puff(get_tree(), global_position + Vector3.UP * 0.5)
-	_play_death()
-	get_tree().create_timer(corpse_time).timeout.connect(queue_free)
+	death_landing = _play_death()
+	# The body lies on the floor corpse_time s after landing, then sinks away (paused with the game).
+	get_tree().create_timer(death_landing + corpse_time, false).timeout.connect(_despawn)
+
+
+## The corpse sinks into the floor in a puff of dust and is freed.
+func _despawn() -> void:
+	if not is_inside_tree():
+		return
+	ImpactFx.dust(get_tree(), global_position + Vector3.UP * 0.1, CORPSE_DUST_SIZE)
+	var holder := get_node_or_null(^"Model") as Node3D
+	if holder == null:
+		queue_free()
+		return
+	var tween := create_tween()
+	tween.tween_property(holder, "position:y", holder.position.y - CORPSE_SINK_DEPTH, CORPSE_SINK_TIME) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_callback(queue_free)
 
 
 # --- Visuals ----------------------------------------------------------------------------------
 
 ## Static clip choice: which kind of clip the FSM state asks for (horizontal speed in m/s).
-static func clip_kind(st: MinionState, horizontal_speed: float) -> StringName:
+## `run_from`: speed from which a runner shows its run clip (INF = it never runs).
+static func clip_kind(st: MinionState, horizontal_speed: float, run_from := INF) -> StringName:
 	match st:
 		MinionState.DEAD:
 			return KIND_DEATH
@@ -440,8 +791,22 @@ static func clip_kind(st: MinionState, horizontal_speed: float) -> StringName:
 		MinionState.ATTACK, MinionState.RECOVER:
 			return KIND_ATTACK   # keeps playing through RECOVER so the swing ends naturally
 		MinionState.CHASE, MinionState.CIRCLE:
+			if horizontal_speed >= run_from:
+				return KIND_RUN
 			return KIND_WALK if horizontal_speed >= MOVE_EPSILON else KIND_IDLE
 	return KIND_IDLE
+
+
+## Chase speed: a runner sprints while Kaelen is farther than run_distance, otherwise it walks.
+static func chase_speed(walk: float, run: float, distance: float, run_from_distance: float) -> float:
+	return run if run > walk and distance > run_from_distance else walk
+
+
+## Speed from which the run clip shows (half-way between walking and running), INF without one.
+func _run_threshold() -> float:
+	if anim_run == &"" or run_speed <= move_speed:
+		return INF
+	return (move_speed + run_speed) * 0.5
 
 
 ## Walk clip speed proportional to the real speed (relative to max_speed).
@@ -489,11 +854,14 @@ func _attach_model(inst: Node3D) -> bool:
 	if _anim == null:
 		push_warning("Minion: the model has no AnimationPlayer.")
 	else:
-		for clip in [anim_idle, anim_walk]:
+		for clip in [anim_idle, anim_walk, anim_run]:
 			if _anim.has_animation(clip):
 				_anim.get_animation(clip).loop_mode = Animation.LOOP_LINEAR
 		# One-shot clips must not loop (a looping death would get the corpse back up).
-		for clip in [anim_attack, anim_hurt, anim_death]:
+		var one_shots: Array[StringName] = [anim_attack, anim_hurt, anim_death]
+		for atk in attacks:
+			one_shots.append(atk.clip)
+		for clip in one_shots:
 			if _anim.has_animation(clip):
 				_anim.get_animation(clip).loop_mode = Animation.LOOP_NONE
 	if weapon_scene:
@@ -586,8 +954,10 @@ func _clip_name(kind: StringName) -> StringName:
 	match kind:
 		KIND_WALK:
 			return anim_walk
+		KIND_RUN:
+			return anim_run
 		KIND_ATTACK:
-			return anim_attack
+			return get_attack().clip
 		KIND_HURT:
 			return anim_hurt
 		KIND_DEATH:
@@ -600,43 +970,92 @@ func _update_animation(force := false) -> void:
 	if _anim == null or not _anim.is_inside_tree():
 		return
 	var speed := Vector2(velocity.x, velocity.z).length()
-	var kind := clip_kind(state, speed)
+	var kind := clip_kind(state, speed, _run_threshold())
 	var clip := _clip_name(kind)
 	if not _anim.has_animation(clip):
 		return
 	if kind == KIND_WALK:
 		_anim.speed_scale = walk_speed_scale(speed, move_speed, walk_anim_speed)
+	elif kind == KIND_RUN:
+		_anim.speed_scale = walk_speed_scale(speed, run_speed, run_anim_speed)
 	if not force and kind == _current_kind:
 		return
 	_current_kind = kind
 	var length := _anim.get_animation(clip).length
+	var start := 0.0
 	match kind:
 		KIND_ATTACK:
-			_anim.speed_scale = fit_speed(length, WINDUP_TIME + ACTIVE_TIME + RECOVER_TIME)
+			var atk := get_attack()
+			start = clampf(atk.clip_start, 0.0, maxf(0.0, length - 0.1))
+			_anim.speed_scale = fit_speed(length - start, atk.total_time())
 		KIND_HURT:
-			_anim.speed_scale = fit_speed(length, STUN_TIME)
-		KIND_WALK:
+			_anim.speed_scale = fit_speed(length, _stun_for)
+		KIND_WALK, KIND_RUN:
 			pass   # already set above
 		_:
 			_anim.speed_scale = 1.0
 	_anim.play(clip, ANIM_BLEND)
+	if start > 0.0:
+		_anim.seek(start, true)
 
 
-func _play_death() -> void:
+## Plays the death and returns the seconds until the body is on the floor.
+func _play_death() -> float:
 	if _model_root == null:
-		return   # placeholder: no animation, as before
+		return 0.0   # placeholder: no animation, as before
 	if _anim and _anim.is_inside_tree() and _anim.has_animation(anim_death):
+		var length := _anim.get_animation(anim_death).length
+		var start := clampf(death_clip_start, 0.0, maxf(0.0, length - 0.05))
+		var land := death_land_at if death_land_at > start and death_land_at <= length else length
+		var speed := fit_speed(land - start, death_fall_time)
 		_current_kind = KIND_DEATH
-		_anim.speed_scale = 1.0
+		_anim.speed_scale = speed
 		_anim.play(anim_death, ANIM_BLEND)
-		return
+		if start > 0.0:
+			_anim.seek(start, true)
+		var land_in := (land - start) / speed
+		if is_inside_tree():
+			get_tree().create_timer(land_in, false).timeout.connect(_on_clip_landed)
+		return land_in
 	var holder := get_node_or_null(^"Model") as Node3D
 	if holder == null or not is_inside_tree():
-		return
-	var tween := create_tween().set_parallel(true)
+		return 0.0
+	# No death clip: a staged collapse. The stagger clip (if any) bends the body while the holder
+	# buckles forward and twists, then it topples backwards, bounces once and raises dust.
+	if _anim and _anim.is_inside_tree() and _anim.has_animation(death_stagger_clip):
+		_current_kind = KIND_DEATH
+		_anim.speed_scale = DEATH_STAGGER_SPEED
+		_anim.play(death_stagger_clip, ANIM_BLEND)
+	var twist := DEATH_TWIST * _orbit_sign
+	var y0 := holder.position.y
+	var tween := create_tween()
+	tween.tween_property(holder, "rotation", Vector3(-DEATH_BUCKLE, holder.rotation.y + twist, 0.0), DEATH_BUCKLE_TIME) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_property(holder, "rotation:x", PI * 0.5, DEATH_FALL_TIME) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.tween_property(holder, "position:y", holder.position.y - DEATH_SINK, DEATH_FALL_TIME)
+	tween.parallel().tween_property(holder, "position:y", y0 - DEATH_SINK, DEATH_FALL_TIME)
+	tween.tween_callback(_on_death_landed)
+	tween.tween_property(holder, "rotation:x", PI * 0.5 - DEATH_BOUNCE, DEATH_BOUNCE_TIME) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(holder, "rotation:x", PI * 0.5, DEATH_BOUNCE_TIME) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	return DEATH_BUCKLE_TIME + DEATH_FALL_TIME
+
+
+## A death clip reached death_land_at: dust under the body (the clip keeps settling on its own).
+func _on_clip_landed() -> void:
+	if is_inside_tree():
+		ImpactFx.dust(get_tree(), global_position + Vector3.UP * 0.1, DEATH_DUST_SIZE)
+
+
+## The body hits the floor: dust where the torso lands and the pose freezes.
+func _on_death_landed() -> void:
+	if not is_inside_tree():
+		return
+	if _anim and _anim.is_inside_tree():
+		_anim.speed_scale = 0.0
+	var back := global_basis.z * DEATH_DUST_OFFSET   # it falls backwards (+Z)
+	ImpactFx.dust(get_tree(), global_position + back, DEATH_DUST_SIZE)
 
 
 ## Can the footstep loop play? `has_voice`: this minion already owns one of the players.

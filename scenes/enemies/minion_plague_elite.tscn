@@ -1,11 +1,16 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/enemies/minion_plague.tscn" id="1_plague"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/knight_spawn.mp3" id="a_spawn"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/knight_hurt.mp3" id="a_hurt"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/knight_death.mp3" id="a_death"]
+[ext_resource type="Script" path="res://scripts/ai/minion_attack.gd" id="ma_script"]
+[ext_resource type="Resource" path="res://resources/attacks/minions/plague_claw.tres" id="ma_plague_claw"]
+[ext_resource type="Resource" path="res://resources/attacks/minions/plague_cast.tres" id="ma_plague_cast"]
+[ext_resource type="Resource" path="res://resources/attacks/minions/plague_leap.tres" id="ma_plague_leap"]
 
 [node name="MinionPlagueElite" instance=ExtResource("1_plague")]
+attacks = Array[ExtResource("ma_script")]([ExtResource("ma_plague_claw"), ExtResource("ma_plague_cast"), ExtResource("ma_plague_leap")])
 cost = 3
 damage = 30
 tint = Color(0.55, 0.9, 0.45, 1)

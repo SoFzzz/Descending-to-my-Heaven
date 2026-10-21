@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="MinionAttack" format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/minion_attack.gd" id="1_attack"]
+
+[resource]
+script = ExtResource("1_attack")
+id = &"combo"
+clip = &"combo"
+clip_start = 0.0
+min_range = 0.0
+max_range = 2.0
+weight = 0.9
+windup = 0.5
+active = 0.2
+hits = 3
+hit_gap = 0.35
+recover = 1.0
+damage_mult = 0.9
+lunge_speed = 1.5
+zone_radius = 0.0
+zone_at_target = false
+warning = 1
+cooldown = 0.0

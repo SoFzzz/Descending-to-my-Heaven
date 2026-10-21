@@ -1,10 +1,14 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/enemies/minion_base.tscn" id="1_base"]
 [ext_resource type="PackedScene" path="res://assets/minions/straw_reaper/straw_reaper.glb" id="2_model"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/reaper_spawn.mp3" id="a_spawn"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/reaper_hurt.mp3" id="a_hurt"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/elites/reaper_death.mp3" id="a_death"]
+[ext_resource type="Script" path="res://scripts/ai/minion_attack.gd" id="ma_script"]
+[ext_resource type="Resource" path="res://resources/attacks/minions/reaper_reap.tres" id="ma_reaper_reap"]
+[ext_resource type="Resource" path="res://resources/attacks/minions/reaper_sweep.tres" id="ma_reaper_sweep"]
+[ext_resource type="Resource" path="res://resources/attacks/minions/reaper_combo.tres" id="ma_reaper_combo"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.4
@@ -18,9 +22,15 @@ height = 1.95
 size = Vector3(1.4, 1.2, 1.8)
 
 [node name="MinionReaperElite" instance=ExtResource("1_base")]
+attacks = Array[ExtResource("ma_script")]([ExtResource("ma_reaper_reap"), ExtResource("ma_reaper_sweep"), ExtResource("ma_reaper_combo")])
 cost = 3
 damage = 30
 model_scene = ExtResource("2_model")
+death_clip_start = 2.0
+death_land_at = 4.2
+anim_run = &"lurch"
+run_speed = 5.0
+run_distance = 7.0
 sfx_spawn = ExtResource("a_spawn")
 sfx_hurt = ExtResource("a_hurt")
 sfx_death = ExtResource("a_death")
@@ -33,7 +43,7 @@ shape = SubResource("CapsuleShape3D_body")
 max_value = 90
 
 [node name="Hurtbox" parent="."]
-surface = &"flesh"
+surface = &"straw"
 
 [node name="CollisionShape3D" parent="Hurtbox"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.975, 0)

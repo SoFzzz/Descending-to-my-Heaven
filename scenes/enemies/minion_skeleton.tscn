@@ -1,13 +1,19 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/enemies/minion_base.tscn" id="1_base"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/monsters/minion_attack.mp3" id="a_attack"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/monsters/minion_death.mp3" id="a_death"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/monsters/minion_walk_arena_1_2.mp3" id="a_step"]
 [ext_resource type="PackedScene" uid="uid://c17kq22ewkgib" path="res://assets/minions/skeleton/skeleton.glb" id="2_model"]
+[ext_resource type="Script" path="res://scripts/ai/minion_attack.gd" id="ma_script"]
+[ext_resource type="Resource" path="res://resources/attacks/minions/skeleton_swing.tres" id="ma_skeleton_swing"]
+[ext_resource type="Resource" path="res://resources/attacks/minions/skeleton_lunge.tres" id="ma_skeleton_lunge"]
 
 [node name="MinionSkeleton" instance=ExtResource("1_base")]
+attacks = Array[ExtResource("ma_script")]([ExtResource("ma_skeleton_swing"), ExtResource("ma_skeleton_lunge")])
 model_scene = ExtResource("2_model")
+death_clip_start = 2.0
+death_land_at = 4.3
 sfx_attack = ExtResource("a_attack")
 sfx_death = ExtResource("a_death")
 sfx_step = ExtResource("a_step")

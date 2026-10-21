@@ -6,8 +6,10 @@ extends Node
 ## Lifecycle: the arena gameplay explicitly calls `begin_arena(config, self, boss)`
 ## at the end of its _ready (after emitting Events.arena_entered). This is preferred over reacting
 ## to `arena_entered` because that signal only carries the id and the Orchestrator needs the ArenaConfig,
-## the arena root (to filter the spawn_points) and the boss. `end_arena()` fires by itself on
-## Events.boss_defeated / Events.player_died and GameState also calls it when changing scene.
+## the arena root (to filter the spawn_points) and the boss. The arena also ends by itself: on
+## Events.boss_defeated the live minions die (they fall like any other) and on Events.player_died
+## they stop and mock Kaelen over her body (Minion.celebrate) instead of vanishing; GameState calls
+## `end_arena()` when changing scene, which frees whatever is left.
 ##
 ## Autoloads are looked up by path (get_node_or_null) because they do not exist under `-s`.
 
@@ -92,13 +94,14 @@ func begin_arena(config: ArenaConfig, arena_root: Node3D = null, boss: Boss = nu
 ## freed and tokens at 0. Each minion returns its token and is freed BEFORE the reset; besides,
 ## Minion._has_token() asks AttackTokens, so no minion can be left believing it holds a token
 ## after an AttackTokens.reset().
-func end_arena() -> void:
+func end_arena(free_minions := true) -> void:
 	_connect_events(false)
 	_active = false
-	for minion in _minions:
+	for minion in _minions.duplicate():
 		if is_instance_valid(minion):
 			minion.call(&"release_token")
-			minion.queue_free()
+			if free_minions:
+				minion.queue_free()
 	_minions.clear()
 	model.reset()
 	_last_budget = 0
@@ -314,7 +317,7 @@ func _connect_events(connect_it: bool) -> void:
 	_toggle(events.boss_phase_changed, _on_boss_phase_changed, connect_it)
 	_toggle(events.enemy_died, _on_enemy_died, connect_it)
 	_toggle(events.boss_defeated, _on_arena_over, connect_it)
-	_toggle(events.player_died, end_arena, connect_it)
+	_toggle(events.player_died, _on_player_died, connect_it)
 
 
 static func _toggle(sig: Signal, callable: Callable, connect_it: bool) -> void:
@@ -338,4 +341,14 @@ func _on_enemy_died(_enemy: Node3D, _cost: int) -> void:
 
 
 func _on_arena_over(_boss_node: Node3D) -> void:
-	end_arena()
+	for minion in _minions.duplicate():
+		if is_instance_valid(minion) and minion.has_node(^"Health"):
+			(minion.get_node(^"Health") as Health).take_damage(1 << 20)   # the guardian falls, so do they
+	end_arena(false)
+
+
+func _on_player_died() -> void:
+	for minion in _minions.duplicate():
+		if is_instance_valid(minion) and minion.has_method(&"celebrate"):
+			minion.call(&"celebrate")
+	end_arena(false)
