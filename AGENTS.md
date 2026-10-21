@@ -5,7 +5,7 @@ Guía única del proyecto para quien se incorpora al equipo: qué es el juego, e
 - **Fecha de esta versión:** 2026-10-20
 - **Juego:** boss rush 3D en tercera persona, estilo soulslike y PSX. Kaelen sube un templo de tres pisos sobre una isla flotante y derrota a tres jefes para llegar a Elysia.
 - **Motor:** Godot 4.7.2 estable, GDScript con tipos estáticos, renderizador `gl_compatibility` (Compatibility). Resolución interna 640×360, ventana 1280×720.
-- **Rama de trabajo:** `feat/aza`. `main` (ec0e4fa) ya incluye un merge de esta rama; la exportación a Windows se prepara en `wt/export`.
+- **Rama de trabajo:** `wt/combat-dynamism` (worktree `../Descending-wt-combat`), la única que se sube. **No se fusiona con `main` ni se hace push a `main`** (sección 18.1). `main` (6034e77) contiene el trabajo anterior de `feat/aza`, `wt/export` y la documentación.
 - **Equipo:** Paula Sofia Gonzalez Zambrano, David Alejandro Aza Jojoa y Stehven Alexander Obando Cordoba.
 - **Repositorio privado.** Varios assets no pueden redistribuirse (ver sección 12).
 
@@ -558,7 +558,7 @@ La isla cae porque los tres guardianes (Bone Dragon, Blackhorn y Ghidorah) la ma
 - **Lógica pura y pruebas:** la IA y el combate están en clases sin escena (`RefCounted` como `BossBrain`, `OrchestratorModel`, `CombatMemory`, `BossTactics`, `MinionBrain`) para que las pruebas no dependan de nodos. Cada prueba empieza con `extends TestCase`.
 - **Escenas generadas:** `exterior.tscn`, `arena_1.tscn`, `arena_2.tscn` y `arena_3.tscn` se regeneran con `level_builder.gd`. El resto de escenas se edita en el editor.
 - **Commits:** pequeños, con prefijo (`feat:`, `fix:`, `test:`, `docs:`). Repartidos entre los tres integrantes. **No se añaden co-autores externos** a los commits del equipo.
-- **Worktrees:** cada trabajo en paralelo va en su rama y su worktree (`git worktree add`), sin tocar el worktree principal. Antes de un push, `git pull --rebase` y pruebas.
+- **Worktrees:** cada trabajo en paralelo va en su rama y su worktree (`git worktree add`), sin tocar el worktree principal. Antes de un push, `git pull --rebase` y pruebas. Las reglas de rama, worktrees de agentes y commits del trabajo actual están en la sección 18.1 (no se fusiona con `main`).
 - **Git y LFS:** modelos, texturas, audio y `.blend` van con Git LFS (ver `.gitattributes`). No se sube `.godot/`. Los `.import` sí se suben.
 - **Restaurar archivos `.import`:** Godot a veces reescribe los `.import` cambiando solo los finales de línea. Antes de commitear, comprobarlo con `git diff --ignore-cr-at-eol --stat`. Si solo cambian los finales de línea, restaurar **solo esos archivos** con `git restore -- <ruta>`. Nunca restaurar todo el árbol.
 - **Shaders y materiales:** un único shader PSX para todo. Los cambios de paleta van por `modulate_color` o `tint`.
@@ -674,3 +674,98 @@ Trabajo de pulido dentro de T18, antes de la congelación de T19. Rama `wt/comba
 - Las simulaciones (`boss_pressure_sim`, `boss_tactics_sim`) usan una Kaelen simulada sin ataque fuerte ni strafe: no miden esos cambios. Sí miden los combos de fase 2.
 - Efecto medido de los combos (`boss_tactics_sim`, tácticas activas, frente al código anterior): daño a Kaelen por minuto con perfil evasivo +27 % en Bone Dragon y +11 % en Blackhorn; Ghidorah casi igual. Si el playtest lo ve duro: subir `Boss.COMBO_RECOVER_FRACTION` (0,35) o `COMBO_TELEGRAPH` (0,85), o quitar un `combo_next`.
 - Corregido en `boss_pressure_sim.gd`: la Kaelen simulada golpeaba desde 2,5 m del centro del jefe, pero Ghidorah (×1,95) se planta a 5 m (`engage_range`), así que nunca moría (0/12). Ahora el alcance es el mayor entre 2,5 m y el `engage_range`: Ghidorah muere en 12/12 (60 s y 88 s).
+
+---
+
+## 18. Plan de mejora, reglas de trabajo y política de rama (2026-10-20)
+
+Plan aprobado por el equipo para seguir refinando el juego después de la sección 17. Quien continúe el trabajo (persona o agente) **debe leer y cumplir esta sección entera** antes de tocar nada.
+
+### 18.1 Política de rama y directorios (obligatoria)
+
+| Regla | Detalle |
+|---|---|
+| **`main` no se toca** | Este trabajo **nunca se fusiona con `main`** ni se hace push a `main` hasta que el equipo lo decida expresamente en otra ocasión. Nada de merge, rebase sobre `main` ni pull request hacia `main` por iniciativa propia. |
+| Rama de integración | `wt/combat-dynamism`, en el worktree `../Descending-wt-combat`. Es la única rama que se sube: `git push origin wt/combat-dynamism`, **sin `--force`**. |
+| Worktree principal | La carpeta `Descending-to-my-Heaven` (rama `main`) no se modifica. |
+| Worktrees de agentes | Uno por agente y oleada: `../Descending-w<oleada>-<agente>`, rama `w<oleada>/<agente>`, creada desde `wt/combat-dynamism`. **Nunca se suben.** Al terminar se entrega su diff, se integra en `wt/combat-dynamism` y el worktree se elimina con `git worktree remove`. |
+| Archivos por agente | Dos agentes no editan el mismo archivo en la misma oleada. Si hace falta, el plan de la oleada dice quién lo toca y en qué orden. |
+| Commits | Solo con aprobación explícita del equipo. Autoría rotada entre Paula, David y Stehven con `--author` (esta PC no tiene identidad de git). Sin líneas `Co-Authored-By` ni atribuciones a IA. |
+| **Cada commit debe cargar solo** | Un commit no puede depender de otro posterior (los siete commits de la sección 17 no lo cumplían: solo el último carga completo; por eso esa rama se fusiona entera). A partir de ahora, cada commit deja el proyecto cargando y con las pruebas en verde. |
+| Higiene de `.import` | Antes de cada commit se restauran los `.import` que solo cambian finales de línea, UID o compresión por la reimportación (`git diff --ignore-cr-at-eol`). Solo se suben los `.import` con un cambio pedido (por ejemplo, los mipmaps de la sección 9.3). |
+| `.godot/` | No se sube nunca. Para arrancar un worktree nuevo se puede copiar la caché `.godot/` de la rama de integración. |
+
+### 18.2 Reglas innegociables de calidad
+
+1. **Nada se afirma sin verificarlo.** Toda afirmación sobre código o assets sale de leer el archivo o de ejecutar algo, con `archivo:línea` o la salida del comando.
+2. **Ninguna cifra inventada.** FPS, tiempos o daños salen de una ejecución real; lo que no se pudo medir se escribe "no medido".
+3. **Lo visual se marca como pendiente de revisión.** Las pruebas sin ventana no compilan shaders ni dibujan. Todo cambio visual queda "pendiente de revisión en pantalla" hasta que una persona lo confirme.
+4. **Una prueba que falla no se debilita para que pase.** Se busca la causa. Si cambia una regla de diseño, se dice, se documenta aquí y se renombra la prueba (ejemplo: la cola de Ghidorah, sección 7.1).
+5. **Sin atajos que escondan problemas:** no se desactivan sistemas, no se ponen valores "a ojo" cuando se pueden medir y no se dejan `TODO`.
+6. **Escenas generadas solo desde `level_builder.gd`** (sección 2.4).
+7. **Sin assets nuevos sin licencia verificada.** Sin Blender (aplazado por el equipo, ver 18.4).
+8. **Rendimiento ante todo:** 60 FPS o más en GTX 1050 a 1280×720 sin VSync.
+   - Sin asignaciones por fotograma en código caliente.
+   - Efectos con pools (ImpactFx) y partículas con tope.
+   - Geometría estática en mallas fusionadas o `MultiMeshInstance3D`.
+   - Todo cambio visual grande se mide antes y después.
+9. **Godot solo sin ventana** (`--headless`) mientras alguien trabaja en la PC: con ventana, el juego captura el ratón. Las mediciones con ventana se pactan con el equipo.
+10. **Código y comentarios en inglés;** textos visibles con `tr()` en es y en (`localization/translations.csv`).
+11. **Alcance cerrado:** lo que no está en 18.3 se pregunta al equipo antes de hacerlo.
+12. **Informe honesto:** cada entrega incluye la salida real de las pruebas, lo que no se pudo verificar y cualquier fallo encontrado, aunque sea propio.
+
+### 18.3 Organización: tres agentes y doble revisión
+
+Tres agentes trabajan en paralelo por oleada, cada uno en su worktree. **Cada oleada se revisa dos veces:**
+- **Revisión 1 (cruzada):** cada agente revisa el diff de otro (1 → 2, 2 → 3, 3 → 1) buscando errores de lógica, regresiones, rendimiento y reglas incumplidas.
+- **Revisión 2 (integración):** se aplican los tres diffs en `wt/combat-dynamism` y se pasa la batería completa: `run_tests.gd`, todos los flujos de `tests/flow/` y las simulaciones de la sección 2.5.
+
+Al final de cada oleada se para para que el equipo lo pruebe en pantalla antes de la siguiente.
+
+**Criterios de "terminado" de cada tarea:**
+- Pruebas unitarias y flujos en verde, más pruebas nuevas que fijen el comportamiento añadido.
+- Rendimiento dentro del presupuesto (medido o razonado con evidencia).
+- Revisión 1 y revisión 2 superadas.
+- Esta guía actualizada (sección correspondiente y riesgos).
+- Sin archivos fuera de su alcance modificados.
+
+| Oleada | Agente 1: combate y control | Agente 2: jefes e IA | Agente 3: mundo, progresión y auditoría |
+|---|---|---|---|
+| **1. Correcciones** | Combo con recuperación (el 3.er golpe cierra el combo; el siguiente golpe solo encadena tras el recorrido); rodada con recuperación (`roll_to_run`) sin cortes por spam; ataque tras rodada para dar dinamismo; aturdimiento solo a esbirros (0,6 s normales, 0,35 s élites); espantapájaros (modelo del Straw Reaper) como muñeco del tutorial | Rugido de fase 2 corto (≈ 1,5 s), invulnerable y con la onda de repulsión existente; Bone Dragon más difícil **sin ataques nuevos** (velocidad, tiempos, presión, avance del mordisco); corregir el hueco en que el jefe persigue sin atacar | Atajos de depuración (F3, F5, F6) solo en compilaciones de depuración (`OS.is_debug_build()`); UID de los `.import` coherentes; anillo de islotes y terreno alrededor de la isla para que parezca enorme; bosque lejano más alejado; torre del templo de tres cuerpos, uno por piso (≈ 45–55 m), con coronación; medición de rendimiento del exterior |
+| **2. IA** | IA de esbirros: separación y cerco por huecos; atacar en la apertura de Kaelen y esperar si los encara; esquivar de lado el ataque fuerte; magos que mantienen 5–7 m y buscan línea de visión; élites con aguante en su ataque; grito de alerta | IA de jefes: memoria ampliada (curación, estamina, momento de las rodadas, ataques fallados); castigo de aperturas; ataques retrasados contra la rodada repetida; espaciado y rodeo; personalidad de fase 2; cabezas que siguen a Kaelen (`LookAtModifier3D`) | Simulaciones con la Kaelen real (combo, ataque fuerte, estamina, rodada); indicadores por jefe (tiempo para matar, daño recibido, esquivas) antes y después; guardado por piso ("Continuar" en el menú) |
+| **3. Presentación** | Abrazo del final con IK en los brazos de Kaelen (`TwoBoneIK3D`); *ragdoll* (`PhysicalBone3D`) para la muerte de TheWrapper | Presentación de cada jefe (barrido de cámara y nombre) y rugido procedural del Bone Dragon sobre su clip | Pantalla de resultados (tiempo, muertes por piso, frascos); notas de historia en cada piso; accesibilidad (iconos además de color en los avisos, sacudida activable, tamaño de subtítulos) |
+| **4. Cierre** | Revisión general cruzada | Revisión general cruzada | Sesión de rendimiento con ventana pactada (exterior, rayo de Ghidorah, final); esta guía al día |
+
+Objetivo de dificultad: progresión coherente entre pisos. El Bone Dragon sigue siendo el primer jefe, pero su tiempo para matar en `boss_pressure_sim` debe acercarse al de Blackhorn sin superarlo. Ningún jefe puede caer en segundos solo con spam de ataque (hoy, sin las correcciones de la oleada 1, el Bone Dragon cae en 11,5 s; medido con Kaelen invulnerable).
+
+### 18.4 Qué se aprueba y qué no
+
+| Propuesta | Estado | Motivo |
+|---|---|---|
+| Correcciones de la oleada 1 | **Aprobado** | Fallos confirmados en código y en pruebas (combo infinito, rodada sin recuperación, rugido de fase 2 de 4,2 s sin defensa, atajos de depuración en el `.exe`) |
+| Bone Dragon más difícil ajustando lo que ya tiene | **Aprobado** | Hoy es el más fácil por diseño: 3 ataques cuerpo a cuerpo, 3 m/s frente a los 5 m/s de Kaelen, sin cambios en fase 2 |
+| Ataques nuevos para el Bone Dragon | **No aprobado** | Decisión del equipo |
+| Más dinamismo en el combate | **Aprobado** | Ataque tras rodada, IA de las oleadas 2 y 3 |
+| Isla rodeada de islotes y terreno | **Aprobado** | Que parezca enorme |
+| Escalar la isla | **No aprobado** | Obliga a re-medir sendero, estanques y templo |
+| Torre imponente | **Aprobado** | Por fuera los tres pisos no se notaban |
+| IA de jefes y esbirros (oleada 2) | **Aprobado** | Prioridad del equipo |
+| Abrazo con IK, *ragdoll* de TheWrapper, rugido procedural | **Aprobado** | Mejoran la animación sin assets nuevos |
+| **Rig y animaciones de Elysia (Blender + Mixamo)** | **Aplazado** | Sin Blender de momento; se retoma al terminar este proceso. Sin rig, Elysia solo puede moverse como un bloque |
+| Guardado por piso, presentación de jefes, pantalla de resultados, notas de historia | **Aprobado** | Progresión y cierre |
+| Accesibilidad (iconos en avisos, sacudida activable, subtítulos) | **Aprobado** | Coste bajo |
+| Modo de dificultad "Historia" | **Solo si sobra tiempo** | No es prioritario |
+| Nueva partida+ | **No aprobado** | Mucho coste para tres jefes |
+| Multijugador, mundo abierto, voces dobladas, personajes nuevos | **No aprobado** | Fuera de alcance o sin assets con licencia |
+| Exportación Web | **Pendiente de evaluar al final** | Compatibilidad y peso (`ghidorah.glb` de 26 MB) |
+| Fusionar con `main` | **No aprobado** | Ver 18.1 |
+
+### 18.5 Pendientes conocidos de la auditoría (2026-10-20)
+
+- Atajos de depuración activos en el `.exe` exportado → oleada 1, agente 3.
+- Avisos de UID inválido al cargar (Elysia, islotes, esqueleto, pilar) → oleada 1, agente 3.
+- Superarmadura de Kaelen más combo infinito: intercambiar golpes siempre sale a cuenta → oleada 1, agente 1.
+- Simulaciones sin el ataque fuerte, la estamina real ni la rodada → oleada 2, agente 3.
+- Shaders nuevos (`telegraph_ground.gdshader`, aura de `psx_lit`) sin verificar en pantalla → revisión del equipo en el editor.
+- Equilibrio de los 10 frascos por piso a revisar tras las oleadas 1 y 2.
+- Fuera de código: peso de `ghidorah.glb`, licencias por confirmar y Ghidorah como fan-art (sección 14.2).
