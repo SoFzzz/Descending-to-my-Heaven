@@ -61,6 +61,9 @@ func _load_arena(index: int) -> void:
 
 func _kill() -> void:
 	var player: Player = _scene().get_node("Kaelen")
+	# A boss or minion hit just before leaves her invulnerable for up to HURT_IFRAMES (minions also
+	# strike from range now): wait it out, or the lethal hit is ignored.
+	await _wait_until(func() -> bool: return not player.health.invulnerable, Player.HURT_IFRAMES + 0.2)
 	player.health.take_damage(9999)
 
 
@@ -86,7 +89,7 @@ func _run() -> void:
 	level._on_boss_state_changed(Boss.State.CHASE)
 	await _wait(2.5)
 	_check(_audio_playing() == 1 and AudioManager.get_current_music() == level.boss_music, "the boss music plays")
-	_kill()
+	await _kill()
 	await _wait_until(func() -> bool: return _audio_playing() == 0, 3.0)
 	_check(_audio_playing() == 0, "after dying the boss music stops (players: %d)" % _audio_playing())
 	_check(level.get_node("Ambience").playing == false, "the ambience stops")
@@ -123,7 +126,7 @@ func _run() -> void:
 		level._on_boss_state_changed(Boss.State.CHASE)   # the boss detects Kaelen
 		await _wait(2.5)
 		_check(_audio_playing() == 1 and AudioManager.get_current_music() == level.boss_music, "retry %d: a single player with the boss music" % attempt)
-		_kill()
+		await _kill()
 		await _wait_until(func() -> bool: return _audio_playing() == 0, 3.0)
 		_check(_audio_playing() == 0, "retry %d: silence after dying" % attempt)
 		await _wait(2.6)

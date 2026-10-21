@@ -37,6 +37,13 @@ const SCENE_CARDS := {
 
 ## Set by reload_current_arena for the duration of its _change_scene call.
 var _quick_next := false
+## Scene being loaded in a background thread (preload_scene): the next change to it is instant.
+var _preloading := ""
+## Set by advance_level: the next arena opens with Kaelen walking in from its entry stairs (a retry
+## does not). ArenaGameplay reads and clears it.
+var arrival_walk := false
+## Set by start_new_game: the exterior opens with the intro (IntroDirector reads and clears it).
+var intro_pending := false
 
 var current_level: int = 0   # 0, 1, 2
 var scene_index: int = 0     # 0 = exterior, 1..3 = arenas
@@ -84,8 +91,25 @@ func level_for_scene(index: int) -> int:
 	return clampi(index - 1, 0, MAX_HP_BY_LEVEL.size() - 1)
 
 
+## Starts loading `path` in a background thread: the following change to it does not stall the
+## frame (change_scene_to_file loads the whole level at once). Safe to call more than once.
+func preload_scene(path: String) -> void:
+	if path.is_empty() or path == _preloading or not ResourceLoader.exists(path):
+		return
+	if ResourceLoader.load_threaded_request(path) == OK:
+		_preloading = path
+
+
+## Preloads whatever advance_level() will open next (the next floor, or the credits after arena 3).
+func preload_next_level() -> void:
+	var next := scene_index + 1
+	preload_scene(scene_for_level(next) if next < LEVEL_SCENES.size() else CREDITS_SCENE)
+
+
 ## Starts a new run at the exterior. Returns false if the scene change could not start.
 func start_new_game() -> bool:
+	arrival_walk = false
+	intro_pending = true
 	if not _change_scene(scene_for_level(0)):
 		return false
 	_set_scene_index(0)
@@ -98,8 +122,11 @@ func advance_level() -> void:
 	if next >= LEVEL_SCENES.size():
 		_change_scene(CREDITS_SCENE if ResourceLoader.exists(CREDITS_SCENE) else MAIN_MENU_SCENE)
 		return
+	arrival_walk = next >= 1   # every arena opens with Kaelen walking in up its entry stairs
 	if _change_scene(scene_for_level(next)):
 		_set_scene_index(next)
+	else:
+		arrival_walk = false
 
 
 ## Respawn after dying: reloads the current scene (new Kaelen, boss at full health, no leftover
@@ -107,6 +134,7 @@ func advance_level() -> void:
 func reload_current_arena() -> void:
 	var path := _current_scene_path()
 	var index := LEVEL_SCENES.find(path)
+	arrival_walk = false
 	_quick_next = true   # retrying: short fade, no title card
 	var changed := _change_scene(path)
 	_quick_next = false
@@ -115,6 +143,7 @@ func reload_current_arena() -> void:
 
 
 func go_to_main_menu() -> void:
+	arrival_walk = false
 	_change_scene(MAIN_MENU_SCENE)
 
 
@@ -190,4 +219,11 @@ func _swap_scene(path: String) -> void:
 		pause_menu.call(&"close_silently")
 	if death_screen:
 		death_screen.call(&"hide_now")
+	if path == _preloading:
+		_preloading = ""
+		# Already loaded in the background (or nearly: load_threaded_get waits for the rest).
+		var packed := ResourceLoader.load_threaded_get(path) as PackedScene
+		if packed:
+			get_tree().change_scene_to_packed(packed)
+			return
 	get_tree().change_scene_to_file(path)
