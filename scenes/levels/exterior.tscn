@@ -234,7 +234,7 @@ albedo_texture = ExtResource("13_yymta")
 uv1_scale = Vector3(0.25, 0.25, 0.25)
 uv1_triplanar = true
 uv1_world_triplanar = true
-texture_filter = 0
+texture_filter = 2
 
 [sub_resource type="BoxMesh" id="BoxMesh_cxm23"]
 material = SubResource("StandardMaterial3D_r8d7k")
@@ -263,7 +263,7 @@ albedo_texture = ExtResource("14_casng")
 uv1_scale = Vector3(0.25, 0.25, 0.25)
 uv1_triplanar = true
 uv1_world_triplanar = true
-texture_filter = 0
+texture_filter = 2
 
 [sub_resource type="BoxMesh" id="BoxMesh_xu1ud"]
 material = SubResource("StandardMaterial3D_iask2")
@@ -340,7 +340,7 @@ albedo_texture = ExtResource("15_5pc3a")
 uv1_scale = Vector3(0.25, 0.25, 0.25)
 uv1_triplanar = true
 uv1_world_triplanar = true
-texture_filter = 0
+texture_filter = 2
 
 [sub_resource type="BoxMesh" id="BoxMesh_cobbm"]
 material = SubResource("StandardMaterial3D_4ig15")
@@ -353,7 +353,7 @@ albedo_texture = ExtResource("16_6difh")
 uv1_scale = Vector3(0.25, 0.25, 0.25)
 uv1_triplanar = true
 uv1_world_triplanar = true
-texture_filter = 0
+texture_filter = 2
 
 [sub_resource type="BoxMesh" id="BoxMesh_a5ul8"]
 material = SubResource("StandardMaterial3D_75unl")
@@ -674,7 +674,7 @@ albedo_texture = ExtResource("15_5pc3a")
 uv1_scale = Vector3(0.25, 0.25, 0.25)
 uv1_triplanar = true
 uv1_world_triplanar = true
-texture_filter = 0
+texture_filter = 2
 
 [sub_resource type="PrismMesh" id="PrismMesh_e054p"]
 material = SubResource("StandardMaterial3D_fu5t0")
@@ -691,7 +691,7 @@ albedo_texture = ExtResource("14_casng")
 uv1_scale = Vector3(0.25, 0.25, 0.25)
 uv1_triplanar = true
 uv1_world_triplanar = true
-texture_filter = 0
+texture_filter = 2
 
 [sub_resource type="BoxMesh" id="BoxMesh_8ty7m"]
 material = SubResource("StandardMaterial3D_mmbmv")
@@ -1099,68 +1099,68 @@ size = Vector3(9.5, 30, 0.5)
 [sub_resource type="BoxShape3D" id="BoxShape3D_0fpwr"]
 size = Vector3(7.5, 30, 0.5)
 
-[node name="Exterior" type="Node3D" unique_id=1214741749]
+[node name="Exterior" type="Node3D" unique_id=407151362]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=89572630]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=794458207]
 environment = SubResource("Environment_twjqa")
 
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1301173571]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=175497207]
 transform = Transform3D(0.8660254, 0.3213938, -0.38302222, 0, 0.76604444, 0.6427876, 0.5, -0.55667037, 0.66341394, 0, 0, 0)
 light_color = Color(0.85, 0.85, 0.95, 1)
 light_energy = 0.9
 
-[node name="Island" type="Node3D" parent="." unique_id=1275516897]
+[node name="Island" type="Node3D" parent="." unique_id=845731787]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 8, 0)
 
-[node name="Ground" type="StaticBody3D" parent="Island" unique_id=1189996963]
+[node name="Ground" type="StaticBody3D" parent="Island" unique_id=1976944410]
 collision_mask = 0
 
-[node name="Mesh" type="MeshInstance3D" parent="Island/Ground" unique_id=1834347615]
+[node name="Mesh" type="MeshInstance3D" parent="Island/Ground" unique_id=2060003356]
 mesh = SubResource("ArrayMesh_fyrg7")
 
-[node name="Shape" type="CollisionShape3D" parent="Island/Ground" unique_id=245243558]
+[node name="Shape" type="CollisionShape3D" parent="Island/Ground" unique_id=2140574707]
 shape = SubResource("ConcavePolygonShape3D_nx0nn")
 
-[node name="Islets" type="Node3D" parent="." unique_id=1867998350]
+[node name="Islets" type="Node3D" parent="." unique_id=96481191]
 
-[node name="IsletRound" type="Node3D" parent="Islets" unique_id=1695383127 instance=ExtResource("3_51iq3")]
+[node name="IsletRound" type="Node3D" parent="Islets" unique_id=239194475 instance=ExtResource("3_51iq3")]
 transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -75, -18, -35)
 
-[node name="IsletLong" type="Node3D" parent="Islets" unique_id=1330922366 instance=ExtResource("4_gkeow")]
+[node name="IsletLong" type="Node3D" parent="Islets" unique_id=2047108973 instance=ExtResource("4_gkeow")]
 transform = Transform3D(0.34202015, 0, 0.9396926, 0, 1, 0, -0.9396926, 0, 0.34202015, 65, -28, 15)
 
-[node name="IsletL" type="Node3D" parent="Islets" unique_id=351446293 instance=ExtResource("5_wgyub")]
+[node name="IsletL" type="Node3D" parent="Islets" unique_id=1292414316 instance=ExtResource("5_wgyub")]
 transform = Transform3D(-0.50000006, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, -0.50000006, -60, -6, 55)
 
-[node name="IsletSmall" type="Node3D" parent="Islets" unique_id=1933318691 instance=ExtResource("6_wyoam")]
+[node name="IsletSmall" type="Node3D" parent="Islets" unique_id=1271828724 instance=ExtResource("6_wyoam")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 6, -70)
 
-[node name="IsletHole" type="Node3D" parent="Islets" unique_id=2041535060 instance=ExtResource("7_v77ox")]
+[node name="IsletHole" type="Node3D" parent="Islets" unique_id=306990998 instance=ExtResource("7_v77ox")]
 transform = Transform3D(-0.9396926, 0, -0.34202015, 0, 1, 0, 0.34202015, 0, -0.9396926, 110, -35, -70)
 
-[node name="Ponds" type="Node3D" parent="." unique_id=1165825793]
+[node name="Ponds" type="Node3D" parent="." unique_id=135631808]
 
-[node name="Pond1" type="MeshInstance3D" parent="Ponds" unique_id=505339050]
+[node name="Pond1" type="MeshInstance3D" parent="Ponds" unique_id=475821595]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, -0.3, -10)
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_ioamt")
 metadata/pond_half = Vector2(11, 14)
 
-[node name="Pond2" type="MeshInstance3D" parent="Ponds" unique_id=236521787]
+[node name="Pond2" type="MeshInstance3D" parent="Ponds" unique_id=624480259]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.5, -0.3, -10)
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_nd0mv")
 metadata/pond_half = Vector2(9.5, 14)
 
-[node name="Pond3" type="MeshInstance3D" parent="Ponds" unique_id=2028166861]
+[node name="Pond3" type="MeshInstance3D" parent="Ponds" unique_id=1547536498]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.4, 6.5)
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_is5ck")
 metadata/pond_half = Vector2(9.5, 9.5)
 
-[node name="Forest" type="Node3D" parent="." unique_id=671577401]
+[node name="Forest" type="Node3D" parent="." unique_id=1705829408]
 
-[node name="Ring1" type="Node3D" parent="Forest" unique_id=727235931]
+[node name="Ring1" type="Node3D" parent="Forest" unique_id=1512991411]
 script = ExtResource("10_rastn")
 tree_paths = PackedStringArray("res://assets/environment/trees/tree01.fbx", "res://assets/environment/trees/tree02.fbx", "res://assets/environment/trees/tree03.fbx", "res://assets/environment/trees/tree05.fbx", "res://assets/environment/trees/tree06.fbx", "res://assets/environment/trees/tree07.fbx", "res://assets/environment/trees/tree08.fbx")
 count = 60
@@ -1168,7 +1168,7 @@ seed_value = 7021
 center = Vector3(5, 0, 0)
 fixed_positions = PackedVector3Array()
 
-[node name="Ring2" type="Node3D" parent="Forest" unique_id=53204425]
+[node name="Ring2" type="Node3D" parent="Forest" unique_id=2017665352]
 script = ExtResource("10_rastn")
 tree_paths = PackedStringArray("res://assets/environment/trees/tree01.fbx", "res://assets/environment/trees/tree02.fbx", "res://assets/environment/trees/tree03.fbx", "res://assets/environment/trees/tree05.fbx", "res://assets/environment/trees/tree06.fbx", "res://assets/environment/trees/tree07.fbx", "res://assets/environment/trees/tree08.fbx")
 count = 70
@@ -1179,7 +1179,7 @@ base_range = Vector2(-24, -10)
 height_range = Vector2(45, 75)
 fixed_positions = PackedVector3Array()
 
-[node name="Ring3" type="Node3D" parent="Forest" unique_id=165571670]
+[node name="Ring3" type="Node3D" parent="Forest" unique_id=718921878]
 script = ExtResource("10_rastn")
 tree_paths = PackedStringArray("res://assets/environment/trees/tree01.fbx", "res://assets/environment/trees/tree02.fbx", "res://assets/environment/trees/tree03.fbx", "res://assets/environment/trees/tree05.fbx", "res://assets/environment/trees/tree06.fbx", "res://assets/environment/trees/tree07.fbx", "res://assets/environment/trees/tree08.fbx")
 count = 80
@@ -1190,507 +1190,507 @@ base_range = Vector2(-34, -18)
 height_range = Vector2(60, 100)
 fixed_positions = PackedVector3Array()
 
-[node name="Mist" type="Node3D" parent="." unique_id=414843491]
+[node name="Mist" type="Node3D" parent="." unique_id=2111373242]
 
-[node name="Layer1" type="MeshInstance3D" parent="Mist" unique_id=212497284]
+[node name="Layer1" type="MeshInstance3D" parent="Mist" unique_id=1715244149]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, -9, 0)
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_ged1i")
 
-[node name="Layer2" type="MeshInstance3D" parent="Mist" unique_id=613735459]
+[node name="Layer2" type="MeshInstance3D" parent="Mist" unique_id=494737993]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, -22, 0)
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_tqr4n")
 
-[node name="Layer3" type="MeshInstance3D" parent="Mist" unique_id=1652343973]
+[node name="Layer3" type="MeshInstance3D" parent="Mist" unique_id=794408152]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, -40, 0)
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_vw56r")
 
-[node name="Temple" type="Node3D" parent="." unique_id=1989593802]
+[node name="Temple" type="Node3D" parent="." unique_id=2125856781]
 metadata/base_y = -0.20722961
 
-[node name="Decor" type="Node3D" parent="Temple" unique_id=477309822]
+[node name="Decor" type="Node3D" parent="Temple" unique_id=1666850312]
 
-[node name="Column0W" type="MeshInstance3D" parent="Temple/Decor" unique_id=839993805]
+[node name="Column0W" type="MeshInstance3D" parent="Temple/Decor" unique_id=1792705526]
 transform = Transform3D(0.8, 0, 0, 0, 0.55, 0, 0, 0, 0.8, -2.5, -0.3072296, -29.7)
 mesh = SubResource("ArrayMesh_c4k85")
 
-[node name="Base0W" type="MeshInstance3D" parent="Temple/Decor" unique_id=1483338962]
+[node name="Base0W" type="MeshInstance3D" parent="Temple/Decor" unique_id=836734776]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, -0.057229616, -29.7)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_cxm23")
 
-[node name="Column1W" type="MeshInstance3D" parent="Temple/Decor" unique_id=957060704]
+[node name="Column1W" type="MeshInstance3D" parent="Temple/Decor" unique_id=1342473509]
 transform = Transform3D(0.68, 0, 0, 0, 0.51, 0, 0, 0, 0.68, -3.8, -0.3072296, -29.7)
 mesh = SubResource("ArrayMesh_c4k85")
 
-[node name="Base1W" type="MeshInstance3D" parent="Temple/Decor" unique_id=677979818]
+[node name="Base1W" type="MeshInstance3D" parent="Temple/Decor" unique_id=1782199342]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8, -0.057229616, -29.7)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_dbylq")
 
-[node name="Column0E" type="MeshInstance3D" parent="Temple/Decor" unique_id=1626378620]
+[node name="Column0E" type="MeshInstance3D" parent="Temple/Decor" unique_id=1127931993]
 transform = Transform3D(0.8, 0, 0, 0, 0.55, 0, 0, 0, 0.8, 2.5, -0.3072296, -29.7)
 mesh = SubResource("ArrayMesh_c4k85")
 
-[node name="Base0E" type="MeshInstance3D" parent="Temple/Decor" unique_id=275048812]
+[node name="Base0E" type="MeshInstance3D" parent="Temple/Decor" unique_id=731686891]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, -0.057229616, -29.7)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_qubdf")
 
-[node name="Column1E" type="MeshInstance3D" parent="Temple/Decor" unique_id=1390559971]
+[node name="Column1E" type="MeshInstance3D" parent="Temple/Decor" unique_id=1232148608]
 transform = Transform3D(0.68, 0, 0, 0, 0.51, 0, 0, 0, 0.68, 3.8, -0.3072296, -29.7)
 mesh = SubResource("ArrayMesh_c4k85")
 
-[node name="Base1E" type="MeshInstance3D" parent="Temple/Decor" unique_id=1728890939]
+[node name="Base1E" type="MeshInstance3D" parent="Temple/Decor" unique_id=2026090051]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, -0.057229616, -29.7)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_lkojo")
 
-[node name="Lintel" type="MeshInstance3D" parent="Temple/Decor" unique_id=2103482212]
+[node name="Lintel" type="MeshInstance3D" parent="Temple/Decor" unique_id=1065932738]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5427704, -30)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_yttg0")
 
-[node name="LintelCap" type="MeshInstance3D" parent="Temple/Decor" unique_id=1654293566]
+[node name="LintelCap" type="MeshInstance3D" parent="Temple/Decor" unique_id=689739508]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.1427703, -29.95)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_xu1ud")
 
-[node name="Frieze0" type="MeshInstance3D" parent="Temple/Decor" unique_id=1330540209]
+[node name="Frieze0" type="MeshInstance3D" parent="Temple/Decor" unique_id=649249094]
 transform = Transform3D(0.6, 0, 0, 0, 0.2, 0, 0, 0, 1, -2.9, 4.1427703, -28.95)
 mesh = SubResource("ArrayMesh_hs2ts")
 
-[node name="Frieze1" type="MeshInstance3D" parent="Temple/Decor" unique_id=589867590]
+[node name="Frieze1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1972809680]
 transform = Transform3D(0.6, 0, 0, 0, 0.2, 0, 0, 0, 1, 0, 4.1427703, -28.95)
 mesh = SubResource("ArrayMesh_hs2ts")
 
-[node name="Frieze2" type="MeshInstance3D" parent="Temple/Decor" unique_id=1297746318]
+[node name="Frieze2" type="MeshInstance3D" parent="Temple/Decor" unique_id=510812043]
 transform = Transform3D(0.6, 0, 0, 0, 0.2, 0, 0, 0, 1, 2.9, 4.1427703, -28.95)
 mesh = SubResource("ArrayMesh_hs2ts")
 
-[node name="Pediment" type="MeshInstance3D" parent="Temple/Decor" unique_id=413820659]
+[node name="Pediment" type="MeshInstance3D" parent="Temple/Decor" unique_id=901214234]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.8927703, -30)
 cast_shadow = 0
 mesh = SubResource("PrismMesh_04268")
 
-[node name="Tympanum" type="MeshInstance3D" parent="Temple/Decor" unique_id=1871186559]
+[node name="Tympanum" type="MeshInstance3D" parent="Temple/Decor" unique_id=1416807012]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.5927706, -29)
 cast_shadow = 0
 mesh = SubResource("PrismMesh_scx85")
 
-[node name="TympanumSkull" type="MeshInstance3D" parent="Temple/Decor" unique_id=1770819947]
+[node name="TympanumSkull" type="MeshInstance3D" parent="Temple/Decor" unique_id=1996022018]
 transform = Transform3D(0.55, 0, 0, 0, 0.4, 0, 0, 0, 1, 0, 6.0927706, -28.65)
 mesh = SubResource("ArrayMesh_hs2ts")
 
-[node name="AcroterW" type="MeshInstance3D" parent="Temple/Decor" unique_id=750595872]
+[node name="AcroterW" type="MeshInstance3D" parent="Temple/Decor" unique_id=748681076]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -4.7, 5.74277, -30)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_adb5k")
 
-[node name="AcroterE" type="MeshInstance3D" parent="Temple/Decor" unique_id=179906084]
+[node name="AcroterE" type="MeshInstance3D" parent="Temple/Decor" unique_id=1045264786]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 4.7, 5.74277, -30)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_kjous")
 
-[node name="AcroterTop" type="MeshInstance3D" parent="Temple/Decor" unique_id=1399297043]
+[node name="AcroterTop" type="MeshInstance3D" parent="Temple/Decor" unique_id=1061477362]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 8.74277, -30)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_e54ys")
 
-[node name="LeafW" type="Node3D" parent="Temple/Decor" unique_id=833784915]
+[node name="LeafW" type="Node3D" parent="Temple/Decor" unique_id=630983909]
 transform = Transform3D(0.20791166, 0, 0.9781476, 0, 1, 0, -0.9781476, 0, 0.20791166, -1.6, -0.10722961, -31.1)
 
-[node name="Wood" type="MeshInstance3D" parent="Temple/Decor/LeafW" unique_id=934471008]
+[node name="Wood" type="MeshInstance3D" parent="Temple/Decor/LeafW" unique_id=1482368443]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.77500004, 1.45, 0)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_cobbm")
 
-[node name="Strap0" type="MeshInstance3D" parent="Temple/Decor/LeafW" unique_id=1317860713]
+[node name="Strap0" type="MeshInstance3D" parent="Temple/Decor/LeafW" unique_id=1450188950]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.77500004, 0.5, 0)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_a5ul8")
 
-[node name="Strap1" type="MeshInstance3D" parent="Temple/Decor/LeafW" unique_id=443217427]
+[node name="Strap1" type="MeshInstance3D" parent="Temple/Decor/LeafW" unique_id=397655430]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.77500004, 1.5, 0)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_hfxxu")
 
-[node name="Strap2" type="MeshInstance3D" parent="Temple/Decor/LeafW" unique_id=1835828154]
+[node name="Strap2" type="MeshInstance3D" parent="Temple/Decor/LeafW" unique_id=837163802]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.77500004, 2.5, 0)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_tjrj3")
 
-[node name="LeafE" type="Node3D" parent="Temple/Decor" unique_id=390573708]
+[node name="LeafE" type="Node3D" parent="Temple/Decor" unique_id=449244145]
 transform = Transform3D(0.20791166, 0, -0.9781476, 0, 1, 0, 0.9781476, 0, 0.20791166, 1.6, -0.10722961, -31.1)
 
-[node name="Wood" type="MeshInstance3D" parent="Temple/Decor/LeafE" unique_id=668703760]
+[node name="Wood" type="MeshInstance3D" parent="Temple/Decor/LeafE" unique_id=1676549455]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.77500004, 1.45, 0)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_0nwck")
 
-[node name="Strap0" type="MeshInstance3D" parent="Temple/Decor/LeafE" unique_id=1185974964]
+[node name="Strap0" type="MeshInstance3D" parent="Temple/Decor/LeafE" unique_id=2109909019]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.77500004, 0.5, 0)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_7teip")
 
-[node name="Strap1" type="MeshInstance3D" parent="Temple/Decor/LeafE" unique_id=1711233316]
+[node name="Strap1" type="MeshInstance3D" parent="Temple/Decor/LeafE" unique_id=67849953]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.77500004, 1.5, 0)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_v2n85")
 
-[node name="Strap2" type="MeshInstance3D" parent="Temple/Decor/LeafE" unique_id=1065359607]
+[node name="Strap2" type="MeshInstance3D" parent="Temple/Decor/LeafE" unique_id=1833658735]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.77500004, 2.5, 0)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_5j25m")
 
-[node name="Pedestal-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=805853622]
+[node name="Pedestal-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1132063719]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6, 0.4427704, -28.8)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_43vyf")
 
-[node name="Beast-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=376012585]
+[node name="Beast-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1187621270]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6, 1.5927703, -28.8)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_ta3yy")
 
-[node name="BeastHead-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=370021169]
+[node name="BeastHead-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1035860970]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6, 1.9427704, -28)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_sytfk")
 
-[node name="Pedestal1" type="MeshInstance3D" parent="Temple/Decor" unique_id=279007324]
+[node name="Pedestal1" type="MeshInstance3D" parent="Temple/Decor" unique_id=86043046]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.6, 0.4427704, -28.8)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_32jj8")
 
-[node name="Beast1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1544989236]
+[node name="Beast1" type="MeshInstance3D" parent="Temple/Decor" unique_id=20623010]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.6, 1.5927703, -28.8)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_s8trm")
 
-[node name="BeastHead1" type="MeshInstance3D" parent="Temple/Decor" unique_id=525531446]
+[node name="BeastHead1" type="MeshInstance3D" parent="Temple/Decor" unique_id=456210456]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.6, 1.9427704, -28)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_lw3kt")
 
-[node name="GateCornice" type="MeshInstance3D" parent="Temple/Decor" unique_id=1347400913]
+[node name="GateCornice" type="MeshInstance3D" parent="Temple/Decor" unique_id=1942962652]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.092771, -36)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_fb3ws")
 
-[node name="Tier1" type="MeshInstance3D" parent="Temple/Decor" unique_id=674997235]
+[node name="Tier1" type="MeshInstance3D" parent="Temple/Decor" unique_id=734025276]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11.892771, -36)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_d86yr")
 
-[node name="Tier1S_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1881814757]
+[node name="Tier1S_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1381110079]
 transform = Transform3D(0.8666666, 0, 0, 0, 0.625, 0, 0, 0, 1, -3.4666665, 9.392771, -30.75)
 mesh = SubResource("ArrayMesh_vx0n5")
 
-[node name="Tier1S_2" type="MeshInstance3D" parent="Temple/Decor" unique_id=437648739]
+[node name="Tier1S_2" type="MeshInstance3D" parent="Temple/Decor" unique_id=979708488]
 transform = Transform3D(0.8666666, 0, 0, 0, 0.625, 0, 0, 0, 1, 0, 9.392771, -30.75)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="Tier1S_3" type="MeshInstance3D" parent="Temple/Decor" unique_id=434853537]
+[node name="Tier1S_3" type="MeshInstance3D" parent="Temple/Decor" unique_id=1108612389]
 transform = Transform3D(0.8666666, 0, 0, 0, 0.625, 0, 0, 0, 1, 3.4666665, 9.392771, -30.75)
 mesh = SubResource("ArrayMesh_vx0n5")
 
-[node name="Tier1S_4" type="MeshInstance3D" parent="Temple/Decor" unique_id=1616046781]
+[node name="Tier1S_4" type="MeshInstance3D" parent="Temple/Decor" unique_id=174630049]
 transform = Transform3D(0.8666666, 0, 0, 0, 0.625, 0, 0, 0, 1, -3.4666665, 11.892771, -30.75)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="Tier1S_5" type="MeshInstance3D" parent="Temple/Decor" unique_id=1892422104]
+[node name="Tier1S_5" type="MeshInstance3D" parent="Temple/Decor" unique_id=1191574250]
 transform = Transform3D(0.8666666, 0, 0, 0, 0.625, 0, 0, 0, 1, 0, 11.892771, -30.75)
 mesh = SubResource("ArrayMesh_vx0n5")
 
-[node name="Tier1S_6" type="MeshInstance3D" parent="Temple/Decor" unique_id=1292883266]
+[node name="Tier1S_6" type="MeshInstance3D" parent="Temple/Decor" unique_id=528423423]
 transform = Transform3D(0.8666666, 0, 0, 0, 0.625, 0, 0, 0, 1, 3.4666665, 11.892771, -30.75)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="Cornice1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1004128603]
+[node name="Cornice1" type="MeshInstance3D" parent="Temple/Decor" unique_id=912412696]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 14.642771, -36)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_scjkc")
 
-[node name="TierPediment1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1960591076]
+[node name="TierPediment1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1479700150]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 16.26777, -31.35)
 cast_shadow = 0
 mesh = SubResource("PrismMesh_bvfu0")
 
-[node name="Acroter0_-1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=502644452]
+[node name="Acroter0_-1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=838373509]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -5.6, 15.392771, -40.6)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_wtp23")
 
-[node name="Acroter0_-1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=989244344]
+[node name="Acroter0_-1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1967883060]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -5.6, 15.392771, -31.4)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_tss7r")
 
-[node name="Acroter0_1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=856740125]
+[node name="Acroter0_1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1272822232]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 5.6, 15.392771, -40.6)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_dyhsm")
 
-[node name="Acroter0_1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=794631764]
+[node name="Acroter0_1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=2027276993]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 5.6, 15.392771, -31.4)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_u4bn1")
 
-[node name="Tier2" type="MeshInstance3D" parent="Temple/Decor" unique_id=2092356900]
+[node name="Tier2" type="MeshInstance3D" parent="Temple/Decor" unique_id=592879905]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.19277, -36)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_m86c3")
 
-[node name="Tier2S_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1579580413]
+[node name="Tier2S_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1536180136]
 transform = Transform3D(1.05, 0, 0, 0, 0.575, 0, 0, 0, 1, -2.1, 14.892771, -31.45)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="Tier2S_2" type="MeshInstance3D" parent="Temple/Decor" unique_id=708903449]
+[node name="Tier2S_2" type="MeshInstance3D" parent="Temple/Decor" unique_id=231387052]
 transform = Transform3D(1.05, 0, 0, 0, 0.575, 0, 0, 0, 1, 2.1, 14.892771, -31.45)
 mesh = SubResource("ArrayMesh_hs2ts")
 
-[node name="Tier2S_3" type="MeshInstance3D" parent="Temple/Decor" unique_id=1178903004]
+[node name="Tier2S_3" type="MeshInstance3D" parent="Temple/Decor" unique_id=1326638057]
 transform = Transform3D(1.05, 0, 0, 0, 0.575, 0, 0, 0, 1, -2.1, 17.19277, -31.45)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="Tier2S_4" type="MeshInstance3D" parent="Temple/Decor" unique_id=912705121]
+[node name="Tier2S_4" type="MeshInstance3D" parent="Temple/Decor" unique_id=394996742]
 transform = Transform3D(1.05, 0, 0, 0, 0.575, 0, 0, 0, 1, 2.1, 17.19277, -31.45)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="Cornice2" type="MeshInstance3D" parent="Temple/Decor" unique_id=1713819461]
+[node name="Cornice2" type="MeshInstance3D" parent="Temple/Decor" unique_id=1103264780]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 19.742771, -36)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_vle1o")
 
-[node name="TierPediment2" type="MeshInstance3D" parent="Temple/Decor" unique_id=240845266]
+[node name="TierPediment2" type="MeshInstance3D" parent="Temple/Decor" unique_id=1837655588]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 21.25777, -32.05)
 cast_shadow = 0
 mesh = SubResource("PrismMesh_gqca3")
 
-[node name="Acroter1_-1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=2128783691]
+[node name="Acroter1_-1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1682564013]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -4.6, 20.492771, -39.9)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_gyqka")
 
-[node name="Acroter1_-1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1334736898]
+[node name="Acroter1_-1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1852544865]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -4.6, 20.492771, -32.1)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_dhqpc")
 
-[node name="Acroter1_1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1570240976]
+[node name="Acroter1_1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=682312009]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 4.6, 20.492771, -39.9)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_8ed08")
 
-[node name="Acroter1_1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=161063418]
+[node name="Acroter1_1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1276262833]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 4.6, 20.492771, -32.1)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_phmi3")
 
-[node name="Tier3" type="MeshInstance3D" parent="Temple/Decor" unique_id=1274959055]
+[node name="Tier3" type="MeshInstance3D" parent="Temple/Decor" unique_id=1939972264]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 22.09277, -36)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_5o4ai")
 
-[node name="Tier3S_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=2100241312]
+[node name="Tier3S_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1840839666]
 transform = Transform3D(0.825, 0, 0, 0, 0.525, 0, 0, 0, 1, -1.65, 19.992771, -32.05)
 mesh = SubResource("ArrayMesh_vx0n5")
 
-[node name="Tier3S_2" type="MeshInstance3D" parent="Temple/Decor" unique_id=1550708084]
+[node name="Tier3S_2" type="MeshInstance3D" parent="Temple/Decor" unique_id=1649289658]
 transform = Transform3D(0.825, 0, 0, 0, 0.525, 0, 0, 0, 1, 1.65, 19.992771, -32.05)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="Tier3S_3" type="MeshInstance3D" parent="Temple/Decor" unique_id=1609529321]
+[node name="Tier3S_3" type="MeshInstance3D" parent="Temple/Decor" unique_id=1880504142]
 transform = Transform3D(0.825, 0, 0, 0, 0.525, 0, 0, 0, 1, -1.65, 22.092772, -32.05)
 mesh = SubResource("ArrayMesh_vx0n5")
 
-[node name="Tier3S_4" type="MeshInstance3D" parent="Temple/Decor" unique_id=898705559]
+[node name="Tier3S_4" type="MeshInstance3D" parent="Temple/Decor" unique_id=2111514619]
 transform = Transform3D(0.825, 0, 0, 0, 0.525, 0, 0, 0, 1, 1.65, 22.092772, -32.05)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="Cornice3" type="MeshInstance3D" parent="Temple/Decor" unique_id=791091867]
+[node name="Cornice3" type="MeshInstance3D" parent="Temple/Decor" unique_id=1737903054]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 24.44277, -36)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_0viky")
 
-[node name="TierPediment3" type="MeshInstance3D" parent="Temple/Decor" unique_id=1754036667]
+[node name="TierPediment3" type="MeshInstance3D" parent="Temple/Decor" unique_id=1065058309]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25.84777, -32.65)
 cast_shadow = 0
 mesh = SubResource("PrismMesh_w7g7k")
 
-[node name="Acroter2_-1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=338726119]
+[node name="Acroter2_-1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=380187779]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -3.7, 25.19277, -39.3)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_ghk2y")
 
-[node name="Acroter2_-1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1483264555]
+[node name="Acroter2_-1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1457862337]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -3.7, 25.19277, -32.7)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_tjnip")
 
-[node name="Acroter2_1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=690225487]
+[node name="Acroter2_1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1569784917]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 3.7, 25.19277, -39.3)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_h7ph8")
 
-[node name="Acroter2_1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1995385828]
+[node name="Acroter2_1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1185936959]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 3.7, 25.19277, -32.7)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_5wu0e")
 
-[node name="Tier4" type="MeshInstance3D" parent="Temple/Decor" unique_id=318313304]
+[node name="Tier4" type="MeshInstance3D" parent="Temple/Decor" unique_id=450377675]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 26.49277, -36)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_ajej2")
 
-[node name="Tier4S_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=312449344]
+[node name="Tier4S_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1700433878]
 transform = Transform3D(1.2, 0, 0, 0, 0.9, 0, 0, 0, 1, 0, 24.69277, -32.75)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="Cornice4" type="MeshInstance3D" parent="Temple/Decor" unique_id=1569198464]
+[node name="Cornice4" type="MeshInstance3D" parent="Temple/Decor" unique_id=2139210288]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 28.54277, -36)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_c0lyf")
 
-[node name="TierPediment4" type="MeshInstance3D" parent="Temple/Decor" unique_id=325956773]
+[node name="TierPediment4" type="MeshInstance3D" parent="Temple/Decor" unique_id=1183277835]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 29.78277, -33.35)
 cast_shadow = 0
 mesh = SubResource("PrismMesh_ev44t")
 
-[node name="Acroter3_-1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1752314521]
+[node name="Acroter3_-1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1954975375]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -2.8000002, 29.29277, -38.6)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_02j1y")
 
-[node name="Acroter3_-1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1411242611]
+[node name="Acroter3_-1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1740195581]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -2.8000002, 29.29277, -33.4)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_e4fdg")
 
-[node name="Acroter3_1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1104705853]
+[node name="Acroter3_1_-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=791072373]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 2.8000002, 29.29277, -38.6)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_0hu8h")
 
-[node name="Acroter3_1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=503951234]
+[node name="Acroter3_1_1" type="MeshInstance3D" parent="Temple/Decor" unique_id=136301851]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 2.8000002, 29.29277, -33.4)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_nayiq")
 
-[node name="Finial" type="MeshInstance3D" parent="Temple/Decor" unique_id=1307494780]
+[node name="Finial" type="MeshInstance3D" parent="Temple/Decor" unique_id=1628402710]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 31.04277, -36)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_r6lwn")
 
-[node name="FinialSpire" type="MeshInstance3D" parent="Temple/Decor" unique_id=456946816]
+[node name="FinialSpire" type="MeshInstance3D" parent="Temple/Decor" unique_id=706839736]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 34.39277, -36)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_p82rw")
 
-[node name="RoofW" type="MeshInstance3D" parent="Temple/Decor" unique_id=162204381]
+[node name="RoofW" type="MeshInstance3D" parent="Temple/Decor" unique_id=1280734752]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -13.25, 6.2927704, -36)
 cast_shadow = 0
 mesh = SubResource("PrismMesh_e054p")
 
-[node name="EaveW" type="MeshInstance3D" parent="Temple/Decor" unique_id=790602051]
+[node name="EaveW" type="MeshInstance3D" parent="Temple/Decor" unique_id=1939516348]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.25, 4.8927703, -32)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_pbh8o")
 
-[node name="RoofMossW0" type="MeshInstance3D" parent="Temple/Decor" unique_id=621518268]
+[node name="RoofMossW0" type="MeshInstance3D" parent="Temple/Decor" unique_id=128240631]
 transform = Transform3D(1, 0, 0, 0, 0.8319541, -0.55484444, 0, 0.55484444, 0.8319541, -17.706139, 6.3527703, -33.75)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_8ty7m")
 
-[node name="RoofMossW1" type="MeshInstance3D" parent="Temple/Decor" unique_id=14014860]
+[node name="RoofMossW1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1018165265]
 transform = Transform3D(1, 0, 0, 0, 0.8319541, 0.55484444, 0, -0.55484444, 0.8319541, -15.14743, 6.3527703, -38.25)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_jhruv")
 
-[node name="RoofMossW2" type="MeshInstance3D" parent="Temple/Decor" unique_id=287719525]
+[node name="RoofMossW2" type="MeshInstance3D" parent="Temple/Decor" unique_id=1791610918]
 transform = Transform3D(1, 0, 0, 0, 0.8319541, -0.55484444, 0, 0.55484444, 0.8319541, -12.225643, 6.3527703, -33.75)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_npicq")
 
-[node name="TileW0" type="MeshInstance3D" parent="Temple/Decor" unique_id=154947780]
+[node name="TileW0" type="MeshInstance3D" parent="Temple/Decor" unique_id=1574738954]
 transform = Transform3D(0.826348, -0.109964676, 0.55231935, 0.082972676, 0.9938208, 0.07372706, -0.55701387, -0.015096787, 0.83036596, -15.840271, 7.8927703, -36.476948)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_vq6vf")
 
-[node name="TileW1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1713692066]
+[node name="TileW1" type="MeshInstance3D" parent="Temple/Decor" unique_id=631986999]
 transform = Transform3D(-0.9261047, -0.09517361, 0.36506447, -0.061011277, 0.9927015, 0.104025885, -0.37230054, 0.07406581, -0.92515224, -17.100395, 7.8927703, -36.284428)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_wiur0")
 
-[node name="TileW2" type="MeshInstance3D" parent="Temple/Decor" unique_id=1820568363]
+[node name="TileW2" type="MeshInstance3D" parent="Temple/Decor" unique_id=67941547]
 transform = Transform3D(0.29712635, -0.005000934, 0.95482504, -0.22540888, 0.9713553, 0.075231165, -0.9278506, -0.23757921, 0.28748798, -12.060637, 7.8927703, -36.142056)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_tampj")
 
-[node name="TileW3" type="MeshInstance3D" parent="Temple/Decor" unique_id=283761990]
+[node name="TileW3" type="MeshInstance3D" parent="Temple/Decor" unique_id=2126722797]
 transform = Transform3D(0.010432072, -0.027835634, 0.9995581, -0.21266204, 0.9766829, 0.029418092, -0.9770702, -0.21287495, 0.004269244, -13.934453, 7.8927703, -35.974937)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_bfl2s")
 
-[node name="TileW4" type="MeshInstance3D" parent="Temple/Decor" unique_id=1647020654]
+[node name="TileW4" type="MeshInstance3D" parent="Temple/Decor" unique_id=1823261645]
 transform = Transform3D(0.5939748, 0.20322073, 0.77839273, -0.33904648, 0.940678, 0.013129373, -0.72954875, -0.27170983, 0.6276403, -15.562761, 7.8927703, -36.212933)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_dfqtd")
 
-[node name="RoofE" type="MeshInstance3D" parent="Temple/Decor" unique_id=502524863]
+[node name="RoofE" type="MeshInstance3D" parent="Temple/Decor" unique_id=1839967141]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 13.25, 6.2927704, -36)
 cast_shadow = 0
 mesh = SubResource("PrismMesh_65o06")
 
-[node name="EaveE" type="MeshInstance3D" parent="Temple/Decor" unique_id=574514975]
+[node name="EaveE" type="MeshInstance3D" parent="Temple/Decor" unique_id=1277340569]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.25, 4.8927703, -32)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_aqpn3")
 
-[node name="RoofMossE0" type="MeshInstance3D" parent="Temple/Decor" unique_id=146736573]
+[node name="RoofMossE0" type="MeshInstance3D" parent="Temple/Decor" unique_id=802708185]
 transform = Transform3D(1, 0, 0, 0, 0.8319541, -0.55484444, 0, 0.55484444, 0.8319541, 18.392513, 6.3527703, -33.75)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_vwsk6")
 
-[node name="RoofMossE1" type="MeshInstance3D" parent="Temple/Decor" unique_id=325053103]
+[node name="RoofMossE1" type="MeshInstance3D" parent="Temple/Decor" unique_id=75656227]
 transform = Transform3D(1, 0, 0, 0, 0.8319541, 0.55484444, 0, -0.55484444, 0.8319541, 11.564747, 6.3527703, -38.25)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_y8ltn")
 
-[node name="RoofMossE2" type="MeshInstance3D" parent="Temple/Decor" unique_id=1495066040]
+[node name="RoofMossE2" type="MeshInstance3D" parent="Temple/Decor" unique_id=998155417]
 transform = Transform3D(1, 0, 0, 0, 0.8319541, -0.55484444, 0, 0.55484444, 0.8319541, 18.469034, 6.3527703, -33.75)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_tdkkc")
 
-[node name="TileE0" type="MeshInstance3D" parent="Temple/Decor" unique_id=1763923804]
+[node name="TileE0" type="MeshInstance3D" parent="Temple/Decor" unique_id=1453613325]
 transform = Transform3D(-0.11115644, -0.05987165, 0.9919978, 0.18417166, 0.9796523, 0.079763554, -0.9765885, 0.1915641, -0.097868, 15.141367, 7.8927703, -36.3614)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_qsmt0")
 
-[node name="TileE1" type="MeshInstance3D" parent="Temple/Decor" unique_id=760036693]
+[node name="TileE1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1916930960]
 transform = Transform3D(-0.6647775, 0.20058285, 0.71960914, 0.0751982, 0.9763536, -0.20267908, -0.7432469, -0.08062318, -0.6641414, 15.917994, 7.8927703, -36.249084)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_dy4p7")
 
-[node name="TileE2" type="MeshInstance3D" parent="Temple/Decor" unique_id=138329953]
+[node name="TileE2" type="MeshInstance3D" parent="Temple/Decor" unique_id=590105477]
 transform = Transform3D(0.8670562, 0.036118016, 0.4968995, -0.20381656, 0.93580467, 0.28762558, -0.4546124, -0.35066387, 0.81875664, 10.003691, 7.8927703, -36.504673)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_odcde")
 
-[node name="TileE3" type="MeshInstance3D" parent="Temple/Decor" unique_id=799567194]
+[node name="TileE3" type="MeshInstance3D" parent="Temple/Decor" unique_id=1836359850]
 transform = Transform3D(-0.74809915, -0.08066781, 0.65866566, -0.18497004, 0.9785927, -0.09023546, -0.6372863, -0.18933848, -0.74700546, 14.104964, 7.8927703, -35.573853)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_l2wp4")
 
-[node name="TileE4" type="MeshInstance3D" parent="Temple/Decor" unique_id=587753760]
+[node name="TileE4" type="MeshInstance3D" parent="Temple/Decor" unique_id=2104763613]
 transform = Transform3D(-0.45603392, -0.10484508, 0.88376504, -0.20489682, 0.97872853, 0.010381681, -0.86605453, -0.17634624, -0.4678158, 9.112302, 7.8927703, -35.52073)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_03o7k")
 
-[node name="Tree" type="Node3D" parent="Temple/Decor" unique_id=1541932741]
+[node name="Tree" type="Node3D" parent="Temple/Decor" unique_id=427176952]
 script = ExtResource("10_rastn")
 tree_paths = PackedStringArray("res://assets/environment/trees/tree02.fbx")
 seed_value = 31
@@ -1702,140 +1702,140 @@ dark_mul = 0.62
 base_haze = 0.0
 fixed_positions = PackedVector3Array(-11, -0.20722961, -34)
 
-[node name="Bush0" type="MeshInstance3D" parent="Temple/Decor" unique_id=613397826]
+[node name="Bush0" type="MeshInstance3D" parent="Temple/Decor" unique_id=94323651]
 transform = Transform3D(1.3, 0, 0, 0, 0.8, 0, 0, 0, 1.1, -7.7852135, 0.09277038, -29.56856)
 cast_shadow = 0
 mesh = SubResource("SphereMesh_iwfv7")
 
-[node name="Bush1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1150326426]
+[node name="Bush1" type="MeshInstance3D" parent="Temple/Decor" unique_id=887446611]
 transform = Transform3D(1.3, 0, 0, 0, 0.8, 0, 0, 0, 1.1, 12.434427, 0.09277038, -31.537321)
 cast_shadow = 0
 mesh = SubResource("SphereMesh_xx4cg")
 
-[node name="Bush2" type="MeshInstance3D" parent="Temple/Decor" unique_id=747452411]
+[node name="Bush2" type="MeshInstance3D" parent="Temple/Decor" unique_id=680112194]
 transform = Transform3D(1.3, 0, 0, 0, 0.8, 0, 0, 0, 1.1, -5.9509153, 0.09277038, -29.534025)
 cast_shadow = 0
 mesh = SubResource("SphereMesh_tdnsk")
 
-[node name="Bush4" type="MeshInstance3D" parent="Temple/Decor" unique_id=1931577988]
+[node name="Bush4" type="MeshInstance3D" parent="Temple/Decor" unique_id=2050079025]
 transform = Transform3D(1.3, 0, 0, 0, 0.8, 0, 0, 0, 1.1, 6.770906, 0.09277038, -29.756294)
 cast_shadow = 0
 mesh = SubResource("SphereMesh_e4h8j")
 
-[node name="Bush5" type="MeshInstance3D" parent="Temple/Decor" unique_id=1110666887]
+[node name="Bush5" type="MeshInstance3D" parent="Temple/Decor" unique_id=203189642]
 transform = Transform3D(1.3, 0, 0, 0, 0.8, 0, 0, 0, 1.1, 5.2374573, 0.09277038, -29.595219)
 cast_shadow = 0
 mesh = SubResource("SphereMesh_irfxp")
 
-[node name="Bush6" type="MeshInstance3D" parent="Temple/Decor" unique_id=1126256687]
+[node name="Bush6" type="MeshInstance3D" parent="Temple/Decor" unique_id=1426536096]
 transform = Transform3D(1.3, 0, 0, 0, 0.8, 0, 0, 0, 1.1, 5.9632664, 0.09277038, -30.711468)
 cast_shadow = 0
 mesh = SubResource("SphereMesh_klcmu")
 
-[node name="Bush7" type="MeshInstance3D" parent="Temple/Decor" unique_id=1164882291]
+[node name="Bush7" type="MeshInstance3D" parent="Temple/Decor" unique_id=181615658]
 transform = Transform3D(1.3, 0, 0, 0, 0.8, 0, 0, 0, 1.1, 5.417019, 0.09277038, -30.649073)
 cast_shadow = 0
 mesh = SubResource("SphereMesh_efur1")
 
-[node name="Bush8" type="MeshInstance3D" parent="Temple/Decor" unique_id=973659094]
+[node name="Bush8" type="MeshInstance3D" parent="Temple/Decor" unique_id=1846078121]
 transform = Transform3D(1.3, 0, 0, 0, 0.8, 0, 0, 0, 1.1, -16.150688, 0.09277038, -31.889135)
 cast_shadow = 0
 mesh = SubResource("SphereMesh_rsseq")
 
-[node name="Bush9" type="MeshInstance3D" parent="Temple/Decor" unique_id=822550851]
+[node name="Bush9" type="MeshInstance3D" parent="Temple/Decor" unique_id=467913515]
 transform = Transform3D(1.3, 0, 0, 0, 0.8, 0, 0, 0, 1.1, 16.488369, 0.09277038, -30.705072)
 cast_shadow = 0
 mesh = SubResource("SphereMesh_tk2f6")
 
-[node name="Bush10" type="MeshInstance3D" parent="Temple/Decor" unique_id=1418087524]
+[node name="Bush10" type="MeshInstance3D" parent="Temple/Decor" unique_id=1342251354]
 transform = Transform3D(1.3, 0, 0, 0, 0.8, 0, 0, 0, 1.1, -14.537849, 0.09277038, -30.221987)
 cast_shadow = 0
 mesh = SubResource("SphereMesh_r1hlq")
 
-[node name="Bush11" type="MeshInstance3D" parent="Temple/Decor" unique_id=1468206142]
+[node name="Bush11" type="MeshInstance3D" parent="Temple/Decor" unique_id=707026566]
 transform = Transform3D(1.3, 0, 0, 0, 0.8, 0, 0, 0, 1.1, -15.296289, 0.09277038, -30.683907)
 cast_shadow = 0
 mesh = SubResource("SphereMesh_caeup")
 
-[node name="Rubble0" type="MeshInstance3D" parent="Temple/Decor" unique_id=1963019663]
+[node name="Rubble0" type="MeshInstance3D" parent="Temple/Decor" unique_id=1795173054]
 transform = Transform3D(0.41846284, -0.16453835, 0.89320546, 0.12672801, 0.9844104, 0.121967785, -0.8993492, 0.06215517, 0.43279076, -8.002468, 0.899663, -26.704275)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_rnqnk")
 
-[node name="Rubble1" type="MeshInstance3D" parent="Temple/Decor" unique_id=2100985715]
+[node name="Rubble1" type="MeshInstance3D" parent="Temple/Decor" unique_id=257604594]
 transform = Transform3D(-0.28402674, 0.1219188, 0.9510334, -0.06971743, 0.9866312, -0.14730345, -0.9562784, -0.10814173, -0.2717298, -5.5093126, 0.7983714, -24.572145)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_qdseh")
 
-[node name="Rubble2" type="MeshInstance3D" parent="Temple/Decor" unique_id=1713061286]
+[node name="Rubble2" type="MeshInstance3D" parent="Temple/Decor" unique_id=1403299603]
 transform = Transform3D(-0.88250613, 0.06374609, 0.46596077, 0.07195649, 0.9974078, -0.00016911073, -0.46476367, 0.03337966, -0.8848054, -7.284329, 0.8054535, -25.897453)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_ireum")
 
-[node name="Rubble3" type="MeshInstance3D" parent="Temple/Decor" unique_id=2046852522]
+[node name="Rubble3" type="MeshInstance3D" parent="Temple/Decor" unique_id=1988857485]
 transform = Transform3D(0.088891886, 0.06879127, 0.9936629, -0.09955927, 0.99322975, -0.059854835, -0.99105304, -0.09360774, 0.09513888, -3.0444522, 0.6483579, -25.102268)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_2qm36")
 
-[node name="Rubble4" type="MeshInstance3D" parent="Temple/Decor" unique_id=1076213526]
+[node name="Rubble4" type="MeshInstance3D" parent="Temple/Decor" unique_id=209252308]
 transform = Transform3D(0.89605606, -0.019095886, 0.44353, 0.009775854, 0.99968094, 0.023290599, -0.44383323, -0.016533796, 0.8959568, 4.4215755, 0.20164816, -25.019444)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_7lk20")
 
-[node name="Rubble5" type="MeshInstance3D" parent="Temple/Decor" unique_id=1168149215]
+[node name="Rubble5" type="MeshInstance3D" parent="Temple/Decor" unique_id=478832311]
 transform = Transform3D(-0.89024526, -0.033347063, 0.4542592, -0.10118528, 0.98687506, -0.12585399, -0.44410017, -0.15800525, -0.88193506, -8.466128, 0.8507817, -27.94709)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_mi1ax")
 
-[node name="Rubble6" type="MeshInstance3D" parent="Temple/Decor" unique_id=2088967139]
+[node name="Rubble6" type="MeshInstance3D" parent="Temple/Decor" unique_id=94189048]
 transform = Transform3D(0.9061593, 0.065583244, 0.41782066, -0.04578732, 0.9973099, -0.057240374, -0.4204507, 0.032738008, 0.9067246, 6.3640356, 0.3037072, -26.178667)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_odxi6")
 
-[node name="Rubble7" type="MeshInstance3D" parent="Temple/Decor" unique_id=232732936]
+[node name="Rubble7" type="MeshInstance3D" parent="Temple/Decor" unique_id=1807616789]
 transform = Transform3D(0.711645, 0.048186272, 0.7008847, 0.022088949, 0.99561703, -0.090877384, -0.7021918, 0.08015425, 0.7074616, 7.217848, 0.528633, -24.81703)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_2640b")
 
-[node name="Rubble8" type="MeshInstance3D" parent="Temple/Decor" unique_id=655585282]
+[node name="Rubble8" type="MeshInstance3D" parent="Temple/Decor" unique_id=2126077824]
 transform = Transform3D(-0.99689984, 0.075300515, 0.022813866, 0.07803429, 0.9833249, 0.16426441, -0.010064249, 0.16553544, -0.98615247, 3.2469006, 0.09283067, -27.901459)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_krvrv")
 
-[node name="FallenPillar-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=363927733]
+[node name="FallenPillar-1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1683290267]
 transform = Transform3D(0.9829825, 0, -0.6882918, 0, 1, 0, 0.6882918, 0, 0.9829825, -7.6, 0.5210617, -24.5)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="FallenPillar1" type="MeshInstance3D" parent="Temple/Decor" unique_id=1081127423]
+[node name="FallenPillar1" type="MeshInstance3D" parent="Temple/Decor" unique_id=653877399]
 transform = Transform3D(0.9829825, 0, 0.6882918, 0, 1, 0, -0.6882918, 0, 0.9829825, 7.6, 0.26479417, -24.5)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Body" type="CSGCombiner3D" parent="Temple" unique_id=1559307155]
+[node name="Body" type="CSGCombiner3D" parent="Temple" unique_id=1762502674]
 use_collision = true
 collision_mask = 0
 
-[node name="Gate" type="CSGBox3D" parent="Temple/Body" unique_id=1490108507]
+[node name="Gate" type="CSGBox3D" parent="Temple/Body" unique_id=928386518]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2927704, -36)
 size = Vector3(12, 17, 10)
 material = SubResource("StandardMaterial3D_iask2")
 
-[node name="WingW" type="CSGBox3D" parent="Temple/Body" unique_id=1617759959]
+[node name="WingW" type="CSGBox3D" parent="Temple/Body" unique_id=177307191]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.25, -1.7072296, -36)
 size = Vector3(14.5, 13, 7)
 material = SubResource("StandardMaterial3D_iask2")
 
-[node name="WingE" type="CSGBox3D" parent="Temple/Body" unique_id=887958812]
+[node name="WingE" type="CSGBox3D" parent="Temple/Body" unique_id=2100291524]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.25, -1.7072296, -36)
 size = Vector3(14.5, 13, 7)
 material = SubResource("StandardMaterial3D_iask2")
 
-[node name="Door" type="CSGBox3D" parent="Temple/Body" unique_id=697625177]
+[node name="Door" type="CSGBox3D" parent="Temple/Body" unique_id=494304186]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.047229614, -31)
 operation = 2
 size = Vector3(3.2, 0.32, 3)
 material = SubResource("StandardMaterial3D_iask2")
 
-[node name="DoorTop" type="CSGCylinder3D" parent="Temple/Body" unique_id=218920561]
+[node name="DoorTop" type="CSGCylinder3D" parent="Temple/Body" unique_id=437151872]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1.8, 0, 1, -7.86805e-08, 0, 0.112770386, -31)
 operation = 2
 radius = 1.6
@@ -1843,461 +1843,461 @@ height = 3.0
 sides = 24
 material = SubResource("StandardMaterial3D_iask2")
 
-[node name="Facade" type="Node3D" parent="Temple" unique_id=1383353051]
+[node name="Facade" type="Node3D" parent="Temple" unique_id=1695062466]
 
-[node name="GateS_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=358695038]
+[node name="GateS_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=2056426797]
 transform = Transform3D(1, 0, 0, 0, 0.75, 0, 0, 0, 1, -4, -0.20722961, -29.95)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="GateS_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=1894706784]
+[node name="GateS_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=111776747]
 transform = Transform3D(1, 0, 0, 0, 0.75, 0, 0, 0, 1, -4, 2.7927704, -29.95)
 mesh = SubResource("ArrayMesh_c7d2p")
 
-[node name="GateS_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=637625037]
+[node name="GateS_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=2130288297]
 transform = Transform3D(1, 0, 0, 0, 0.75, 0, 0, 0, 1, -4, 5.7927704, -29.95)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="GateS_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=815160798]
+[node name="GateS_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=1829343477]
 transform = Transform3D(1, 0, 0, 0, 0.75, 0, 0, 0, 1, 4, -0.20722961, -29.95)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="GateS_5" type="MeshInstance3D" parent="Temple/Facade" unique_id=170780464]
+[node name="GateS_5" type="MeshInstance3D" parent="Temple/Facade" unique_id=1557391039]
 transform = Transform3D(1, 0, 0, 0, 0.75, 0, 0, 0, 1, 4, 2.7927704, -29.95)
 mesh = SubResource("ArrayMesh_c7d2p")
 
-[node name="GateS_6" type="MeshInstance3D" parent="Temple/Facade" unique_id=1932925550]
+[node name="GateS_6" type="MeshInstance3D" parent="Temple/Facade" unique_id=632095442]
 transform = Transform3D(1, 0, 0, 0, 0.75, 0, 0, 0, 1, 4, 5.7927704, -29.95)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="GateS_7" type="MeshInstance3D" parent="Temple/Facade" unique_id=760640409]
+[node name="GateS_7" type="MeshInstance3D" parent="Temple/Facade" unique_id=807464045]
 transform = Transform3D(1, 0, 0, 0, 0.75, 0, 0, 0, 1, 0, 2.7927704, -29.95)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="GateS_8" type="MeshInstance3D" parent="Temple/Facade" unique_id=1591646400]
+[node name="GateS_8" type="MeshInstance3D" parent="Temple/Facade" unique_id=816292862]
 transform = Transform3D(1, 0, 0, 0, 0.75, 0, 0, 0, 1, 0, 5.7927704, -29.95)
 mesh = SubResource("ArrayMesh_c7d2p")
 
-[node name="WingWS_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=256057730]
+[node name="WingWS_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=1041436169]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, -18.6875, -0.20722961, -31.45)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWS_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=637391940]
+[node name="WingWS_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=457365166]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, -15.0625, -0.20722961, -31.45)
 mesh = SubResource("ArrayMesh_vx0n5")
 
-[node name="WingWS_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=900844450]
+[node name="WingWS_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=1798386469]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, -11.4375, -0.20722961, -31.45)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWS_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=798831695]
+[node name="WingWS_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=123236685]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, -7.8125, -0.20722961, -31.45)
 mesh = SubResource("ArrayMesh_c7d2p")
 
-[node name="WingWS_5" type="MeshInstance3D" parent="Temple/Facade" unique_id=52258295]
+[node name="WingWS_5" type="MeshInstance3D" parent="Temple/Facade" unique_id=1499410281]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, -18.6875, 2.2927704, -31.45)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWS_6" type="MeshInstance3D" parent="Temple/Facade" unique_id=1859351674]
+[node name="WingWS_6" type="MeshInstance3D" parent="Temple/Facade" unique_id=180558852]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, -15.0625, 2.2927704, -31.45)
 mesh = SubResource("ArrayMesh_vx0n5")
 
-[node name="WingWS_7" type="MeshInstance3D" parent="Temple/Facade" unique_id=920585962]
+[node name="WingWS_7" type="MeshInstance3D" parent="Temple/Facade" unique_id=1957653811]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, -11.4375, 2.2927704, -31.45)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWS_8" type="MeshInstance3D" parent="Temple/Facade" unique_id=1355793578]
+[node name="WingWS_8" type="MeshInstance3D" parent="Temple/Facade" unique_id=473520130]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, -7.8125, 2.2927704, -31.45)
 mesh = SubResource("ArrayMesh_c7d2p")
 
-[node name="WingWEnd_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=628332946]
+[node name="WingWEnd_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=1825596338]
 transform = Transform3D(-3.8247464e-08, 0, -1, 0, 0.625, 0, 0.875, 0, -4.371139e-08, -21.55, -0.20722961, -37.75)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWEnd_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=415846088]
+[node name="WingWEnd_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=460802947]
 transform = Transform3D(-3.8247464e-08, 0, -1, 0, 0.625, 0, 0.875, 0, -4.371139e-08, -21.55, -0.20722961, -34.25)
 mesh = SubResource("ArrayMesh_c7d2p")
 
-[node name="WingWEnd_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=800574496]
+[node name="WingWEnd_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=1223604303]
 transform = Transform3D(-3.8247464e-08, 0, -1, 0, 0.625, 0, 0.875, 0, -4.371139e-08, -21.55, 2.2927704, -37.75)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWEnd_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=625918352]
+[node name="WingWEnd_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=812082038]
 transform = Transform3D(-3.8247464e-08, 0, -1, 0, 0.625, 0, 0.875, 0, -4.371139e-08, -21.55, 2.2927704, -34.25)
 mesh = SubResource("ArrayMesh_c7d2p")
 
-[node name="GateWSide_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=1816795789]
+[node name="GateWSide_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=2077593196]
 transform = Transform3D(-4.644335e-08, 0, -1, 0, 1, 0, 1.0625, 0, -4.371139e-08, -7.0499997, 4.7927704, -38.875)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="GateWSide_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=464869357]
+[node name="GateWSide_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=720668333]
 transform = Transform3D(-4.644335e-08, 0, -1, 0, 1, 0, 1.0625, 0, -4.371139e-08, -7.05, 4.7927704, -34.625)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWBack_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=1464965032]
+[node name="WingWBack_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=906413589]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, -7.8125, -0.20722961, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWBack_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=752997098]
+[node name="WingWBack_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=1553993220]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, -11.4375, -0.20722961, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWBack_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=213443652]
+[node name="WingWBack_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=811487122]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, -15.0625, -0.20722961, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWBack_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=200994492]
+[node name="WingWBack_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=783639104]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, -18.6875, -0.20722961, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWBack_5" type="MeshInstance3D" parent="Temple/Facade" unique_id=11529600]
+[node name="WingWBack_5" type="MeshInstance3D" parent="Temple/Facade" unique_id=567327951]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, -7.8125, 2.2927704, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWBack_6" type="MeshInstance3D" parent="Temple/Facade" unique_id=761625164]
+[node name="WingWBack_6" type="MeshInstance3D" parent="Temple/Facade" unique_id=1856807811]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, -11.4375, 2.2927704, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWBack_7" type="MeshInstance3D" parent="Temple/Facade" unique_id=76712337]
+[node name="WingWBack_7" type="MeshInstance3D" parent="Temple/Facade" unique_id=1563788820]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, -15.0625, 2.2927704, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingWBack_8" type="MeshInstance3D" parent="Temple/Facade" unique_id=1528937974]
+[node name="WingWBack_8" type="MeshInstance3D" parent="Temple/Facade" unique_id=1793792529]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, -18.6875, 2.2927704, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingES_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=934989401]
+[node name="WingES_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=1168475644]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, 7.8125, -0.20722961, -31.45)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingES_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=541627143]
+[node name="WingES_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=1941564676]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, 11.4375, -0.20722961, -31.45)
 mesh = SubResource("ArrayMesh_vx0n5")
 
-[node name="WingES_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=2012835157]
+[node name="WingES_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=157242673]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, 15.0625, -0.20722961, -31.45)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingES_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=2123376631]
+[node name="WingES_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=889952216]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, 18.6875, -0.20722961, -31.45)
 mesh = SubResource("ArrayMesh_c7d2p")
 
-[node name="WingES_5" type="MeshInstance3D" parent="Temple/Facade" unique_id=1671147088]
+[node name="WingES_5" type="MeshInstance3D" parent="Temple/Facade" unique_id=1953946145]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, 7.8125, 2.2927704, -31.45)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingES_6" type="MeshInstance3D" parent="Temple/Facade" unique_id=1974910611]
+[node name="WingES_6" type="MeshInstance3D" parent="Temple/Facade" unique_id=1313855177]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, 11.4375, 2.2927704, -31.45)
 mesh = SubResource("ArrayMesh_vx0n5")
 
-[node name="WingES_7" type="MeshInstance3D" parent="Temple/Facade" unique_id=956105417]
+[node name="WingES_7" type="MeshInstance3D" parent="Temple/Facade" unique_id=1179767786]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, 15.0625, 2.2927704, -31.45)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingES_8" type="MeshInstance3D" parent="Temple/Facade" unique_id=621726701]
+[node name="WingES_8" type="MeshInstance3D" parent="Temple/Facade" unique_id=1605472958]
 transform = Transform3D(0.90625, 0, 0, 0, 0.625, 0, 0, 0, 1, 18.6875, 2.2927704, -31.45)
 mesh = SubResource("ArrayMesh_c7d2p")
 
-[node name="WingEEnd_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=1881468745]
+[node name="WingEEnd_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=199811007]
 transform = Transform3D(-3.8247464e-08, 0, 1, 0, 0.625, 0, -0.875, 0, -4.371139e-08, 21.55, -0.20722961, -34.25)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingEEnd_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=2136905349]
+[node name="WingEEnd_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=1312532803]
 transform = Transform3D(-3.8247464e-08, 0, 1, 0, 0.625, 0, -0.875, 0, -4.371139e-08, 21.55, -0.20722961, -37.75)
 mesh = SubResource("ArrayMesh_c7d2p")
 
-[node name="WingEEnd_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=2064252490]
+[node name="WingEEnd_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=1467850777]
 transform = Transform3D(-3.8247464e-08, 0, 1, 0, 0.625, 0, -0.875, 0, -4.371139e-08, 21.55, 2.2927704, -34.25)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingEEnd_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=517146307]
+[node name="WingEEnd_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=1452338241]
 transform = Transform3D(-3.8247464e-08, 0, 1, 0, 0.625, 0, -0.875, 0, -4.371139e-08, 21.55, 2.2927704, -37.75)
 mesh = SubResource("ArrayMesh_c7d2p")
 
-[node name="GateESide_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=4019735]
+[node name="GateESide_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=1649668853]
 transform = Transform3D(-4.644335e-08, 0, 1, 0, 1, 0, -1.0625, 0, -4.371139e-08, 7.05, 4.7927704, -34.625)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="GateESide_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=458375754]
+[node name="GateESide_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=1403551286]
 transform = Transform3D(-4.644335e-08, 0, 1, 0, 1, 0, -1.0625, 0, -4.371139e-08, 7.0499997, 4.7927704, -38.875)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingEBack_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=908700865]
+[node name="WingEBack_1" type="MeshInstance3D" parent="Temple/Facade" unique_id=1491968205]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, 18.6875, -0.20722961, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingEBack_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=1615858977]
+[node name="WingEBack_2" type="MeshInstance3D" parent="Temple/Facade" unique_id=903242587]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, 15.0625, -0.20722961, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingEBack_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=1384256959]
+[node name="WingEBack_3" type="MeshInstance3D" parent="Temple/Facade" unique_id=1140746046]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, 11.4375, -0.20722961, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingEBack_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=1454420281]
+[node name="WingEBack_4" type="MeshInstance3D" parent="Temple/Facade" unique_id=1760108861]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, 7.8125, -0.20722961, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingEBack_5" type="MeshInstance3D" parent="Temple/Facade" unique_id=363886164]
+[node name="WingEBack_5" type="MeshInstance3D" parent="Temple/Facade" unique_id=2129434186]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, 18.6875, 2.2927704, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingEBack_6" type="MeshInstance3D" parent="Temple/Facade" unique_id=745647083]
+[node name="WingEBack_6" type="MeshInstance3D" parent="Temple/Facade" unique_id=2003146177]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, 15.0625, 2.2927704, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingEBack_7" type="MeshInstance3D" parent="Temple/Facade" unique_id=1009068961]
+[node name="WingEBack_7" type="MeshInstance3D" parent="Temple/Facade" unique_id=2144099903]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, 11.4375, 2.2927704, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="WingEBack_8" type="MeshInstance3D" parent="Temple/Facade" unique_id=1411084950]
+[node name="WingEBack_8" type="MeshInstance3D" parent="Temple/Facade" unique_id=1843007088]
 transform = Transform3D(-0.90625, 0, -8.742278e-08, 0, 0.625, 0, 7.922689e-08, 0, -1, 7.8125, 2.2927704, -40.55)
 mesh = SubResource("ArrayMesh_khof0")
 
-[node name="Arch" type="MeshInstance3D" parent="Temple" unique_id=1576313021]
+[node name="Arch" type="MeshInstance3D" parent="Temple" unique_id=41740905]
 transform = Transform3D(1, 0, 0, 0, 1.6, 0, 0, 0, 1, 0, -0.20722961, -30.5)
 mesh = SubResource("ArrayMesh_33hjt")
 
-[node name="DecorCollision" type="StaticBody3D" parent="Temple" unique_id=1276142217]
+[node name="DecorCollision" type="StaticBody3D" parent="Temple" unique_id=256752110]
 collision_mask = 0
 
-[node name="Column0W" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=736098327]
+[node name="Column0W" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=238493578]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 1.9927704, -29.7)
 shape = SubResource("BoxShape3D_cvcdi")
 
-[node name="Column1W" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=479981576]
+[node name="Column1W" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=293782283]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8, 1.8327703, -29.7)
 shape = SubResource("BoxShape3D_qdsaj")
 
-[node name="Column0E" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=957765966]
+[node name="Column0E" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=1047614968]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 1.9927704, -29.7)
 shape = SubResource("BoxShape3D_bulrt")
 
-[node name="Column1E" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=1564062809]
+[node name="Column1E" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=2007101942]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, 1.8327703, -29.7)
 shape = SubResource("BoxShape3D_0751t")
 
-[node name="Guardian-1" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=163540643]
+[node name="Guardian-1" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=1984924863]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6, 0.9927704, -28.8)
 shape = SubResource("BoxShape3D_xialt")
 
-[node name="Guardian1" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=505233265]
+[node name="Guardian1" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=1775099206]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.6, 0.9927704, -28.8)
 shape = SubResource("BoxShape3D_g2r1u")
 
-[node name="Rubble0" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=1699937285]
+[node name="Rubble0" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=1725336985]
 transform = Transform3D(0.41846284, -0.16453835, 0.89320546, 0.12672803, 0.9844104, 0.12196779, -0.8993492, 0.06215518, 0.43279076, -8.002468, 0.899663, -26.704275)
 shape = SubResource("BoxShape3D_gyvav")
 
-[node name="Rubble1" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=33840787]
+[node name="Rubble1" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=936563520]
 transform = Transform3D(-0.28402686, 0.1219188, 0.9510334, -0.06971743, 0.9866312, -0.14730346, -0.9562784, -0.10814175, -0.27172992, -5.5093126, 0.7983714, -24.572145)
 shape = SubResource("BoxShape3D_yd6m8")
 
-[node name="Rubble2" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=922424650]
+[node name="Rubble2" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=546792785]
 transform = Transform3D(-0.88250613, 0.06374609, 0.46596077, 0.07195649, 0.9974078, -0.00016911073, -0.46476367, 0.03337966, -0.8848054, -7.284329, 0.8054535, -25.897453)
 shape = SubResource("BoxShape3D_g0b11")
 
-[node name="Rubble3" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=686194836]
+[node name="Rubble3" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=63055421]
 transform = Transform3D(0.08889177, 0.06879126, 0.99366295, -0.09955927, 0.99322975, -0.059854835, -0.9910531, -0.09360775, 0.09513876, -3.0444522, 0.6483579, -25.102268)
 shape = SubResource("BoxShape3D_cra3o")
 
-[node name="Rubble4" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=623333270]
+[node name="Rubble4" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=1840109923]
 transform = Transform3D(0.89605606, -0.019095886, 0.44353002, 0.009775854, 0.99968094, 0.023290599, -0.44383326, -0.016533796, 0.8959568, 4.4215755, 0.20164816, -25.019444)
 shape = SubResource("BoxShape3D_6467e")
 
-[node name="Rubble5" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=1416402382]
+[node name="Rubble5" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=1153467125]
 transform = Transform3D(-0.8902454, -0.03334711, 0.45425898, -0.101185285, 0.98687506, -0.12585399, -0.44409996, -0.15800525, -0.8819352, -8.466128, 0.8507817, -27.94709)
 shape = SubResource("BoxShape3D_s4t7r")
 
-[node name="Rubble6" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=321845232]
+[node name="Rubble6" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=420578610]
 transform = Transform3D(0.9061593, 0.065583244, 0.4178207, -0.045787323, 0.9973099, -0.057240378, -0.42045072, 0.032738008, 0.9067246, 6.3640356, 0.3037072, -26.178667)
 shape = SubResource("BoxShape3D_23big")
 
-[node name="Rubble7" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=1550024251]
+[node name="Rubble7" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=330540912]
 transform = Transform3D(0.71164495, 0.048186287, 0.70088476, 0.022088949, 0.99561703, -0.09087739, -0.7021919, 0.08015425, 0.70746154, 7.217848, 0.528633, -24.81703)
 shape = SubResource("BoxShape3D_h57vh")
 
-[node name="Rubble8" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=914184592]
+[node name="Rubble8" type="CollisionShape3D" parent="Temple/DecorCollision" unique_id=777855444]
 transform = Transform3D(-0.99689984, 0.07530055, 0.022813631, 0.07803429, 0.9833249, 0.16426441, -0.0100640105, 0.1655354, -0.98615247, 3.2469006, 0.09283067, -27.901459)
 shape = SubResource("BoxShape3D_m2mop")
 
-[node name="DoorLight" type="OmniLight3D" parent="Temple" unique_id=1791344922]
+[node name="DoorLight" type="OmniLight3D" parent="Temple" unique_id=1366685463]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.7927704, -28)
 light_color = Color(1, 0.6, 0.3, 1)
 light_energy = 2.0
 omni_range = 10.0
 
-[node name="ExitTrigger" type="Area3D" parent="." unique_id=1139368866]
+[node name="ExitTrigger" type="Area3D" parent="." unique_id=997884905]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2927704, -30.5)
 collision_layer = 0
 collision_mask = 2
 monitorable = false
 metadata/doc = "Kaelen enters the temple → GameState.advance_level() (A)"
 
-[node name="Shape" type="CollisionShape3D" parent="ExitTrigger" unique_id=164622863]
+[node name="Shape" type="CollisionShape3D" parent="ExitTrigger" unique_id=1494918883]
 shape = SubResource("BoxShape3D_wr80u")
 
-[node name="PathMarkers" type="Node3D" parent="." unique_id=1970209138]
+[node name="PathMarkers" type="Node3D" parent="." unique_id=344946065]
 
-[node name="Marker1" type="MeshInstance3D" parent="PathMarkers" unique_id=792107716]
+[node name="Marker1" type="MeshInstance3D" parent="PathMarkers" unique_id=1203777713]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.3, 5.9043875, 32)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker2" type="MeshInstance3D" parent="PathMarkers" unique_id=1074460688]
+[node name="Marker2" type="MeshInstance3D" parent="PathMarkers" unique_id=1931671936]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.3, 4.716777, 32)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker3" type="MeshInstance3D" parent="PathMarkers" unique_id=1137011581]
+[node name="Marker3" type="MeshInstance3D" parent="PathMarkers" unique_id=1413708661]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.3, 5.633563, 24)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker4" type="MeshInstance3D" parent="PathMarkers" unique_id=488805505]
+[node name="Marker4" type="MeshInstance3D" parent="PathMarkers" unique_id=903978706]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.3, 4.2749014, 24)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker5" type="MeshInstance3D" parent="PathMarkers" unique_id=2145638169]
+[node name="Marker5" type="MeshInstance3D" parent="PathMarkers" unique_id=1354560771]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.1618795, 5.6173124, 19.919239)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker6" type="MeshInstance3D" parent="PathMarkers" unique_id=896720610]
+[node name="Marker6" type="MeshInstance3D" parent="PathMarkers" unique_id=1714297801]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.91923904, 2.2978737, 13.8381195)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker7" type="MeshInstance3D" parent="PathMarkers" unique_id=1386851913]
+[node name="Marker7" type="MeshInstance3D" parent="PathMarkers" unique_id=1296775533]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.8, 4.028285, 10.278174)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker8" type="MeshInstance3D" parent="PathMarkers" unique_id=985922763]
+[node name="Marker8" type="MeshInstance3D" parent="PathMarkers" unique_id=789566272]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1999998, 2.3902466, 10.278174)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker9" type="MeshInstance3D" parent="PathMarkers" unique_id=236997644]
+[node name="Marker9" type="MeshInstance3D" parent="PathMarkers" unique_id=12664277]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.8, 2.7305481, 2.2781744)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker10" type="MeshInstance3D" parent="PathMarkers" unique_id=1147759719]
+[node name="Marker10" type="MeshInstance3D" parent="PathMarkers" unique_id=1100334206]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1999998, 2.4109032, 2.2781744)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker11" type="MeshInstance3D" parent="PathMarkers" unique_id=581620964]
+[node name="Marker11" type="MeshInstance3D" parent="PathMarkers" unique_id=845452142]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7875109, 1.7343628, -6.7936077)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker12" type="MeshInstance3D" parent="PathMarkers" unique_id=1344788135]
+[node name="Marker12" type="MeshInstance3D" parent="PathMarkers" unique_id=876376529]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2936077, 1.7888367, -0.7124891)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker13" type="MeshInstance3D" parent="PathMarkers" unique_id=590542890]
+[node name="Marker13" type="MeshInstance3D" parent="PathMarkers" unique_id=1810601505]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.3, 1.2541878, -11.443651)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="Marker14" type="MeshInstance3D" parent="PathMarkers" unique_id=710432925]
+[node name="Marker14" type="MeshInstance3D" parent="PathMarkers" unique_id=1009636164]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.3, 0.8822929, -11.443651)
 mesh = SubResource("ArrayMesh_gkvhs")
 
-[node name="InvisibleWalls" type="StaticBody3D" parent="." unique_id=1654948047]
+[node name="InvisibleWalls" type="StaticBody3D" parent="." unique_id=568056709]
 collision_mask = 0
 
-[node name="Wall1" type="CollisionShape3D" parent="InvisibleWalls" unique_id=919554991]
+[node name="Wall1" type="CollisionShape3D" parent="InvisibleWalls" unique_id=275746694]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.5, 11.134216, 36.741623)
 shape = SubResource("BoxShape3D_evbg3")
 
-[node name="Wall2" type="CollisionShape3D" parent="InvisibleWalls" unique_id=392251804]
+[node name="Wall2" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1609328969]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.5, 10.984005, 30.224874)
 shape = SubResource("BoxShape3D_yfnw2")
 
-[node name="Wall3" type="CollisionShape3D" parent="InvisibleWalls" unique_id=972664455]
+[node name="Wall3" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1004954829]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.5, 10.749664, 23.708122)
 shape = SubResource("BoxShape3D_nlxdn")
 
-[node name="Wall4" type="CollisionShape3D" parent="InvisibleWalls" unique_id=889116468]
+[node name="Wall4" type="CollisionShape3D" parent="InvisibleWalls" unique_id=145151134]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 3.5, 10.400585, 36.225044)
 shape = SubResource("BoxShape3D_el1ad")
 
-[node name="Wall5" type="CollisionShape3D" parent="InvisibleWalls" unique_id=724071214]
+[node name="Wall5" type="CollisionShape3D" parent="InvisibleWalls" unique_id=768343715]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 3.5, 9.813576, 28.675127)
 shape = SubResource("BoxShape3D_s4vk1")
 
-[node name="Wall6" type="CollisionShape3D" parent="InvisibleWalls" unique_id=939587100]
+[node name="Wall6" type="CollisionShape3D" parent="InvisibleWalls" unique_id=714005499]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 3.5, 9.637772, 21.12521)
 shape = SubResource("BoxShape3D_rtwlw")
 
-[node name="Wall7" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1307130457]
+[node name="Wall7" type="CollisionShape3D" parent="InvisibleWalls" unique_id=839190034]
 transform = Transform3D(-0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, -0.70710677, -6.320711, 10.6843605, 17.629038)
 shape = SubResource("BoxShape3D_1jsuq")
 
-[node name="Wall8" type="CollisionShape3D" parent="InvisibleWalls" unique_id=542848937]
+[node name="Wall8" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1257694452]
 transform = Transform3D(-0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, -0.70710677, 0.8207109, 7.662979, 14.870963)
 shape = SubResource("BoxShape3D_fcv7d")
 
-[node name="Wall9" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1647440706]
+[node name="Wall9" type="CollisionShape3D" parent="InvisibleWalls" unique_id=904937296]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -9, 9.741154, 11.199874)
 shape = SubResource("BoxShape3D_f7sbf")
 
-[node name="Wall10" type="CollisionShape3D" parent="InvisibleWalls" unique_id=607382982]
+[node name="Wall10" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1992007949]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -9, 8.1909485, 3.300126)
 shape = SubResource("BoxShape3D_0ya8u")
 
-[node name="Wall11" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1989232490]
+[node name="Wall11" type="CollisionShape3D" parent="InvisibleWalls" unique_id=529586406]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2, 7.765339, 9.650126)
 shape = SubResource("BoxShape3D_40vg1")
 
-[node name="Wall12" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1671877321]
+[node name="Wall12" type="CollisionShape3D" parent="InvisibleWalls" unique_id=897422525]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2, 7.773327, 4.8498735)
 shape = SubResource("BoxShape3D_y2ued")
 
-[node name="Wall13" type="CollisionShape3D" parent="InvisibleWalls" unique_id=284265790]
+[node name="Wall13" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1780313496]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -6.320711, 7.3738785, -3.1290367)
 shape = SubResource("BoxShape3D_ndt3v")
 
-[node name="Wall14" type="CollisionShape3D" parent="InvisibleWalls" unique_id=549984614]
+[node name="Wall14" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1938023921]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0.8207107, 7.351307, -0.3709631)
 shape = SubResource("BoxShape3D_5lslv")
 
-[node name="Wall15" type="CollisionShape3D" parent="InvisibleWalls" unique_id=634294214]
+[node name="Wall15" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1684531578]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.5, 6.8724785, -8.624789)
 shape = SubResource("BoxShape3D_215eh")
 
-[node name="Wall16" type="CollisionShape3D" parent="InvisibleWalls" unique_id=898927623]
+[node name="Wall16" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1757958759]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.5, 6.4454308, -13.974874)
 shape = SubResource("BoxShape3D_xbi3h")
 
-[node name="Wall17" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1012077282]
+[node name="Wall17" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1901033601]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.5, 6.0181503, -19.324959)
 shape = SubResource("BoxShape3D_e3vj6")
 
-[node name="Wall18" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1438724880]
+[node name="Wall18" type="CollisionShape3D" parent="InvisibleWalls" unique_id=632542901]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 3.5, 6.4553795, -6.041877)
 shape = SubResource("BoxShape3D_a6ej5")
 
-[node name="Wall19" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1067500239]
+[node name="Wall19" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1062711606]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 3.5, 6.20549, -12.425126)
 shape = SubResource("BoxShape3D_rkkgb")
 
-[node name="Wall20" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1473217935]
+[node name="Wall20" type="CollisionShape3D" parent="InvisibleWalls" unique_id=895672325]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 3.5, 5.6726913, -18.808376)
 shape = SubResource("BoxShape3D_2xun4")
 
-[node name="Wall21" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1078595932]
+[node name="Wall21" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1546611972]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.75, 5.8058014, -22)
 shape = SubResource("BoxShape3D_6ixnr")
 
-[node name="Wall22" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1931646809]
+[node name="Wall22" type="CollisionShape3D" parent="InvisibleWalls" unique_id=528610489]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -10, 5.7649, -26.5)
 shape = SubResource("BoxShape3D_5n4vf")
 
-[node name="Wall23" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1200717309]
+[node name="Wall23" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1869171182]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.75, 5.5646515, -22)
 shape = SubResource("BoxShape3D_j0xb1")
 
-[node name="Wall24" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1461480842]
+[node name="Wall24" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1820825916]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 10, 5.6473427, -26.5)
 shape = SubResource("BoxShape3D_3pyit")
 
-[node name="Wall25" type="CollisionShape3D" parent="InvisibleWalls" unique_id=754932479]
+[node name="Wall25" type="CollisionShape3D" parent="InvisibleWalls" unique_id=1588681328]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.903286, 40)
 shape = SubResource("BoxShape3D_0fpwr")
 
-[node name="PlayerStart" type="Marker3D" parent="." unique_id=1790619012]
+[node name="PlayerStart" type="Marker3D" parent="." unique_id=162269985]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.7093086, 34)
 
-[node name="Gameplay" type="Node3D" parent="." unique_id=834138397]
+[node name="Gameplay" type="Node3D" parent="." unique_id=740908900]

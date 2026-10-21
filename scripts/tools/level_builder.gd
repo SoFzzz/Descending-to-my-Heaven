@@ -131,6 +131,7 @@ const EXTERIOR := {
 # Alternative output folder (see the header), trailing slash included.
 var _out_dir := OUT_DIR
 var _mats := {}
+var _floor_skip := 0.0   # m of each hall floor already covered by the kit gate tiles (see _build_level)
 var _kit_mat: Material
 var _kit_meshes := {}
 
@@ -734,6 +735,10 @@ func _build_level(id: String, cfg: Dictionary) -> void:
 			Vector3(0, GATE_H / 2, side * (half_d + WALL_T / 2)), wall_mat, CSGShape3D.OPERATION_SUBTRACTION)
 
 	_pillars(geo, cfg, wall_mat)
+	# Rectangular kit arenas (_grid_shell) put floor tiles in the gate cells, which run 4 m out, 3 m into
+	# each hall: the halls' CSG floor starts past them (two coplanar floors flickered as stripes there).
+	# The octagon (_oct_shell) has no gate cells, so its halls keep their whole floor.
+	_floor_skip = 4.0 - WALL_T if cfg.get("output", "csg") == "gridmap" and cfg.shape == "rect" else 0.0
 	_entry_hall(geo, half_d, floor_mat, wall_mat)
 	var exit_info: Dictionary
 	if cfg.exit == "stairs":
@@ -910,7 +915,8 @@ func _corridor(comb: CSGCombiner3D, z0: float, length: float, dir: int, width: f
 		height: float, floor_mat: Material, wall_mat: Material) -> void:
 	var zc := z0 + dir * length / 2
 	var tag := "S" if dir == 1 else "N"
-	_box(comb, "Floor" + tag, Vector3(width + 2, 1, length), Vector3(0, -0.5, zc), floor_mat)
+	var floor_len := length - _floor_skip
+	_box(comb, "Floor" + tag, Vector3(width + 2, 1, floor_len), Vector3(0, -0.5, z0 + dir * (_floor_skip + floor_len / 2)), floor_mat)
 	_box(comb, "Roof" + tag, Vector3(width + 2, 1, length), Vector3(0, height + 0.5, zc), wall_mat)
 	_box(comb, "SideE" + tag, Vector3(1, height, length), Vector3(width / 2 + 0.5, height / 2, zc), wall_mat)
 	_box(comb, "SideW" + tag, Vector3(1, height, length), Vector3(-width / 2 - 0.5, height / 2, zc), wall_mat)
@@ -1178,6 +1184,10 @@ func _oct_shell(geo: Node3D, shell: CSGCombiner3D, cfg: Dictionary, wall_mat: Ma
 			if cfg.ceiling:
 				gm.set_cell_item(Vector3i(x, int(h / 4), z), ceil_id)
 	_cyl(shell, "Floor", (apo + WALL_T) / cos(PI / 8), 1, Vector3(0, -0.55, 0), wall_mat, 8)
+	# Backing slab over the ceiling tiles, like the floor's: the cells that straddle the diagonal faces
+	# get no tile, and through those triangular gaps the sky showed (arena 2, 2026-10-20).
+	if cfg.ceiling:
+		_cyl(shell, "Ceiling", (apo + WALL_T) / cos(PI / 8), 1, Vector3(0, h + 0.55, 0), wall_mat, 8)
 
 	var face_len := 2.0 * apo * tan(PI / 8)           # inner length of the face
 	var half_out := (apo + WALL_T) * tan(PI / 8) + 0.1   # outer half-length + overlap with the neighbor
@@ -1369,7 +1379,9 @@ func _camera(parent: Node, name: String, pos: Vector3, target: Vector3) -> void:
 
 
 # Blockout material: kit texture with triplanar projection in world coordinates
-# (CSG shapes have no useful UVs; section 6.4 allows it temporarily). Nearest filter, no mipmaps.
+# (CSG shapes have no useful UVs; section 6.4 allows it temporarily). Nearest filter WITH mipmaps:
+# these 512 px dithered textures at 128 px/m turned into noise a few metres away (the far end of the
+# exit corridors looked like a broken texture); up close the pixels stay as sharp as before.
 func _mat(tex_name: String, tint: Color) -> Material:
 	var key := tex_name + str(tint)
 	if _mats.has(key):
@@ -1380,7 +1392,7 @@ func _mat(tex_name: String, tint: Color) -> Material:
 	m.uv1_triplanar = true
 	m.uv1_world_triplanar = true
 	m.uv1_scale = Vector3(0.25, 0.25, 0.25)   # one repeat every 4 m (one module)
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
 	_mats[key] = m
 	return m
