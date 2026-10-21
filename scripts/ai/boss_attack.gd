@@ -40,6 +40,14 @@ extends Resource
 ## Impact sound when this attack's blow reaches Kaelen (once per blow). Boss copies it to the
 ## `sfx_impact` of the attack's Hitbox and of its `extra_hitbox_paths`.
 @export var sfx_hit: AudioStream
+## Phase 2 combo: id of the attack chained right after this one (cutting the recovery short, with a
+## shorter warning) when Kaelen is within the follow-up's range (± Boss.COMBO_RANGE_SLACK). Empty = none.
+@export var combo_next: StringName = &""
+## Warning colour (AttackWarning.Level): 1 = yellow, a timed roll goes through it; 2 = red, the roll
+## does not cover it, get out of the zone (or into its safe centre); 0 = no aura.
+@export_range(0, 2) var warning := 1
+## Safe centre of a disc warning (m): the hitbox starts there and the warning is drawn as a ring.
+@export var telegraph_inner := 0.0
 
 
 ## Metres covered by the advance at `progress` (0-1) of ACTIVE.

@@ -20,3 +20,4 @@ lateral = false
 spin_degrees = 0.0
 opener = true
 sfx_active = ExtResource("2_sfx")
+combo_next = &"pounce"

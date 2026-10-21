@@ -12,7 +12,8 @@ const BOSSES := {
 	"Ghidorah": "res://scenes/bosses/boss_ghidorah.tscn",
 }
 const DT := 1.0 / 60.0
-const REACH := 2.5          # distance at which Kaelen hits (m)
+const REACH := 2.5          # distance at which Kaelen hits (m), from the boss origin; at least the
+                            # boss's engage_range (Ghidorah ×1.95 stops 5 m away and its body is that big)
 const WALK := 5.0
 const RUNS := 12
 const MAX_TIME := 240.0
@@ -85,6 +86,8 @@ func _run(path: String, profile: String, duration: float, seed_value: int) -> Di
 	player.add_to_group("player")
 	root.add_child(boss)
 	root.add_child(player)
+	var reach := maxf(REACH, boss.engage_range)
+	player.home = Vector3(0.0, 0.0, -reach)
 	player.global_position = player.home
 	boss.set_physics_process(false)
 	boss.set(&"_gravity", 0.0)   # no floor in the simulation
@@ -122,7 +125,7 @@ func _run(path: String, profile: String, duration: float, seed_value: int) -> Di
 				since_spend = 0.0
 		var rolling := t < roll_until and t > roll_until - 0.6
 		var shoved: bool = player.shove_left > 0.0
-		var near: bool = (player.global_position - boss.global_position).length() <= REACH + 0.4
+		var near: bool = (player.global_position - boss.global_position).length() <= reach + 0.4
 		var can_swing := (not rolling and not shoved and near and t >= busy_until and stamina >= 20.0)
 		if can_swing and profile == "opportunist":
 			can_swing = boss.state == Boss.State.RECOVER and punish_hits < 2

@@ -18,3 +18,4 @@ hitbox_path = NodePath("TailSweepHitbox")
 lateral = true
 spin_degrees = 360.0
 sfx_active = ExtResource("2_sfx")
+warning = 2

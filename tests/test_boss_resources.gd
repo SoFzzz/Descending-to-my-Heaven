@@ -159,7 +159,7 @@ func test_ghidorah_scene() -> void:
 	assert_almost((_shape(boss, "BiteHitbox") as BoxShape3D).size.z, 7.0, 0.001, "bite: fixed zone 7 m deep (from flush against the body to 5 m)")
 	assert_almost((_shape(boss, "BeamHitbox") as BoxShape3D).size.z, 2.0, 0.001, "beam: short zone that travels with the impact")
 	assert_almost((_shape(boss, "BeamHitbox") as BoxShape3D).size.x, 1.5)
-	assert_almost((_shape(boss, "TailSweepHitbox") as BoxShape3D).size.z, 9.6, 0.001, "9.6 m tail: from the body to the telegraph edge, no gap")
+	assert_almost((_shape(boss, "TailSweepHitbox") as BoxShape3D).size.z, 6.6, 0.001, "tail from 3 m (safe spot by the body) to the telegraph edge (9.6 m)")
 	# Heads: hurtbox only (sphere r 1.0), closed until the head comes down.
 	for head in ["HeadCHurtbox", "HeadLHurtbox", "HeadRHurtbox"]:
 		var hurt := boss.get_node_or_null(NodePath(head)) as Hurtbox

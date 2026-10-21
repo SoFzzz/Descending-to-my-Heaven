@@ -18,3 +18,4 @@ hitbox_path = NodePath("Model/metarig/Skeleton3D/SkullAttach/BiteHitbox")
 lateral = false
 spin_degrees = 0.0
 sfx_active = ExtResource("2_sfx")
+combo_next = &"tail_sweep"

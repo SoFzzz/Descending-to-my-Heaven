@@ -22,3 +22,4 @@ advance_distance = 3.0
 opener = true
 extra_hitbox_paths = Array[NodePath]([NodePath("ClawLHitbox"), NodePath("ClawRHitbox")])
 sfx_active = ExtResource("2_sfx")
+combo_next = &"slam"

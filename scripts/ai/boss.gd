@@ -44,6 +44,14 @@ const PINCER_SPEED := 0.85
 const GESTURE_MAX := 1.1
 const GESTURE_VOLUME_DB := -3.0
 const DAMAGE_WINDOW := 4.0
+## Phase 2 combos (BossAttack.combo_next): the follow-up starts once this fraction of the recovery
+## has passed and its warning lasts COMBO_TELEGRAPH of the normal one; the attack aura (AttackWarning)
+## rises again from wherever its fade-out was. One follow-up per attack (no endless strings).
+const COMBO_PHASE := 2
+const COMBO_RECOVER_FRACTION := 0.35
+const COMBO_TELEGRAPH := 0.85
+const COMBO_RANGE_SLACK := 2.0
+const COMBO_MAX_CHAIN := 1
 
 @export var display_name: String = "Boss"
 @export var attacks: Array[BossAttack] = []
@@ -135,6 +143,9 @@ var telegraph_scale := 1.0
 var gesturing := false
 ## Tactics statistics (simulations and debugging).
 var ambush_count := 0
+## Follow-ups chained so far (phase 2 combos), for the debug overlay and the tests.
+var combo_count := 0
+var _combo_chain := 0              # follow-ups in the current string
 var settled_offset := 0.0
 
 @onready var health: Health = $Health
@@ -216,6 +227,10 @@ func _ready() -> void:
 		var tg := _telegraph_for(attack)
 		if tg:
 			tg.visible = false
+			AttackWarning.make_ground(tg as MeshInstance3D, attack.warning, attack.telegraph_inner)
+			for child in tg.get_children():   # the beam's "hitting now" stretch
+				if AttackWarning.make_ground(child as MeshInstance3D, attack.warning):
+					AttackWarning.set_progress(child as MeshInstance3D, 1.0)
 	_anim = find_child("AnimationPlayer", true, false) as AnimationPlayer
 	_model = get_node_or_null(model_path) as Node3D
 	if _model:
@@ -291,6 +306,8 @@ func _run_state(delta: float, target_ok: bool) -> void:
 			var telegraph := current_attack.telegraph_time * telegraph_scale / speed
 			if _state_time < telegraph * TRACK_FRACTION:
 				_face(_aim_target(), delta)
+			if _telegraph:
+				AttackWarning.set_progress(_telegraph as GeometryInstance3D, _state_time / maxf(telegraph, 0.01))
 			if _state_time >= telegraph:
 				_set_state(State.ACTIVE)
 				_spin_done = 0.0
@@ -310,9 +327,12 @@ func _run_state(delta: float, target_ok: bool) -> void:
 				_set_state(State.RECOVER)
 		State.RECOVER:
 			_stop()
+			if _try_combo(target_ok):
+				return
 			if _state_time >= current_attack.recovery_time / speed:
 				current_attack = null
 				telegraph_scale = 1.0
+				_combo_chain = 0
 				tactics.request_eval()   # end of the recovery: time to decide what to do
 				if _pending_repel or repel.is_due(health.max_value):
 					_pending_repel = true   # deferred from the punish window: fires next frame
@@ -549,23 +569,68 @@ func _try_start_attack(distance: float, approaching := false) -> bool:
 	if attack == null:
 		return false
 	# Ambush: Kaelen distracted (with minions or turned away) → the warning lasts a bit longer.
-	telegraph_scale = 1.0
+	var warn_scale := 1.0
 	if tactics_enabled and tactics.goal == BossTactics.Goal.ATTACK and memory.distracted and not memory.fleeing:
-		telegraph_scale = BossTactics.AMBUSH_TELEGRAPH
+		warn_scale = BossTactics.AMBUSH_TELEGRAPH
 		ambush_count += 1
+	_combo_chain = 0
+	_start_attack(attack, warn_scale)
+	return true
+
+
+## The follow-up of a phase 2 combo, decided in RECOVER (see combo_follow_up).
+func _try_combo(target_ok: bool) -> bool:
+	if not target_ok or _pending_repel or _pending_roar or current_attack == null:
+		return false
+	if repel_enabled and repel.is_due(health.max_value):
+		return false   # a due repel wins: it fires at the end of this recovery, as without combos
+	if _state_time < current_attack.recovery_time / _speed() * COMBO_RECOVER_FRACTION:
+		return false
+	var next := combo_follow_up(current_attack, attacks, phase, _flat_distance(), _combo_chain)
+	if next == null:
+		return false
+	_combo_chain += 1
+	combo_count += 1
+	_cancel_attack()
+	_start_attack(next, COMBO_TELEGRAPH)
+	return true
+
+
+## Pure rule of the phase 2 combos: the attack chained after `attack`, or null. Needs phase ≥
+## COMBO_PHASE, a free slot in the string, the follow-up in the list (and allowed in this phase)
+## and Kaelen within its range ± COMBO_RANGE_SLACK.
+static func combo_follow_up(attack: BossAttack, list: Array[BossAttack], phase_now: int, distance: float, chain: int) -> BossAttack:
+	if attack == null or attack.combo_next == &"" or phase_now < COMBO_PHASE or chain >= COMBO_MAX_CHAIN:
+		return null
+	for candidate in list:
+		if candidate.id != attack.combo_next:
+			continue
+		if phase_now < candidate.phase_min:
+			return null
+		if distance < candidate.min_range - COMBO_RANGE_SLACK or distance > candidate.max_range + COMBO_RANGE_SLACK:
+			return null
+		return candidate
+	return null
+
+
+func _start_attack(attack: BossAttack, warn_scale: float) -> void:
+	telegraph_scale = warn_scale
 	current_attack = attack
 	brain.last_attack_id = attack.id
 	attack_log.append(attack.id)
 	_hitbox = _hitbox_for(attack)
 	_telegraph = _telegraph_for(attack)
 	if _telegraph:
+		AttackWarning.set_progress(_telegraph as GeometryInstance3D, 0.0)
 		_telegraph.visible = true
+	if attack.warning != AttackWarning.Level.NONE:
+		var warn_time := attack.telegraph_time * telegraph_scale / _speed()
+		AttackWarning.aura_to(_model, AttackWarning.color_for(attack.warning), 1.0, AttackWarning.rise_time(warn_time))
 	_play(attack.animation)
 	if _anim and telegraph_scale != 1.0:
 		_anim.speed_scale = _speed() / telegraph_scale
 	_set_state(State.TELEGRAPH)
 	attack_started.emit(attack)
-	return true
 
 
 func _begin_active() -> void:
@@ -598,6 +663,8 @@ func _end_active() -> void:
 	_visual = null
 	if _telegraph:
 		_telegraph.visible = false
+	if current_attack and current_attack.warning != AttackWarning.Level.NONE:
+		AttackWarning.aura_to(_model, AttackWarning.color_for(current_attack.warning), 0.0, AttackWarning.AURA_FADE)
 
 
 ## Stops the current attack wherever it is (Kaelen died, phase change or death).

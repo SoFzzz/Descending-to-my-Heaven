@@ -23,3 +23,4 @@ opener = true
 visual_path = NodePath("BeamVisual")
 sfx_active = ExtResource("2_fire")
 sfx_hit = ExtResource("3_hit")
+warning = 2

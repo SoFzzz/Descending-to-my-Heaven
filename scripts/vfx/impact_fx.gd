@@ -16,7 +16,7 @@ extends Node
 const SPARK_SHADER := "res://addons/storm_wind/shaders/spark.gdshader"
 const NODE_NAME := "ImpactFx"
 const SPARK_POOL := 6
-const DUST_POOL := 4
+const DUST_POOL := 6   # hits, deaths and corpses share it
 ## Boss attacks that hit the ground: they kick up dust where the hitbox lands.
 const GROUND_ATTACKS: Array[StringName] = [&"slam", &"stomp", &"pounce"]
 
@@ -27,6 +27,13 @@ const HEAL_EDGE := Color(0.2, 0.75, 0.35)
 const HEAL_SPARK := Color(1.0, 0.92, 0.5)
 const DUST_COLOR := Color(0.62, 0.58, 0.52)
 const DUST_EDGE := Color(0.38, 0.35, 0.32)
+## Organic surfaces get a splash as heavy as the bone hit, in the creature's colour:
+## [spark colour, spark edge, mist colour, mist edge].
+const ORGANIC := {
+	&"flesh": [Color(0.85, 0.16, 0.1), Color(0.4, 0.03, 0.02), Color(0.5, 0.1, 0.07), Color(0.25, 0.04, 0.03)],   # TheWrapper, Blackhorn, Kaelen
+	&"ichor": [Color(0.65, 1.0, 0.35), Color(0.18, 0.5, 0.1), Color(0.38, 0.6, 0.22), Color(0.16, 0.3, 0.08)],   # Plague Arcanist
+	&"straw": [Color(1.0, 0.86, 0.42), Color(0.62, 0.42, 0.12), Color(0.72, 0.62, 0.36), Color(0.42, 0.33, 0.16)],   # Straw Reaper
+}
 
 static var _instance: ImpactFx
 
@@ -124,6 +131,7 @@ static func warmup_samples() -> Array[Node3D]:
 	ring.light = false
 	ring.particles = false
 	out.append(ring)
+	out.append(SpellFx.warmup_sample())   # the Plague Arcanist's orb
 	var ripple := MagicArea.new()   # beam impact ripple (BeamVfx)
 	ripple.kind = "ripple"
 	ripple.element = "fire"
@@ -149,7 +157,12 @@ func _on_hit_landed(pos: Vector3, surface: StringName) -> void:
 			_emit_sparks(pos, 0.7, true)
 			_emit_dust(pos, 0.45, Color(0.82, 0.8, 0.74), Color(0.55, 0.52, 0.48), 0.8)
 		_:
-			_emit_sparks(pos, 0.8, false)
+			if ORGANIC.has(surface):
+				var c: Array = ORGANIC[surface]
+				_emit_sparks(pos, 1.1, false, c[0], c[1])
+				_emit_dust(pos, 0.55, c[2], c[3], 0.8)
+			else:
+				_emit_sparks(pos, 0.8, false)
 
 
 func _build() -> void:

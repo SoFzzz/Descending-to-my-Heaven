@@ -61,3 +61,18 @@ func test_ending_room_uses_storm_gust() -> void:
 	if gust:
 		assert_true(gust.visible, "visible when falling")
 	room.free()
+
+
+func test_every_enemy_surface_has_a_strong_hit_effect() -> void:
+	# Floors 2 and 3 used to fall back to faint sparks ("flesh" had no effect of its own).
+	var strong := [&"bone", &"metal"] + ImpactFx.ORGANIC.keys()
+	for path in ["res://scenes/enemies/minion_skeleton.tscn", "res://scenes/enemies/minion_knight_elite.tscn",
+			"res://scenes/enemies/minion_plague.tscn", "res://scenes/enemies/minion_plague_elite.tscn",
+			"res://scenes/enemies/minion_wrapper.tscn", "res://scenes/enemies/minion_reaper_elite.tscn",
+			"res://scenes/bosses/boss_bonedragon.tscn", "res://scenes/bosses/boss_blackhorn.tscn",
+			"res://scenes/bosses/boss_ghidorah.tscn"]:
+		var node := (load(path) as PackedScene).instantiate()
+		for hb in node.find_children("*", "Hurtbox", true, false):
+			assert_true((hb as Hurtbox).surface in strong, "%s: %s has a strong hit effect" % [path, (hb as Hurtbox).surface])
+		node.free()
+	assert_true(ImpactFx.ORGANIC.has(&"ichor") and ImpactFx.ORGANIC.has(&"straw"), "creature colours")

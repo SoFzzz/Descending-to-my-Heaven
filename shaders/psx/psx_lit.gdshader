@@ -12,6 +12,10 @@ uniform vec2 uv_pan_velocity = vec2(0.0);
 // Parpadeo al recibir un golpe (HitFlash): 0 = normal, 1 = todo del color del golpe.
 uniform float hit_flash : hint_range(0.0, 1.0) = 0.0;
 uniform vec3 hit_flash_color : source_color = vec3(1.0);
+// Aura de aviso de ataque (AttackWarning): borde luminoso que sube y baja poco a poco.
+// Va aparte del parpadeo para que un golpe no la apague.
+uniform float aura : hint_range(0.0, 1.0) = 0.0;
+uniform vec3 aura_color : source_color = vec3(1.0, 0.8, 0.2);
 
 // https://github.com/dsoft20/psx_retroshader/blob/master/Assets/Shaders/psx-vertexlit.shader
 const vec2 base_snap_res = vec2(160.0, 120.0);
@@ -40,4 +44,12 @@ void fragment()
 	vec3 base = (COLOR * texture(albedoTex, UV) * modulate_color).rgb;
 	ALBEDO = mix(base, hit_flash_color, hit_flash);
 	EMISSION = hit_flash_color * hit_flash * 0.5;
+	if (aura > 0.0) {
+		// Fresnel rim (cull_disabled: back faces too) + a slow pulse; a touch of tint on the body.
+		float rim = 1.0 - abs(dot(normalize(NORMAL), normalize(VIEW)));
+		rim = smoothstep(0.35, 1.0, rim);
+		float pulse = 0.8 + 0.2 * sin(TIME * 9.0);
+		ALBEDO = mix(ALBEDO, aura_color, aura * 0.18);
+		EMISSION += aura_color * aura * pulse * (0.12 + 1.6 * rim * rim);
+	}
 }

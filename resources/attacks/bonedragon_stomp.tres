@@ -18,3 +18,4 @@ hitbox_path = NodePath("StompHitbox")
 lateral = false
 spin_degrees = 0.0
 sfx_active = ExtResource("2_sfx")
+combo_next = &"bite"

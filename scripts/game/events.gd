@@ -9,5 +9,5 @@ signal boss_phase_changed(boss: Node3D, phase: int)
 signal boss_defeated(boss: Node3D)
 signal arena_entered(arena_id: int)
 signal arena_cleared(arena_id: int)
-signal hit_landed(position: Vector3, surface: StringName)   # &"flesh", &"bone", &"metal"
+signal hit_landed(position: Vector3, surface: StringName)   # &"flesh", &"ichor", &"straw", &"bone", &"metal"
 @warning_ignore_restore("unused_signal")

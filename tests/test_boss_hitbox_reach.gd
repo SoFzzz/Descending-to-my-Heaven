@@ -59,10 +59,15 @@ func test_bonedragon_has_no_safe_spot_under_its_attacks() -> void:
 	boss.free()
 
 
-func test_ghidorah_tail_has_no_hole_at_the_body() -> void:
+# Since 2026-10-20 Ghidorah's tail (red warning, a ring) has a safe spot hugging the body: rolling
+# cannot cover a 360-degree sweep, so the answer is to get in close or out of the ring.
+func test_ghidorah_tail_has_a_safe_spot_at_the_body() -> void:
 	var boss := _boss("res://scenes/bosses/boss_ghidorah.tscn")
 	var tail := load("res://resources/attacks/ghidorah_tail_sweep.tres") as BossAttack
-	for z in [0.4, 1.5, 3.0, 5.0, tail.max_range]:
+	assert_true(tail.telegraph_inner >= 2.5, "the warning is a ring with a safe centre")
+	for z in [1.9, tail.telegraph_inner - KAELEN_RADIUS - 0.1]:
+		assert_true(not _reaches(boss, "TailSweepHitbox", Vector3(0.0, 0.0, z)), "safe at %s m (hugging the body)" % z)
+	for z in [tail.telegraph_inner, 5.0, tail.max_range]:
 		assert_true(_reaches(boss, "TailSweepHitbox", Vector3(0.0, 0.0, z)), "tail reaches %s m" % z)
 	boss.free()
 
