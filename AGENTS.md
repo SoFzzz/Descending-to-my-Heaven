@@ -2,7 +2,7 @@
 
 Guía única del proyecto para quien se incorpora al equipo: qué es el juego, en qué estado está, cómo ejecutarlo y probarlo, cómo está organizado el código y qué falta. Sustituye a la antigua carpeta `docs/`.
 
-- **Fecha de esta versión:** 2026-10-16
+- **Fecha de esta versión:** 2026-10-20
 - **Juego:** boss rush 3D en tercera persona, estilo soulslike y PSX. Kaelen sube un templo de tres pisos sobre una isla flotante y derrota a tres jefes para llegar a Elysia.
 - **Motor:** Godot 4.7.2 estable, GDScript con tipos estáticos, renderizador `gl_compatibility` (Compatibility). Resolución interna 640×360, ventana 1280×720.
 - **Rama de trabajo:** `feat/aza`. `main` (ec0e4fa) ya incluye un merge de esta rama; la exportación a Windows se prepara en `wt/export`.
@@ -21,10 +21,13 @@ Guía única del proyecto para quien se incorpora al equipo: qué es el juego, e
 | T15: flujo completo, final y créditos | Hecha | Partida completa a mano (menú → exterior → 3 jefes → final → créditos) con el checklist de la sección 14 |
 | T16: esbirros por nivel y élites | Hecha | Revisar en juego animaciones de ataque y muerte, espada del Knight, hoz del Straw Reaper y caída de TheWrapper |
 | T17: audio completo | Hecha | Licencias "por confirmar" (sección 12) |
-| T18: pulido y playtest | Casi hecha | **Playtest con 2 personas externas** (plantilla en la sección 14); decoración de arenas (pendiente); commit por persona |
+| T18: pulido y playtest | Casi hecha | **Playtest con 2 personas externas** (plantilla en la sección 14); decoración de arenas (pendiente); revisar en juego el combate nuevo (sección 17); commit por persona |
 | T19: congelación, exportación Windows, tag `v1.0` | En curso | Exportación Windows lista (sección 2.6). Ya hay una release candidata `v1.0.0-rc1` en GitHub con el `.exe` (ver sección 2.6). Falta: congelación, probar el `.exe` en otra PC, revisar créditos, `v1.0` (Web, si funciona) |
 
-### 1.2 Lo último que se hizo (2026-10-14 a 2026-10-16)
+### 1.2 Lo último que se hizo (2026-10-14 a 2026-10-20)
+
+- **Ronda 2 (2026-10-20, misma rama, sección 17):** auras de aviso estilo God of War (amarilla = esquivable rodando, roja = sal de la zona) y avisos de suelo con shader propio; retroceso al golpear (el 3.er golpe empuja más) y aturdimiento de 1,2 s con el ataque fuerte (centrado); hechizo del Plague con círculo mágico, orbe e impacto; los esbirros se burlan al morir Kaelen y caen al morir el jefe; cola de Ghidorah con zona segura; techo del piso 2 y rayas del piso 3 corregidos; subida entre pisos dirigida con carga en segundo plano; final precalentado y con coreografía; introducción con historia y tutorial de controles.
+- **Combate más dinámico (2026-10-20, rama `wt/combat-dynamism`, sección 17):** varios ataques por esbirro con sus propios clips, caída escalonada de TheWrapper, ataque fuerte de Kaelen (`jump_attack`), caminar lateral con objetivo fijado, combos de jefes en fase 2 y una amenaza nueva por piso.
 
 - Transición con cartel entre pisos (cortinilla iris, nombre del piso y jefe, unos 2,1 s).
 - Final: corte al encuentro (fundido a negro y colocación de Kaelen antes de la primera línea), caída de la isla con viento y blips de voz normalizados.
@@ -54,7 +57,7 @@ En los comandos siguientes, `godot` es el ejecutable de Godot 4.7.2 (en Windows,
 godot --headless --path . -s res://tests/run_tests.gd
 ```
 
-Pasa si termina con `N/N passed` y código de salida 0. **Número actual de pruebas: 365.** Cada prueba crea sus propios nodos y los libera al terminar.
+Pasa si termina con `N/N passed` y código de salida 0. **Número actual de pruebas: 400.** Cada prueba crea sus propios nodos y los libera al terminar.
 
 ### 2.3 Pruebas de flujo (escenas)
 
@@ -62,7 +65,7 @@ Pasa si termina con `N/N passed` y código de salida 0. **Número actual de prue
 godot --headless --path . res://tests/flow/<nombre>.tscn
 ```
 
-Pasa si imprime `FLOW: OK`. Los siete flujos:
+Pasa si imprime `FLOW: OK`. Los trece flujos:
 
 | Flujo | Comprueba |
 |---|---|
@@ -73,6 +76,12 @@ Pasa si imprime `FLOW: OK`. Los siete flujos:
 | `hit_feedback_flow` | Pausa de impacto y parpadeo |
 | `transition_flow` | Cartel entre pisos: no se dispara dos veces, Kaelen bloqueada, se puede saltar |
 | `ui_flow` | HUD y menú de opciones (captura de tecla cancelada al ocultarse) |
+| `minion_attacks_flow` | Cada ataque de cada esbirro golpea a Kaelen en su arena con el daño exacto; muertes y cadáveres; retroceso y aturdimiento; hechizo (círculo, orbe, aura); burla al morir Kaelen; carrera del piso 3 |
+| `kaelen_moves_flow` | Ataque fuerte (salto, golpe a 1,6–3,6 m, remate del combo), avance al atacar con objetivo fijado y caminar lateral |
+| `boss_combo_flow` | Cada jefe encadena combos en fase 2 y nunca en fase 1; el aura de aviso sube poco a poco y se apaga |
+| `floor_climb_flow` | Entrada al templo, llegada a la arena, carga en segundo plano, subida por la escalera y llegada al siguiente piso; el reintento no repite la llegada |
+| `ending_staging_flow` | Coreografía del final: temblores, Elysia baja del escalón sin hundirse y nunca se solapan (≥ 0,65 m), abrazo |
+| `intro_tutorial_flow` | Introducción (planos, bloqueo, se salta con pausa) y cada paso del tutorial con la tecla real y la del mando |
 
 ### 2.4 Regenerar niveles
 
@@ -227,6 +236,7 @@ Menú principal → Exterior (isla, sendero, templo) → puerta del templo
 | Mover | W A S D | Stick izquierdo |
 | Cámara | Ratón | Stick derecho (zona muerta 0,2) |
 | Atacar | Clic izquierdo | X y RB |
+| Ataque fuerte | Clic derecho | RT |
 | Rodar | Espacio | B |
 | Curarse | R | Y |
 | Fijar objetivo (lock-on) | Clic central (rueda) o Q | R3 |
@@ -260,10 +270,12 @@ Estados: `MOVE`, `ROLL`, `ATTACK`, `HURT`, `DEAD`, más el subestado de curació
 |---|---|
 | Vida máxima | 100 / 70 / 40 según el nivel |
 | Estamina | 100; regenera 30/s tras 0,6 s sin gastar |
-| Costes | Rodar 25; atacar 20 |
+| Costes | Rodar 25; atacar 20; ataque fuerte 35 |
 | Rodada | 0,6 s a 7 m/s; i-frames de 0,05 a 0,40 s |
 | Combo | 20 / 20 / 36 (ventana de encadenado 0,4 s; buffer de entrada 0,2 s) |
-| Mandoble | Caja de 2,15 m a lo largo de la hoja; alcance efectivo ≈ 2,6 m. Un golpe por activación |
+| Mandoble | Hoja de ≈ 1,95 m (antes 2,3 m: se veía demasiado grande). Caja de 1,85 m a lo largo de la hoja, hasta la punta visible; alcance efectivo ≈ 2,35 m. Un golpe por activación |
+| Ataque fuerte | Clip `jump_attack` a ×1,25: salta unos 2 m hacia delante y golpea al aterrizar (45 de daño, ventana 0,92–1,20 s, polvo y sacudida a 1,02 s); vuelve a `MOVE` a 1,48 s. Desde `MOVE` o como remate en la ventana del combo. Misma superarmadura que el combo |
+| Con objetivo fijado | Camina a 3,2 m/s mirando al objetivo (mezcla `BlendSpace2D` con `strafe_left/right` y `walk_back`, clips a 2 m/s). Cada golpe del combo avanza hasta ≈ 0,75 m hacia el objetivo si está a más de 1,8 m |
 | Tras recibir un golpe | 0,4 s de `HURT` y 1 s de i-frames. Mientras ataca recibe la mitad de daño |
 | Sacudida de cámara | Si un golpe quita el 15 % o más de la vida máxima |
 | Escalones | Sube escalones de hasta 0,35 m (`MAX_STEP`) |
@@ -272,7 +284,7 @@ Feedback de combate:
 
 - **Pausa de impacto** (`hit_stop.gd`): 60 ms al acertar, 40 ms al recibir daño, con `Engine.time_scale` a 0,05. No se apila y siempre se restaura.
 - **Parpadeo** (`hit_flash.gd`): 0,1 s, blanco en enemigos y rojo en Kaelen. Es un uniform del shader `psx_lit`.
-- **Chispas y polvo** (`impact_fx.gd`): según la superficie (carne, hueso, metal) con reservas fijas de partículas.
+- **Chispas y polvo** (`impact_fx.gd`): según la superficie del `Hurtbox`, con reservas fijas de partículas. Hueso: chispas y polvo claro; metal: chispas grandes; orgánicas (`ImpactFx.ORGANIC`, salpicadura y neblina del color de la criatura): `flesh` rojo oscuro (TheWrapper, Blackhorn, Kaelen), `ichor` verde (Plague Arcanist) y `straw` paja (Straw Reaper).
 
 Lock-on (`lock_on.gd`): cada enemigo fijable tiene un `Marker3D` llamado `LockOnPoint`. Se suelta si el objetivo muere o se aleja más de 15 m (25 m para jefes). Con un jefe a más de 8 m el brazo de la cámara se alarga hasta 3 m.
 
@@ -282,7 +294,11 @@ Lock-on (`lock_on.gd`): cada enemigo fijable tiene un `Marker3D` llamado `LockOn
 
 ### 7.1 Jefes
 
-Los tres jefes comparten `boss_base.tscn` y se diferencian por modelo, recursos de ataque y valores. Fase 2 al 50 % de vida: +25 % de velocidad de ataque y más presupuesto para el Orquestador. La embestida de Blackhorn (`charge`) existe solo en fase 2.
+Los tres jefes comparten `boss_base.tscn` y se diferencian por modelo, recursos de ataque y valores. Fase 2 al 50 % de vida: +25 % de velocidad de ataque, más presupuesto para el Orquestador y **combos**. La embestida de Blackhorn (`charge`) existe solo en fase 2.
+
+**Avisos (`AttackWarning`, estilo God of War):** cada `BossAttack` tiene `warning` (1 = amarillo: una rodada a tiempo lo atraviesa; 2 = rojo: la rodada no lo cubre, hay que salir de la zona o meterse en su zona segura). El modelo del atacante recibe un aura (uniform `aura` de `psx_lit`, borde Fresnel) que **sube poco a poco** durante el primer 45 % del aviso (mínimo 0,25 s), se mantiene en el golpe y se apaga en 0,35 s; nunca aparece ni desaparece de golpe. El aviso del suelo usa el mismo color con `shaders/telegraph_ground.gdshader` (borde que ondula, ruido, tramado PSX y un relleno que llega al borde cuando impacta). Rojos: los dos coletazos y el rayo. La cola de Ghidorah golpea **de 3 m hacia fuera** (aviso en anillo): pegarse al cuerpo es la zona segura (antes no había hueco; prueba `test_ghidorah_tail_has_a_safe_spot_at_the_body`); su giro dura 1,0 s.
+
+**Combos de fase 2** (`BossAttack.combo_next`, `Boss.combo_follow_up`): pasado el 35 % de la recuperación, el jefe encadena el ataque siguiente con un aviso al 85 % y un destello naranja. Solo uno por cadena, solo si Kaelen está en el rango del siguiente (±2 m) y nunca si toca una repulsión. Bone Dragon: `bite` → `tail_sweep`, `stomp` → `bite`. Blackhorn: `slam` → `pounce`, `pounce` → `slam`. Ghidorah: `bite` → `tail_sweep`, `tail_sweep` → `beam`.
 
 | Jefe | Arena | Vida | Ataques (id: distancia) | Notas |
 |---|---|---|---|---|
@@ -308,9 +324,24 @@ La reacción interrumpe lo que esté haciendo, ruge (invulnerable, hasta 1,6 s) 
 - **Por arena:** Skeleton y Knight (arena 1); Plague Arcanist y su élite con tinte verdoso (arena 2); TheWrapper y Straw Reaper (arena 3).
 - **Máquina de estados** (`minion_brain.gd`): `IDLE`, `CHASE`, `CIRCLE`, `ATTACK`, `RECOVER`, `STUNNED`, `DEAD`. Detecta a 12 m con cono de 110° y línea de visión.
 - **Fichas de ataque:** máximo 2 atacando a la vez. Pide ficha a 4 m y la suelta a 6 m. Tras atacar o recibir un golpe espera 2 s.
-- **Ataque:** aviso de 0,5 s, hitbox activa 0,3 s, recuperación de 0,8 s.
+- **Ataques:** cada esbirro tiene 2 o 3 recursos `MinionAttack` (`resources/attacks/minions/*.tres`: clip, aviso, ventanas de golpe, recuperación, rango, peso, avance y zona en el suelo). Elige por sorteo ponderado entre los que alcanzan a Kaelen y penaliza repetir (×0,35). Sin lista, el golpe clásico (aviso 0,5 s, activo 0,3 s, recuperación 0,8 s).
+
+| Esbirro | Ataques |
+|---|---|
+| Skeleton | `swing`; `lunge` (estocada con avance, 1,4–3 m) |
+| Knight (élite) | `slash`; `heavy` (×1,3); `combo` (3 golpes ×0,9 con avance) |
+| Plague Arcanist | `claw`; `cast` (círculo verde de 1,6 m donde está Kaelen, 3–7 m; la sigue el 60 % del aviso de 1 s) |
+| Plague (élite) | `claw`, `cast` y `leap` (salto de 2,4 m, 2,2–3,8 m) |
+| TheWrapper | `charge`; `scream` (círculo de 2,6 m alrededor de él, ×0,75) |
+| Straw Reaper (élite) | `reap`; `sweep` (×1,2); `combo` (3 golpes ×0,9) |
+
+- **Amenaza por piso:** piso 1, estocadas y combos; piso 2, ataque a distancia (`cast`; los esbirros con alcance largo piden ficha desde más lejos); piso 3, **corredores**: TheWrapper corre a 6 m/s con `run` y el Straw Reaper a 5 m/s con `lurch` mientras Kaelen está a más de 6–7 m.
+- **Muerte sin clip (TheWrapper):** tambaleo con su clip `hurt`, se dobla y gira, cae de espaldas, rebota, levanta polvo y se queda quieto.
 - **Retirada:** un esbirro normal con menos del 30 % de vida se aleja unos 3,5 s hasta unos 9 m de Kaelen y vuelve. Solo una vez por vida.
-- **Cadáveres:** desaparecen a los 2 s.
+- **Al recibir un golpe:** retroceden (normal ≈ 0,35 m; el 3.er golpe del combo ≈ 1,3 m y 0,65 s de aturdimiento; el ataque fuerte aturde 1,2 s) y el cuerpo se inclina hacia atrás un instante; los élites retroceden la mitad. La pausa de impacto es de 35 ms en golpes normales y 70 ms en el 3.º y el fuerte.
+- **Hechizo del Plague (`cast`):** círculo mágico de veneno (addon Magic Circles) que se dibuja en el sitio de Kaelen durante el aviso, un orbe que sale de la mano y cae sobre él al impactar (chispas, neblina y onda); si se interrumpe, el orbe se deshace. Recarga de 4 s, así mezcla el zarpazo. Los ataques especiales de esbirros llevan aura amarilla.
+- **Al morir Kaelen:** los esbirros se quedan y se burlan (`taunt` del Plague, `scream` de TheWrapper); al morir el jefe, los esbirros vivos caen como cualquier otro.
+- **Muerte y cadáveres:** el clip de muerte se recorta y acelera para que el cuerpo toque el suelo en 1,5 s como mucho (`death_clip_start`, `death_land_at`, `death_fall_time`; el Skeleton y el Straw Reaper se tambaleaban 2,3 s y antes se borraban de pie a los 2 s). Al caer levanta polvo, queda 2,5 s en el suelo (`corpse_time`) y se hunde 0,9 m en 1 s con una nube de polvo antes de liberarse.
 - **Navegación:** `NavigationAgent3D` con evitación, sobre la capa `small` (radio 0,5 m).
 
 ---
@@ -407,13 +438,17 @@ Las simulaciones usan Kaelen simulada, así que los tiempos reales serán mayore
 
 Reglas comunes: entrada al sur con reja (`GateEntry`, se cierra al entrar), salida al norte (`GateExit`, se abre al morir el jefe), `ExitTrigger`, `PlayerStart`, `BossStart`, seis `Marker3D` del grupo `spawn_point`, navegación horneada al generar (capa `small` radio 0,5 m y capa `large` radio 2,5 m).
 
+**Correcciones de geometría (2026-10-20):** la arena 2 (octógono) tiene una losa de techo de respaldo como la del suelo (por los huecos de las celdas diagonales se veía el cielo); en las arenas rectangulares de kit el suelo CSG de los pasillos empieza donde acaban las baldosas del kit bajo la puerta (dos suelos en el mismo plano hacían rayas).
+
+**Subida entre pisos:** pasada la reja de salida (`ClimbTrigger`, creado en tiempo de ejecución por `level_gameplay.gd`) Kaelen sube sola la escalera (`Player.scripted_walk`, la cámara se coloca detrás) y sigue andando mientras se cierra la cortinilla; en el templo entra caminando por la puerta. Al llegar (`GameState.arrival_walk`), aparece en el rellano de entrada, camina hasta `PlayerStart` mientras sale una línea sobre el guardián del piso (`Narration`, `FLOOR_LORE_*`) y la reja se cierra detrás; el jefe y las oleadas esperan. El piso siguiente se carga en segundo plano (`GameState.preload_scene`) al morir el jefe o al llegar al exterior. Salidas de seguridad por tiempo si algo bloquea la caminata.
+
 **Sala de Elysia (final, dentro de `arena_3`):** pasillo de 6 m de ancho y unos 20 m hasta la sala de 12 × 12 m con el altar. El muro norte tiene un hueco irregular hacia el cielo (cortes `BreakWall*` y `BreakCeil*`), cerrado por una barrera invisible. `ending_room.tscn` añade cielo, escombros y nubes. La caída (`start_fall()`) acelera el movimiento de nubes e islotes y el viento (`StormFX`) durante 2,5 s.
 
 ### 9.3 Look PSX
 
 - Shader `psx_lit` (Godot-PSX-Starter-kit, MIT, portado a Godot 4): vértices que tiemblan, iluminación por vértice, texturas con filtro nearest. Variantes `alpha_scissor`, `transparent` y `metal`. Todos los modelos usan el mismo estilo.
 - Postproceso `pp_band_dither` (reducción de color con dithering).
-- Texturas nearest, sin mipmaps y de 256 px como máximo.
+- Texturas nearest, sin mipmaps y de 256 px como máximo. Excepción: los bloques CSG generados (`level_builder._mat`, pasillos, escaleras y templo) y las piedras de la sala final usan texturas de 512 px con filtro *nearest con mipmaps*; sin mipmaps se veían como ruido a pocos metros ("textura dañada" al final de los pasillos de salida).
 - Kit de piezas `dungeon_kit.meshlib` (de `PSX_Dungeon`) con material `kit_std.tres`. Las arenas 1 y 3 usan `GridMap`; la arena 2 usa baldosas y muros girados 45°.
 
 ### 9.4 Efectos (VFX)
@@ -461,6 +496,13 @@ La isla cae porque los tres guardianes (Bone Dragon, Blackhorn y Ghidorah) la ma
 - **Cámaras:** `ENDING_LINES` en `ending_director.gd` asigna cada línea a `EndingCam1` (lejos) o `EndingCam2` (cerca).
 - **Escenas del final:** `ending_director.gd` (adjunto a `arena_3_gameplay.tscn`), `ending_room.gd`, `credits.tscn` con `assets/credits.txt`.
 - **Tiempo:** el diálogo avanza con pulsación. El revelado de cada línea va a 30 caracteres por segundo.
+- **Coreografía (`ending_director.gd`, `BEATS`):** temblor en `ENDING_04` (sacudida, Kaelen se tambalea con `hurt`, Elysia se inclina, polvo); en `ENDING_12` las dos se giran hacia el muro roto; en `ENDING_13` Elysia baja del escalón (primero a su altura hasta pasar el borde, luego al suelo) y queda a 0,7 m de Kaelen; en `ENDING_17` se inclinan una hacia la otra (8°) bajo el último temblor. Elysia respira y se balancea siempre.
+- **Carga:** la caja de diálogo y el viento se crean al cargar la arena; mientras el cartel de entrada tapa la pantalla, las cámaras del final se activan unos fotogramas con los efectos encendidos para compilar sus shaders (antes daba tirón al empezar).
+
+### 11.1 Introducción y tutorial
+
+- **Intro (`intro_director.gd`, solo en partida nueva, `GameState.intro_pending`):** seis líneas (`INTRO_01`–`INTRO_06`): la isla flota por tres guardianes; Elysia fue subida al altar para velar su sueño; la ley dice que vencerlos hace caer la isla con todos; Kaelen sube igualmente porque prometió verla. Plano aéreo del templo, primer plano de Kaelen y negro; se salta con pausa.
+- **Tutorial (`tutorial.gd`):** avisos abajo con la tecla **real** asignada (o los botones del mando si es lo último usado): moverse, cámara, rodar, atacar a un muñeco (aparece junto al sendero y no se rompe), ataque fuerte, fijar y moverse de lado, curarse, colores de las auras y "sube al templo". Cada aviso espera a que el jugador lo haga.
 
 ---
 
@@ -521,7 +563,7 @@ La isla cae porque los tres guardianes (Bone Dragon, Blackhorn y Ghidorah) la ma
 - **Restaurar archivos `.import`:** Godot a veces reescribe los `.import` cambiando solo los finales de línea. Antes de commitear, comprobarlo con `git diff --ignore-cr-at-eol --stat`. Si solo cambian los finales de línea, restaurar **solo esos archivos** con `git restore -- <ruta>`. Nunca restaurar todo el árbol.
 - **Shaders y materiales:** un único shader PSX para todo. Los cambios de paleta van por `modulate_color` o `tint`.
 - **Medidas:** 1 unidad = 1 metro. Los modelos se normalizan a sus alturas (sección 9.5); nunca se confía en la escala del archivo original.
-- **Tests antes de push:** ejecutar `run_tests.gd` (365 pasan) y, si se toca un flujo, su `.tscn`.
+- **Tests antes de push:** ejecutar `run_tests.gd` (400 pasan) y, si se toca un flujo, su `.tscn`.
 
 ---
 
@@ -559,6 +601,10 @@ La isla cae porque los tres guardianes (Bone Dragon, Blackhorn y Ghidorah) la ma
 | Mando real | Los controles están configurados para Xbox, pero no se ha probado el mando físico en todas las funciones. Revisar en el playtest |
 | Aviso del rayo | El aviso cuenta con una zona clara que no hace daño y puede confundir. Revisar en el playtest |
 | Animaciones de esbirros | Ataque y muerte de los esbirros normales pendientes de revisar en juego. El élite Knight usa un clip de caminar más lento |
+| Shaders nuevos sin compilar en pruebas | `telegraph_ground.gdshader` y el aura de `psx_lit` no se compilan sin ventana (las pruebas usan el renderizador vacío). Revisados a mano; confirmar en el editor que no hay errores de shader |
+| Sincronía de los ataques nuevos | Los tiempos de los ataques de esbirros (`resources/attacks/minions/`) son estimados: se comprobó que golpean, no que el golpe coincida con el clip. Velocidades de `strafe`/`walk_back` (2 m/s), `run` y `lurch` puestas a ojo. Revisar en juego y ajustar los `.tres` |
+| Plague Arcanist a distancia | Desde 3 m su único ataque en rango es `cast`: a media distancia lo lanza casi siempre. Vigilar en el playtest si resulta repetitivo |
+| Ataque fuerte con ajustes antiguos | Si alguien había reasignado "Atacar" al clic derecho, ese clic sigue atacando normal; se arregla reasignando en Opciones |
 | Clips duplicados de Blackhorn | `idle` y `charge`, y `walk` y `run`, duran lo mismo. Solo se usa `run` |
 | Cola de Ghidorah junto al muro norte | En la arena 3 la punta de la cola queda a 1,9 m del muro (1,35 m en `death`). Medir de nuevo si se regeneran las arenas |
 | Decoración de arenas | Pendiente. Las arenas tienen geometría de kit pero poca decoración |
@@ -600,3 +646,31 @@ Animaciones de Mixamo (Kaelen, Skeleton, Knight, Plague Arcanist, Straw Reaper y
 | Stehven | Stehven Alexander Obando Cordoba | `StehvenObandoUcc` |
 
 Los roles A/B/C del plan original quedaron sin efecto desde el 2026-10-14: ya no hay dueños de archivos ni de escenas. Cualquiera puede tocar cualquier parte, con commits pequeños y pruebas antes de cada push.
+
+---
+
+## 17. Decisiones: dinamismo del combate y curva (2026-10-20)
+
+Trabajo de pulido dentro de T18, antes de la congelación de T19. Rama `wt/combat-dynamism` (worktree aparte). Objetivo: que el combate sea menos monótono y que cada piso tenga su propio pico de ritmo, sin assets nuevos.
+
+| Decisión | Elección | Por qué | Revisar si |
+|---|---|---|---|
+| Alcance | Pulido acotado de T18, sin sistemas nuevos de datos ni guardado | Congelación y playtest pendientes | El playtest pide cambios mayores |
+| Vida por piso | Se mantiene 100 / 70 / 40 | Da la dificultad creciente y encaja con la historia | El playtest la ve injusta en el piso 3 |
+| Esbirros con varios ataques | Usar los clips ya importados (`attack_2`, `combo`, `attack_cast`, `attack_leap`, `scream`, `run`…), empezando por los élites | Es lo que más dinamismo da por esfuerzo; solo código y `.tscn` | Algún clip no encaja en juego |
+| Muerte de TheWrapper | Mejorar la caída por `Tween` (desplome, polvo, sonido) | **Nada de Blender ni de rehacer `.glb`** | Aparece un clip `death` ya hecho |
+| Fase 2 de jefes | Al menos un combo encadenado por jefe en fase 2 | Un giro a mitad de pelea, el pico de ritmo de cada piso | Los combos vuelven injusta la fase 2 |
+| Kaelen: `jump_attack` | Nuevo ataque fuerte con el clip existente | Variedad ofensiva | Rompe el balance de las simulaciones |
+| Kaelen: strafe | Caminar lateral y hacia atrás con lock-on (`strafe_left/right`, `walk_back`), cuidando que el ataque siga sintiéndose bien al girar hacia el objetivo | Peleas más dinámicas con jefes | El ataque pierde precisión o peso |
+| Curva entre pisos | Cada piso presenta una amenaza nueva (por ejemplo, a distancia en el piso 2, esbirros que corren en el piso 3) | Progresión por variedad, no solo por números | El playtest no la nota |
+| Registro | Esta sección (una sola guía) | El equipo eligió `AGENTS.md` en lugar de `docs/` | — |
+
+### Resuelto al implementar
+- `jump_attack`: clic derecho / RT, 45 de daño, 35 de estamina, desde `MOVE` o como remate del combo (sección 6). Ventana de golpe medida fotograma a fotograma en `kaelen_moves_flow`.
+- Combos de cada jefe: sección 7.1. Amenaza de cada piso: sección 7.2.
+
+### Abierto
+- Revisar en juego la sincronía de los ataques nuevos con sus clips y las velocidades de `strafe`, `run` y `lurch` (sección 14.2).
+- Las simulaciones (`boss_pressure_sim`, `boss_tactics_sim`) usan una Kaelen simulada sin ataque fuerte ni strafe: no miden esos cambios. Sí miden los combos de fase 2.
+- Efecto medido de los combos (`boss_tactics_sim`, tácticas activas, frente al código anterior): daño a Kaelen por minuto con perfil evasivo +27 % en Bone Dragon y +11 % en Blackhorn; Ghidorah casi igual. Si el playtest lo ve duro: subir `Boss.COMBO_RECOVER_FRACTION` (0,35) o `COMBO_TELEGRAPH` (0,85), o quitar un `combo_next`.
+- Corregido en `boss_pressure_sim.gd`: la Kaelen simulada golpeaba desde 2,5 m del centro del jefe, pero Ghidorah (×1,95) se planta a 5 m (`engage_range`), así que nunca moría (0/12). Ahora el alcance es el mayor entre 2,5 m y el `engage_range`: Ghidorah muere en 12/12 (60 s y 88 s).
