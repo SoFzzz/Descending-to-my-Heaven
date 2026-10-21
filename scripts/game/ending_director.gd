@@ -38,6 +38,34 @@ const MUSIC_DUCK_DB := -7.0
 const MUSIC_DUCK_TIME := 1.0
 
 const TEXT_LAYER := 20
+## Frames each ending camera is shown during the warm-up (under the arena's title card).
+const WARMUP_FRAMES := 3
+
+## Staging of the ending (procedural: Elysia's model has no rig, so she moves as a whole body; Kaelen
+## uses her own clips). Beat applied when the line of that index (in ENDING_LINES) starts:
+## - &"quake": the room shakes, both stagger, dust falls (ENDING_04, the floor trembles);
+## - &"look_out": both turn to the broken wall while a tower breaks away (ENDING_12);
+## - &"come_down": Elysia turns back and steps down from the altar step to stand in front of Kaelen
+##   (ENDING_13); she stops ELYSIA_EMBRACE_GAP m from her, so the bodies never overlap;
+## - &"embrace": both lean in (EMBRACE_LEAN) under a last strong tremor (ENDING_17).
+const BEATS := {3: &"quake", 11: &"look_out", 12: &"come_down", 16: &"embrace"}
+const QUAKE_KICK := 0.12
+const QUAKE_TIME := 1.2
+const STAGGER_TILT := 0.09     # rad Elysia sways on a tremor
+const STAGGER_TIME := 0.35
+## Elysia stepping down: final distance to Kaelen (horizontal, between origins), duration and hop.
+const ELYSIA_EMBRACE_GAP := 0.7
+const STEP_DOWN_TIME := 1.1
+const STEP_DOWN_HOP := 0.12
+## She walks at the step's height until STEP_DOWN_LEDGE m before her mark (already past the step's
+## edge: the mark is 0.3 m beyond it), and only then drops to the floor: her feet never cut into it.
+const STEP_DOWN_LEDGE := 0.25
+const STEP_DOWN_SPLIT := 0.6
+const EMBRACE_LEAN := 0.14     # rad each one leans toward the other (about 8 deg)
+const EMBRACE_TIME := 1.4
+## Idle life: Elysia sways slightly while she talks (besides breathing).
+const SWAY_ANGLE := 0.02
+const SWAY_HALF_CYCLE := 2.4
 
 ## Ending script: translation key (localization/translations.csv; the "Kaelen:" / "Elysia:" prefix is
 ## kept in both languages and only tells who is speaking) and camera shot of each line:
@@ -69,6 +97,8 @@ var _end_point: Node3D
 var _text_layer: CanvasLayer
 var _overlay: ColorRect
 var _box: DialogueBox
+var _sway_tween: Tween
+var _beat_tween: Tween
 
 
 ## Text of a line in the current language.
@@ -116,6 +146,9 @@ func _ready() -> void:
 	_cam_2 = _ending.get_node_or_null(^"EndingCam2") as Camera3D
 	_end_point = _ending.get_node_or_null(^"KaelenEndPoint") as Node3D
 	_start_breathing()
+	_start_sway()
+	_build_text_layer()   # now, not when the ending starts: the box and its fonts cost a frame
+	_warm_up.call_deferred()
 	if _trigger:
 		_trigger.body_entered.connect(_on_trigger_body_entered)
 	else:
@@ -132,6 +165,114 @@ func _start_breathing() -> void:
 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_breath_tween.tween_property(_elysia, "position:y", base_y, BREATH_HALF_CYCLE) \
 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+## Slow whole-body sway (rotation z) so Elysia never stands like a statue.
+func _start_sway() -> void:
+	if _elysia == null:
+		return
+	_sway_tween = create_tween().set_loops()
+	_sway_tween.tween_property(_elysia, "rotation:z", SWAY_ANGLE, SWAY_HALF_CYCLE) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_sway_tween.tween_property(_elysia, "rotation:z", -SWAY_ANGLE, SWAY_HALF_CYCLE) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+## Where Elysia ends when she steps down: on the line from her to Kaelen, ELYSIA_EMBRACE_GAP m from
+## Kaelen, on Kaelen's floor height.
+static func step_down_target(elysia: Vector3, kaelen: Vector3, gap: float) -> Vector3:
+	var flat := Vector3(kaelen.x - elysia.x, 0.0, kaelen.z - elysia.z)
+	if flat.length() <= gap:
+		return Vector3(elysia.x, kaelen.y, elysia.z)
+	var stop := kaelen - flat.normalized() * gap
+	return Vector3(stop.x, kaelen.y, stop.z)
+
+
+func _beat(index: int, player: Player) -> void:
+	var beat: StringName = BEATS.get(index, &"")
+	if beat == &"" or player == null or not is_inside_tree():
+		return
+	match beat:
+		&"quake":
+			_quake(player, 1.0)
+		&"look_out":
+			_quake(player, 0.6)
+			var hole := _hole_point()
+			player.face_point(hole)
+			if _elysia:
+				_turn_elysia_toward(hole)
+		&"come_down":
+			player.face_point(_elysia.global_position if _elysia else player.global_position)
+			_come_down(player)
+		&"embrace":
+			_quake(player, 1.3)
+			_lean_in(player)
+
+
+## A tremor: camera kick and dust (EndingRoom.kick), Kaelen's hurt stagger, Elysia's sway.
+func _quake(player: Player, strength: float) -> void:
+	get_tree().call_group(EndingRoom.GROUP, &"kick", QUAKE_KICK * strength, QUAKE_TIME)
+	player.call(&"_play_action", &"hurt")
+	if _elysia:
+		var tilt := create_tween()
+		tilt.tween_property(_elysia, "rotation:x", -STAGGER_TILT * strength, STAGGER_TIME * 0.4) \
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		tilt.tween_property(_elysia, "rotation:x", 0.0, STAGGER_TIME) \
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+## The broken north wall of the room (where the sky opens): EndingCam1 looks across the room toward
+## the altar, so the hole is beyond the altar from Kaelen's mark.
+func _hole_point() -> Vector3:
+	var from := _end_point.global_position if _end_point else Vector3.ZERO
+	var altar := _elysia.global_position if _elysia else from + Vector3.FORWARD
+	var dir := altar - from
+	dir.y = 0.0
+	return altar + dir.normalized() * 6.0 + Vector3.UP * 3.0
+
+
+func _come_down(player: Player) -> void:
+	if _elysia == null:
+		return
+	if _breath_tween and _breath_tween.is_valid():
+		_breath_tween.kill()
+	_turn_elysia_toward(player.global_position)
+	var from := _elysia.global_position
+	var to := step_down_target(from, player.global_position, ELYSIA_EMBRACE_GAP)
+	_beat_tween = create_tween()
+	_beat_tween.tween_method(_place_on_arc.bind(from, to), 0.0, 1.0, STEP_DOWN_TIME) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_beat_tween.tween_callback(_start_breathing)   # breathing again from her new height
+
+
+func _place_on_arc(t: float, from: Vector3, to: Vector3) -> void:
+	if _elysia and is_instance_valid(_elysia):
+		_elysia.global_position = step_down_point(t, from, to)
+
+
+## Position of the step down at `t` (0..1): walk at the step's height to the ledge point, then drop.
+static func step_down_point(t: float, from: Vector3, to: Vector3) -> Vector3:
+	var flat := Vector3(to.x - from.x, 0.0, to.z - from.z)
+	var ledge := Vector3(to.x, from.y, to.z) - flat.normalized() * minf(STEP_DOWN_LEDGE, flat.length())
+	if t < STEP_DOWN_SPLIT:
+		var k := t / STEP_DOWN_SPLIT
+		return from.lerp(ledge, k) + Vector3.UP * STEP_DOWN_HOP * sin(PI * k)
+	var k2 := (t - STEP_DOWN_SPLIT) / (1.0 - STEP_DOWN_SPLIT)
+	return ledge.lerp(to, k2)
+
+
+func _lean_in(player: Player) -> void:
+	var model := player.get_node_or_null(^"Model") as Node3D
+	var lean := create_tween().set_parallel(true)
+	if model:
+		lean.tween_property(model, "rotation:x", EMBRACE_LEAN, EMBRACE_TIME) \
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if _elysia:
+		if _sway_tween and _sway_tween.is_valid():
+			_sway_tween.kill()
+		lean.tween_property(_elysia, "rotation:x", EMBRACE_LEAN, EMBRACE_TIME) \
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		lean.tween_property(_elysia, "rotation:z", 0.0, EMBRACE_TIME)
 
 
 func _on_trigger_body_entered(body: Node3D) -> void:
@@ -175,7 +316,8 @@ func play() -> void:
 	# then move everything: the island starts falling under the black so the clouds and the wind
 	# are already moving when the picture comes back.
 	player.set_cutscene(true)
-	_build_text_layer()
+	if _text_layer == null:
+		_build_text_layer()
 	_tween_alpha(_overlay, 1.0, CUT_FADE_OUT)
 	if not await _wait(CUT_FADE_OUT):
 		return
@@ -193,10 +335,12 @@ func play() -> void:
 	# shot changes when the next line belongs to another shot.
 	_duck_music(MUSIC_DUCK_DB)
 	_box.fade(1.0, BOX_FADE_IN)
-	for entry in ENDING_LINES:
+	for i in ENDING_LINES.size():
+		var entry: Array = ENDING_LINES[i]
 		if int(entry[1]) != shot:
 			shot = int(entry[1])
 			_activate_camera(_cam_1 if shot == 1 else _cam_2)
+		_beat(i, player)
 		if not await _say(localized(entry[0])):
 			return
 	_box.fade(0.0, BOX_FADE_OUT)
@@ -292,6 +436,35 @@ func _build_text_layer() -> void:
 
 func _game_state() -> Node:
 	return get_node_or_null(^"/root/GameState") if is_inside_tree() else null
+
+
+## gl_compatibility compiles a shader the first time it is drawn, so the ending's first frame (sky,
+## clouds, wind streaks, dust, the room) stalled. While the arena's title card still covers the screen
+## each ending camera is made current for a few frames with the fall's effects on, then Kaelen's
+## camera comes back. Skipped without a window or without a transition covering the screen.
+func _warm_up() -> void:
+	if DisplayServer.get_name() == "headless" or not is_inside_tree() or _played:
+		return
+	# Only while the transition covers the screen (a scene opened straight from the editor would
+	# flash the ending's shots instead).
+	var game_state := _game_state()
+	var transition: Node = game_state.get(&"transition") if game_state else null
+	if transition == null or not transition.call(&"is_busy"):
+		return
+	var previous := get_viewport().get_camera_3d()
+	get_tree().call_group(EndingRoom.GROUP, &"warm_up", true)
+	for cam in [_cam_1, _cam_2]:
+		if cam == null:
+			continue
+		cam.make_current()
+		for i in WARMUP_FRAMES:
+			await get_tree().process_frame
+			if not is_inside_tree() or _played:
+				return
+	if is_inside_tree():
+		get_tree().call_group(EndingRoom.GROUP, &"warm_up", false)
+	if previous and is_instance_valid(previous) and not _played:
+		previous.make_current()
 
 
 ## Closes the sequence: requests the next step (credits) with GameState's own fade.

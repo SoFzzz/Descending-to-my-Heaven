@@ -72,6 +72,7 @@ ACT_MOVE_BACK,Retroceder,Move back
 ACT_MOVE_LEFT,Izquierda,Move left
 ACT_MOVE_RIGHT,Derecha,Move right
 ACT_ATTACK,Atacar,Attack
+ACT_HEAVY_ATTACK,Ataque fuerte,Heavy attack
 ACT_ROLL,Rodar,Roll
 ACT_HEAL,Curarse,Heal
 ACT_LOCK_ON,Fijar objetivo,Lock on
@@ -115,3 +116,23 @@ TRANS_FLOOR_2,Piso 2 - Claustro,Floor 2 - Cloister
 TRANS_SUB_2,Blackhorn,Blackhorn
 TRANS_FLOOR_3,Piso 3 - Ruinas,Floor 3 - Ruins
 TRANS_SUB_3,Mecha King Ghidorah,Mecha King Ghidorah
+INTRO_01,"Dicen que la isla flota porque tres guardianes la sostienen, dormidos en los pisos del templo.","They say the island floats because three guardians hold it up, asleep on the floors of the temple."
+INTRO_02,"Para que nunca despierten del todo, alguien debe velar su sueño desde el altar. Este invierno eligieron a Elysia.","So that they never fully wake, someone must watch over their sleep from the altar. This winter they chose Elysia."
+INTRO_03,"Quien sube al altar no vuelve a bajar. Y si alguien vence a los guardianes, la isla cae con todos los que viven en ella. Esa es la ley.","Whoever climbs to the altar never comes down. And if anyone defeats the guardians, the island falls with everyone who lives on it. That is the law."
+INTRO_04,Kaelen: Me prometiste que volverías antes del deshielo. El deshielo llegó hace tres lunas.,Kaelen: You promised me you would be back before the thaw. The thaw came three moons ago.
+INTRO_05,Kaelen: Conozco la ley. Que la isla me juzgue después.,Kaelen: I know the law. Let the island judge me afterwards.
+INTRO_06,"Esa noche, Kaelen tomó la espada de su madre y caminó hacia el templo.","That night, Kaelen took her mother's sword and walked toward the temple."
+INTRO_SKIP,Omitir,Skip
+FLOOR_LORE_1,"El primer guardián duerme sobre los huesos de quienes subieron antes.","The first guardian sleeps on the bones of those who climbed before."
+FLOOR_LORE_2,"Dicen que cada temblor de la isla es la respiración del segundo guardián.","They say every tremor of the island is the breathing of the second guardian."
+FLOOR_LORE_3,"El último guardián. Tras él, el altar. Tras el altar, Elysia.","The last guardian. Beyond it, the altar. Beyond the altar, Elysia."
+TUT_MOVE,Moverse,Move
+TUT_CAMERA,Mover la cámara,Move the camera
+TUT_ROLL,"Rodar (esquiva los golpes, gasta estamina)","Roll (dodges blows, costs stamina)"
+TUT_ATTACK,Atacar al muñeco (pulsa varias veces para encadenar),Attack the dummy (press repeatedly to chain)
+TUT_HEAVY,"Ataque fuerte (aturde, gasta más estamina)","Heavy attack (stuns, costs more stamina)"
+TUT_LOCK,"Fijar objetivo y moverse de lado","Lock on and move sideways"
+TUT_HEAL,"Curarse (10 frascos por piso)","Heal (10 flasks per floor)"
+TUT_WARN,"Aura amarilla: esquiva rodando. Aura roja: sal de la zona.","Yellow aura: roll through it. Red aura: get out of the zone."
+TUT_GO,Sube al templo,Climb to the temple
+TUT_MOUSE,Ratón,Mouse

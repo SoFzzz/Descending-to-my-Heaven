@@ -57,6 +57,9 @@ var _time := 0.0
 var _tween: Tween
 var _wind: AudioStreamPlayer
 var _wind_tween: Tween
+var _kick := 0.0         # extra shake of a tremor (kick), fading over _kick_total s
+var _kick_total := 0.0
+var _kick_left := 0.0
 
 
 ## Relative fall speed for an intensity 0..1.
@@ -82,6 +85,7 @@ func _ready() -> void:
 	_build_cracks()
 	_build_dust()
 	_build_light()
+	_prepare_wind()
 	_apply_speed()
 	_outside.visible = false
 
@@ -106,21 +110,42 @@ func start_fall() -> void:
 	_start_wind()
 
 
+## Builds the wind player ahead of time (on load): loading the mp3 when the fall starts stalled the
+## first frame of the ending.
+func _prepare_wind() -> void:
+	if _wind != null:
+		return
+	var stream := load(WIND_STREAM) as AudioStreamMP3
+	if stream == null:
+		push_warning("EndingRoom: missing %s" % WIND_STREAM)
+		return
+	stream = stream.duplicate() as AudioStreamMP3
+	stream.loop = true   # shorter than the ending: it repeats
+	_wind = AudioStreamPlayer.new()
+	_wind.name = "WindFall"
+	_wind.stream = stream
+	_wind.bus = WIND_BUS if AudioServer.get_bus_index(WIND_BUS) >= 0 else &"Master"
+	_wind.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_wind)
+
+
+## Shader warm-up (EndingDirector, while the arena's title card hides the screen): shows the fall's
+## effects for a few frames so gl_compatibility compiles them then, not on the ending's first frame.
+func warm_up(on: bool) -> void:
+	if falling:
+		return
+	if _streaks:
+		_streaks.visible = on
+	for p in [_dust, _pebbles]:
+		if p:
+			(p as CPUParticles3D).emitting = on
+
+
 ## Wind: fades in with the same curve and duration as the fall's acceleration (RAMP_TIME).
 func _start_wind() -> void:
+	_prepare_wind()
 	if _wind == null:
-		var stream := load(WIND_STREAM) as AudioStreamMP3
-		if stream == null:
-			push_warning("EndingRoom: missing %s" % WIND_STREAM)
-			return
-		stream = stream.duplicate() as AudioStreamMP3
-		stream.loop = true   # shorter than the ending: it repeats
-		_wind = AudioStreamPlayer.new()
-		_wind.name = "WindFall"
-		_wind.stream = stream
-		_wind.bus = WIND_BUS if AudioServer.get_bus_index(WIND_BUS) >= 0 else &"Master"
-		_wind.process_mode = Node.PROCESS_MODE_ALWAYS
-		add_child(_wind)
+		return
 	_wind.volume_db = WIND_SILENT_DB
 	if is_inside_tree():
 		_wind.play()
@@ -179,8 +204,23 @@ func _shake(cam: Camera3D) -> void:
 	if not falling or cam == null:
 		return
 	var a := SHAKE_AMOUNT * intensity
+	if _kick_left > 0.0:
+		_kick_left = maxf(0.0, _kick_left - get_process_delta_time())
+		a += _kick * _kick_left / maxf(_kick_total, 0.001)
 	cam.h_offset = a * (sin(_time * SHAKE_FREQ) * 0.6 + sin(_time * SHAKE_FREQ * 1.7 + 1.3) * 0.4)
 	cam.v_offset = a * (sin(_time * SHAKE_FREQ * 1.3 + 2.1) * 0.6 + sin(_time * SHAKE_FREQ * 2.3) * 0.4)
+
+
+## A tremor (EndingDirector's quake beats): an extra camera shake of `amount` m fading over `time` s,
+## and a burst of falling dust and pebbles.
+func kick(amount: float, time: float) -> void:
+	_kick = maxf(_kick * _kick_left / maxf(_kick_total, 0.001), amount)
+	_kick_total = time
+	_kick_left = time
+	for p in [_dust, _pebbles]:
+		if p:
+			(p as CPUParticles3D).restart()
+			(p as CPUParticles3D).emitting = true
 
 
 func _release_camera() -> void:
@@ -365,7 +405,7 @@ func _stone_material(tex_name: String, tint: Color) -> StandardMaterial3D:
 	m.albedo_color = tint
 	m.uv1_triplanar = true
 	m.uv1_scale = Vector3(0.5, 0.5, 0.5)
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS   # see level_builder._mat
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
 	return m
 

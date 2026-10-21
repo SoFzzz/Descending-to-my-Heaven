@@ -1,10 +1,12 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/game/level_gameplay.gd" id="1_gp"]
 [ext_resource type="PackedScene" path="res://scenes/levels/exterior.tscn" id="2_level"]
 [ext_resource type="PackedScene" path="res://scenes/player/kaelen.tscn" id="3_kaelen"]
 [ext_resource type="AudioStream" path="res://assets/audio/bgm/exterior_forest_night.ogg" id="4_music"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/player/run_dirt.ogg" id="5_steps"]
+[ext_resource type="Script" path="res://scripts/game/intro_director.gd" id="6_intro"]
+[ext_resource type="Script" path="res://scripts/game/tutorial.gd" id="7_tutorial"]
 
 [node name="ExteriorGameplay" type="Node3D"]
 script = ExtResource("1_gp")
@@ -14,3 +16,9 @@ footstep_stream = ExtResource("5_steps")
 [node name="Level" parent="." instance=ExtResource("2_level")]
 
 [node name="Kaelen" parent="." instance=ExtResource("3_kaelen")]
+
+[node name="IntroDirector" type="Node" parent="."]
+script = ExtResource("6_intro")
+
+[node name="Tutorial" type="CanvasLayer" parent="."]
+script = ExtResource("7_tutorial")

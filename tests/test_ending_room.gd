@@ -49,7 +49,9 @@ func test_fall_starts_only_when_asked() -> void:
 func test_wind_is_prepared_when_fall_starts() -> void:
 	var room := (load("res://scenes/props/ending_room.tscn") as PackedScene).instantiate()
 	room._ready()
-	assert_true(room.get_node_or_null(^"WindFall") == null, "no wind during combat")
+	# Prepared on load (loading the mp3 at the fall stalled the ending's first frame) but silent.
+	var idle := room.get_node_or_null(^"WindFall") as AudioStreamPlayer
+	assert_true(idle == null or not idle.playing, "no wind during combat")
 	room.start_fall()
 	var wind := room.get_node_or_null(^"WindFall") as AudioStreamPlayer
 	assert_true(wind != null, "the wind is created when the fall starts")
