@@ -4,6 +4,8 @@ Boss rush 3D en tercera persona, con combate de estilo soulslike y estética PSX
 
 Proyecto desarrollado con Godot 4.7.2 (GDScript con tipado estático).
 
+🎬 **Video de demostración:** [ver en YouTube](https://youtu.be/LX9I3KKRmG4)
+
 ---
 
 ## Descarga y cómo jugar
