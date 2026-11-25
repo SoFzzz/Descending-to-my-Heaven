@@ -260,7 +260,7 @@ Menú principal → Exterior (isla, sendero, templo) → puerta del templo
 | Diálogos del final: avanzar | Enter, Espacio, clic izquierdo | A, RB, X |
 | Opciones: cambiar pestaña | Ratón | LB / RB |
 | Pantalla completa | Alt + Enter | — |
-| Depuración (solo en compilaciones de depuración, `OS.is_debug_build()`; no existen en el `.exe` de release) | F3 (overlay IA), F5 (salta de nivel), F6 (invulnerable) | — |
+| Depuración (solo en compilaciones de depuración, `OS.is_debug_build()`; no existen en el `.exe` de release) | F3 (overlay IA), F5 (salta de nivel), F6 (invulnerable), F7 (cada golpe de Kaelen mata de un solo golpe, para demostraciones) | — |
 
 Las acciones de teclado y mando se pueden reasignar; los sticks de movimiento y cámara son fijos.
 

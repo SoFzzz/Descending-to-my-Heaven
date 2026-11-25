@@ -106,6 +106,7 @@ const ATTACK_STEP_MIN := 1.8
 # --- Heavy attack (jump_attack clip): a leap forward that lands with a downward slam ---
 const HEAVY_ANIM := &"jump_attack"
 const HEAVY_DAMAGE := 45
+const ONE_HIT_DAMAGE := 99999   # debug one-hit kill (F7)
 const HEAVY_COST := 35.0
 const HEAVY_ANIM_SPEED := 1.25
 ## Clip seconds (jump_attack, 2.2 s): the hips peak at ≈ 0.8 s; the blade stays behind her head until
@@ -213,6 +214,7 @@ var _roll_dir := Vector3.ZERO
 var _iframes := false   # roll window
 var _hurt_iframes_left := 0.0   # after taking a hit (HURT_IFRAMES)
 var _victory := false   # after Events.boss_defeated
+var _one_hit := false   # debug (action "debug_one_hit", F7): every hit of hers kills
 var _god := false       # debug (action "debug_god", F6)
 ## Speed of the standing idle clip (1 = normal). The ending slows it so Kaelen stands almost still.
 var idle_anim_scale := 1.0
@@ -305,6 +307,8 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= _gravity * delta
 	if Input.is_action_just_pressed("debug_god"):
 		toggle_debug_god()
+	if Input.is_action_just_pressed("debug_one_hit"):
+		toggle_debug_one_hit()
 
 	if _cutscene:
 		_attack_pressed = false
@@ -902,7 +906,7 @@ func _set_hitbox_active(on: bool) -> void:
 	if _sword_hitbox == null:
 		return
 	if on:
-		_sword_hitbox.damage = HEAVY_DAMAGE if _heavy else combo_damage(combo_index)
+		_sword_hitbox.damage = ONE_HIT_DAMAGE if _one_hit else (HEAVY_DAMAGE if _heavy else combo_damage(combo_index))
 		_sword_hitbox.activate()
 	else:
 		_sword_hitbox.deactivate()
@@ -1109,6 +1113,20 @@ func _on_boss_defeated(_boss: Node3D) -> void:
 
 func is_invulnerable() -> bool:
 	return _iframes or _hurt_iframes_left > 0.0 or _victory or _god or _cutscene
+
+
+## F7 (action "debug_one_hit"): her hits kill anything they reach (for demos), only in debug builds.
+## Returns true if it toggled.
+func toggle_debug_one_hit(debug_build := OS.is_debug_build()) -> bool:
+	if not debug_build:
+		return false
+	_one_hit = not _one_hit
+	print("debug_one_hit: ", _one_hit)
+	return true
+
+
+func is_debug_one_hit() -> bool:
+	return _one_hit
 
 
 ## F6 (action "debug_god"): toggles invulnerability, only in debug builds; an exported release build

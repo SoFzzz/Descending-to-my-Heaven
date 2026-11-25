@@ -180,3 +180,13 @@ func test_death_is_terminal() -> void:
 	assert_true(not p.try_attack(), "no control when dying")
 	assert_true(not p.try_roll(), "no control when dying")
 	_free_all(n)
+
+
+func test_debug_one_hit_toggle_only_in_debug_builds() -> void:
+	var player := Player.new()
+	assert_true(not player.toggle_debug_one_hit(false), "a release build ignores F7")
+	assert_true(not player.is_debug_one_hit(), "still off")
+	assert_true(player.toggle_debug_one_hit(true), "a debug build toggles it")
+	assert_true(player.is_debug_one_hit(), "on")
+	assert_true(player.toggle_debug_one_hit(true) and not player.is_debug_one_hit(), "toggles off again")
+	player.free()
