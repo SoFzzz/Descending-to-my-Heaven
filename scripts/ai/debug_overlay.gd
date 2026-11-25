@@ -3,17 +3,21 @@ extends CanvasLayer
 ## phase, budget of the last wave, live minions and attack tokens. F5 ("debug_skip")
 ## jumps to the next level with GameState.advance_level(). F6 (god mode) is handled by Kaelen.
 ## Child of the GameState autoload; it only shows and acts if there is a "player" in the scene, so it
-## does not appear in the main menu.
+## does not appear in the main menu. Debug builds only: GameState does not create it in an exported
+## release, and `shortcuts_enabled` (OS.is_debug_build()) ignores the keys even if it is instanced.
 
 const TokensScript := preload("res://scripts/ai/attack_tokens.gd")
 const PHASE_NAMES: Array[String] = ["BUILD-UP", "PEAK", "RELAX"]
 ## Order of OrchestratorModel.Cycle.
 const CYCLE_NAMES: Array[String] = ["FIRST WAVE in", "WAVE in progress", "BOSS WINDOW"]
+const SHORTCUTS: Array[StringName] = [&"debug_overlay", &"debug_skip"]
 
 @onready var _panel: Control = $Panel
 @onready var _label: Label = $Panel/Label
 
 var _enabled := false
+## false in release builds: F3 and F5 do nothing. Tests set it to check both behaviours.
+var shortcuts_enabled := OS.is_debug_build()
 
 
 func _ready() -> void:
@@ -22,17 +26,35 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not _in_gameplay():
+	var action := shortcut_for(event)
+	if action == &"" or not _in_gameplay():
 		return
-	if event.is_action_pressed(&"debug_overlay"):
+	apply_shortcut(action)
+	get_viewport().set_input_as_handled()
+
+
+## Debug action that `event` presses (&"debug_overlay" or &"debug_skip"), or &"" if none or if the
+## shortcuts are disabled (release build).
+func shortcut_for(event: InputEvent) -> StringName:
+	if not shortcuts_enabled:
+		return &""
+	for action in SHORTCUTS:
+		if event.is_action_pressed(action):
+			return action
+	return &""
+
+
+## F3 toggles the panel; F5 asks GameState for the next level (deferred, outside input handling).
+func apply_shortcut(action: StringName) -> void:
+	if not shortcuts_enabled:
+		return
+	if action == &"debug_overlay":
 		_enabled = not _enabled
 		_panel.visible = _enabled
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed(&"debug_skip"):
-		var game_state := get_node_or_null(^"/root/GameState")
+	elif action == &"debug_skip":
+		var game_state := get_node_or_null(^"/root/GameState") if is_inside_tree() else null
 		if game_state and game_state.has_method(&"advance_level"):
 			game_state.call_deferred(&"advance_level")
-		get_viewport().set_input_as_handled()
 
 
 func _process(_delta: float) -> void:

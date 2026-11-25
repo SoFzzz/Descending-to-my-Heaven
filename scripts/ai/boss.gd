@@ -2,8 +2,9 @@ class_name Boss
 extends CharacterBody3D
 ## Boss (Task 9): IDLE → CHASE (NavigationAgent3D on the large layer) → picks an attack with
 ## BossBrain → TELEGRAPH (red warning on the floor, same size as the hitbox) → ACTIVE (hitbox on)
-## → RECOVER → CHASE. Phase 2 at 50 % health: ROAR (no damage, NOT invulnerable: punishing it is a
-## reward) and then +25 % animation, attack and movement speed. On death: death animation,
+## → RECOVER → CHASE. Phase 2 at 50 % health: a short ROAR (PHASE2_ROAR_TIME, invulnerable) whose
+## shockwave is the repel one (pushes Kaelen if she is within repel_radius), and then +25 % animation,
+## attack and movement speed. On death: death animation,
 ## Events.boss_defeated once and deferred shutdown of collisions/hitboxes.
 ##
 ## Scene conventions (boss_base.tscn): children Health, CollisionShape3D, NavigationAgent3D,
@@ -13,7 +14,9 @@ extends CharacterBody3D
 ## Approach vs attack: while CHASE, the boss asks BossBrain every frame (after the cooldown). Once
 ## it is within `engage_range` every attack valid at that distance competes; while it is still
 ## farther away only `BossAttack.opener` attacks (lunge, pounce, beam) can start, if the distance
-## is inside their [min_range, max_range]. Otherwise it keeps walking (`walk_animation`).
+## is inside their [min_range, max_range]. Otherwise it keeps walking (`walk_animation`), unless the
+## chase stalls (Kaelen inside the reach of an attack backs off as fast as the boss walks): then every
+## attack in range competes (BossBrain.track_chase).
 ## During ACTIVE an attack may move the boss (`advance_distance`), open extra hitboxes
 ## (`extra_hitbox_paths`), show a visual (`visual_path`) and expose gated hurtboxes.
 
@@ -25,8 +28,10 @@ signal goal_changed(goal: BossTactics.Goal)
 enum State { IDLE, CHASE, TELEGRAPH, ACTIVE, RECOVER, ROAR, DEAD }
 
 const PHASE2_SPEED := 1.25
-## Radius (m) of the seal that appears under the boss when it roars on entering phase 2.
-const PHASE2_SEAL_RADIUS := 5.0
+## The phase-2 roar lasts this many seconds (it used to play the whole clip: 3.7 s for the Bone
+## Dragon, 2.3 s for Blackhorn and Ghidorah, with the boss open to hits). It is invulnerable and
+## its shockwave is the repel one (repel_push_delay s after it starts, repel_radius m).
+const PHASE2_ROAR_TIME := 1.5
 const TURN_SPEED := 4.0            # rad/s-ish smoothing toward Kaelen
 const TRACK_FRACTION := 0.7        # during the first 70 % of the warning it keeps turning; then it commits
 const DODGE_RECORD_RANGE := 12.0   # only rolls this close count for the anticipation bonus
@@ -128,6 +133,8 @@ var brain := BossBrain.new()
 var repel := BossRepel.new()
 ## True while the current ROAR is a repel reaction (not the phase-2 roar).
 var repelling := false
+## True while the current ROAR is the phase-2 roar (invulnerable, with the repel shockwave).
+var phase_roaring := false
 ## How many repel reactions happened (debug and tests).
 var repel_count := 0
 var current_attack: BossAttack
@@ -208,6 +215,7 @@ func _ready() -> void:
 		# counts once; that is why its hurtboxes have no Health.
 		var hurtbox := node as Hurtbox
 		hurtbox.health = null
+		hurtbox.guard = self   # no hit feedback at all while the boss is invulnerable (roars)
 		hurtbox.hurt.connect(_on_hurt)
 	for attack in attacks:
 		var hb := _hitbox_for(attack)
@@ -273,12 +281,7 @@ func _physics_process(delta: float) -> void:
 			if glued:
 				_pending_repel = true
 	if _pending_roar and state != State.ROAR:
-		_pending_roar = false
-		_cancel_attack()
-		_play(roar_animation)
-		_play_sfx(sfx_phase2)
-		ImpactFx.seal(self, PHASE2_SEAL_RADIUS, 1.0, "blood")
-		_set_state(State.ROAR)
+		start_phase_roar()
 	elif _pending_repel and can_repel():
 		start_repel()
 	elif not target_ok and state != State.IDLE and state != State.ROAR:
@@ -341,17 +344,13 @@ func _run_state(delta: float, target_ok: bool) -> void:
 				_set_state(State.CHASE)
 		State.ROAR:
 			_stop()
-			if repelling and _repel_push_left > 0.0:
+			if (repelling or phase_roaring) and _repel_push_left > 0.0:
 				_repel_push_left -= delta
 				if _repel_push_left <= 0.0:
 					_push_player()
-			var roar_time := _anim_length(roar_animation, 2.0)
-			if repelling:
-				roar_time = minf(roar_time, repel_roar_max)   # the repel roar is cut short: it must not become a rest
-			if gesturing:
-				roar_time = _gesture_len
-			if _state_time >= roar_time / speed:
+			if _state_time >= _roar_duration(speed):
 				repelling = false
+				phase_roaring = false
 				gesturing = false
 				tactics.request_eval()
 				_play(idle_animation)
@@ -390,7 +389,14 @@ func _run_chase(delta: float, speed: float) -> void:
 		_:
 			if tactics_enabled and BossTactics.is_ambush(memory.distracted, memory.fleeing, distance, engage_range):
 				factor = BossTactics.AMBUSH_SPEED   # stalks: approaches more slowly while she is distracted
-	if may_attack and _cooldown <= 0.0 and _try_start_attack(distance, approaching):
+	# Chase gap: in ATTACK, a Kaelen inside the reach of an attack that the boss cannot catch up with
+	# lets every attack in range start, not only the openers (BossBrain.track_chase).
+	var stalled := false
+	if goal == BossTactics.Goal.ATTACK and approaching:
+		stalled = brain.track_chase(delta, distance, distance <= BossBrain.reach(attacks, phase))
+	else:
+		brain.reset_chase()
+	if may_attack and _cooldown <= 0.0 and _try_start_attack(distance, approaching and not stalled):
 		_stop()
 		return
 	var moving := approaching
@@ -614,6 +620,7 @@ static func combo_follow_up(attack: BossAttack, list: Array[BossAttack], phase_n
 
 
 func _start_attack(attack: BossAttack, warn_scale: float) -> void:
+	brain.reset_chase()
 	telegraph_scale = warn_scale
 	current_attack = attack
 	brain.last_attack_id = attack.id
@@ -857,7 +864,7 @@ func _settle(delta: float) -> void:
 ## Damage from any hurtbox (already multiplied: head × 1.25). Hits from the same source within
 ## SAME_SWING_WINDOW are the same swing touching several hurtboxes: only the largest one counts.
 func _on_hurt(amount: int, source: Node) -> void:
-	if state == State.DEAD or repelling:
+	if state == State.DEAD or is_invulnerable():
 		return
 	_aggro = true
 	var key := source.get_instance_id() if source else 0
@@ -913,6 +920,42 @@ func start_repel() -> void:
 	_repel_push_left = repel_push_delay
 
 
+## Starts the phase-2 roar: interrupts the current action, roars (invulnerable) for PHASE2_ROAR_TIME
+## s and fires the repel shockwave after repel_push_delay s. It counts as a repel for the anti-burst
+## window (clears it and starts its cooldown, so no second roar follows right after), but not for
+## the tactics (no WAIT afterwards: phase 2 is the aggressive one) nor for repel_count.
+func start_phase_roar() -> void:
+	_pending_roar = false
+	_pending_repel = false
+	_cancel_attack()
+	_stop()
+	repel.trigger()
+	phase_roaring = true
+	_play(roar_animation)
+	_play_sfx(sfx_phase2)
+	ImpactFx.seal(self, repel_radius, repel_push_delay, "blood")   # same warning as the repel, phase colour
+	_set_state(State.ROAR)
+	_repel_push_left = repel_push_delay
+
+
+## True while no damage gets through: repel roar and phase-2 roar.
+func is_invulnerable() -> bool:
+	return repelling or phase_roaring
+
+
+## Seconds (game time) the current ROAR lasts: the gesture, the phase roar, the repel roar (clip cut
+## to repel_roar_max) or the whole clip, the last two at the phase speed.
+func _roar_duration(speed: float) -> float:
+	if gesturing:
+		return _gesture_len / speed
+	if phase_roaring:
+		return PHASE2_ROAR_TIME
+	var roar_time := _anim_length(roar_animation, 2.0)
+	if repelling:
+		roar_time = minf(roar_time, repel_roar_max)   # the repel roar is cut short: it must not become a rest
+	return roar_time / speed
+
+
 func _push_player() -> void:
 	if not is_inside_tree():
 		return
@@ -949,6 +992,7 @@ func _on_died() -> void:
 	_pending_repel = false
 	_repel_push_left = 0.0
 	repelling = false
+	phase_roaring = false
 	gesturing = false
 	_play(death_animation)
 	_play_sfx(sfx_death)

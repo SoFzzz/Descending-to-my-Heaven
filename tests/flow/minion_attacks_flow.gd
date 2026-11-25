@@ -74,11 +74,13 @@ func _run() -> void:
 	get_tree().quit(1 if _fails > 0 else 0)
 
 
-## Kaelen's hits push minions back: a little on a normal slash, a lot on the combo's 3rd hit (and a
-## longer stun), half as much on an elite; the heavy attack stuns HEAVY_STUN s.
+## Kaelen's hits push minions back: a little on a normal slash, a lot on the combo's 3rd hit and the
+## heavy attack, half as much on an elite. Every kind of hit stuns the same, by minion type:
+## Minion.STUN_NORMAL s a normal minion, Minion.STUN_ELITE s an elite (measured frame by frame).
 func _knockback(level: Node, player: Player) -> void:
 	player._god = true
-	var cases := [["normal", 0, false], ["finisher", 2, false], ["elite finisher", 2, true], ["heavy", -1, false]]
+	var cases := [["normal", 0, false], ["finisher", 2, false], ["heavy", -1, false],
+			["elite normal", 0, true], ["elite finisher", 2, true], ["elite heavy", -1, true]]
 	var moved := {}
 	for c in cases:
 		var path := "res://scenes/enemies/minion_knight_elite.tscn" if c[2] else "res://scenes/enemies/minion_skeleton.tscn"
@@ -96,13 +98,24 @@ func _knockback(level: Node, player: Player) -> void:
 			player.combo_index = c[1]
 		var start := minion.global_position
 		minion.hurtbox.receive_hit(1, player)
-		await _wait(0.5)
-		var d := Vector2(minion.global_position.x - start.x, minion.global_position.z - start.z).length()
+		var t := 0.0
+		var d := 0.0
+		var stun_start := -1.0
+		var stun_end := -1.0
+		while t < 1.5 and (stun_end < 0.0 or t < 0.5):
+			await get_tree().physics_frame
+			t += get_physics_process_delta_time()
+			if t <= 0.5:
+				d = maxf(d, Vector2(minion.global_position.x - start.x, minion.global_position.z - start.z).length())
+			var stunned := minion.state == MinionBrain.State.STUNNED
+			if stun_start < 0.0 and stunned:
+				stun_start = t
+			elif stun_start >= 0.0 and stun_end < 0.0 and not stunned:
+				stun_end = t
 		moved[c[0]] = d
-		if c[0] == "heavy":
-			_check(minion.state == MinionBrain.State.STUNNED, "heavy: still stunned after 0.5 s")
-			await _wait(Minion.HEAVY_STUN - 0.4)
-			_check(minion.state != MinionBrain.State.STUNNED, "heavy: the stun ends after %.1f s" % Minion.HEAVY_STUN)
+		var expected := Minion.STUN_ELITE if c[2] else Minion.STUN_NORMAL
+		var lasted := stun_end - stun_start
+		_check(stun_start >= 0.0 and absf(lasted - expected) <= 0.034, "%s: stunned %.2f s (expected %.2f)" % [c[0], lasted, expected])
 		player._end_attack()
 		minion.queue_free()
 		await _wait(0.6)

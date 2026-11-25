@@ -100,3 +100,19 @@ func test_cutscene_blocks_pause() -> void:
 	gs.cutscene_active = true
 	assert_true(not gs.can_pause(), "not during the sequence")
 	gs.free()
+
+
+# The debug overlay (F3/F5) is created only in debug builds: a release export never has it.
+func test_debug_overlay_only_in_debug_builds() -> void:
+	var gs: Node = GameStateScript.new()
+	assert_eq(gs.debug_tools_enabled, OS.is_debug_build(), "default comes from OS.is_debug_build()")
+	gs.debug_tools_enabled = false   # as in a release export
+	gs._ready()
+	assert_true(gs.debug_overlay == null, "release: no debug overlay")
+	assert_true(gs.transition != null and gs.pause_menu != null and gs.death_screen != null, "the rest of the UI exists")
+	gs.free()
+	var dbg: Node = GameStateScript.new()
+	dbg.debug_tools_enabled = true
+	dbg._ready()
+	assert_true(dbg.debug_overlay != null, "debug build: overlay created")
+	dbg.free()

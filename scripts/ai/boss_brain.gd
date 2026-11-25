@@ -9,11 +9,21 @@ extends RefCounted
 ##         × (1.25 if phase == 2)
 ##         × multipliers[id] (optional: tactical preferences, e.g. tail swipe when Kaelen circles the boss)
 ## Attacks with phase_min > phase score 0. choose() draws weighted between the 2 best scores.
+##
+## Chase without progress (track_chase): while the boss is still approaching only `opener` attacks may
+## start. A Kaelen that backs off or circles as fast as the boss walks, inside the reach of a normal
+## attack, used to be chased forever without a single attack (the Bone Dragon has no openers). When
+## the boss has not closed CHASE_PROGRESS m in CHASE_PATIENCE s while she is in reach, the chase is
+## "stalled" and the caller lets every attack in range compete.
 
 const REPEAT_PENALTY := 0.3
 const PHASE2_MULTIPLIER := 1.25
 const LATERAL_BONUS := 0.5
 const DODGE_HISTORY := 6
+## A still Kaelen is closed at the boss's full speed (≥ 3 m/s: 0.5 m in ≤ 0.17 s), so a stall of
+## 0.6 s means the boss gains less than 0.83 m/s on her.
+const CHASE_PATIENCE := 0.6
+const CHASE_PROGRESS := 0.5
 
 ## Id of the last attack used; boss.gd sets it after choose() (choose does not change state).
 var last_attack_id: StringName = &""
@@ -21,6 +31,8 @@ var last_attack_id: StringName = &""
 var dodge_bias: float = 0.0
 
 var _dodges: Array[int] = []
+var _chase_ref := INF       # distance at the last CHASE_PROGRESS m of progress of the current approach
+var _chase_stall := 0.0     # seconds without closing CHASE_PROGRESS m
 
 
 static func score(attack: BossAttack, distance: float, last_attack_id: StringName, dodge_bias: float, phase: int, multipliers := {}) -> float:
@@ -66,6 +78,40 @@ func choose(attacks: Array[BossAttack], distance: float, phase: int, rng: Random
 	if second == null:
 		return best
 	return best if rng.randf() * (best_score + second_score) < best_score else second
+
+
+## Longest max_range of the attacks usable in `phase` (how far the boss can hit at all).
+static func reach(attacks: Array[BossAttack], phase: int) -> float:
+	var best := 0.0
+	for attack in attacks:
+		if attack.phase_min <= phase:
+			best = maxf(best, attack.max_range)
+	return best
+
+
+## Call every frame of the approach with Kaelen `in_reach` of some attack. Returns true once the boss
+## has gone CHASE_PATIENCE s without getting CHASE_PROGRESS m closer (see the header).
+func track_chase(delta: float, distance: float, in_reach: bool) -> bool:
+	if not in_reach:
+		reset_chase()
+		return false
+	if distance <= _chase_ref - CHASE_PROGRESS:   # also the first frame (_chase_ref = INF)
+		_chase_ref = distance
+		_chase_stall = 0.0
+		return false
+	_chase_stall += delta
+	return _chase_stall >= CHASE_PATIENCE
+
+
+## The approach ended (attack started, engage_range reached, other goal, Kaelen out of reach).
+func reset_chase() -> void:
+	_chase_ref = INF
+	_chase_stall = 0.0
+
+
+## Seconds the current approach has gone without progress (tests and debug).
+func chase_stall_seconds() -> float:
+	return _chase_stall
 
 
 ## side: −1 Kaelen rolled to the boss's left, +1 to its right. Keeps the last DODGE_HISTORY.

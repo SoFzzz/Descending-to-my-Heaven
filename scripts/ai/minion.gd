@@ -15,7 +15,11 @@ const ORBIT_SPEED_FACTOR := 0.6
 const WINDUP_TIME := 0.5        # warning: turns toward Kaelen without moving
 const ACTIVE_TIME := 0.3        # hitbox active
 const RECOVER_TIME := 0.8
-const STUN_TIME := 0.4
+## Any hit from Kaelen (normal slash, combo finisher or heavy attack alike) stuns a minion for this
+## long: STUN_NORMAL for a normal minion, STUN_ELITE for an elite, which recovers faster and is never
+## stun-locked by the combo. Bosses are never stunned (Boss has no STUNNED state).
+const STUN_NORMAL := 0.6
+const STUN_ELITE := 0.35
 const PSX := preload("res://scenes/levels/psx_test.gd")
 const ANIM_BLEND := 0.15        # s of blend between clips
 const MOVE_EPSILON := 0.1       # m/s below which a chasing minion plays idle instead of walk
@@ -138,7 +142,7 @@ var _zone_hitbox: Hitbox            # floor circle of zone attacks (cast, scream
 var _zone_telegraph: MeshInstance3D
 var _zone_point := Vector3.ZERO
 
-var _stun_for := STUN_TIME          # length of the current STUNNED (a finisher or the heavy attack stun longer)
+var _stun_for := STUN_NORMAL        # length of the current STUNNED (set on each hit, see stun_time)
 var _knock := Vector3.ZERO          # knockback velocity at the start of the push (fades to 0)
 var _knock_total := 0.0
 var _knock_left := 0.0
@@ -151,14 +155,13 @@ var _clock := 0.0
 var _taunting := false              # Kaelen died: it stops and mocks her
 
 ## Being hit pushes the minion back: a normal hit KNOCK_SPEED m/s fading over KNOCK_TIME (about 0.35 m),
-## the combo's 3rd hit and the heavy attack FINISHER_KNOCK_* (about 1.3 m) and a longer stun (the heavy
-## one HEAVY_STUN). Elites, heavier, take ELITE_KNOCK_MULT of the push. The body also flinches back.
+## the combo's 3rd hit and the heavy attack FINISHER_KNOCK_* (about 1.3 m). The kind of hit changes
+## only the push and the flinch, not the stun (see STUN_NORMAL). Elites, heavier, take
+## ELITE_KNOCK_MULT of the push. The body also flinches back.
 const KNOCK_SPEED := 3.2
 const KNOCK_TIME := 0.22
 const FINISHER_KNOCK_SPEED := 7.0
 const FINISHER_KNOCK_TIME := 0.36
-const FINISHER_STUN := 0.65
-const HEAVY_STUN := 1.2
 const ELITE_KNOCK_MULT := 0.5
 const FLINCH_ANGLE := 0.16          # rad the body leans back on a hit (twice on a finisher)
 const FLINCH_TIME := 0.09
@@ -254,7 +257,7 @@ func is_retreating() -> bool:
 func _check_retreat() -> void:
 	if state == MinionState.DEAD or state == MinionState.ATTACK or _retreat_left > 0.0:
 		return
-	if MinionBrain.should_retreat(float(health.current) / maxf(1.0, float(health.max_value)), sfx_spawn != null, _retreated):
+	if MinionBrain.should_retreat(float(health.current) / maxf(1.0, float(health.max_value)), is_elite(), _retreated):
 		_retreated = true
 		_retreat_left = MinionBrain.RETREAT_TIME
 		_order_left = 0.0
@@ -662,7 +665,7 @@ func _on_hurt(_amount: int, source: Node) -> void:
 	_was_hit = true
 	_play_sfx(sfx_hurt)
 	var kind := hit_kind(source)
-	_stun_for = HEAVY_STUN if kind == &"heavy" else (FINISHER_STUN if kind == &"finisher" else STUN_TIME)
+	_stun_for = stun_time(is_elite())
 	var strong := kind != &"normal"
 	var away := -get_forward()
 	if source is Node3D:
@@ -670,11 +673,21 @@ func _on_hurt(_amount: int, source: Node) -> void:
 	away.y = 0.0
 	if away.length_squared() < 0.0001:
 		away = -get_forward()
-	var mult := ELITE_KNOCK_MULT if sfx_spawn != null else 1.0
+	var mult := ELITE_KNOCK_MULT if is_elite() else 1.0
 	_knock = away.normalized() * (FINISHER_KNOCK_SPEED if strong else KNOCK_SPEED) * mult
 	_knock_total = FINISHER_KNOCK_TIME if strong else KNOCK_TIME
 	_knock_left = _knock_total
 	_flinch_back(2.0 if strong else 1.0)
+
+
+## Elites are the minions with their own spawn sound (one per group, cost 3; see AGENTS.md 7.2).
+func is_elite() -> bool:
+	return sfx_spawn != null
+
+
+## Seconds a hit stuns a normal minion or an elite.
+static func stun_time(elite: bool) -> float:
+	return STUN_ELITE if elite else STUN_NORMAL
 
 
 ## How hard a hit was: &"heavy" (Kaelen's heavy attack), &"finisher" (3rd hit of her combo) or &"normal".
@@ -684,7 +697,7 @@ static func hit_kind(source: Node) -> StringName:
 		return &"normal"
 	if player.is_heavy_attacking():
 		return &"heavy"
-	if player.state == Player.State.ATTACK and player.combo_index % 3 == 2:
+	if player.is_finisher():
 		return &"finisher"
 	return &"normal"
 

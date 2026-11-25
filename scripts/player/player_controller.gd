@@ -2,9 +2,10 @@ class_name Player
 extends CharacterBody3D
 ## Kaelen. States: MOVE (walk relative to the camera, gravity, smooth turning), ROLL (roll with
 ## i-frames and stamina cost), ATTACK (3-hit combo with the greatsword; hyper armor: a hit does not
-## interrupt it and does less damage), HURT (stunned when taking damage) and DEAD (no control;
-## respawn is handled by GameState, Task 10). Every hit taken grants HURT_IFRAMES of invulnerability.
-## Healing is a sub-state of MOVE (see try_heal): a flask with HEAL_CHARGES uses per level.
+## interrupt it and does less damage, except in the follow-through of a finisher), HURT (stunned when
+## taking damage) and DEAD (no control; respawn is handled by GameState, Task 10). Every hit taken
+## grants HURT_IFRAMES of invulnerability. Two sub-states of MOVE: healing (see try_heal, a flask with
+## HEAL_CHARGES uses per level) and the roll's recovery (see is_roll_recovering).
 
 enum State { MOVE, ROLL, ATTACK, HURT, DEAD }
 
@@ -24,6 +25,16 @@ const ROLL_IFRAME_START := 0.05
 const ROLL_IFRAME_END := 0.40
 const ROLL_COST := 25.0
 const ROLL_SPEED := 7.0          # constant m/s during the whole roll
+## The roll plays roll_to_run (kaelen.glb, 1.43 s): a dive, a roll on the ground and a get-up into a
+## run. Sampled pose by pose (Hips height): the head is lowest at clip 0.7 s, the hips at 0.9-1.0 s,
+## and from 1.0 s she rises (hips 0.20 -> 0.82 m at 1.4 s). The clip is fitted so the travel
+## (ROLL_DURATION) ends at ROLL_CLIP_RISE and the get-up is the recovery.
+const ROLL_CLIP := &"roll_to_run"
+const ROLL_CLIP_LENGTH := 1.4333   # checked against the real clip by test_player_roll
+const ROLL_CLIP_RISE := 1.0
+## Recovery after the travel (MOVE sub-state, ≈ 0.26 s: the get-up at the clip's speed). She can steer
+## and attack (a roll attack), but another roll waits in the buffer until it ends (no roll spam).
+const ROLL_RECOVERY := ROLL_DURATION * (ROLL_CLIP_LENGTH - ROLL_CLIP_RISE) / ROLL_CLIP_RISE
 
 # --- Healing flask ---
 ## Uses per level (refilled on entering an arena and on retrying: the player scene is rebuilt).
@@ -41,8 +52,11 @@ const HEAL_SFX_VOLUME_DB := -3.0
 # --- Combo (spec §4) ---
 const COMBO_DAMAGE: Array[int] = [20, 20, 36]
 const ATTACK_COST := 20.0
-## When each hit's damage window closes, there are COMBO_WINDOW s to chain the next one;
-## after that window the hit ends and it returns to MOVE (the tail of the clip is cut).
+## The 3rd hit (the finisher) closes the combo: nothing chains from it.
+const COMBO_LENGTH := 3
+## When the damage window of hits 1 and 2 closes, there are COMBO_WINDOW s to chain the next one (or
+## the heavy attack as finisher); after that window the hit ends and it returns to MOVE (the tail of the
+## clip is cut).
 const COMBO_WINDOW := 0.4
 ## Clip of each hit. attack_2 is a long Mixamo combo (3.3 s, three slashes): only its first
 ## upward slash is used and the hit is cut when the combo window closes (≈ 1.32 s of the clip),
@@ -62,6 +76,9 @@ const ATTACK_ANIM_SPEED: Array[float] = [1.4, 1.45, 1.2]
 ## - attack_3: final downward strike, −35° → +65° (clip 1.10–1.27 s).
 const CLIP_HIT_START: Array[float] = [0.80, 0.53, 1.10]
 const CLIP_HIT_END: Array[float] = [1.03, 0.74, 1.27]
+## The finisher plays its follow-through to the end of attack_3 (1.90 s in kaelen.glb, checked by
+## test_player_combo): ≈ 0.53 s after its damage window, without hyper armor and without chaining.
+const FINISHER_CLIP_END := 1.90
 ## The same windows in game seconds from the start of each hit (by time, not by animation markers):
 ## ≈ 0.32–0.49, 0.37–0.51 and 0.33–0.48 s.
 const HIT_START: Array[float] = [
@@ -74,6 +91,8 @@ const HIT_END: Array[float] = [
 	(CLIP_HIT_END[1] - ATTACK_CLIP_START[1]) / ATTACK_ANIM_SPEED[1],
 	(CLIP_HIT_END[2] - ATTACK_CLIP_START[2]) / ATTACK_ANIM_SPEED[2],
 ]
+## Game second at which the finisher ends and returns to MOVE (1.0 s).
+const FINISHER_END := (FINISHER_CLIP_END - ATTACK_CLIP_START[2]) / ATTACK_ANIM_SPEED[2]
 ## The slashes do not pass exactly through the front (see the sweeps above). When turning toward the
 ## target this offset is added so the target is hit in the middle of the sweep (the target ends up
 ## at +30°, −35° and +5° of the model).
@@ -132,7 +151,8 @@ const HEAVY_HIT_RATIO := 0.15
 ## Meanwhile the model blinks: it toggles its visibility every HURT_BLINK_INTERVAL s.
 const HURT_BLINK_INTERVAL := 0.08
 ## Hyper armor: in ATTACK a hit does not interrupt the slash (no HURT) and only this fraction of its
-## damage is taken (multiplier of Kaelen's Hurtbox while attacking).
+## damage is taken (multiplier of Kaelen's Hurtbox while attacking). It drops when the damage window of
+## a finisher (3rd hit, heavy attack) closes: trading blows is not free during its follow-through.
 const ATTACK_DAMAGE_TAKEN_MULT := 0.5
 ## Orders (roll, attack) pressed while they cannot be executed are kept for this long.
 const BUFFER_TIME := 0.2
@@ -172,7 +192,7 @@ var state: State = State.MOVE
 var health: Health
 var stamina: Stamina
 var hurtbox: Hurtbox
-## Current combo hit (0, 1, 2, 3…; damage and clip use index % 3).
+## Current combo hit (0, 1 or 2; 2 is the finisher).
 var combo_index := 0
 ## How many times she died (Events.player_died is emitted only the first time).
 var death_count := 0
@@ -194,6 +214,8 @@ var _iframes := false   # roll window
 var _hurt_iframes_left := 0.0   # after taking a hit (HURT_IFRAMES)
 var _victory := false   # after Events.boss_defeated
 var _god := false       # debug (action "debug_god", F6)
+## Speed of the standing idle clip (1 = normal). The ending slows it so Kaelen stands almost still.
+var idle_anim_scale := 1.0
 var _cutscene := false  # scripted sequence (set_cutscene): no control, invulnerable
 # Hyper armor: the Hurtbox's multiplier is scaled while attacking and restored afterwards.
 var _armor_on := false
@@ -203,6 +225,7 @@ var _footstep_distance := 0.0
 var _attack_time := 0.0
 var _hitbox_on := false
 var _hurt_time := 0.0
+var _roll_recovery_left := 0.0   # > 0: getting up after a roll (MOVE sub-state)
 var _last_hp := -1
 var _last_stamina := 0.0
 var _attack_pressed := false   # from _unhandled_input: the click that recaptures the mouse does not attack
@@ -281,8 +304,7 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
 	if Input.is_action_just_pressed("debug_god"):
-		_god = not _god
-		print("debug_god: ", _god)
+		toggle_debug_god()
 
 	if _cutscene:
 		_attack_pressed = false
@@ -314,7 +336,9 @@ func _physics_process(delta: float) -> void:
 	match state:
 		State.MOVE:
 			_tick_buffer(delta)
-			if want_roll and try_roll():
+			if is_roll_recovering():
+				_recover_step(delta, want_roll, want_attack, want_heavy)
+			elif want_roll and try_roll():
 				_roll_step(delta)
 			elif want_attack and try_attack():
 				_stand_still()
@@ -372,7 +396,7 @@ static func footstep_due(accumulated: float) -> bool:
 
 ## Footsteps synchronized with the real speed; only in MOVE and with the feet on the ground.
 func _tick_footsteps(delta: float, ground_speed: float) -> void:
-	var walking := state == State.MOVE and is_on_floor() and not _cutscene
+	var walking := state == State.MOVE and is_on_floor() and not _cutscene and not is_roll_recovering()
 	_footstep_distance = footstep_progress(_footstep_distance, ground_speed, delta, walking)
 	if footstep_due(_footstep_distance):
 		_footstep_distance -= FOOTSTEP_STRIDE
@@ -510,10 +534,10 @@ static func iframes_active_at(t: float) -> bool:
 	return t >= ROLL_IFRAME_START and t < ROLL_IFRAME_END
 
 
-## Starts a roll if she is in MOVE and has stamina. Direction: the input relative to the
-## camera or, without input, the model's facing.
+## Starts a roll if she is in MOVE (not getting up from the previous one) and has stamina.
+## Direction: the input relative to the camera or, without input, the model's facing.
 func try_roll() -> bool:
-	if state != State.MOVE or stamina == null or not stamina.try_spend(ROLL_COST):
+	if state != State.MOVE or is_roll_recovering() or stamina == null or not stamina.try_spend(ROLL_COST):
 		return false
 	var dir := _input_direction()
 	if dir == Vector3.ZERO:
@@ -543,8 +567,9 @@ func _roll_step(delta: float) -> void:
 	_advance_roll(delta)
 
 
-## Advances the roll clock; when ROLL_DURATION is reached it returns to MOVE, stopped dead, and runs
-## the stored order, if there is one.
+## Advances the roll clock; when ROLL_DURATION is reached it returns to MOVE, stopped dead, and the
+## recovery (ROLL_RECOVERY) starts. A stored attack runs at once (the roll attack); a stored roll stays
+## in the buffer until the recovery ends.
 func _advance_roll(delta: float) -> void:
 	_roll_time += delta
 	_iframes = iframes_active_at(_roll_time)
@@ -552,12 +577,45 @@ func _advance_roll(delta: float) -> void:
 		state = State.MOVE
 		_iframes = false
 		_roll_time = 0.0
+		_roll_recovery_left = ROLL_RECOVERY
 		velocity.x = 0.0
 		velocity.z = 0.0
 		_update_invulnerability()
-		_consume_buffer()
+		if _buffered_action != &"roll":
+			_consume_buffer()
 		return
 	_update_invulnerability()
+
+
+## True while she gets up after a roll (no i-frames; she can walk and attack, not roll).
+func is_roll_recovering() -> bool:
+	return _roll_recovery_left > 0.0
+
+
+## Counts down the recovery; when it ends a stored order (a spammed roll) runs. Returns true then.
+func _tick_roll_recovery(delta: float) -> bool:
+	if _roll_recovery_left <= 0.0:
+		return false
+	_roll_recovery_left -= delta
+	if _roll_recovery_left > 0.0001:
+		return false
+	_roll_recovery_left = 0.0
+	_consume_buffer()
+	return true
+
+
+## One frame of the recovery: an attack cuts it (roll attack), a roll is stored, and she walks.
+func _recover_step(delta: float, want_roll: bool, want_attack: bool, want_heavy: bool) -> void:
+	if want_attack and try_attack():
+		_stand_still()
+		return
+	if want_heavy and try_heavy_attack():
+		_stand_still()
+		return
+	if want_roll:
+		buffer_action(&"roll")
+	_move_step(delta)
+	_tick_roll_recovery(delta)
 
 
 # --- Healing flask ----------------------------------------------------------------------------
@@ -586,7 +644,7 @@ func heal_blocked_reason() -> String:
 		var game_state := get_node_or_null(^"/root/GameState")
 		if game_state and game_state.cutscene_active:
 			return "cutscene"
-	if _heal_time >= 0.0:
+	if _heal_time >= 0.0 or is_roll_recovering():
 		return "busy"
 	if heal_charges <= 0:
 		return "empty"
@@ -642,16 +700,24 @@ func refill_heals() -> void:
 
 # --- Combo attack -----------------------------------------------------------------------------
 
+## Damage of hit `i` of the combo. Kaelen's combo_index stays in 0..2; the wrap-around is kept for
+## boss_pressure_sim.gd, whose simulated Kaelen counts her hits without a limit.
 static func combo_damage(i: int) -> int:
 	return COMBO_DAMAGE[posmod(i, COMBO_DAMAGE.size())]
 
 
+## True if the hit in progress is the combo's finisher (its 3rd hit), which closes the combo.
+func is_finisher() -> bool:
+	return state == State.ATTACK and not _heavy and combo_index >= COMBO_LENGTH - 1
+
+
+## Inside the chaining window of hits 1 and 2 (never after the finisher or the heavy attack).
 func _in_combo_window() -> bool:
-	return state == State.ATTACK and not _heavy and _attack_time >= HIT_END[combo_index % 3]
+	return state == State.ATTACK and not _heavy and not is_finisher() and _attack_time >= HIT_END[combo_index]
 
 
-## Starts a hit from MOVE, or chains the next one inside the window after the previous one.
-## Spends ATTACK_COST of stamina.
+## Starts a hit from MOVE (also during the roll's recovery: the roll attack), or chains the next one
+## inside the window after hits 1 and 2. Spends ATTACK_COST of stamina.
 func try_attack() -> bool:
 	var chaining := _in_combo_window()
 	if not (state == State.MOVE or chaining):
@@ -659,6 +725,7 @@ func try_attack() -> bool:
 	if stamina == null or not stamina.try_spend(ATTACK_COST):
 		return false
 	combo_index = combo_index + 1 if chaining else 0
+	_roll_recovery_left = 0.0
 	cancel_heal()
 	_set_hitbox_active(false)
 	_attack_time = 0.0
@@ -666,7 +733,7 @@ func try_attack() -> bool:
 	state = State.ATTACK
 	_set_armor(true)
 	_face_attack_direction()
-	var hit := combo_index % 3
+	var hit := combo_index
 	if _anim_tree:
 		_anim_tree.set(StringName("parameters/%s/speed/scale" % ATTACK_ANIMS[hit]), ATTACK_ANIM_SPEED[hit])
 	_play_action(ATTACK_ANIMS[hit])
@@ -674,14 +741,16 @@ func try_attack() -> bool:
 	return true
 
 
-## Heavy attack: a leap that lands with a slam (HEAVY_DAMAGE). From MOVE or as a finisher inside
-## the combo window. Spends HEAVY_COST of stamina; it has the same hyper armor as the combo.
+## Heavy attack: a leap that lands with a slam (HEAVY_DAMAGE). From MOVE (also after a roll) or as
+## the finisher inside the window of hits 1 and 2. Spends HEAVY_COST of stamina; it has the same hyper
+## armor as the combo until its damage window closes.
 func try_heavy_attack() -> bool:
 	var chaining := _in_combo_window()
 	if not (state == State.MOVE or chaining):
 		return false
 	if stamina == null or not stamina.try_spend(HEAVY_COST):
 		return false
+	_roll_recovery_left = 0.0
 	cancel_heal()
 	_set_hitbox_active(false)
 	_attack_time = 0.0
@@ -704,7 +773,7 @@ func is_heavy_attacking() -> bool:
 
 ## Hit-stop for the blow Kaelen is landing now (Hitbox asks it): stronger on the finisher and the slam.
 func hit_stop_time() -> float:
-	if _heavy or (state == State.ATTACK and combo_index % 3 == 2):
+	if _heavy or is_finisher():
 		return HIT_STOP_STRONG
 	return HIT_STOP_LIGHT
 
@@ -723,7 +792,7 @@ func _face_attack_direction() -> void:
 	if dir.length_squared() <= 0.0001 and _heavy:
 		dir = _heavy_dir   # no target or input: the slam still centres on where she was facing
 	if dir.length_squared() > 0.0001:
-		var offset := HEAVY_AIM_OFFSET if _heavy else ATTACK_AIM_OFFSET[combo_index % 3]
+		var offset := HEAVY_AIM_OFFSET if _heavy else ATTACK_AIM_OFFSET[combo_index]
 		_model.rotation.y = atan2(dir.x, dir.z) + offset
 		if _heavy:
 			_heavy_dir = dir.normalized()
@@ -750,15 +819,25 @@ func _attack_motion() -> void:
 
 
 ## Advances the hit clock: activates the hitbox only inside its damage window, chains a buffered
-## attack when the combo window opens and returns to MOVE when that window closes.
+## attack when the combo window opens and returns to MOVE when that window closes. The finisher does
+## not chain: it loses the hyper armor when its window closes and returns to MOVE at FINISHER_END,
+## where a buffered order starts again from the first hit.
 func _advance_attack(delta: float) -> void:
 	_attack_time += delta
 	_tick_buffer(delta)
 	if _heavy:
 		_advance_heavy(delta)
 		return
-	var hit := combo_index % 3
+	var hit := combo_index
 	_set_hitbox_active(_attack_time >= HIT_START[hit] and _attack_time < HIT_END[hit])
+	if is_finisher():
+		if _attack_time >= HIT_END[hit]:
+			_set_armor(false)
+		if _attack_time >= FINISHER_END - 0.0001:
+			_end_attack()
+			_play_action(&"locomotion")
+			_consume_buffer()
+		return
 	if _attack_time >= HIT_END[hit] and _buffered_action == &"heavy":
 		_clear_buffer()
 		if try_heavy_attack():
@@ -778,6 +857,8 @@ func _advance_attack(delta: float) -> void:
 func _advance_heavy(delta: float) -> void:
 	var was_before := _attack_time - delta < HEAVY_IMPACT
 	_set_hitbox_active(_attack_time >= HEAVY_HIT_START and _attack_time < HEAVY_HIT_END)
+	if _attack_time >= HEAVY_HIT_END:
+		_set_armor(false)   # the landing crouch can be punished
 	if was_before and _attack_time >= HEAVY_IMPACT and is_inside_tree():
 		var spot := _sword_hitbox.global_position if _sword_hitbox else global_position + _heavy_dir * 1.6
 		ImpactFx.dust(get_tree(), Vector3(spot.x, global_position.y + 0.1, spot.z), 1.2)
@@ -835,8 +916,11 @@ func buffer_action(action: StringName) -> void:
 	_buffer_left = BUFFER_TIME
 
 
+## Counts the stored order down. It does not expire during the roll's get-up: a roll pressed late in
+## the travel or while getting up cannot run yet, so it waits for the end of the recovery (at most
+## BUFFER_TIME + ROLL_RECOVERY ≈ 0.46 s after the press). An attack never waits there (it cuts it).
 func _tick_buffer(delta: float) -> void:
-	if _buffered_action == &"":
+	if _buffered_action == &"" or is_roll_recovering():
 		return
 	_buffer_left -= delta
 	if _buffer_left <= 0.0:
@@ -878,7 +962,7 @@ func _on_health_changed(current: int, max_value: int) -> void:
 	_play_sfx(sfx_hurt)
 	_hurt_feedback(previous - current, max_value)
 	_start_hurt_iframes()
-	if state != State.ATTACK:   # hyper armor: the slash goes on, without the hurt animation
+	if not (state == State.ATTACK and _armor_on):   # hyper armor: the slash goes on, without the hurt animation
 		_enter_hurt()
 
 
@@ -911,6 +995,7 @@ func _enter_hurt() -> void:
 	_end_attack()
 	_shove_left = 0.0
 	_roll_time = 0.0
+	_roll_recovery_left = 0.0
 	_iframes = false
 	_hurt_time = 0.0
 	state = State.HURT
@@ -1000,6 +1085,7 @@ func _on_died() -> void:
 	cancel_heal(false)
 	_end_attack()
 	_clear_buffer()
+	_roll_recovery_left = 0.0
 	_iframes = false
 	_hurt_iframes_left = 0.0
 	_update_blink()
@@ -1025,6 +1111,17 @@ func is_invulnerable() -> bool:
 	return _iframes or _hurt_iframes_left > 0.0 or _victory or _god or _cutscene
 
 
+## F6 (action "debug_god"): toggles invulnerability, only in debug builds; an exported release build
+## ignores it. Returns true if it toggled.
+func toggle_debug_god(debug_build := OS.is_debug_build()) -> bool:
+	if not debug_build:
+		return false
+	_god = not _god
+	_update_invulnerability()
+	print("debug_god: ", _god)
+	return true
+
+
 ## Hands Kaelen over to a scripted sequence (the ending) or gives control back. While on: movement,
 ## roll, attack and lock-on are ignored, she stands in idle and cannot be hurt. Turning it on cancels
 ## any roll / attack / hurt in progress and the target lock.
@@ -1041,6 +1138,7 @@ func set_cutscene(on: bool) -> void:
 			_roll_time = 0.0
 			_hurt_time = 0.0
 			state = State.MOVE
+		_roll_recovery_left = 0.0
 		_clear_buffer()
 		_iframes = false
 		_hurt_iframes_left = 0.0
@@ -1150,9 +1248,9 @@ func spawn_at(marker: Node3D) -> void:
 # Root: AnimationNodeStateMachine.
 # - "locomotion": BlendTree with a BlendSpace1D idle/walk/run based on speed and a TimeScale
 #   that speeds up the clip when moving faster than it shows (prevents the feet from sliding).
-# - roll, attack_1..3, hurt: BlendTree with the clip and a TimeScale ("speed"). roll and hurt are fitted
-#   to ROLL_DURATION / HURT_DURATION; each hit uses ATTACK_ANIM_SPEED and starts its clip at
-#   ATTACK_CLIP_START.
+# - roll, attack_1..3, hurt: BlendTree with the clip and a TimeScale ("speed"). The roll state plays
+#   ROLL_CLIP fitted to ROLL_DURATION + ROLL_RECOVERY, hurt is fitted to HURT_DURATION; each hit uses
+#   ATTACK_ANIM_SPEED and starts its clip at ATTACK_CLIP_START.
 # - death: the clip only, no return.
 # Transitions: locomotion → action and action → action are immediate (travel is used so there is a crossfade);
 # roll and hurt return on their own when finished; hits return when the code asks for it,
@@ -1168,6 +1266,8 @@ func _build_animation_tree() -> void:
 		if state_name in ATTACK_ANIMS:
 			var hit := ATTACK_ANIMS.find(state_name)
 			node = _build_time_scaled_clip(state_name, ATTACK_CLIP_START[hit], _clip_length(player, state_name, 2.0))
+		elif state_name == &"roll":
+			node = _build_time_scaled_clip(ROLL_CLIP)
 		elif state_name in SCALED_STATES:
 			node = _build_time_scaled_clip(state_name)
 		else:
@@ -1205,15 +1305,27 @@ func _build_animation_tree() -> void:
 	_anim_tree = AnimationTree.new()
 	_anim_tree.name = "AnimationTree"
 	_anim_tree.tree_root = sm
+	# Posed on physics frames: the sword hitbox follows a bone of the hand (_follow_sword) and its
+	# damage windows are counted in physics time. Posed on idle frames, a slow frame (measured in
+	# kaelen_moves_flow: one idle frame per 3-6 physics frames) froze the blade for several physics
+	# steps and a slash at full reach could pass through a target without touching it.
+	_anim_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
 	add_child(_anim_tree)
 	_anim_tree.anim_player = _anim_tree.get_path_to(player)
-	# The roll (~2.4 s) and hurt (~0.7 s) clips must fit their duration: factor based on their real length.
-	_anim_tree.set(&"parameters/roll/speed/scale", _clip_length(player, &"roll", ROLL_DURATION) / ROLL_DURATION)
+	# The roll (roll_to_run, ~1.43 s) and hurt (~0.7 s) clips must fit their duration: factor based on
+	# their real length. The roll's clip covers the travel and the recovery.
+	_anim_tree.set(&"parameters/roll/speed/scale", roll_anim_scale(_clip_length(player, ROLL_CLIP, ROLL_CLIP_LENGTH)))
 	_anim_tree.set(&"parameters/hurt/speed/scale", _clip_length(player, &"hurt", HURT_DURATION) / HURT_DURATION)
 	for i in ATTACK_ANIMS.size():
 		_anim_tree.set(StringName("parameters/%s/speed/scale" % ATTACK_ANIMS[i]), ATTACK_ANIM_SPEED[i])
 	_anim_tree.set(StringName("parameters/%s/speed/scale" % HEAVY_ANIM), HEAVY_ANIM_SPEED)
 	_anim_tree.active = true
+
+
+## TimeScale of the roll state for a roll clip of `clip_length` s: the whole clip spans the travel and
+## the recovery, so ROLL_CLIP_RISE lands at the end of the travel.
+static func roll_anim_scale(clip_length: float) -> float:
+	return clip_length / (ROLL_DURATION + ROLL_RECOVERY)
 
 
 func _clip_length(player: AnimationPlayer, clip: StringName, fallback: float) -> float:
@@ -1291,4 +1403,6 @@ func _update_animation(speed: float) -> void:
 	_anim_tree.set(&"parameters/locomotion/strafe/blend_position", local)
 	_anim_tree.set(&"parameters/locomotion/lock/blend_amount", _lock_blend)
 	var anim_scale := lerpf(free_anim_scale(speed), strafe_anim_scale(local), _lock_blend)
+	if speed < 0.05:
+		anim_scale *= idle_anim_scale
 	_anim_tree.set(&"parameters/locomotion/speed/scale", anim_scale)

@@ -60,6 +60,75 @@ func test_combo_chains_inside_window() -> void:
 	_free_all(n)
 
 
+# Chains hit 1 -> 2 -> 3 inside their windows and leaves the player on the finisher.
+func _reach_finisher(p: Player) -> void:
+	assert_true(p.try_attack())
+	p._advance_attack(Player.HIT_END[0] + 0.05)
+	assert_true(p.try_attack(), "hit 2 chains")
+	p._advance_attack(Player.HIT_END[1] + 0.05)
+	assert_true(p.try_attack(), "hit 3 chains")
+	assert_eq(p.combo_index, 2)
+	assert_true(p.is_finisher(), "the 3rd hit is the finisher")
+
+
+# The 3rd hit closes the combo: neither a slash nor the heavy attack chains from it, and it returns
+# to MOVE only at FINISHER_END (the follow-through), where the combo starts over.
+func test_finisher_closes_the_combo() -> void:
+	var n := _make_player()
+	var p: Player = n[0]
+	var s: Stamina = n[1]
+	_reach_finisher(p)
+	p._advance_attack(Player.HIT_END[2] + 0.05)
+	s.current = s.max_value
+	assert_true(not p.try_attack(), "nothing chains after the finisher's damage window")
+	assert_true(not p.try_heavy_attack(), "the heavy attack does not chain from the finisher")
+	assert_almost(s.current, s.max_value, 0.001, "the refused presses spend no stamina")
+	p._advance_attack(Player.COMBO_WINDOW - 0.04)
+	assert_eq(p.state, Player.State.ATTACK, "the finisher is not cut where the old combo window closed")
+	p._advance_attack(Player.FINISHER_END - p._attack_time + 0.001)
+	assert_eq(p.state, Player.State.MOVE, "back to MOVE at FINISHER_END")
+	assert_true(p.try_attack())
+	assert_eq(p.combo_index, 0, "the next attack starts the combo over")
+	_free_all(n)
+
+
+# An attack mashed during the follow-through is buffered and starts hit 1 when the finisher ends.
+func test_attack_buffered_in_the_follow_through_restarts_the_combo() -> void:
+	var n := _make_player()
+	var p: Player = n[0]
+	_reach_finisher(p)
+	p._advance_attack(Player.FINISHER_END - 0.1)
+	p.buffer_action(&"attack")
+	p._advance_attack(0.11)
+	assert_eq(p.state, Player.State.ATTACK, "the buffered attack runs when the finisher ends")
+	assert_eq(p.combo_index, 0, "as the first hit")
+	_free_all(n)
+
+
+# The heavy attack still works as finisher from hits 1 and 2.
+func test_heavy_chains_as_finisher_from_hit_two() -> void:
+	var n := _make_player()
+	var p: Player = n[0]
+	assert_true(p.try_attack())
+	p._advance_attack(Player.HIT_END[0] + 0.05)
+	assert_true(p.try_attack())
+	p._advance_attack(Player.HIT_END[1] + 0.05)
+	assert_true(p.try_heavy_attack(), "heavy chains from hit 2")
+	assert_true(p.is_heavy_attacking())
+	_free_all(n)
+
+
+# FINISHER_CLIP_END is the real length of attack_3 in kaelen.glb.
+func test_finisher_end_is_the_end_of_its_clip() -> void:
+	var model := (load("res://assets/characters/kaelen/kaelen.glb") as PackedScene).instantiate()
+	var anim := model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	assert_true(anim != null and anim.has_animation(&"attack_3"))
+	assert_almost(anim.get_animation(&"attack_3").length, Player.FINISHER_CLIP_END, 0.01, "attack_3 length")
+	model.free()
+	assert_almost(Player.FINISHER_END, (Player.FINISHER_CLIP_END - Player.ATTACK_CLIP_START[2]) / Player.ATTACK_ANIM_SPEED[2], 0.0001)
+	assert_true(Player.FINISHER_END > Player.HIT_END[2] + Player.COMBO_WINDOW, "longer than the old chaining window")
+
+
 # A roll pressed during an attack is buffered for ~0.2 s and runs when returning to MOVE.
 func test_buffered_roll() -> void:
 	var n := _make_player()

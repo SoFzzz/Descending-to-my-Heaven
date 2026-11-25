@@ -41,13 +41,9 @@ albedo_color = Color(1, 0.08, 0.04, 0.4)
 cull_mode = 2
 no_depth_test = false
 
-[sub_resource type="CylinderMesh" id="Cyl_bite"]
+[sub_resource type="BoxMesh" id="Box_bite"]
 material = SubResource("Mat_telegraph")
-top_radius = 1.7
-bottom_radius = 1.7
-height = 0.02
-radial_segments = 24
-rings = 1
+size = Vector3(3.4, 0.02, 5.7)
 
 [sub_resource type="CylinderMesh" id="Cyl_stomp"]
 material = SubResource("Mat_telegraph")
@@ -69,6 +65,8 @@ rings = 1
 display_name = "Bone Dragon"
 attacks = Array[ExtResource("5_attack")]([ExtResource("6_bite"), ExtResource("7_tail"), ExtResource("8_stomp")])
 max_health = 500
+move_speed = 3.6
+attack_cooldown = 0.15
 circling_attack = &"tail_sweep"
 sfx_phase2 = ExtResource("a_roar")
 sfx_death = ExtResource("a_death")
@@ -210,10 +208,10 @@ damage = 34
 shape = SubResource("SphereShape3D_stomp")
 
 [node name="bite" type="MeshInstance3D" parent="Telegraphs"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -2.95)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -3.15)
 visible = false
 cast_shadow = 0
-mesh = SubResource("Cyl_bite")
+mesh = SubResource("Box_bite")
 
 [node name="stomp" type="MeshInstance3D" parent="Telegraphs"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -1.2)

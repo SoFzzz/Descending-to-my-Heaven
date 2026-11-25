@@ -7,7 +7,8 @@ extends Node
 ##   boss: exterior and arena 1 -> 0 (100), arena 2 -> 1 (70), arena 3 -> 2 (40). See level_for_scene().
 ##
 ## On start (outside the tests) it creates as its own children the transition (fade), the pause menu,
-## the death screen and the debug overlay (F3/F5; only acts with Kaelen in the scene). Being children
+## the death screen and, in debug builds only, the debug overlay (F3/F5; only acts with Kaelen in the
+## scene; an exported release never creates it, see debug_tools_enabled). Being children
 ## of an autoload they survive scene changes and exist in every playable scene without editing the
 ## level scenes.
 
@@ -57,13 +58,17 @@ var transition: Node = null
 var pause_menu: Node = null
 var death_screen: Node = null
 var debug_overlay: Node = null
+## Debug tools (F3 overlay, F5 level skip) exist only in debug builds (editor runs, tests, debug
+## exports); a release export has OS.is_debug_build() == false and never creates the overlay.
+var debug_tools_enabled := OS.is_debug_build()
 
 
 func _ready() -> void:
 	transition = _add_ui(TRANSITION_SCENE)
 	pause_menu = _add_ui(PAUSE_MENU_SCENE)
 	death_screen = _add_ui(DEATH_SCREEN_SCENE)
-	debug_overlay = _add_ui(DEBUG_OVERLAY_SCENE)
+	if debug_tools_enabled:
+		debug_overlay = _add_ui(DEBUG_OVERLAY_SCENE)
 
 
 func _add_ui(path: String) -> Node:

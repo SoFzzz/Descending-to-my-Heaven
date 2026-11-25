@@ -7,10 +7,16 @@ signal hurt(amount: int, source: Node)
 @export var health: Health
 @export var damage_multiplier := 1.0
 @export var surface: StringName = &"flesh"
+## Optional owner that applies the damage itself (the boss: its hurtboxes have no Health). While its
+## is_invulnerable() is true (roars) the hit is ignored whole: no hit-stop, sound, sparks or flash.
+var guard: Node = null
 
 
-## False if its Health is invulnerable or dead: the hit does not count (no sound, no reaction).
+## False if its Health is invulnerable or dead, or its guard is invulnerable: the hit does not count
+## (no sound, no reaction).
 func can_be_hit() -> bool:
+	if guard != null and is_instance_valid(guard) and guard.call(&"is_invulnerable"):
+		return false
 	return health == null or not (health.invulnerable or health.is_dead())
 
 

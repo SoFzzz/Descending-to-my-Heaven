@@ -113,6 +113,57 @@ func test_attack_hyper_armor_still_dies() -> void:
 	_free_all(n)
 
 
+# The finisher keeps its hyper armor during its damage window and loses it in the follow-through:
+# a hit there interrupts it (HURT) and takes full damage. Trading blows is not free.
+func test_finisher_follow_through_has_no_hyper_armor() -> void:
+	var n := _make_player()
+	var p: Player = n[0]
+	var h: Health = n[2]
+	var hb: Hurtbox = n[3]
+	assert_true(p.try_attack())
+	p._advance_attack(Player.HIT_END[0] + 0.05)
+	assert_true(p.try_attack())
+	p._advance_attack(Player.HIT_END[1] + 0.05)
+	assert_true(p.try_attack())
+	p._advance_attack(Player.HIT_START[2] + 0.01)
+	assert_almost(hb.damage_multiplier, Player.ATTACK_DAMAGE_TAKEN_MULT, 0.001, "armored while the finisher hits")
+	p._advance_attack(Player.HIT_END[2] - Player.HIT_START[2])
+	assert_almost(hb.damage_multiplier, 1.0, 0.001, "no armor in the follow-through")
+	hb.receive_hit(20, null)
+	assert_eq(h.current, 80, "full damage")
+	assert_eq(p.state, Player.State.HURT, "the hit interrupts the follow-through")
+	_free_all(n)
+
+
+# The heavy attack's landing (after its damage window) can be punished too.
+func test_heavy_landing_has_no_hyper_armor() -> void:
+	var n := _make_player()
+	var p: Player = n[0]
+	var hb: Hurtbox = n[3]
+	assert_true(p.try_heavy_attack())
+	p._advance_attack(Player.HEAVY_HIT_START + 0.01)
+	assert_almost(hb.damage_multiplier, Player.ATTACK_DAMAGE_TAKEN_MULT, 0.001, "armored during the slam")
+	p._advance_attack(Player.HEAVY_HIT_END - Player.HEAVY_HIT_START)
+	assert_almost(hb.damage_multiplier, 1.0, 0.001, "no armor while landing")
+	hb.receive_hit(20, null)
+	assert_eq(p.state, Player.State.HURT)
+	_free_all(n)
+
+
+# F6 (debug_god) only toggles invulnerability in a debug build; a release build ignores it.
+func test_debug_god_only_in_debug_builds() -> void:
+	var n := _make_player()
+	var p: Player = n[0]
+	var h: Health = n[2]
+	assert_true(not p.toggle_debug_god(false), "release build: ignored")
+	assert_true(not p.is_invulnerable() and not h.invulnerable)
+	assert_true(p.toggle_debug_god(true), "debug build: toggles")
+	assert_true(p.is_invulnerable() and h.invulnerable, "god on")
+	assert_true(p.toggle_debug_god(true))
+	assert_true(not p.is_invulnerable(), "god off again")
+	_free_all(n)
+
+
 # Each hit's damage window starts early in game time and is derived from the clip time.
 func test_attack_windows_start_early() -> void:
 	var limits: Array[float] = [0.35, 0.40, 0.40]
