@@ -89,6 +89,11 @@ func _run() -> void:
 	await _wait(0.8)
 	var dummy := tutorial.get(&"_dummy") as Node3D
 	_check(dummy != null and is_instance_valid(dummy), "tutorial: training dummy beside the path")
+	var start := tutorial.get_parent().find_child("PlayerStart", true, false) as Node3D
+	_check(start != null and absf(dummy.global_position.x - start.global_position.x) < 0.5
+			and dummy.global_position.z < start.global_position.z - 13.0,
+			"tutorial: the dummy stands on the path axis ahead of the start, not where Kaelen faces (%s)" % str(dummy.global_position))
+	await _check_scarecrow(dummy)
 	_check(key_label.text == "Clic izq.", "tutorial: attack shows the mouse binding (%s)" % key_label.text)
 	var pad := InputEventJoypadButton.new()
 	pad.button_index = JOY_BUTTON_A
@@ -105,6 +110,7 @@ func _run() -> void:
 	hurt.receive_hit(20, player)
 	_check(await _wait_step(tutorial, "TUT_HEAVY", 2.0), "tutorial: attacking done")
 	_check(is_instance_valid(dummy), "tutorial: the dummy does not break")
+	_check(bool(dummy.call(&"is_pose_frozen")), "tutorial: the scarecrow keeps its fixed pose after the hits")
 	player.stamina.current = player.stamina.max_value
 	player.try_heavy_attack()
 	_check(await _wait_step(tutorial, "TUT_LOCK", 2.0), "tutorial: heavy attack done")
@@ -126,3 +132,28 @@ func _run() -> void:
 	_check(not again.is_playing() and not (get_tree().current_scene.get(&"player") as Player).is_cutscene(), "no intro outside a new run")
 	print("FLOW: OK" if _fails == 0 else "FLOW: FAIL (%d)" % _fails)
 	get_tree().quit(1 if _fails > 0 else 0)
+
+
+## The dummy is the Straw Reaper's model (a scarecrow) in a fixed pose. The tutorial turns the
+## dummy's -Z toward Kaelen when it spawns (look_at); the model, facing +Z, is turned to match.
+func _check_scarecrow(dummy: Node3D) -> void:
+	var reaper := dummy.get_node_or_null(^"Model/StrawReaper") as Node3D
+	_check(reaper != null, "scarecrow: the dummy uses the Straw Reaper model")
+	_check(bool(dummy.call(&"is_pose_frozen")), "scarecrow: its AnimationPlayer holds a fixed pose")
+	var skeleton := dummy.find_child("Skeleton3D", true, false) as Skeleton3D
+	_check(skeleton != null, "scarecrow: the model has its skeleton")
+	if skeleton == null:
+		return
+	var bone := skeleton.get_bone_count() - 1
+	var before := skeleton.get_bone_global_pose(bone)
+	await _wait(0.5)
+	var after := skeleton.get_bone_global_pose(bone)
+	_check(before.origin.is_equal_approx(after.origin) and before.basis.is_equal_approx(after.basis), "scarecrow: static (a bone does not move in 0.5 s)")
+	var front := reaper.global_basis.z   # the model faces +Z
+	var looks := -dummy.global_basis.z
+	front.y = 0.0
+	looks.y = 0.0
+	var angle := rad_to_deg(front.angle_to(looks))
+	_check(angle < 1.0, "scarecrow: the model faces where the dummy looks (%.1f deg)" % angle)
+	var hurtbox := dummy.get_node(^"Hurtbox") as Hurtbox
+	_check(hurtbox.surface == &"straw", "scarecrow: straw impact effects")

@@ -107,25 +107,64 @@ const EXTERIOR := {
 	# Door = opening with the outline of the kit arch (arch.glb, stretched x1.6 vertically): inner
 	# width 3.2 m, height 3.2 m (the normal door of section 7.3 is 3 x 2; this is the temple one).
 	"door": Vector2(3.2, 3.2),
-	# Ponds that cover the holes of the island [center (x, z), half-axes (x, z), water y]: left eye, right
-	# eye and nose of the skull (measured with rays against `island_main`; see AGENTS.md, sections 1.2 and 9.1).
-	"ponds": [[Vector2(-17.5, -10.0), Vector2(11.0, 14.0), -0.3], [Vector2(27.5, -10.0), Vector2(9.5, 14.0), -0.3],
-		[Vector2(6.0, 6.5), Vector2(9.5, 9.5), 1.4]],
-	# Distant forest: rings of silhouettes (radius, base y, height) and mist layers [y, density].
+	# The island is flattened: every vertex height h (world) becomes ref + k * (h - ref), so the ground rises
+	# and falls less (flatter path, fewer slopes under the trees). Water levels are measured on the rim.
+	"flatten": {"ref": 2.0, "k": 0.5},
+	# Ponds over the three holes of the skull (both eyes and the nose) [center (x, z), half-axes (x, z)]. The
+	# center must lie inside the hole; the half-axes only say how far from it the search for the hole goes
+	# (+ 3 m). The water fills the whole hole, whatever its shape: every cell of the ground that is a void or
+	# lies clearly below the water level and is connected to the center is covered (see _ponds). The water level is
+	# 0.5 m under the median height of the rim. Under every pond there is a bed `pond_bed_depth` m below the
+	# water (same cells), so the hole is never bottomless.
+	"ponds": [[Vector2(-20.5, -11.0), Vector2(7.0, 10.5)], [Vector2(30.5, -11.0), Vector2(7.0, 10.5)],
+		[Vector2(6.0, 6.5), Vector2(9.5, 9.5)]],
+	"pond_bed_depth": 1.1,
+	# Extra land around the island (islet models, flattened about their top and merged into the ground with
+	# collision, so trees stand on them): model, center (x, z), scale, yaw, and a point `anchor` on the island
+	# near it whose ground height gives the new top. One behind the start, one on each flank.
+	"extensions": [
+		{"model": "islet_round", "pos": Vector2(3.0, 59.0), "scale": 1.0, "yaw": 20.0, "anchor": Vector2(1.0, 44.0)},
+		{"model": "islet_l", "pos": Vector2(-45.0, 38.0), "scale": 1.3, "yaw": 0.0, "anchor": Vector2(-27.0, 31.0)},
+		{"model": "islet_long", "pos": Vector2(38.0, 36.0), "scale": 1.5, "yaw": 0.0, "anchor": Vector2(24.0, 30.0)}],
+	# Distant forest (the fog forest): rings of silhouettes (radius, base y, height) below the path level, so
+	# the mist layers swallow the trunks and only the crowns show. Outer edge 245 m (camera far = 300 m).
 	"forest_center": Vector3(5, 0, 0),
 	"forest_rings": [
-		{"count": 60, "radius": [95.0, 130.0], "base": [-12.0, -2.0], "height": [30.0, 50.0], "fade": [10.0, 230.0]},
-		{"count": 70, "radius": [140.0, 190.0], "base": [-24.0, -10.0], "height": [45.0, 75.0], "fade": [10.0, 230.0]},
-		{"count": 80, "radius": [200.0, 235.0], "base": [-34.0, -18.0], "height": [60.0, 100.0], "fade": [10.0, 230.0]}],
+		{"count": 60, "radius": [125.0, 160.0], "base": [-22.0, -12.0], "height": [30.0, 50.0], "fade": [10.0, 260.0]},
+		{"count": 70, "radius": [170.0, 205.0], "base": [-32.0, -18.0], "height": [45.0, 75.0], "fade": [10.0, 260.0]},
+		{"count": 80, "radius": [215.0, 245.0], "base": [-40.0, -26.0], "height": [60.0, 100.0], "fade": [10.0, 260.0]}],
+	# Forest standing ON the island and its extensions: trees are sampled with rays, so every trunk has
+	# ground under it. Candidates are rejected on the path (`path_clear` m from its center line), the ponds
+	# (+`pond_margin`), the `keep_out` rectangles (temple block and the camera corridor behind the start),
+	# steep or rim ground and closer than `spacing` to another tree. Rim and slope: ground must exist in all 8
+	# directions at 1.5 m, 3 m, 5 m and `edge_margin` m and no step between samples may exceed `max_step` m.
+	# The base of each tree is the lowest ground under its trunk minus `sink` m.
+	"island_trees": {"count": 150, "tries": 9000, "seed": 7021, "height": [8.0, 14.0], "spacing": 4.0,
+		"path_clear": 6.5, "pond_margin": 2.5, "edge_margin": 8.0, "max_step": 0.8, "min_y": -1.5, "sink": 0.35,
+		"keep_out": [Rect2(-26, -60, 52, 40), Rect2(-7, 28, 14, 14)], "area": Rect2(-70, -58, 140, 160)},
+	# Ring of islets and far terrain around the island (the island itself is not scaled): the island
+	# models of `assets/environment/island/` instanced with ForestRing (one MultiMesh per model, no
+	# collision, haze shader). `top` = y of the grass top, `scale` = factor of the model's own size.
+	# Ring 1: small islets floating around the island (above and below the path level); ring 2: big
+	# low land masses under the forest. The inner radius keeps them > 30 m from the island edge
+	# (half size ~52 m), so they never touch the path, the camera or the temple. Seed of ring 1 chosen
+	# so that no two islets (nor the five of `islets`) intersect, and of ring 2 so that no land mass cuts
+	# into an islet (bounding boxes; test_level_generator checks both).
+	"islet_rings": [
+		{"models": ["islet_small", "islet_round", "islet_long", "islet_l"], "count": 14, "radius": [88.0, 118.0],
+			"top": [-24.0, 4.0], "scale": [0.45, 1.0], "fade": [10.0, 260.0], "seed": 9338},
+		{"models": ["island_main", "islet_hole", "islet_round"], "count": 7, "radius": [165.0, 225.0],
+			"top": [-18.0, -8.0], "scale": [0.8, 1.3], "fade": [10.0, 260.0], "seed": 9402}],
 	"forest_trees": ["res://assets/environment/trees/tree01.fbx", "res://assets/environment/trees/tree02.fbx",
 		"res://assets/environment/trees/tree03.fbx", "res://assets/environment/trees/tree05.fbx",
 		"res://assets/environment/trees/tree06.fbx", "res://assets/environment/trees/tree07.fbx",
 		"res://assets/environment/trees/tree08.fbx"],
-	"mist_layers": [[-9.0, 0.45], [-22.0, 0.6], [-40.0, 0.85]],
+	"mist_layers": [[-4.0, 0.4], [-9.0, 0.45], [-22.0, 0.6], [-40.0, 0.85]],
 	"islets": [["islet_round", Vector3(-75, -18, -35), 30.0], ["islet_long", Vector3(65, -28, 15), 70.0],
 		["islet_l", Vector3(-60, -6, 55), 120.0], ["islet_small", Vector3(35, 6, -70), 0.0],
 		["islet_hole", Vector3(110, -35, -70), 200.0]],
 	"fog_end": 110.0,
+	"sky": {"top": Color(0.17, 0.15, 0.46), "horizon": Color(0.93, 0.56, 0.52), "curve": 0.22, "fog_affect": 0.12},
 }
 
 # Alternative output folder (see the header), trailing slash included.
@@ -169,6 +208,11 @@ func _build_exterior(cfg: Dictionary) -> void:
 	sky_mat.ground_horizon_color = Color(0.42, 0.46, 0.55)
 	sky_mat.ground_bottom_color = Color(0.3, 0.33, 0.42)
 	sky_mat.ground_curve = 0.25
+	# Dusk sky with colour: indigo overhead, violet and a warm rose band at the horizon (EXTERIOR.sky).
+	sky_mat.sky_top_color = cfg.sky.top
+	sky_mat.sky_horizon_color = cfg.sky.horizon
+	sky_mat.sky_curve = cfg.sky.curve
+	env.fog_sky_affect = cfg.sky.fog_affect
 	sky.sky_material = sky_mat
 	env.sky = sky
 	we.environment = env
@@ -188,13 +232,12 @@ func _build_exterior(cfg: Dictionary) -> void:
 	body.collision_mask = 0
 	_node(island, body, "Ground")
 	for mi: MeshInstance3D in src.find_children("*", "MeshInstance3D", true, false):
+		var flat := _flatten_mesh(mi.mesh, mi.transform, (cfg.island_pos as Vector3).y, cfg.flatten.ref, cfg.flatten.k)
 		var m := MeshInstance3D.new()
-		m.mesh = mi.mesh
-		m.transform = mi.transform
+		m.mesh = flat
 		_node(body, m, "Mesh")
 		var col := CollisionShape3D.new()
-		col.shape = mi.mesh.create_trimesh_shape()
-		col.transform = mi.transform
+		col.shape = flat.create_trimesh_shape()
 		_node(body, col, "Shape")
 	src.free()
 	var islets := _node(root, Node3D.new(), "Islets")
@@ -203,8 +246,7 @@ func _build_exterior(cfg: Dictionary) -> void:
 		isl.position = it[1]
 		isl.rotation_degrees.y = it[2]
 		_node(islets, isl, it[0].to_pascal_case())
-	_ponds(root, cfg)
-	_forest(root, cfg)
+	_islet_rings(root, cfg)
 	_mist(root, cfg)
 
 	for i in 3:
@@ -214,8 +256,20 @@ func _build_exterior(cfg: Dictionary) -> void:
 		var r := root.get_world_3d().direct_space_state.intersect_ray(q)
 		return r.position.y if r else 0.0
 
+	var hit_y := func(x: float, z: float) -> float:   # NAN when there is no island under (x, z)
+		var q := PhysicsRayQueryParameters3D.create(Vector3(x, 60, z), Vector3(x, -60, z))
+		var r := root.get_world_3d().direct_space_state.intersect_ray(q)
+		return r.position.y if r else NAN
+
+	_extensions(body, cfg, hit_y)
+	for i in 2:
+		await physics_frame   # the new collision must be in the space before anything is placed on it
+	_ponds(root, body, cfg, hit_y)
+	for i in 2:
+		await physics_frame
 	# Tiered ancient temple with door, columns, roofed wings and ruins (see _temple).
 	var geo := _temple(root, cfg, ground)
+	_forest(root, cfg, hit_y)
 	var tz: float = cfg.temple_z
 	var base_y: float = geo.get_meta("base_y")
 	var door: Vector2 = cfg.door
@@ -238,11 +292,19 @@ func _build_exterior(cfg: Dictionary) -> void:
 		var at := _path_at(path, dist)
 		for sx in [-1, 1]:
 			var q: Vector2 = at[0] + at[1] * sx * (hw + 0.8)
+			# A stump is skipped where it would hang over a pond or the void, sit on the inner side of a
+			# bend (closer than the path half width to another stretch) or stand on ground that is not at
+			# the level of the path.
+			var gy: float = hit_y.call(q.x, q.y)
+			var gp: float = hit_y.call(at[0].x, at[0].y)
+			if is_nan(gy) or is_nan(gp) or absf(gy - gp) > 0.8 or _in_pond(q, cfg, 1.5) 					or _dist_to_path(q, path) < hw + 0.6:
+				continue
 			var m := _kit_mesh("pillar_collapsed")
-			m.position = Vector3(q.x, ground.call(q.x, q.y) - 0.3, q.y)
+			m.position = Vector3(q.x, gy - 0.3, q.y)
 			n += 1
 			_node(deco, m, "Marker%d" % n)
 		dist += 8.0
+	_merge_static(deco as Node3D, "MarkersMesh")   # 14 kit stumps: one draw call
 	# Walls: one chain on each side of the polyline. At each bend the outer side is lengthened by
 	# hw*tan(theta/2) (+0.2 overlap) and the inner side shortened by the same (otherwise it would block the path).
 	var chunks := []   # [a, b, ext_a, ext_b]
@@ -336,41 +398,264 @@ func _path_at(path: Array, dist: float) -> Array:
 
 # --- Exterior environment: ponds, distant forest and mist ----------------------------------
 
+## Height after the island flattening (EXTERIOR.flatten) of a world height `y`.
+func _flat_world_y(y: float, cfg: Dictionary) -> float:
+	return cfg.flatten.ref + cfg.flatten.k * (y - cfg.flatten.ref)
+
+
+## Copy of `mesh` baked with `xf` and with every height flattened (see EXTERIOR.flatten): a world height h
+## becomes ref + k * (h - ref); normals follow the squash. The island node sits at `island_y`.
+func _flatten_mesh(mesh: Mesh, xf: Transform3D, island_y: float, ref: float, k: float) -> ArrayMesh:
+	var out := ArrayMesh.new()
+	for si in mesh.get_surface_count():
+		var arrays := mesh.surface_get_arrays(si)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		for i in verts.size():
+			var v := xf * verts[i]
+			var h := v.y + island_y
+			v.y = ref + k * (h - ref) - island_y
+			verts[i] = v
+		arrays[Mesh.ARRAY_VERTEX] = verts
+		if arrays[Mesh.ARRAY_NORMAL] != null:
+			var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+			for i in normals.size():
+				var n := xf.basis * normals[i]
+				normals[i] = Vector3(n.x, n.y / k, n.z).normalized()
+			arrays[Mesh.ARRAY_NORMAL] = normals
+		arrays[Mesh.ARRAY_TANGENT] = null
+		out.add_surface_from_arrays(mesh.surface_get_primitive_type(si), arrays)
+		out.surface_set_material(si, mesh.surface_get_material(si))
+	return out
+
+
+## Extra land around the island (EXTERIOR.extensions): islet models flattened about their top (the top stays
+## where the anchor's ground is) and added to the island body with collision.
+func _extensions(body: StaticBody3D, cfg: Dictionary, hit_y: Callable) -> void:
+	var island := body.get_parent() as Node3D
+	for i in cfg.extensions.size():
+		var ex: Dictionary = cfg.extensions[i]
+		var anchor: Vector2 = ex.anchor
+		var top: float = hit_y.call(anchor.x, anchor.y)
+		if is_nan(top):
+			top = 2.0
+		top -= 0.1
+		var pos: Vector2 = ex.pos
+		var src := (load("res://assets/environment/island/%s.glb" % ex.model) as PackedScene).instantiate()
+		var origin := Vector3(pos.x - island.position.x, top - island.position.y, pos.y)
+		var basis := Basis(Vector3.UP, deg_to_rad(ex.yaw)) * Basis.from_scale(Vector3.ONE * float(ex.scale))
+		for mi: MeshInstance3D in src.find_children("*", "MeshInstance3D", true, false):
+			var xf := Transform3D(basis, origin) * mi.transform
+			var flat := _flatten_mesh(mi.mesh, xf, island.position.y, top, 0.5)
+			var m := MeshInstance3D.new()
+			m.mesh = flat
+			_node(body, m, "Extension%d" % (i + 1))
+			var col := CollisionShape3D.new()
+			col.shape = flat.create_trimesh_shape()
+			_node(body, col, "Extension%dShape" % (i + 1))
+		src.free()
+		print("  extension %d (%s) at (%.0f, %.0f): top y=%.2f" % [i + 1, ex.model, pos.x, pos.y, top])
+
+
 # The eyes and nose of the skull are holes through the island (the void was visible). Each pond is
 # a water plane with a shader (per-vertex waves, quantized ripples) at the height of the hole's edge. It
 # has no collision or floor: Kaelen never gets there (the invisible walls enclose the path and the plaza),
 # so she could not fall there before either; the water only covers the view.
-func _ponds(root: Node3D, cfg: Dictionary) -> void:
+func _ponds(root: Node3D, body: StaticBody3D, cfg: Dictionary, hit_y: Callable) -> void:
 	var ponds := _node(root, Node3D.new(), "Ponds") as Node3D
 	var shader := load("res://shaders/water_psx.gdshader") as Shader
+	_wet.clear()
 	for i in cfg.ponds.size():
 		var pd: Array = cfg.ponds[i]
+		var c: Vector2 = pd[0]
+		var half: Vector2 = pd[1]
+		# Water level: 0.5 m under the median height of the rim around the hole.
+		var rim: Array[float] = []
+		for k in 24:
+			var a := k * TAU / 24.0
+			var y: float = hit_y.call(c.x + cos(a) * half.x * 1.12, c.y + sin(a) * half.y * 1.12)
+			if not is_nan(y):
+				rim.append(y)
+		rim.sort()
+		var level: float = (rim[rim.size() / 2] if not rim.is_empty() else 0.0) - 0.5
+		var cells := _pond_cells(c, half + Vector2(3.0, 3.0), level, hit_y, cfg)
+		for k: Vector2i in cells:
+			_wet[k] = true
 		var mat := ShaderMaterial.new()
 		mat.shader = shader
 		mat.set_shader_parameter("water_tex", load("res://assets/environment/textures/water_sbs_elements12.png"))
-		var mesh := PlaneMesh.new()
-		mesh.size = Vector2(pd[1].x * 2.0, pd[1].y * 2.0)
-		mesh.subdivide_width = 10
-		mesh.subdivide_depth = 10
-		mesh.material = mat
 		var mi := MeshInstance3D.new()
-		mi.mesh = mesh
-		mi.position = Vector3(pd[0].x, pd[2], pd[0].y)
+		mi.mesh = _cells_mesh(cells, level, c, half + Vector2(3.0, 3.0), 0.0, mat)
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		mi.set_meta("pond_half", pd[1])
+		mi.set_meta("pond_half", half)
+		mi.set_meta("pond_cells", cells.size())
 		_node(ponds, mi, "Pond%d" % (i + 1))
+		# Bed: the same cells, pond_bed_depth under the water, with collision (rays find ground there).
+		var bed_mat := StandardMaterial3D.new()
+		bed_mat.albedo_color = Color(0.16, 0.17, 0.12)
+		bed_mat.roughness = 1.0
+		bed_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		var island := body.get_parent() as Node3D
+		var bed := MeshInstance3D.new()
+		bed.mesh = _cells_mesh(cells, level - cfg.pond_bed_depth, c, half + Vector2(3.0, 3.0), 0.0, bed_mat, island.position)
+		_node(body, bed, "Bed%d" % (i + 1))
+		var col := CollisionShape3D.new()
+		col.shape = bed.mesh.create_trimesh_shape()
+		_node(body, col, "Bed%dShape" % (i + 1))
+		print("  pond %d: water y=%.2f, %d cells (rim samples %d)" % [i + 1, level, cells.size(), rim.size()])
 
 
-# Rings of distant trees around the island and below its level, peeking out of the sea of mist: the
-# edge looks like it continues into a huge forest. They use the models of the "ps1-style tree pack"
-# (assets/environment/trees/). Each ring is a node with `ForestRing`, which builds its MultiMesh on entering
-# the tree (with a fixed seed) and darkens and blends them into the haze by distance (shaders/forest_tree.gdshader).
-# A MultiMesh is not saved when this generator runs with --headless; that is why only the parameters are saved.
-# Kaelen's camera sees up to 300 m, so the rings stay inside that range.
-func _forest(root: Node3D, cfg: Dictionary) -> void:
+const POND_CELL := 1.0
+var _wet: Dictionary = {}   # Vector2i -> true: every 1 m cell of the ground covered by a pond
+
+
+func _cell_of(p: Vector2) -> Vector2i:
+	return Vector2i(floori(p.x / POND_CELL), floori(p.y / POND_CELL))
+
+
+func _cell_center(k: Vector2i) -> Vector2:
+	return (Vector2(k) + Vector2(0.5, 0.5)) * POND_CELL
+
+
+## Cells of the hole around `c`: connected to the cell nearest to `c` that is below `level` (a void or
+## ground lower than the water), within `reach` of `c` and farther from the path than its half width,
+## grown by 3 cells so the water ends under the rim (the ground above the water hides the excess).
+func _pond_cells(c: Vector2, reach: Vector2, level: float, hit_y: Callable, cfg: Dictionary) -> Dictionary:
+	var hw: float = cfg.path_half_w + 0.1
+	var low := func(k: Vector2i) -> bool:
+		var q := _cell_center(k)
+		if absf(q.x - c.x) > reach.x or absf(q.y - c.y) > reach.y or _dist_to_path(q, cfg.path) <= hw:
+			return false
+		var y: float = hit_y.call(q.x, q.y)
+		return is_nan(y) or y < level - 0.6   # a void or clearly lower than the water (rim cells come from the growth)
+	var start := _cell_of(c)
+	var best := Vector2i.ZERO
+	var best_d := INF
+	for dx in range(-8, 9):
+		for dz in range(-8, 9):
+			var k := start + Vector2i(dx, dz)
+			var d := float(dx * dx + dz * dz)
+			if d < best_d and low.call(k):
+				best = k
+				best_d = d
+	var wet := {}
+	if best_d == INF:
+		return wet
+	var stack: Array[Vector2i] = [best]
+	wet[best] = true
+	while not stack.is_empty():
+		var k: Vector2i = stack.pop_back()
+		for n in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var nk: Vector2i = k + n
+			if not wet.has(nk) and low.call(nk):
+				wet[nk] = true
+				stack.append(nk)
+	var grown := {}
+	for k: Vector2i in wet:
+		for dx in range(-3, 4):
+			for dz in range(-3, 4):
+				var nk := k + Vector2i(dx, dz)
+				if not grown.has(nk) and _dist_to_path(_cell_center(nk), cfg.path) > hw:
+					grown[nk] = true
+	return grown
+
+
+## Flat mesh of one quad per cell at world height `y` (minus `origin`, the node that will hold it).
+## UV spans the pond's search box (the water shader only uses it for a light edge).
+func _cells_mesh(cells: Dictionary, y: float, c: Vector2, reach: Vector2, _unused: float, mat: Material,
+		origin := Vector3.ZERO) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var keys: Array = cells.keys()
+	keys.sort()
+	for k: Vector2i in keys:
+		var x0 := k.x * POND_CELL
+		var z0 := k.y * POND_CELL
+		var x1 := x0 + POND_CELL
+		var z1 := z0 + POND_CELL
+		for corner in [Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z0), Vector2(x1, z1), Vector2(x0, z1)]:
+			var q: Vector2 = corner
+			st.set_normal(Vector3.UP)
+			st.set_uv((q - c) / (reach * 2.0) + Vector2(0.5, 0.5))
+			st.add_vertex(Vector3(q.x, y, q.y) - origin)
+	var mesh := st.commit()
+	mesh.surface_set_material(0, mat)
+	return mesh
+
+
+# Forest standing on the island (EXTERIOR.island_trees). One ForestRing with `fixed_positions` (PS1 tree
+# pack, one MultiMesh per model, no collision); the positions come from rays against the island so no
+# trunk hangs in the air, and they keep clear of the path, ponds, plaza and temple (see the config).
+func _forest(root: Node3D, cfg: Dictionary, hit_y: Callable) -> void:
 	var forest := _node(root, Node3D.new(), "Forest") as Node3D
+	var tc: Dictionary = cfg.island_trees
+	var rng := RandomNumberGenerator.new()
+	rng.seed = tc.seed
+	var area: Rect2 = tc.area
+	var keeps: Array = tc.keep_out
+	var spots := PackedVector3Array()
+	var flat: Array[Vector2] = []
+	for _t in int(tc.tries):
+		if spots.size() >= int(tc.count):
+			break
+		var p := Vector2(rng.randf_range(area.position.x, area.end.x), rng.randf_range(area.position.y, area.end.y))
+		var blocked := false
+		for keep: Rect2 in keeps:
+			blocked = blocked or keep.has_point(p)
+		if blocked or _dist_to_path(p, cfg.path) < tc.path_clear or _in_pond(p, cfg, tc.pond_margin):
+			continue
+		var y: float = hit_y.call(p.x, p.y)
+		if is_nan(y) or y < tc.min_y:
+			continue
+		var ok := true
+		for k in 8:   # rim and slope: ground all around, level step by step
+			var d := Vector2.from_angle(k * TAU / 8.0)
+			var prev := y
+			for r: float in [1.5, 3.0, 5.0, tc.edge_margin]:
+				var yr: float = hit_y.call(p.x + d.x * r, p.y + d.y * r)
+				if is_nan(yr) or absf(yr - prev) > tc.max_step or absf(yr - y) > 2.0 * tc.max_step:
+					ok = false
+					break
+				prev = yr
+			if not ok:
+				break
+		if not ok:
+			continue
+		for f in flat:
+			if f.distance_to(p) < tc.spacing:
+				ok = false
+				break
+		if ok:
+			flat.append(p)
+			var low := y   # lowest ground under the trunk: the roots sink into it, nothing hangs
+			for k in 4:
+				var d := Vector2.from_angle(k * TAU / 4.0 + 0.4)
+				var yk: float = hit_y.call(p.x + d.x * 0.9, p.y + d.y * 0.9)
+				if not is_nan(yk):
+					low = minf(low, yk)
+			spots.append(Vector3(p.x, low - tc.sink, p.y))
+	print("  island trees: %d placed" % spots.size())
+	var ring := Node3D.new()
+	ring.set_script(load("res://scripts/environment/forest_ring.gd"))
+	ring.set("tree_paths", PackedStringArray(cfg.forest_trees))
+	ring.set("fixed_positions", spots)
+	ring.set("seed_value", tc.seed)
+	ring.set("center", cfg.forest_center)
+	ring.set("height_range", Vector2(tc.height[0], tc.height[1]))
+	# Same haze range as the scene fog (25 m to 110 m), so from afar the crowns fade exactly like the ground
+	# under them and never look detached from it; the trunk bases melt a little into the mist.
+	ring.set("fade_near", 25.0)
+	ring.set("fade_far", 115.0)
+	ring.set("base_haze", 0.25)
+	ring.set("dark_mul", 0.62)
+	_node(forest, ring, "IslandTrees")
+	_distant_forest(forest, cfg)
+
+
+## Rings of distant trees around the island, below the path level, swallowed by the mist: the edge looks
+## like it continues into a huge forest in the fog (also behind Kaelen's start). ForestRing builds its
+## MultiMesh on entering the tree (fixed seed) and blends the trees into the haze with distance.
+func _distant_forest(forest: Node3D, cfg: Dictionary) -> void:
 	var script := load("res://scripts/environment/forest_ring.gd")
-	var center: Vector3 = cfg.forest_center
 	for i in cfg.forest_rings.size():
 		var rg: Dictionary = cfg.forest_rings[i]
 		var ring := Node3D.new()
@@ -378,13 +663,71 @@ func _forest(root: Node3D, cfg: Dictionary) -> void:
 		ring.set("tree_paths", PackedStringArray(cfg.forest_trees))
 		ring.set("count", rg.count)
 		ring.set("seed_value", 7021 + i * 101)
-		ring.set("center", center)
+		ring.set("center", cfg.forest_center)
 		ring.set("radius_range", Vector2(rg.radius[0], rg.radius[1]))
 		ring.set("base_range", Vector2(rg.base[0], rg.base[1]))
 		ring.set("height_range", Vector2(rg.height[0], rg.height[1]))
 		ring.set("fade_near", rg.fade[0])
 		ring.set("fade_far", rg.fade[1])
 		_node(forest, ring, "Ring%d" % (i + 1))
+
+
+## Distance from `p` (x, z) to the center line of the path polyline.
+func _dist_to_path(p: Vector2, path: Array) -> float:
+	var best := INF
+	for i in path.size() - 1:
+		var a: Vector2 = path[i]
+		var b: Vector2 = path[i + 1]
+		var t := clampf((p - a).dot(b - a) / (b - a).length_squared(), 0.0, 1.0)
+		best = minf(best, p.distance_to(a + (b - a) * t))
+	return best
+
+
+## true when `p` (x, z) is inside a pond ellipse grown by `margin` metres.
+func _in_pond(p: Vector2, cfg: Dictionary, margin: float) -> bool:
+	for pd: Array in cfg.ponds:
+		var half: Vector2 = pd[1]
+		var center: Vector2 = pd[0]
+		var e: Vector2 = (p - center) / (half + Vector2(margin, margin))
+		if e.length() < 1.0:
+			return true
+	# The real extent of the water (the holes are not ellipses): any wet cell within `margin` metres.
+	var r := ceili(margin / POND_CELL) + 1
+	var k0 := _cell_of(p)
+	for dx in range(-r, r + 1):
+		for dz in range(-r, r + 1):
+			var k := k0 + Vector2i(dx, dz)
+			if _wet.has(k) and _cell_center(k).distance_to(p) < margin + POND_CELL:
+				return true
+	return false
+
+
+# Ring of islets and far terrain (EXTERIOR.islet_rings): ForestRing nodes with island models, built on
+# entering the tree like the forest (one MultiMeshInstance3D per model: 1 draw call each, no collision).
+func _islet_rings(root: Node3D, cfg: Dictionary) -> void:
+	var rings := _node(root, Node3D.new(), "IsletRings") as Node3D
+	var script := load("res://scripts/environment/forest_ring.gd")
+	for i in cfg.islet_rings.size():
+		var rg: Dictionary = cfg.islet_rings[i]
+		var paths := PackedStringArray()
+		for m in rg.models:
+			paths.append("res://assets/environment/island/%s.glb" % m)
+		var ring := Node3D.new()
+		ring.set_script(script)
+		ring.set("tree_paths", paths)
+		ring.set("count", rg.count)
+		ring.set("seed_value", rg.seed)
+		ring.set("center", cfg.forest_center)
+		ring.set("radius_range", Vector2(rg.radius[0], rg.radius[1]))
+		ring.set("base_range", Vector2(rg.top[0], rg.top[1]))
+		ring.set("height_range", Vector2(rg.scale[0], rg.scale[1]))
+		ring.set("height_is_scale", true)
+		ring.set("anchor_top", true)
+		ring.set("fade_near", rg.fade[0])
+		ring.set("fade_far", rg.fade[1])
+		ring.set("dark_mul", 0.55)
+		ring.set("base_haze", 0.5)
+		_node(rings, ring, "Ring%d" % (i + 1))
 
 
 # Horizontal mist layers (sea of mist) at different heights under the island.
@@ -502,6 +845,7 @@ func _temple(root: Node3D, cfg: Dictionary, ground: Callable) -> Node3D:
 		_mbox(leaf, "Wood", Vector3(lw, 2.9, 0.16), Vector3(-sx * lw / 2, 1.45, 0), wood)
 		for k in 3:
 			_mbox(leaf, "Strap%d" % k, Vector3(lw + 0.04, 0.16, 0.2), Vector3(-sx * lw / 2, 0.5 + k * 1.0, 0), metal)
+		_merge_static(leaf, "LeafMesh")
 	# Stone guardians beside the door (pedestal + body + head) with simple collision.
 	for sx in [-1, 1]:
 		var gx: float = sx * 7.6
@@ -510,26 +854,54 @@ func _temple(root: Node3D, cfg: Dictionary, ground: Callable) -> Node3D:
 		_mbox(dec, "BeastHead%d" % sx, Vector3(0.9, 0.85, 0.9), Vector3(gx, b + 2.15, f + 3.0), stone)
 		_frame_box(col_body, "Guardian%d" % sx, Vector3(2.0, 2.4, 2.0), Vector3(gx, b + 1.2, f + 2.2))
 
-	# Tiered tower: four decreasing floors with cornice, pediment on the south face and finial.
+	# Tower: three bodies, one per floor of the temple (catacomb, cloister, ruins), decreasing in
+	# width, each with a cornice, a pediment on the south face and acroteria on the corners; the faces
+	# that the path sees (south, east, west) carry kit walls in the style of each floor (skulls,
+	# windows, ruin). Crown: a lantern of four kit columns with a cap, the pyramidal finial and a metal
+	# spire. Top ~52 m above the door (meta "tower_top"; test_level_generator keeps it in 45-55 m).
+	# No collision (unreachable). Same center as the door block, so it stays aligned with the path.
 	_mbox(dec, "GateCornice", Vector3(13.6, 0.6, 11.4), Vector3(0, b + 9.3, f - 5), trim)
-	var tiers := [Vector3(10.4, 5.0, 8.4), Vector3(8.4, 4.6, 7.0), Vector3(6.6, 4.2, 5.8), Vector3(4.8, 3.6, 4.4)]
+	var tower := _node(geo, Node3D.new(), "Tower") as Node3D
+	var tiers := [Vector3(10.4, 11.0, 8.4), Vector3(8.4, 10.0, 7.0), Vector3(6.6, 9.0, 5.8)]
+	var tier_walls := [["wall", "wall_skull", "wall"], ["wall_window", "wall"], ["wall_ruin", "wall_window", "wall"]]
 	var ty := b + 9.6
 	var zc := f - 5.0
 	for i in tiers.size():
 		var t: Vector3 = tiers[i]
-		_mbox(dec, "Tier%d" % (i + 1), t, Vector3(0, ty + t.y / 2, zc), stone)
-		_facade(dec, "Tier%dS" % (i + 1), Vector3(0, ty, zc + t.z / 2), 0.0, t.x, t.y, Vector2.ZERO,
-			["wall_window", "wall"] if i % 2 == 0 else ["wall", "wall_skull", "wall"])
-		_mbox(dec, "Cornice%d" % (i + 1), Vector3(t.x + 1.2, 0.5, t.z + 1.2), Vector3(0, ty + t.y + 0.25, zc), trim)
-		_mprism(dec, "TierPediment%d" % (i + 1), Vector3(t.x * 0.62, t.y * 0.55, 0.9),
-			Vector3(0, ty + t.y + 0.5 + t.y * 0.275, zc + t.z / 2 + 0.45), trim)
+		var walls: Array = tier_walls[i]
+		_mbox(tower, "Tier%d" % (i + 1), t, Vector3(0, ty + t.y / 2, zc), stone)
+		_facade(tower, "Tier%dS" % (i + 1), Vector3(0, ty, zc + t.z / 2), 0.0, t.x, t.y, Vector2.ZERO, walls)
+		for sx in [-1, 1]:
+			_facade(tower, "Tier%d%s" % [i + 1, "E" if sx > 0 else "W"], Vector3(sx * t.x / 2, ty, zc), sx * PI / 2,
+				t.z, t.y, Vector2.ZERO, walls)
+		_mbox(tower, "Cornice%d" % (i + 1), Vector3(t.x + 1.2, 0.5, t.z + 1.2), Vector3(0, ty + t.y + 0.25, zc), trim)
+		_mprism(tower, "TierPediment%d" % (i + 1), Vector3(t.x * 0.62, 2.6, 0.9),
+			Vector3(0, ty + t.y + 0.5 + 1.3, zc + t.z / 2 + 0.45), trim)
 		for sx in [-1, 1]:
 			for sz in [-1, 1]:
-				_mcyl(dec, "Acroter%d_%d_%d" % [i, sx, sz], 0.0, 0.32, 1.0,
+				_mcyl(tower, "Acroter%d_%d_%d" % [i, sx, sz], 0.0, 0.32, 1.0,
 					Vector3(sx * (t.x / 2 + 0.4), ty + t.y + 1.0, zc + sz * (t.z / 2 + 0.4)), trim, 4)
 		ty += t.y + 0.5
-	_mcyl(dec, "Finial", 0.0, 1.7, 4.5, Vector3(0, ty + 2.25, zc), trim, 4)
-	_mcyl(dec, "FinialSpire", 0.0, 0.18, 2.2, Vector3(0, ty + 5.6, zc), metal, 6)
+	# Crown (lantern): base slab, four kit columns (pillar.glb 1.2 x 8 m scaled to 0.54 x 3.6 m), a
+	# core block, the cap, then the finial and the spire.
+	var top_t: Vector3 = tiers[tiers.size() - 1]
+	_mbox(tower, "CrownBase", Vector3(top_t.x - 1.2, 0.6, top_t.z - 1.2), Vector3(0, ty + 0.3, zc), trim)
+	ty += 0.6
+	var col_h := 3.6
+	for sx in [-1, 1]:
+		for sz in [-1, 1]:
+			var cp := _kit_mesh("pillar")
+			cp.position = Vector3(sx * (top_t.x / 2 - 1.0), ty, zc + sz * (top_t.z / 2 - 1.0))
+			cp.scale = Vector3(0.45, col_h / 8.0, 0.45)
+			_node(tower, cp, "CrownColumn_%d_%d" % [sx, sz])
+	_mbox(tower, "CrownCore", Vector3(top_t.x - 3.6, col_h, top_t.z - 3.6), Vector3(0, ty + col_h / 2, zc), stone)
+	ty += col_h
+	_mbox(tower, "CrownCap", Vector3(top_t.x - 0.8, 0.5, top_t.z - 0.8), Vector3(0, ty + 0.25, zc), trim)
+	ty += 0.5
+	_mcyl(dec, "Finial", 0.0, 2.6, 4.0, Vector3(0, ty + 2.0, zc), trim, 4)
+	_mcyl(dec, "FinialSpire", 0.0, 0.18, 2.4, Vector3(0, ty + 4.0 + 1.2, zc), metal, 6)
+	geo.set_meta("tower_top", ty + 6.4)
+	geo.set_meta("tower_bodies", tiers.size())
 
 	# Wings with a gabled roof (ridge along X), broken tiles and moss.
 	for sx in [-1, 1]:
@@ -556,9 +928,9 @@ func _temple(root: Node3D, cfg: Dictionary, ground: Callable) -> Node3D:
 	ft.set("seed_value", 31)
 	ft.set("center", tree)
 	ft.set("height_range", Vector2(17.0, 17.0))
-	ft.set("fade_near", 400.0)
-	ft.set("fade_far", 500.0)
-	ft.set("base_haze", 0.0)
+	ft.set("fade_near", 25.0)   # same haze range as the scene fog, so it never looks detached from far away
+	ft.set("fade_far", 115.0)
+	ft.set("base_haze", 0.25)
 	ft.set("dark_mul", 0.62)
 	_node(dec, ft, "Tree")
 	for k in 6:   # keeps the random sequence of the bushes below
@@ -600,7 +972,72 @@ func _temple(root: Node3D, cfg: Dictionary, ground: Callable) -> Node3D:
 	torch.omni_range = 10
 	torch.position = Vector3(0, b + 5, f + 3)
 	_node(geo, torch, "DoorLight")
+	# Static decoration merged into one mesh per material (§18.2.8): ~170 loose meshes were ~170 draw
+	# calls. The door leaves (merged on their own), the tree (ForestRing) and the finial stay as nodes.
+	_merge_static(tower, "TowerMesh")
+	_merge_static(facade as Node3D, "FacadeMesh")
+	_merge_static(dec, "DecorMesh", ["Finial"])
 	return geo
+
+
+# Replaces the MeshInstance3D children of `container` (direct children only, no script, no
+# children of their own, not named in `keep`) with a single MeshInstance3D `name` that has one surface
+# per material. Vertices and normals are moved to the container space (normals with the
+# inverse-transpose, so the stretched kit pieces keep their shading); UVs are kept for the kit atlas
+# (the blockout materials are world-triplanar, so their look does not depend on the node).
+func _merge_static(container: Node3D, name: String, keep: Array = []) -> MeshInstance3D:
+	var by_mat := {}   # Material -> [vertices, normals, uvs, indices] (plain Arrays: shared by reference)
+	var merged: Array[Node] = []
+	for c in container.get_children():
+		var mi := c as MeshInstance3D
+		if mi == null or mi.mesh == null or mi.get_script() != null or mi.get_child_count() > 0 or String(mi.name) in keep:
+			continue
+		var xf := mi.transform
+		var nb := xf.basis.inverse().transposed()
+		for si in mi.mesh.get_surface_count():
+			var mat: Material = mi.get_surface_override_material(si)
+			if mat == null:
+				mat = mi.material_override if mi.material_override else mi.mesh.surface_get_material(si)
+			if not by_mat.has(mat):
+				by_mat[mat] = [[], [], [], []]
+			var acc: Array = by_mat[mat]
+			var arr := mi.mesh.surface_get_arrays(si)
+			var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			var norms = arr[Mesh.ARRAY_NORMAL]
+			var uvs = arr[Mesh.ARRAY_TEX_UV]
+			var idx = arr[Mesh.ARRAY_INDEX]
+			var base: int = (acc[0] as Array).size()
+			for vi in verts.size():
+				acc[0].append(xf * verts[vi])
+				acc[1].append((nb * norms[vi]).normalized() if norms != null and (norms as PackedVector3Array).size() > vi else Vector3.UP)
+				acc[2].append(uvs[vi] if uvs != null and (uvs as PackedVector2Array).size() > vi else Vector2.ZERO)
+			if idx != null and (idx as PackedInt32Array).size() > 0:
+				for k in (idx as PackedInt32Array):
+					acc[3].append(base + k)
+			else:
+				for k in verts.size():
+					acc[3].append(base + k)
+		merged.append(mi)
+	if merged.is_empty():
+		return null
+	var mesh := ArrayMesh.new()
+	for mat in by_mat:
+		var acc: Array = by_mat[mat]
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array(acc[0])
+		arrays[Mesh.ARRAY_NORMAL] = PackedVector3Array(acc[1])
+		arrays[Mesh.ARRAY_TEX_UV] = PackedVector2Array(acc[2])
+		arrays[Mesh.ARRAY_INDEX] = PackedInt32Array(acc[3])
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		mesh.surface_set_material(mesh.get_surface_count() - 1, mat)
+	for n in merged:
+		container.remove_child(n)
+		n.free()
+	var out := MeshInstance3D.new()
+	out.mesh = mesh
+	out.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return _node(container, out, name) as MeshInstance3D
 
 
 func _mbox(parent: Node, name: String, size: Vector3, pos: Vector3, mat: Material, rot_deg := Vector3.ZERO) -> MeshInstance3D:
@@ -887,7 +1324,9 @@ func _exit_ending(root: Node3D, geo: Node3D, cfg: Dictionary, half_d: float,
 	light.position = Vector3(0, 4, altar_z + 2)
 	_node(ending, light, "AltarLight")
 	_camera(ending, "EndingCam1", Vector3(3.5, 2.2, altar_z + 6.5), Vector3(0, 1.3, altar_z + 1))
-	_camera(ending, "EndingCam2", Vector3(0, 1.6, zc + room.z / 2 + 2), Vector3(0, 1.3, altar_z + 1))
+	# Profile of the couple (from the side): from the south end of the room, in line with them, Kaelen hid
+	# Elysia and the embrace could not be seen.
+	_camera(ending, "EndingCam2", Vector3(2.7, 1.45, altar_z + 2.6), Vector3(0, 1.0, altar_z + 2.6))
 	_node(ending, Marker3D.new(), "KaelenEndPoint").position = Vector3(0, 0, altar_z + 3.0)
 	# The floor 3 ExitTrigger does not lead to another floor: it stays in the corridor in case gameplay needs it.
 	return {"pos": Vector3(0, 1.5, z0 - 3.0), "size": Vector3(GATE_W, 3.0, 2.0)}

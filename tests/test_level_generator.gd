@@ -32,3 +32,95 @@ func test_no_level_camera_is_current() -> void:
 	for cam in level.find_children("*", "Camera3D", true, false):
 		assert_true(not (cam as Camera3D).current, "%s must not be current" % cam.name)
 	level.free()
+
+
+# --- Exterior: tower, merged decoration and the ring of islets --------------------------------
+
+const EXTERIOR := "res://scenes/levels/exterior.tscn"
+const TOWER_MIN := 45.0   # design: three bodies, one per floor, 45-55 m with the crown
+const TOWER_MAX := 55.0
+const ISLAND_CLEARANCE := 10.0   # m between the island and any islet of the rings
+
+
+func test_exterior_tower_has_three_bodies_and_crown() -> void:
+	var level := (load(EXTERIOR) as PackedScene).instantiate()
+	var temple := level.get_node("Temple") as Node3D
+	var base_y: float = temple.get_meta("base_y")
+	var top: float = temple.get_meta("tower_top")
+	assert_eq(int(temple.get_meta("tower_bodies")), 3, "one body per floor")
+	assert_true(top - base_y >= TOWER_MIN and top - base_y <= TOWER_MAX, "tower height %.1f m" % (top - base_y))
+	var tower := level.get_node_or_null("Temple/Tower/TowerMesh") as MeshInstance3D
+	assert_true(tower != null, "merged tower mesh")
+	var finial := level.get_node_or_null("Temple/Decor/Finial") as MeshInstance3D
+	assert_true(finial != null, "finial")
+	if tower and finial:
+		var tower_top := (tower.mesh.get_aabb().end.y)
+		var finial_bottom := finial.position.y - (finial.mesh as CylinderMesh).height / 2.0
+		assert_almost(finial_bottom, tower_top, 0.01, "the finial sits on the crown")
+		assert_true(tower_top - base_y > 40.0, "bodies and crown reach %.1f m" % (tower_top - base_y))
+	level.free()
+
+
+func test_exterior_static_decoration_is_merged() -> void:
+	var level := (load(EXTERIOR) as PackedScene).instantiate()
+	var meshes := level.get_node("Temple").find_children("*", "MeshInstance3D", true, false)
+	# Before the merge the temple had 175 loose MeshInstance3D (one draw call each).
+	assert_true(meshes.size() <= 20, "temple MeshInstance3D: %d" % meshes.size())
+	assert_eq(level.get_node("PathMarkers").get_child_count(), 1, "path stumps merged")
+	level.free()
+
+
+func _instance_boxes(ring: ForestRing) -> Array[AABB]:
+	var out: Array[AABB] = []
+	for bx in ring.instance_boxes:
+		out.append(ring.transform * bx)
+	return out
+
+
+func test_islet_rings_stay_clear_of_the_island_and_each_other() -> void:
+	var level := (load(EXTERIOR) as PackedScene).instantiate()
+	# Footprint of the island: its vertices projected on the ground (level space).
+	var island := level.get_node("Island") as Node3D
+	var footprint := PackedVector2Array()
+	for mi: MeshInstance3D in island.find_children("*", "MeshInstance3D", true, false):
+		var xf := island.transform * mi.transform
+		for v: Vector3 in mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+			var w := xf * v
+			footprint.append(Vector2(w.x, w.z))
+	assert_true(footprint.size() > 100, "island vertices (%d)" % footprint.size())
+	var rings := level.get_node("IsletRings").get_children()
+	assert_eq(rings.size(), 2, "islets and far terrain")
+	var near: Array[AABB] = []
+	var far: Array[AABB] = []
+	var total := 0
+	for r in rings:
+		var fr := r as ForestRing
+		assert_true(fr != null, "%s is a ForestRing" % r.name)
+		fr.build()   # outside the tree _ready does not run
+		for mmi in fr.multimeshes:
+			assert_true(mmi.get_child_count() == 0, "no collision under %s" % mmi.name)
+		var boxes := _instance_boxes(fr)
+		total += boxes.size()
+		for bx in boxes:
+			# Nothing of the island within ISLAND_CLEARANCE of the islet's ground rectangle (so it is
+			# neither beside it nor above / below it).
+			var rect := Rect2(bx.position.x, bx.position.z, bx.size.x, bx.size.z).grow(ISLAND_CLEARANCE)
+			var hit := false
+			for q in footprint:
+				hit = hit or rect.has_point(q)
+			assert_true(not hit, "%s: islet %s too close to the island" % [r.name, str(bx)])
+		if r.name == &"Ring1":
+			near = boxes
+		else:
+			far.append_array(boxes)
+	assert_true(total >= 20, "instanced islets (%d)" % total)
+	# The small islets do not cut into each other nor into the five hand-placed ones.
+	for isl: Node3D in level.get_node("Islets").get_children():
+		for mi: MeshInstance3D in isl.find_children("*", "MeshInstance3D", true, false):
+			near.append(isl.transform * mi.transform * mi.mesh.get_aabb())
+	for i in near.size():
+		for j in range(i + 1, near.size()):
+			assert_true(not near[i].intersects(near[j]), "islets %d and %d overlap" % [i, j])
+		for j in far.size():   # the far land masses may merge with each other, never with an islet
+			assert_true(not near[i].intersects(far[j]), "islet %d cuts into land mass %d" % [i, j])
+	level.free()

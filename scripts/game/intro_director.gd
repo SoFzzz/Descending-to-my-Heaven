@@ -25,10 +25,20 @@ const AERIAL_FROM := Vector3(0.0, 12.0, 10.0)
 const AERIAL_TO := Vector3(0.0, 8.0, 2.0)
 const AERIAL_LOOK_UP := 6.0
 const DOLLY_TIME := 30.0
-## Close shot: in front of Kaelen, at face height, looking back at her.
-const CLOSE_AHEAD := 1.9
-const CLOSE_SIDE := 0.5
+## Close shot: in front of Kaelen, at face height, looking back at her. It starts at CLOSE_AHEAD m and
+## slowly pushes in to CLOSE_AHEAD_END over CLOSE_PUSH_TIME s, with a soft warm light on her face (the
+## default idle holds the greatsword up in front of it and left it in shadow).
+const CLOSE_AHEAD := 1.8
+const CLOSE_AHEAD_END := 1.3
+const CLOSE_PUSH_TIME := 9.0
+const CLOSE_SIDE := 0.85   # to the side opposite her sword hand: the blade hid her face from the front
 const CLOSE_HEIGHT := 1.55
+const FACE_LIGHT_ENERGY := 1.5
+## TEMPORARY (set SWORD_PICKUP to false to get the old intro back): Kaelen starts without the sword and
+## picks it up with her `draw_sword` clip while she speaks. The sword shows PICKUP_REVEAL s into the clip.
+const SWORD_PICKUP := true
+const PICKUP_REVEAL := 0.35
+const SWORD_GRIP := ^"Model/Armature/Skeleton3D/RightHand/SwordGrip"
 
 var playing := false
 var _player: Player
@@ -41,6 +51,14 @@ var _close: Camera3D
 var _dolly: Tween
 var _skipped := false
 var _dolly_offset := Vector3.ZERO   # world-space travel of the aerial dolly
+var _push: Tween
+var _close_from := Vector3.ZERO
+var _close_to := Vector3.ZERO
+var _face_point := Vector3.ZERO
+var _face_light: OmniLight3D
+var _sword: Node3D
+var _anim_tree: AnimationTree
+var _anim: AnimationPlayer
 
 
 func _ready() -> void:
@@ -80,6 +98,7 @@ func _play() -> void:
 	_set_hud(false)
 	_build_ui()
 	_build_cameras(level)
+	_hide_sword()
 	_aerial.make_current()
 	_dolly = create_tween()
 	_dolly.tween_property(_aerial, "global_position", _aerial.global_position + _dolly_offset, DOLLY_TIME) \
@@ -88,6 +107,7 @@ func _play() -> void:
 	await _wait(FADE_IN * 0.6)
 	_box.fade(1.0, BOX_FADE)
 	var shot := 0
+	var pickup_due := false
 	for entry in LINES:
 		if _skipped or not is_inside_tree():
 			break
@@ -95,9 +115,13 @@ func _play() -> void:
 		if next_shot != shot:
 			shot = next_shot
 			await _cut_to(shot)
+			pickup_due = shot == 1
 			if _skipped or not is_inside_tree():
 				break
 		_box.show_line(tr(entry[0]))
+		if pickup_due:
+			pickup_due = false
+			_pickup_sword()   # runs alongside the line
 		await _box.advanced
 	await _finish()
 
@@ -108,6 +132,7 @@ func _cut_to(shot: int) -> void:
 	await _wait(CUT)
 	if shot == 1:
 		_close.make_current()
+		_start_close_push()
 		_fade(0.0, CUT)
 		await _wait(CUT)
 
@@ -120,6 +145,9 @@ func _finish() -> void:
 	await _wait(END_FADE * 0.5)
 	if _dolly and _dolly.is_valid():
 		_dolly.kill()
+	if _push and _push.is_valid():
+		_push.kill()
+	_restore_pose()
 	var cam := _player.get_node_or_null(^"CameraRig/SpringArm3D/Camera3D") as Camera3D
 	if cam:
 		cam.make_current()
@@ -136,7 +164,7 @@ func _finish() -> void:
 	playing = false
 	if _layer:
 		_layer.queue_free()
-	for c in [_aerial, _close]:
+	for c in [_aerial, _close, _face_light]:
 		if c:
 			c.queue_free()
 	finished.emit()
@@ -195,8 +223,81 @@ func _build_cameras(level: Node3D) -> void:
 	_close = Camera3D.new()
 	_close.name = "IntroClose"
 	get_parent().add_child(_close)
-	_close.global_position = start + forward * CLOSE_AHEAD + right * CLOSE_SIDE + Vector3.UP * CLOSE_HEIGHT
-	_close.look_at(start + Vector3.UP * (CLOSE_HEIGHT - 0.05), Vector3.UP)
+	var grip := _player.get_node_or_null(SWORD_GRIP) as Node3D
+	var side := -1.0   # camera side: opposite to the sword hand
+	if grip != null and absf((grip.global_position - start).dot(right)) > 0.01:
+		side = -signf((grip.global_position - start).dot(right))
+	_close_from = start + forward * CLOSE_AHEAD + right * side * CLOSE_SIDE + Vector3.UP * CLOSE_HEIGHT
+	_close_to = start + forward * CLOSE_AHEAD_END + right * side * CLOSE_SIDE * 0.65 + Vector3.UP * CLOSE_HEIGHT
+	_face_point = start + Vector3.UP * (CLOSE_HEIGHT - 0.05)
+	_close.global_position = _close_from
+	_close.look_at(_face_point, Vector3.UP)
+	_face_light = OmniLight3D.new()
+	_face_light.name = "IntroFaceLight"
+	_face_light.light_color = Color(1.0, 0.9, 0.8)
+	_face_light.light_energy = FACE_LIGHT_ENERGY
+	_face_light.omni_range = 4.5
+	_face_light.shadow_enabled = false
+	get_parent().add_child(_face_light)
+	_face_light.global_position = _close_from + Vector3.UP * 0.35 - forward * 0.2
+
+## Slow push-in toward her face during the Kaelen lines.
+func _start_close_push() -> void:
+	if _push and _push.is_valid():
+		_push.kill()
+	_push = create_tween()
+	_push.tween_method(_push_step, 0.0, 1.0, CLOSE_PUSH_TIME).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
+func _push_step(t: float) -> void:
+	if _close == null or not is_instance_valid(_close):
+		return
+	_close.global_position = _close_from.lerp(_close_to, t)
+	_close.look_at(_face_point, Vector3.UP)
+	if _face_light and is_instance_valid(_face_light):
+		_face_light.global_position = _close.global_position + Vector3.UP * 0.35
+
+
+## TEMPORARY sword pickup (see SWORD_PICKUP): the greatsword is hidden until she reaches for it.
+func _hide_sword() -> void:
+	if not SWORD_PICKUP:
+		return
+	_sword = _player.get_node_or_null(SWORD_GRIP) as Node3D
+	_anim_tree = _player.get_node_or_null(^"AnimationTree") as AnimationTree
+	if _anim_tree and not _anim_tree.anim_player.is_empty():
+		_anim = _anim_tree.get_node_or_null(_anim_tree.anim_player) as AnimationPlayer
+	if _sword:
+		_sword.visible = false
+
+
+## Plays `draw_sword` straight on the AnimationPlayer (the AnimationTree has no state for it) and shows
+## the sword when her hand gets to it; afterwards she idles with the sword in hand.
+func _pickup_sword() -> void:
+	if _sword == null:
+		return
+	if _anim == null or not _anim.has_animation(&"draw_sword"):
+		_sword.visible = true
+		return
+	if _anim_tree:
+		_anim_tree.active = false
+	_anim.play(&"draw_sword")
+	await _wait(PICKUP_REVEAL)
+	if is_instance_valid(_sword):
+		_sword.visible = true
+	await _wait(maxf(_anim.get_animation(&"draw_sword").length - PICKUP_REVEAL, 0.0))
+	if is_instance_valid(_anim) and _anim.current_animation == &"draw_sword" and not _skipped and playing:
+		_anim.play(&"idle")
+
+
+## Gives the sword and the AnimationTree back before control returns to the player.
+func _restore_pose() -> void:
+	if is_instance_valid(_sword):
+		_sword.visible = true
+	if is_instance_valid(_anim_tree) and not _anim_tree.active:
+		if is_instance_valid(_anim):
+			_anim.stop()
+		_anim_tree.active = true
+		_player.call(&"_play_action", &"locomotion")
 
 
 

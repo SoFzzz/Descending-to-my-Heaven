@@ -2,7 +2,8 @@
 // Elements 12, CC0) in two layers scrolling in different directions with nearest filtering, tinted
 // with the dark pond colors; per-vertex waves on a low-subdivision mesh and two ripple bands
 // quantized to a few tones.
-// The plane is a rectangle; the shader cuts out a superellipse (|x|^3 + |y|^3 < 1 in UV) so the pond is eye-shaped.
+// The mesh is built from the cells of the hole (level_builder._ponds), so it already has the shape of the pond: the
+// shader does not cut anything out (it used to discard a superellipse, which left parts of the holes uncovered).
 // No transparency or lights; the environment fog does affect it.
 shader_type spatial;
 render_mode unshaded, cull_disabled, shadows_disabled, depth_draw_opaque;
@@ -32,9 +33,6 @@ void vertex() {
 
 void fragment() {
 	vec2 c = v_uv * 2.0 - 1.0;
-	if (pow(abs(c.x), 3.0) + pow(abs(c.y), 3.0) > 1.0) {
-		discard;
-	}
 	vec3 w = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float r1 = sin((w.x + w.z * 0.6) * ripple_scale + TIME * 0.8);
 	float r2 = sin((w.z - w.x * 0.4) * ripple_scale * 1.7 - TIME * 0.6);

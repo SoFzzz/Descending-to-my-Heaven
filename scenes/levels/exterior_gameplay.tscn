@@ -7,6 +7,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/player/run_dirt.ogg" id="5_steps"]
 [ext_resource type="Script" path="res://scripts/game/intro_director.gd" id="6_intro"]
 [ext_resource type="Script" path="res://scripts/game/tutorial.gd" id="7_tutorial"]
+[ext_resource type="Script" path="res://scripts/environment/temp_clouds.gd" id="8_clouds"]
 
 [node name="ExteriorGameplay" type="Node3D"]
 script = ExtResource("1_gp")
@@ -22,3 +23,6 @@ script = ExtResource("6_intro")
 
 [node name="Tutorial" type="CanvasLayer" parent="."]
 script = ExtResource("7_tutorial")
+
+[node name="TempClouds" type="Node3D" parent="."]
+script = ExtResource("8_clouds")

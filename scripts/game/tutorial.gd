@@ -5,7 +5,8 @@ extends CanvasLayer
 ## the options; the gamepad's buttons if that was the last device used) and what it does. Each hint
 ## waits for the player to do it, so it never gets in the way of someone who already knows:
 ## move → camera → roll → attack the dummy → heavy attack → lock on and strafe → heal → the warning
-## auras → go up to the temple. A training dummy appears beside the path for the attack hints.
+## auras → go up to the temple. A training dummy (a scarecrow: the Straw Reaper's model in a fixed
+## pose, training_dummy.tscn) appears beside the path for the attack hints and cannot be destroyed.
 
 signal step_changed(key: String)
 signal finished
@@ -17,9 +18,12 @@ const TEXT_COLOR := Color(0.94, 0.94, 0.97)
 const FONT_SIZE := 12
 const BOTTOM := 132.0
 const DUMMY := "res://scenes/enemies/training_dummy.tscn"
-## Where the dummy stands: ahead of Kaelen along her facing, a little to the side of the path.
-const DUMMY_AHEAD := 5.0
-const DUMMY_SIDE := 1.6
+## Where the dummy stands: always on the middle line of the path, DUMMY_AHEAD m north of the level's
+## PlayerStart (the middle of the island), wherever Kaelen is looking. If she is already standing there
+## it is moved on by DUMMY_PUSH m.
+const DUMMY_AHEAD := 14.0
+const DUMMY_PUSH := 6.0
+const DUMMY_CLEARANCE := 3.0
 const DUMMY_HEALTH := 99999
 ## Goals of each step.
 const MOVE_DISTANCE := 3.0
@@ -194,7 +198,8 @@ func binding_text(action: StringName) -> String:
 	return String(settings.call(&"slot_text", action, slot))
 
 
-## A training dummy beside the path, standing on the ground, that cannot be destroyed.
+## A training dummy in the middle of the path, standing on the ground and facing Kaelen (look_at turns its -Z
+## to her; the model inside is turned PI, like the minions'), that cannot be destroyed.
 func _spawn_dummy() -> void:
 	if _dummy and is_instance_valid(_dummy):
 		return
@@ -202,11 +207,7 @@ func _spawn_dummy() -> void:
 	if scene == null:
 		return
 	_dummy = scene.instantiate() as Node3D
-	var forward := _player.get_facing()
-	forward.y = 0.0
-	forward = forward.normalized() if forward.length_squared() > 0.001 else Vector3.FORWARD
-	var side := forward.cross(Vector3.UP).normalized()
-	var spot := _player.global_position + forward * DUMMY_AHEAD + side * DUMMY_SIDE
+	var spot := _dummy_spot()
 	get_parent().add_child(_dummy)
 	_dummy.global_position = _ground_at(spot)
 	_dummy.look_at(_player.global_position, Vector3.UP)
@@ -216,6 +217,17 @@ func _spawn_dummy() -> void:
 	if health:
 		health.reset(DUMMY_HEALTH)
 		health.changed.connect(func(_c: int, _m: int) -> void: _dummy_hits += 1)
+
+
+## Fixed spot of the dummy (see DUMMY_AHEAD). The level's north is -Z.
+func _dummy_spot() -> Vector3:
+	var start := get_parent().find_child("PlayerStart", true, false) as Node3D
+	var origin := start.global_position if start != null else _player.global_position
+	var spot := origin + Vector3.FORWARD * DUMMY_AHEAD
+	var flat := Vector2(_player.global_position.x - spot.x, _player.global_position.z - spot.z)
+	if flat.length() < DUMMY_CLEARANCE:
+		spot += Vector3.FORWARD * DUMMY_PUSH
+	return spot
 
 
 func _ground_at(spot: Vector3) -> Vector3:

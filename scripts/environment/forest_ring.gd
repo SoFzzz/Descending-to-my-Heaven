@@ -8,6 +8,8 @@ extends Node3D
 ## generator runs with --headless; the scene only stores these parameters.
 ## The material (forest_tree.gdshader) darkens the trees and blends them into the haze colour with
 ## distance and height (the trunks emerge from the fog sea).
+## The same node also builds the ring of distant islets and terrain of the exterior (island models with
+## `height_is_scale` and `anchor_top`): any model with a single textured mesh works.
 
 const SHADER := preload("res://shaders/forest_tree.gdshader")
 
@@ -25,8 +27,15 @@ const SHADER := preload("res://shaders/forest_tree.gdshader")
 @export var base_haze := 0.6                          # haze at the base (0 = none)
 ## If not empty, trees are placed only at these positions (with random yaw) instead of the ring.
 @export var fixed_positions: PackedVector3Array = []
+## true: `height_range` is a scale factor of the model's own size instead of a height in metres.
+@export var height_is_scale := false
+## true: `base_range` is the y of the top of the model (islets: the grass top) instead of its base.
+@export var anchor_top := false
 
 var multimeshes: Array[MultiMeshInstance3D] = []
+## Box of every instance of the last build(), in this node's space (for checks and tests:
+## a headless run does not keep MultiMesh transforms).
+var instance_boxes: Array[AABB] = []
 
 
 func _ready() -> void:
@@ -38,6 +47,7 @@ func build() -> void:
 		remove_child(old)   # leave the tree now so the new nodes can reuse the names
 		old.queue_free()
 	multimeshes.clear()
+	instance_boxes.clear()
 	if tree_paths.is_empty() or count <= 0:
 		return
 	var rng := RandomNumberGenerator.new()
@@ -64,6 +74,10 @@ func build() -> void:
 		var pos := center + Vector3(cos(ang) * rad, rng.randf_range(base_range.x, base_range.y), sin(ang) * rad)
 		var yaw := rng.randf_range(0.0, TAU)
 		var kind := rng.randi() % kinds.size()
+		if height_is_scale:
+			h *= float(kinds[kind].height)
+		if anchor_top:
+			pos.y -= h
 		per_kind[kind].append([pos, yaw, h])
 	for i in kinds.size():
 		var items: Array = per_kind[i]
@@ -80,6 +94,7 @@ func build() -> void:
 			var it: Array = items[j]
 			var xf := Transform3D(Basis(Vector3.UP, it[1]).scaled(Vector3.ONE * it[2]), it[0]) * norm
 			mm.set_instance_transform(j, xf)
+			instance_boxes.append(xf * kd.mesh.get_aabb())
 			mm.set_instance_custom_data(j, Color(it[0].y, it[2], 0.0, 0.0))
 		var mat := ShaderMaterial.new()
 		mat.shader = SHADER
@@ -125,7 +140,7 @@ func _load_kind(path: String) -> Dictionary:
 	if src is BaseMaterial3D:
 		tex = (src as BaseMaterial3D).albedo_texture
 	root.free()
-	return {"mesh": mesh, "norm": norm, "tex": tex}
+	return {"mesh": mesh, "norm": norm, "tex": tex, "height": h}
 
 
 func _find_mesh(node: Node) -> MeshInstance3D:

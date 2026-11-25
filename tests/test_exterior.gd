@@ -5,6 +5,18 @@ extends TestCase
 const EXTERIOR := "res://scenes/levels/exterior.tscn"
 # Holes through `island_main` (x, z boxes measured with rays, in level space): eyes and nose.
 const HOLES := [Rect2(-25, -19, 9, 16), Rect2(26, -19, 9, 16), Rect2(-2, 0, 13, 13)]
+# Copies of EXTERIOR.path / ponds / island_trees in level_builder.gd (the generator is a SceneTree script).
+const PATH := [Vector2(0, 40), Vector2(0, 19), Vector2(-5.5, 13.5), Vector2(-5.5, 1), Vector2(0, -4.5),
+	Vector2(0, -22)]
+const PONDS := [[Vector2(-20.5, -11.0), Vector2(7.0, 10.5)], [Vector2(30.5, -11.0), Vector2(7.0, 10.5)],
+	[Vector2(6.0, 6.5), Vector2(9.5, 9.5)]]
+const NOSE_HOLE := Rect2(-2, 0, 13, 13)
+# A pond must stay at least this far from the middle line of the path (its half width is 3.5 m).
+const POND_PATH_GAP := 7.0
+const TREE_PATH_CLEAR := 6.5
+const TEMPLE_BLOCK := Rect2(-26, -60, 52, 40)
+const START_CORRIDOR := Rect2(-7, 28, 14, 14)
+const PATH_HALF_W := 3.5
 
 
 func _level() -> Node:
@@ -14,45 +26,90 @@ func _level() -> Node:
 func test_ponds_cover_every_island_hole() -> void:
 	var level := _level()
 	var ponds := level.get_node("Ponds").get_children()
-	assert_eq(ponds.size(), HOLES.size(), "one pond per hole")
-	for hole: Rect2 in HOLES:
-		var covered := false
-		for p: MeshInstance3D in ponds:
-			var half: Vector2 = p.get_meta("pond_half")
-			var c := Vector2(p.position.x, p.position.z)
-			var inside := true
-			for corner in [hole.position, Vector2(hole.end.x, hole.position.y), Vector2(hole.position.x, hole.end.y), hole.end]:
-				var d: Vector2 = (corner - c).abs() / half
-				if pow(d.x, 3.0) + pow(d.y, 3.0) > 1.0:   # same mask as water_psx.gdshader
-					inside = false
-			covered = covered or inside
-		assert_true(covered, "hole %s has no pond" % str(hole))
-	for p: MeshInstance3D in ponds:
+	assert_eq(ponds.size(), HOLES.size(), "one pond per hole (eyes and nose)")
+	for i in HOLES.size():
+		assert_true(level.get_node_or_null("Island/Ground/Bed%d" % (i + 1)) != null, "pond %d has a bed: the hole is not bottomless" % (i + 1))
+	# Each pond is built from the cells of its hole: its box must enclose the hole's box (shrunk by 1 m),
+	# and no vertex of the water may lie on the path itself.
+	for i in HOLES.size():
+		var p := ponds[i] as MeshInstance3D
 		assert_true((p.mesh.material as ShaderMaterial) != null, "%s has no water material" % p.name)
+		var box := p.mesh.get_aabb()
+		var rect := Rect2(box.position.x, box.position.z, box.size.x, box.size.z)
+		assert_true(rect.encloses((HOLES[i] as Rect2).grow(-1.0)), "%s does not cover its hole %s (water box %s)" % [p.name, str(HOLES[i]), str(rect)])
+		var verts: PackedVector3Array = p.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+		var nearest := INF
+		for v in verts:
+			nearest = minf(nearest, _path_dist(Vector2(v.x, v.z), PATH))
+		assert_true(nearest > PATH_HALF_W, "%s reaches the path (%.1f m from its middle line)" % [p.name, nearest])
+		if i < 2:   # the eye ponds stay clear of the path; the nose pond hugs it by design
+			assert_true(nearest >= POND_PATH_GAP, "%s is too close to the path (%.1f m)" % [p.name, nearest])
 	level.free()
 
 
-func test_forest_rings_use_pack_trees_and_mist_exists() -> void:
+func test_island_trees_stand_on_the_island_and_mist_exists() -> void:
 	var level := _level()
 	var rings := level.get_node("Forest").get_children()
-	assert_eq(rings.size(), 3, "three forest rings")
-	var total := 0
+	assert_eq(rings.size(), 4, "island trees plus three distant fog rings")
+	var fr := level.get_node("Forest/IslandTrees") as ForestRing
+	assert_true(fr != null, "IslandTrees is a ForestRing")
 	var kinds := {}
+	var total := 0
+	var far_total := 0
 	for r in rings:
-		assert_true(r is ForestRing, "%s is not a ForestRing" % r.name)
-		var fr := r as ForestRing
-		fr.build()   # the test does not enter the tree, so _ready did not run
-		assert_true(fr.tree_paths.size() >= 4, "%s: several tree types from the pack" % r.name)
-		for p in fr.tree_paths:
+		var ring := r as ForestRing
+		assert_true(ring != null, "%s is a ForestRing" % r.name)
+		ring.build()   # the test does not enter the tree, so _ready did not run
+		assert_true(ring.tree_paths.size() >= 4, "%s: several tree types from the pack" % r.name)
+		for p in ring.tree_paths:
 			assert_true(p.begins_with("res://assets/environment/trees/"), "model outside the pack: %s" % p)
-		for m in fr.multimeshes:
-			total += m.multimesh.instance_count
+		for m in ring.multimeshes:
+			if ring == fr:
+				total += m.multimesh.instance_count
+			else:
+				far_total += m.multimesh.instance_count
 			kinds[m.multimesh.mesh] = true
 			assert_true((m.material_override as ShaderMaterial).get_shader_parameter("albedo_tex") != null, "tree without texture")
-	assert_true(total >= 180, "instanced trees (%d)" % total)
+	assert_true(total >= 100, "trees on the island (%d)" % total)
+	assert_true(far_total >= 180, "trees of the distant fog forest (%d)" % far_total)
 	assert_true(kinds.size() >= 4, "several distinct models in use (%d)" % kinds.size())
+	# Every trunk is on land, off the path, off the ponds and clear of the temple block.
+	for pos in fr.fixed_positions:
+		var p2 := Vector2(pos.x, pos.z)
+		assert_true(pos.y > -1.7, "tree base at y=%.1f is not on the island" % pos.y)
+		assert_true(_path_dist(p2, PATH) >= TREE_PATH_CLEAR - 0.01, "tree on the path at %s" % str(p2))
+		for pd: Array in PONDS:
+			var e: Vector2 = (p2 - pd[0]) / pd[1]
+			assert_true(e.length() >= 1.0, "tree inside a pond at %s" % str(p2))
+		assert_true(not TEMPLE_BLOCK.has_point(p2) and not START_CORRIDOR.has_point(p2), "tree in a keep-out zone at %s" % str(p2))
 	assert_true(level.get_node("Mist").get_child_count() >= 2, "mist layers")
 	assert_true(level.get_node_or_null("Temple/Decor/Tree") is ForestRing, "temple tree from the pack")
+	level.free()
+
+
+func _path_dist(p: Vector2, path: Array) -> float:
+	var best := INF
+	for i in path.size() - 1:
+		var a: Vector2 = path[i]
+		var b: Vector2 = path[i + 1]
+		var t := clampf((p - a).dot(b - a) / (b - a).length_squared(), 0.0, 1.0)
+		best = minf(best, p.distance_to(a + (b - a) * t))
+	return best
+
+
+func test_path_stumps_avoid_ponds_and_inner_bends() -> void:
+	var level := _level()
+	var mm := level.get_node("PathMarkers/MarkersMesh") as MeshInstance3D
+	assert_true(mm != null, "merged stumps exist")
+	var verts: PackedVector3Array = mm.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	assert_true(verts.size() > 0, "stump vertices")
+	for v in verts:
+		var w := mm.transform * v
+		var p2 := Vector2(w.x, w.z)
+		for pd: Array in PONDS:
+			var e: Vector2 = (p2 - pd[0]) / pd[1]
+			assert_true(e.length() >= 1.0, "stump over a pond at %s" % str(p2))
+		assert_true(_path_dist(p2, PATH) >= PATH_HALF_W - 0.1, "stump on the path at %s" % str(p2))
 	level.free()
 
 
