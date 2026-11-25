@@ -39,3 +39,33 @@ func test_play_runs_only_once() -> void:
 	dir.play()
 	assert_true(dir._played, "second call does not break")
 	dir.free()
+
+
+func test_every_line_has_its_own_moving_shot() -> void:
+	assert_eq(Director.SHOT_KINDS.size(), Director.line_count(), "one shot kind per line")
+	# Consecutive lines never reuse the same shot kind, so the picture changes with each line.
+	for i in range(1, Director.SHOT_KINDS.size()):
+		assert_true(Director.SHOT_KINDS[i] != Director.SHOT_KINDS[i - 1], "line %d changes the shot" % i)
+
+
+func test_shots_look_at_the_speaker_and_drift() -> void:
+	var k := Vector3(0, 1.55, 0)
+	var e := Vector3(0, 1.42, -3.5)   # Elysia on the altar, Kaelen on her mark
+	for kind in [&"face", &"side", &"over", &"low"]:
+		for who in [&"kaelen", &"elysia"]:
+			var target := e if who == &"elysia" else k
+			var t0: Transform3D = Director.shot_transform(kind, 0.0, k, e, who, Vector3(3.5, 2.2, 3.0))
+			var forward := -t0.basis.z
+			var to_target := (target - t0.origin).normalized()
+			assert_true(forward.dot(to_target) > 0.9, "%s shot looks at the speaker %s" % [kind, who])
+			var t1: Transform3D = Director.shot_transform(kind, 5.0, k, e, who, Vector3(3.5, 2.2, 3.0))
+			assert_true(t0.origin.distance_to(t1.origin) > 0.05, "%s shot drifts" % kind)
+
+
+func test_feet_stop_keeps_the_gap_on_the_line_to_kaelen() -> void:
+	var kaelen := Vector3(0, 0, 0)
+	var feet := Vector3(0, 0.5, -3)
+	var stop: Vector3 = Director.feet_stop(feet, kaelen, 1.35)
+	assert_almost(stop.z, -1.35, 0.001, "stops 1.35 m from Kaelen")
+	assert_almost(stop.x, 0.0, 0.001, "on the line between them")
+	assert_true(Director.feet_stop(Vector3(0, 0, -1.0), kaelen, 1.35).is_equal_approx(Vector3(0, 0, -1.0)), "already closer: stays")
