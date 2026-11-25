@@ -59,6 +59,7 @@ func _ready() -> void:
 	_options_menu.closed.connect(_on_options_closed)
 	_credits.pressed.connect(_on_credits)
 	_quit.pressed.connect(_on_quit)
+	MenuNav.link_vertical(_visible_buttons())
 	for button in _buttons():
 		button.mouse_entered.connect(_refresh_highlight.bind(button))
 		button.mouse_exited.connect(_refresh_highlight.bind(button))
@@ -84,6 +85,14 @@ func _exit_tree() -> void:
 
 func _buttons() -> Array[Button]:
 	return [_start, _options, _credits, _quit]
+
+
+func _visible_buttons() -> Array[Button]:
+	var out: Array[Button] = []
+	for button in _buttons():
+		if button.visible:
+			out.append(button)
+	return out
 
 
 func _on_button_resized(button: Button) -> void:
@@ -149,7 +158,7 @@ func _kill(button: Button) -> void:
 func _refresh_highlight(button: Button) -> void:
 	if _leaving or not is_instance_valid(button) or not button.is_inside_tree():
 		return
-	var on := button.has_focus() or button.is_hovered()
+	var on := button.has_focus()   # the mouse moves the focus (MenuNav), so there is one highlight
 	if bool(button.get_meta(&"hl", false)) == on:
 		return
 	button.set_meta(&"hl", on)

@@ -55,8 +55,9 @@ VOL_UI,Interfaz,Interface
 OPT_TAB_DISPLAY,Pantalla,Display
 DISP_MODE,Modo de ventana,Window mode
 DISP_MODE_WINDOWED,Ventana,Windowed
-DISP_MODE_FULLSCREEN,Pantalla completa sin bordes,Borderless fullscreen
-DISP_MODE_EXCLUSIVE,Pantalla completa exclusiva,Exclusive fullscreen
+DISP_MODE_FULLSCREEN,Pantalla completa en ventana,Windowed fullscreen
+DISP_MODE_EXCLUSIVE,Pantalla completa,Fullscreen
+DISP_APPLIED,Aplicado: %s,Applied: %s
 DISP_RESOLUTION,Resolución de ventana,Window resolution
 DISP_VSYNC,Sincronización vertical,VSync
 DISP_FPS,Límite de FPS,FPS limit

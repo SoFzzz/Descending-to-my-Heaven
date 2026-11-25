@@ -376,6 +376,7 @@ func _refresh_display(settings: GameSettings) -> void:
 	_res_button.disabled = settings.window_mode != GameSettings.MODE_WINDOWED
 	_vsync_button.text = "< %s >" % tr("DISP_ON" if settings.vsync else "DISP_OFF")
 	_fps_button.text = "< %s >" % (tr("DISP_UNLIMITED") if settings.fps_limit == 0 else str(settings.fps_limit))
+	_wire_focus()   # the resolution button is disabled outside windowed mode
 
 
 func _set_status(key: String, arg := "") -> void:
@@ -404,6 +405,60 @@ func _select_tab(index: int) -> void:
 	elif index != TAB_CONTROLS:
 		_status.text = ""
 		_status_key = "OPT_CONTROLS_HINT"
+	_wire_focus()
+
+
+## Explicit arrow navigation for the current tab: tabs left / right, then the rows of the page (left /
+## right inside a row, up / down between rows at the same column), then Restore / Back. Nothing wraps
+## and nothing outside this menu (the pause or main menu buttons behind it) can be reached.
+func _wire_focus() -> void:
+	if _back == null or _restore == null or _pages.is_empty():
+		return
+	var page := _pages[_tab]
+	var container: Node = _scroll.get_child(0) if _tab == TAB_CONTROLS else page
+	var rows: Array = []
+	for child in container.get_children():
+		var cells := MenuNav.focusables(child)
+		if not cells.is_empty():
+			rows.append(cells)
+	var bottom: Array[Control] = []
+	if _restore.visible:
+		bottom.append(_restore)
+	bottom.append(_back)
+	var top_target: Control = _tab_buttons[_tab]
+	for i in _tab_buttons.size():
+		var tab := _tab_buttons[i]
+		MenuNav.hover_focus(tab)
+		MenuNav.link(tab, SIDE_LEFT, _tab_buttons[maxi(i - 1, 0)])
+		MenuNav.link(tab, SIDE_RIGHT, _tab_buttons[mini(i + 1, _tab_buttons.size() - 1)])
+		MenuNav.link(tab, SIDE_TOP, tab)
+		var first: Control = rows[0][0] if not rows.is_empty() else bottom[0]
+		MenuNav.link(tab, SIDE_BOTTOM, first)
+	for r in rows.size():
+		var cells: Array = rows[r]
+		for ci in cells.size():
+			var c: Control = cells[ci]
+			MenuNav.hover_focus(c)
+			MenuNav.link(c, SIDE_LEFT, cells[maxi(ci - 1, 0)])
+			MenuNav.link(c, SIDE_RIGHT, cells[mini(ci + 1, cells.size() - 1)])
+			if r == 0:
+				MenuNav.link(c, SIDE_TOP, top_target)
+			else:
+				var above: Array = rows[r - 1]
+				MenuNav.link(c, SIDE_TOP, above[mini(ci, above.size() - 1)])
+			if r == rows.size() - 1:
+				MenuNav.link(c, SIDE_BOTTOM, bottom[mini(ci, bottom.size() - 1)])
+			else:
+				var below: Array = rows[r + 1]
+				MenuNav.link(c, SIDE_BOTTOM, below[mini(ci, below.size() - 1)])
+	var last_first: Control = rows[rows.size() - 1][0] if not rows.is_empty() else top_target
+	for bi in bottom.size():
+		var b := bottom[bi]
+		MenuNav.hover_focus(b)
+		MenuNav.link(b, SIDE_LEFT, bottom[maxi(bi - 1, 0)])
+		MenuNav.link(b, SIDE_RIGHT, bottom[mini(bi + 1, bottom.size() - 1)])
+		MenuNav.link(b, SIDE_TOP, last_first)
+		MenuNav.link(b, SIDE_BOTTOM, b)
 
 
 func _focus(control: Control) -> void:
@@ -548,6 +603,9 @@ func _on_mode_pressed() -> void:
 	var settings := _settings()
 	if settings:
 		settings.set_window_mode(_next_in(GameSettings.WINDOW_MODES, settings.window_mode))
+		# Borderless and exclusive fullscreen look alike on a desktop: say which one is on and its size.
+		var size := GameSettings.scale_size(settings.window_scale) if settings.window_mode == GameSettings.MODE_WINDOWED 				else DisplayServer.screen_get_size(DisplayServer.window_get_current_screen())
+		_set_status("DISP_APPLIED", "%s (%d x %d)" % [tr(MODE_KEYS[settings.window_mode]), size.x, size.y])
 
 
 func _on_resolution_pressed() -> void:

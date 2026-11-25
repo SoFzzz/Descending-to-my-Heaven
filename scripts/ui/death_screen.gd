@@ -45,6 +45,7 @@ func _ready() -> void:
 	_retry.pressed.connect(_on_retry)
 	_menu.pressed.connect(_on_menu)
 	_quit.pressed.connect(_on_quit)
+	MenuNav.link_vertical([_retry, _menu, _quit])
 	var events := get_node_or_null(^"/root/Events")
 	if events:
 		events.player_died.connect(_on_player_died)

@@ -42,6 +42,7 @@ func _run() -> void:
 	hud.free()
 	boss_health.free()
 	_check_options_capture()
+	await _check_menu_navigation()
 	print("FLOW: OK" if _fails == 0 else "FLOW: FAIL (%d)" % _fails)
 	get_tree().quit(1 if _fails > 0 else 0)
 
@@ -55,3 +56,48 @@ func _check_options_capture() -> void:
 	options.visible = false   # e.g. the pause menu closing underneath
 	_check(not options.is_capturing(), "hiding the menu cancels the capture")
 	options.free()
+
+
+## Arrow navigation: every neighbour stays inside the menu, nothing wraps, and walking down from any tab
+## ends on Restore / Back; the pause buttons behind the options cannot take the focus while it is open.
+func _check_menu_navigation() -> void:
+	var options := OptionsMenu.new()
+	add_child(options)
+	options.open()
+	for tab in OptionsMenu.TAB_KEYS.size():
+		options._select_tab(tab)
+		var node: Control = options._tab_buttons[tab]
+		var steps := 0
+		while node != options._back and node != options._restore and steps < 40:
+			var next := node.get_node_or_null(node.focus_neighbor_bottom) as Control
+			if next == null or next == node or not options.is_ancestor_of(next):
+				break
+			node = next
+			steps += 1
+		_check(node == options._back or node == options._restore, "tab %d: walking down ends on the bottom buttons (%d steps)" % [tab, steps])
+		var first: Control = options._tab_buttons[0]
+		_check(first.get_node(first.focus_neighbor_left) == first, "first tab: left stays put")
+		var back: Control = options._back
+		_check(back.get_node(back.focus_neighbor_bottom) == back and back.get_node(back.focus_neighbor_right) == back,
+			"Back: down and right stay put")
+	options.free()
+
+	var pause := (load("res://scenes/ui/pause_menu.tscn") as PackedScene).instantiate()
+	add_child(pause)
+	pause._open_options()
+	_check(pause._continue.focus_mode == Control.FOCUS_NONE and pause._quit.focus_mode == Control.FOCUS_NONE,
+		"pause buttons cannot take focus behind the options")
+	pause._on_options_closed()
+	_check(pause._continue.focus_mode == Control.FOCUS_ALL, "pause buttons focusable again")
+	_check(pause._continue.get_node(pause._continue.focus_neighbor_top) == pause._continue, "pause: up from the first stays put")
+	pause.free()
+
+	var menu := (load("res://scenes/ui/main_menu.tscn") as PackedScene).instantiate()
+	add_child(menu)
+	await get_tree().process_frame
+	var start: Button = menu.get_node(^"%Start")
+	var quit: Button = menu.get_node(^"%Quit")
+	_check(start.get_node(start.focus_neighbor_top) == start, "main menu: up from Start stays put")
+	_check(quit.get_node(quit.focus_neighbor_bottom) == quit, "main menu: down from Quit stays put")
+	_check(start.get_node(start.focus_neighbor_left) == start, "main menu: left stays put")
+	menu.free()

@@ -17,13 +17,27 @@ func _ready() -> void:
 	_root.visible = false
 	_continue.set_meta(&"ui_sound", &"none")   # closing already plays its own sound
 	_continue.pressed.connect(close)
-	_options.pressed.connect(_options_menu.open)
+	_options.pressed.connect(_open_options)
+	MenuNav.link_vertical([_continue, _options, _menu, _quit])
 	_options_menu.closed.connect(_on_options_closed)
 	_menu.pressed.connect(_on_main_menu)
 	_quit.pressed.connect(_on_quit)
 
 
+## The pause buttons stay behind the options overlay: while it is open they cannot take the focus,
+## so the arrows never reach them.
+func _set_buttons_focusable(on: bool) -> void:
+	for button in [_continue, _options, _menu, _quit]:
+		button.focus_mode = Control.FOCUS_ALL if on else Control.FOCUS_NONE
+
+
+func _open_options() -> void:
+	_set_buttons_focusable(false)
+	_options_menu.open()
+
+
 func _on_options_closed() -> void:
+	_set_buttons_focusable(true)
 	var audio := get_node_or_null(^"/root/AudioManager")
 	if audio:
 		audio.grab_focus_silent(_options)
@@ -71,6 +85,7 @@ func open() -> void:
 
 func close() -> void:
 	_options_menu.visible = false
+	_set_buttons_focusable(true)
 	if _root.visible:
 		var audio := get_node_or_null(^"/root/AudioManager")
 		if audio:
@@ -84,6 +99,7 @@ func close() -> void:
 ## Hides without touching pause or cursor (GameState calls it on scene change).
 func close_silently() -> void:
 	_options_menu.visible = false
+	_set_buttons_focusable(true)
 	_root.visible = false
 
 
